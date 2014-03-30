@@ -1,0 +1,73 @@
+<html>
+<head>
+    <meta charset="utf-8"/>
+    <title>Models Tests</title>
+    <link rel="stylesheet" href="test/mocha.css"/>
+</head>
+<body>
+<div id="mocha"></div>
+<script src="js/lib/requirejs/require.js"></script>
+<script type="text/javascript">
+    require.config({
+		
+		packages : [
+			{ name : "jquery", location : "lib/jquery"}
+		],
+
+			
+			
+		baseUrl: 'js/',
+        paths: {
+            'underscore'    : 'lib/underscore',
+            "backbone-pageable" : "lib/backbone-pageable",
+            "backbone.localStorage": "lib/backbone.localStorage",
+            'backbone'      : 'lib/backbone',
+            'chaplin'       : 'lib/chaplin',
+
+            'mocha'         : '../test/mocha',
+            'chai'          : '../test/chai',
+            'sinon'         : '../test/sinon',
+            'sinon-chai'    : '../test/sinon-chai',
+            'chai-backbone' : '../test/chai-backbone',
+            'chai-changes' : '../test/chai-changes',
+            'knockout' : 'lib/knockout'
+        },
+        shim: {
+            'sinon': {
+                exports: 'sinon'
+            },
+
+            'underscore': {
+                exports: '_'
+            },
+
+            'backbone': {
+                deps: ['underscore', 'jquery'],
+                exports: 'Backbone'
+            }
+        }
+    });
+
+    require(['require', 'sinon', 'chai', 'sinon-chai', 'chai-changes', 'chai-backbone', 'mocha' ],
+            function(require, sinon, chai, sinonChai, chaiChanges, chaiBackbone ){
+                // Chai
+                chai.should();
+
+                chai.use( sinonChai );
+                chai.use( chaiChanges );
+                chai.use( chaiBackbone );
+
+                /*globals mocha */
+                mocha.setup( 'bdd' );
+
+                var search = window.location.search;
+                require([
+                    'js/' + (search ? search.substring( 1 ) + '.js' : '_all.js')
+                ], function( require ) {
+                    mocha.run();
+                });
+            }
+    );
+</script>
+</body>
+</html>

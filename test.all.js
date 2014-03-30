@@ -1,8 +1,7 @@
 define( function( require, exports, module ){
-    var Model = require( 'base/Model' ),
-        Collection = require( 'base/Collection' );
+    var Base = require( 'nestedtypes' );
 
-    var Nested = Model.extend({
+    var Nested = Base.Model.extend({
         defaults:{
             time: Date,
             text: '',
@@ -14,7 +13,7 @@ define( function( require, exports, module ){
         save: function(){}
     });
 
-    var Main = Model.extend({
+    var Main = Base.Model.extend({
         defaults:{
             first: Nested,
             second: Nested,
@@ -27,7 +26,7 @@ define( function( require, exports, module ){
         var M, M1;
 
         it( 'create native properties for defaults', function( done ){
-            M = Model.extend({
+            M = Base.Model.extend({
                 defaults: {
                     a: 1,
                     b: 'ds'
@@ -69,7 +68,7 @@ define( function( require, exports, module ){
     });
 
     describe( 'constructors in defaults', function(){
-        var user, User = Model.extend({
+        var user, User = Base.Model.extend({
             defaults:{
                 created: Date,
                 name: String,
@@ -101,7 +100,7 @@ define( function( require, exports, module ){
             user.name.should.be.string;
         });
 
-        var comment, Comment = Model.extend({
+        var comment, Comment = Base.Model.extend({
             defaults: {
                 created: Date,
                 author: User,
@@ -200,7 +199,7 @@ define( function( require, exports, module ){
         });
 
         describe( 'model with nested collection', function(){
-            var Coll = Collection.extend({
+            var Coll = Base.Collection.extend({
                 model: Nested
             });
 
@@ -314,7 +313,7 @@ define( function( require, exports, module ){
 
     describe( 'custom event subscription', function(){
         it( 'manage subscriptions automatically', function(){
-            var M = Model.extend({
+            var M = Base.Model.extend({
                 defaults:{
                     left: Nested,
                     right: Nested
@@ -341,7 +340,7 @@ define( function( require, exports, module ){
 
     describe( 'custom properties', function(){
         it( 'generate read-only properties if function specified', function(){
-            var M = Model.extend({
+            var M = Base.Model.extend({
                 properties: {
                     a: function(){ return 5; }
                 }
@@ -353,7 +352,7 @@ define( function( require, exports, module ){
 
         it( 'generate custom properties if standard spec provided', function(){
 
-            var M = Model.extend({
+            var M = Base.Model.extend({
                 state: 0,
 
                 properties: {
@@ -371,7 +370,7 @@ define( function( require, exports, module ){
         });
 
         it( 'override properties for defaults', function(){
-            var M = Model.extend({
+            var M = Base.Model.extend({
                 defaults: {
                     a: 10
                 },

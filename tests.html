@@ -2,17 +2,17 @@
 <head>
     <meta charset="utf-8"/>
     <title>Models Tests</title>
-    <link rel="stylesheet" href="test/mocha.css"/>
+    <link rel="stylesheet" href="lib/test/mocha.css"/>
 </head>
 <body>
 <div id="mocha"></div>
-<script src="js/lib/requirejs/require.js"></script>
+<script src="lib/requirejs/require.js"></script>
 <script type="text/javascript">
-    require.config({
-        paths: {
-            'underscore'    : 'lib/underscore',
-            'backbone'      : 'lib/backbone',
-            'jquery'        : 'lib/jquery-core',
+    require.config( {
+        paths : {
+            'underscore' : 'lib/underscore',
+            'backbone'   : 'lib/backbone',
+            'jquery'     : 'lib/jquery',
 
             'mocha'         : 'lib/test/mocha',
             'chai'          : 'lib/test/chai',
@@ -21,14 +21,14 @@
             'chai-backbone' : 'lib/test/chai-backbone'
         },
 
-        shim: {
-            'sinon': {
-                exports: 'sinon'
+        shim : {
+            'sinon' : {
+                exports : 'sinon'
             }
         }
-    });
+    } );
 
-    require([ 'require', 'sinon', 'chai', 'sinon-chai', 'chai-backbone', 'mocha' ],
+    require( [ 'require', 'sinon', 'chai', 'sinon-chai', 'chai-backbone', 'mocha' ],
             function( require, sinon, chai, sinonChai, chaiBackbone ){
                 // Chai
                 chai.should();
@@ -39,11 +39,9 @@
                 mocha.setup( 'bdd' );
 
                 var search = window.location.search;
-                require([
-                    'tests/' + (search ? search.substring( 1 ) : 'all' )
-                ], function( require ) {
+                require( ['./test.all' ], function(){
                     mocha.run();
-                });
+                } );
             }
     );
 </script>

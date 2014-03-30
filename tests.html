@@ -9,29 +9,18 @@
 <script src="js/lib/requirejs/require.js"></script>
 <script type="text/javascript">
     require.config({
-		
-		packages : [
-			{ name : "jquery", location : "lib/jquery"}
-		],
-
-			
-			
-		baseUrl: 'js/',
         paths: {
             'underscore'    : 'lib/underscore',
-            "backbone-pageable" : "lib/backbone-pageable",
-            "backbone.localStorage": "lib/backbone.localStorage",
             'backbone'      : 'lib/backbone',
-            'chaplin'       : 'lib/chaplin',
+            'jquery'        : 'lib/jquery',
 
             'mocha'         : '../test/mocha',
             'chai'          : '../test/chai',
             'sinon'         : '../test/sinon',
             'sinon-chai'    : '../test/sinon-chai',
-            'chai-backbone' : '../test/chai-backbone',
-            'chai-changes' : '../test/chai-changes',
-            'knockout' : 'lib/knockout'
+            'chai-backbone' : '../test/chai-backbone'
         },
+
         shim: {
             'sinon': {
                 exports: 'sinon'
@@ -48,13 +37,11 @@
         }
     });
 
-    require(['require', 'sinon', 'chai', 'sinon-chai', 'chai-changes', 'chai-backbone', 'mocha' ],
-            function(require, sinon, chai, sinonChai, chaiChanges, chaiBackbone ){
+    require(['require', 'sinon', 'chai', 'sinon-chai', 'chai-backbone', 'mocha' ],
+            function(require, sinon, chai, sinonChai, chaiBackbone ){
                 // Chai
                 chai.should();
-
                 chai.use( sinonChai );
-                chai.use( chaiChanges );
                 chai.use( chaiBackbone );
 
                 /*globals mocha */
@@ -62,7 +49,7 @@
 
                 var search = window.location.search;
                 require([
-                    'js/' + (search ? search.substring( 1 ) + '.js' : '_all.js')
+                    'tests/' + (search ? search.substring( 1 ) : 'all' )
                 ], function( require ) {
                     mocha.run();
                 });

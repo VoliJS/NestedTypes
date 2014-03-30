@@ -12,33 +12,24 @@
         paths: {
             'underscore'    : 'lib/underscore',
             'backbone'      : 'lib/backbone',
-            'jquery'        : 'lib/jquery',
+            'jquery'        : 'lib/jquery-core',
 
-            'mocha'         : '../test/mocha',
-            'chai'          : '../test/chai',
-            'sinon'         : '../test/sinon',
-            'sinon-chai'    : '../test/sinon-chai',
-            'chai-backbone' : '../test/chai-backbone'
+            'mocha'         : 'lib/test/mocha',
+            'chai'          : 'lib/test/chai',
+            'sinon'         : 'lib/test/sinon',
+            'sinon-chai'    : 'lib/test/sinon-chai',
+            'chai-backbone' : 'lib/test/chai-backbone'
         },
 
         shim: {
             'sinon': {
                 exports: 'sinon'
-            },
-
-            'underscore': {
-                exports: '_'
-            },
-
-            'backbone': {
-                deps: ['underscore', 'jquery'],
-                exports: 'Backbone'
             }
         }
     });
 
-    require(['require', 'sinon', 'chai', 'sinon-chai', 'chai-backbone', 'mocha' ],
-            function(require, sinon, chai, sinonChai, chaiBackbone ){
+    require([ 'require', 'sinon', 'chai', 'sinon-chai', 'chai-backbone', 'mocha' ],
+            function( require, sinon, chai, sinonChai, chaiBackbone ){
                 // Chai
                 chai.should();
                 chai.use( sinonChai );

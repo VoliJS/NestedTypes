@@ -311,7 +311,7 @@ define( function( require, exports, module ){
         });
     });
 
-    describe( 'custom event subscription', function(){
+    describe( 'automatic event subscription', function(){
         it( 'manage subscriptions automatically', function(){
             var M = Base.Model.extend({
                 defaults:{

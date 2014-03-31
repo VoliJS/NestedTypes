@@ -20,7 +20,7 @@ define( function( require, exports, module ){
             };
         }
 
-        return Backbone.Collection.extend({
+        return Backbone.Collection.extend( {
             triggerWhenChanged: 'change add remove reset sort',
 
             deepClone: function(){
@@ -28,7 +28,7 @@ define( function( require, exports, module ){
 
                 copy.reset( this.map( function( model ){
                     return model.deepClone();
-                }));
+                } ) );
 
                 return copy;
             },
@@ -39,7 +39,7 @@ define( function( require, exports, module ){
             add: wrapCall( CollectionProto.add ),
             reset: wrapCall( CollectionProto.reset ),
             sort: wrapCall( CollectionProto.sort )
-        });
+        } );
     }();
 
     exports.Model = function(){
@@ -47,12 +47,20 @@ define( function( require, exports, module ){
             ModelProto = Backbone.Model.prototype;
 
         function delegateEvents( name, oldValue, newValue ){
+            var replace = false;
+
+            if( _.isEqual( oldValue, newValue ) ){
+                return;
+            }
+
             if( oldValue && oldValue.triggerWhenChanged ){
+                replace = true;
                 this.stopListening( oldValue );
-                this.trigger( 'listening:off', name, oldValue );
             }
 
             if( newValue && newValue.triggerWhenChanged ){
+                replace = true;
+
                 this.listenTo( newValue, 'before:change', onEnter );
                 this.listenTo( newValue, 'after:change', onExit );
 
@@ -66,14 +74,16 @@ define( function( require, exports, module ){
                         this.attributes[ name ] = null;
                         ModelProto.set.call( this, name, value );
                     }
-                });
+                } );
 
                 _.each( this.listening[ name ], function( handler, events ){
                     var callback = typeof handler === 'string' ? this[ handler ] : handler;
                     this.listenTo( newValue, events, callback );
                 }, this );
+            }
 
-                this.trigger( 'listening:on', name, newValue );
+            if( replace ){
+                this.trigger( 'replace:' + name, this, newValue, oldValue );
             }
         }
 
@@ -99,8 +109,13 @@ define( function( require, exports, module ){
 
             if( !--this.__duringSet ){
                 _.each( this.__nestedChanges, function( value, name ){
-                    attrs[ name ] = value;
-                    this.attributes[ name ] = null;
+                    if( !( name in attrs ) ){
+                        attrs[ name ] = value;
+                    }
+
+                    if( attrs[ name ] === this.attributes[ name ] ){
+                        this.attributes[ name ] = null;
+                    }
                 }, this );
 
                 this.__nestedChanges = {};
@@ -115,7 +130,7 @@ define( function( require, exports, module ){
             }
         }
 
-        var Model = Backbone.Model.extend({
+        var Model = Backbone.Model.extend( {
             triggerWhenChanged: 'change',
             listening: {},
             __duringSet: 0,
@@ -160,7 +175,7 @@ define( function( require, exports, module ){
                     if( value && value.deepClone ){
                         copy.set( key, value.deepClone() );
                     }
-                });
+                } );
 
                 return copy;
             },
@@ -174,24 +189,24 @@ define( function( require, exports, module ){
                     if( value && value.toJSON ){
                         res[ key ] = value.toJSON();
                     }
-                });
+                } );
 
                 return res;
             },
 
             _: _ // add underscore to be accessible in templates
-        });
+        } );
 
         function parseDefaults( spec, Base ){
-            var defaults    = _.defaults( spec.defaults || {}, Base.prototype.__defaults ),
-                fnames      = _.functions( defaults ),
-                values      = _.omit( defaults, fnames ),
-                types       = _.pick( defaults, fnames );
+            var defaults = _.defaults( spec.defaults || {}, Base.prototype.__defaults ),
+                fnames = _.functions( defaults ),
+                values = _.omit( defaults, fnames ),
+                types = _.pick( defaults, fnames );
 
-            return _.defaults({
-                defaults    : createDefaults( values, types ),
-                __defaults  : defaults,
-                __types     : types
+            return _.defaults( {
+                defaults: createDefaults( values, types ),
+                __defaults: defaults,
+                __types: types
             }, spec );
         }
 
@@ -201,7 +216,7 @@ define( function( require, exports, module ){
 
                 _.each( ctors, function( Ctor, name ){
                     defaults[ name ] = new Ctor();
-                });
+                } );
 
                 return defaults;
             };
@@ -228,14 +243,14 @@ define( function( require, exports, module ){
             if( spec.properties !== false ){
                 _.each( spec.defaults, function( notUsed, name ){
                     properties[ name ] = createAttrPropDesc( name );
-                });
+                } );
 
                 _.each( spec.properties, function( propDesc, name ){
                     properties[ name ] = typeof propDesc === 'function' ? {
                         get: propDesc,
                         enumerable: false
                     } : propDesc;
-                });
+                } );
 
                 _.each( properties, function( prop, name ){
                     if( name in ModelProto ||
@@ -244,7 +259,7 @@ define( function( require, exports, module ){
                     }
 
                     Object.defineProperty( This.prototype, name, prop );
-                });
+                } );
             }
         }
 
@@ -259,4 +274,4 @@ define( function( require, exports, module ){
 
         return Model;
     }();
-});
+} );

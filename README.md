@@ -47,7 +47,7 @@ Also, you can define calculated native properties like this:
     // This could be done from some other place...
     MyModel.prototype.__otherModelsCollection = ...
 
-Great for implementing collection joins which looks like nested models.
+Great for implementing collection joins which looks like nested models. Also, since custom properties definition override default properties, it's well suitable for setting hooks on attribute's modification. In case you'll need such a weird stuff, of course.
 
 Type annotations for Model attributes
 -------------------------------------

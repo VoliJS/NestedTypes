@@ -15,7 +15,7 @@ instead of
     model.set( 'first', model.get( 'second' ) );
     model.deep.set( 'nesting', some.get( 'thing' ).get( 'from' ).get( 'another' ).get( 'model );
 
-Great for accessing models from templates.
+Great for accessing nested models from templates.
 
 Also, you can define calculated native properties like this:
 

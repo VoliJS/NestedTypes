@@ -7,11 +7,13 @@ Model's native properties
 -------------------------
 For any model attributes mentioned in 'defaults', use
 
-    model.first = model.second
+    model.first = model.second;
+    model.deep.nesting = some.thing.from.another.model;
 
 instead of
 
     model.set( 'first', model.get( 'second' ) );
+    model.deep.set( 'nesting', some.get( 'thing' ).get( 'from' ).get( 'another' ).get( 'model );
 
 Great for accessing models from templates.
 

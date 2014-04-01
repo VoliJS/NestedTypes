@@ -100,7 +100,6 @@ I.e. this code:
 
     var user = new User();
     user.group = {
-        id: 6,
         name: "Admin"
     };
 
@@ -109,15 +108,33 @@ I.e. this code:
 is equivalent of:
 
     user.group.set({
-       id: 6,
        name: "Admin"
     };
 
     user.permissions.set( [{ id: 5, type: 'full' }] );
 
+This mechanics of 'set' allows you to work with JSON from in case of deeply nested models and collections without the need to override 'parse'. This code (considering that nested attributes defined as models):
+
+    user.group = {
+        nestedModel : {
+            deeplyNestedModel : {
+                attr : 'value'
+            },
+            
+            attr : 5
+        }
+    };
+    
+is almost equivalent of:
+    
+    user.group.nestedModel.deeplyNestedModel.set( 'attr', 'value' );
+    user.group.nestedModel.set( 'attr', 'value' );
+    
+but it will fire just single 'change' event.
+
 Change events will be bubbled from nested models and collections.
-- 'change' and 'change:attribute' events for any changes in nested models and collections;
-- 'replace:attribute' event when model or collection is replaced with new object.
+- 'change' and 'change:attribute' events for any changes in nested models and collections. Multiple 'change' events from submodels during bulk updates are carefully joined together, which make it suitable to subscribe View.render to the top model's 'change'.
+- 'replace:attribute' event when model or collection is replaced with new object. You might need it to subscribe for events from submodels.
 
 Other enhancements
 ------------------

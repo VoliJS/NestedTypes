@@ -1,7 +1,24 @@
 backbone.nestedTypes
 ====================
 
-Backbone.js extension adding model's native properties, type annotations, nested models and collections.
+In case you're precisely know what you're looking for, it's backbone.js extension adding model's native properties, type annotations, nested models and collections.
+
+In case if you don't, here is a brief outline of problems we're solving with this little thing. There are two major goals behind:
+1) Simplify maping of complex server-side entities to client's models. It should:
+- free you from writing type convertion code inside of 'parse', 'toJSON', and  'initialize'. It's _not_ trivial thing to do it right.
+- automatically handle nested JSON objects.
+- automatically handle simple types, such as Date.
+- behave well for inherited models as well.
+- Provide really easy way to handle different type of model's relations. Should have zero learingn curve. As we think, the way how it's done in backbone.relational is too restrictive and is an overkill for most applications.
+
+2) Simplify usage of models as contexts for template rendering. What we've done for that:
+- support for nested models is mandatory, since view-models are usually hold the set of different models.
+- implement event bubbling from nested models and collections _right_. It means, for example, that in case of bulk collection change with collection.set upper level model should trigger 'change' event only once. Very helpful, if you like to render you view in case of model's change.
+- automatic generation of native JS properties, to make templates look good.
+
+These issues are addressed in many different backbone plugins, but this one is defferent.
+
+We solve these problems encouraging you to type less, than you used to. 'Type specs' in model's 'defaults' section do all the magic. So, if your attribute is a date, just write in defaults, that it's Date. That's it. No, you don't need a compiler, it's still old good vanilla JS you're get used to.
 
 Model's native properties
 -------------------------

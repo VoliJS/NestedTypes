@@ -1,7 +1,18 @@
-define( function( require, exports, module ){
-    'use strict';
+// Backbone.nestedTypes 0.2 (https://github.com/Volicon/backbone.nestedTypes)
+// (c) 2014 Vlad Balin, may be freely distributed under the MIT license
 
-    var Backbone = require( 'backbone' );
+( function( root, factory ){
+    if( typeof define === 'function' && define.amd ) {
+        define( [ 'exports', 'backbone', 'underscore' ], factory );
+    }
+    else if( typeof exports !== 'undefined' ){
+        factory( exports, require( 'backbone' ), require( 'underscore' ) );
+    }
+    else{
+        factory( root, root.Backbone, root._ );
+    }
+}( this, function( exports, Backbone, _ ){
+    'use strict';
 
     exports.Collection = function(){
         var Collection,
@@ -307,4 +318,4 @@ define( function( require, exports, module ){
 
         return Model;
     }();
-} );
+}));

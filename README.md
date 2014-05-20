@@ -178,3 +178,14 @@ Other enhancements
 ------------------
 - deepClone operation for deep copy of nested models, collections, and types.
 - Default attributes are being inherited from the base class.
+
+Installation and dependencies
+-----------------------------
+You need a single file (nestedtypes.js) and backbone.js itself. It should work in browser with plain script tag,
+require.js or other AMD loader. Also, it's available as npm package for node.js (https://www.npmjs.org/package/backbone.nested-types).
+
+Module exports two variables - Model and Collection. You need to use them instead of backbone's.
+
+
+
+

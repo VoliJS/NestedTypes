@@ -39,7 +39,7 @@ model.deep.set( 'nesting', some.get( 'thing' ).get( 'from' ).get( 'another' ).ge
 
 Great for accessing nested models from templates.
 
-Also, you can define calculated native properties like this:
+Also, you can define calculated native properties for models and collections like this:
 
 ```javascript
 var MyModel = Model.extend({

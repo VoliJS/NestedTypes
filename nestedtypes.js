@@ -4,7 +4,9 @@ define( function( require, exports, module ){
     var Backbone = require( 'backbone' );
 
     exports.Collection = function(){
-        var CollectionProto = Backbone.Collection.prototype;
+        var Collection,
+            CollectionProto = Backbone.Collection.prototype,
+            extend = Backbone.Collection.extend;
 
         function wrapCall( func ){
             return function(){
@@ -20,7 +22,7 @@ define( function( require, exports, module ){
             };
         }
 
-        return Backbone.Collection.extend( {
+        Collection = Backbone.Collection.extend({
             triggerWhenChanged: 'change add remove reset sort',
 
             deepClone: function(){
@@ -39,7 +41,38 @@ define( function( require, exports, module ){
             add: wrapCall( CollectionProto.add ),
             reset: wrapCall( CollectionProto.reset ),
             sort: wrapCall( CollectionProto.sort )
-        } );
+        });
+
+        function attachNativeProperties( This, spec ){
+            var properties = {};
+
+            if( spec.properties !== false ){
+                _.each( spec.properties, function( propDesc, name ){
+                    properties[ name ] = typeof propDesc === 'function' ? {
+                        get: propDesc,
+                        enumerable: false
+                    } : propDesc;
+                });
+
+                _.each( properties, function( prop, name ){
+                    if( name in Base ){
+                        throw new TypeError( 'extend: property ' + name + ' conflicts with Backbone.Collection base class members!' );
+                    }
+
+                    Object.defineProperty( This.prototype, name, prop );
+                });
+            }
+        }
+
+        Collection.extend = function( protoProps, staticProps ){
+            var This = extend.call( this, protoProps, staticProps );
+
+            attachNativeProperties( This, protoProps );
+
+            return This;
+        };
+
+        return Collection;
     }();
 
     exports.Model = function(){
@@ -89,7 +122,7 @@ define( function( require, exports, module ){
 
         function typeCast( Ctor, name, value ){
             var oldValue = this.attributes[ name ],
-            valueHasOtherType = ( value != null ) && !( value instanceof Ctor ),
+                valueHasOtherType = ( value != null ) && !( value instanceof Ctor ),
                 newValue;
 
             if( oldValue && oldValue.set && valueHasOtherType ){
@@ -198,16 +231,16 @@ define( function( require, exports, module ){
         } );
 
         function parseDefaults( spec, Base ){
-            var defaults = _.defaults( spec.defaults || {}, Base.prototype.__defaults ),
-                fnames = _.functions( defaults ),
-                values = _.omit( defaults, fnames ),
-                types = _.pick( defaults, fnames );
+            var defaults    = _.defaults( spec.defaults || {}, Base.prototype.__defaults ),
+                fnames      = _.functions( defaults ),
+                values      = _.omit( defaults, fnames ),
+                types       = _.pick( defaults, fnames );
 
-            return _.defaults( {
-                defaults: createDefaults( values, types ),
-                __defaults: defaults,
-                __types: types
-            }, spec );
+            return _.extend( {}, spec, {
+                defaults    : createDefaults( values, types ),
+                __defaults  : defaults,
+                __types     : types
+            });
         }
 
         function createDefaults( values, ctors ){

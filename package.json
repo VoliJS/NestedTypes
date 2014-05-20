@@ -1,0 +1,19 @@
+{
+    "name": "backbone.nestedTypes",
+    "main": "nestedtypes.js",
+    "description": "Native properties, defaults' type annotations, nested models and collections",
+    "homepage": "https://github.com/Volicon/backbone.nestedTypes",
+    "keywords": [ "backbone", "relation", "nested", "model", "types", "properties" ],
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/Volicon/backbone.nestedTypes.git"
+    },
+    "author": "Vlad Balin <https://github.com/gaperton>",
+    "contributors": "",
+    "dependencies": {
+        "underscore": ">=1.5.0",
+        "backbone": ">=1.1.2"
+    },
+    "license": "MIT",
+    "version": "0.2"
+}

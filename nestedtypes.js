@@ -89,7 +89,7 @@ define( function( require, exports, module ){
 
         function typeCast( Ctor, name, value ){
             var oldValue = this.attributes[ name ],
-                valueHasOtherType = value && !( value instanceof Ctor ),
+            valueHasOtherType = ( value != null ) && !( value instanceof Ctor ),
                 newValue;
 
             if( oldValue && oldValue.set && valueHasOtherType ){

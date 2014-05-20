@@ -336,7 +336,7 @@ define( function( require, exports, module ){
                 }
             });
         });
-    }),
+    });
 
     describe( 'custom properties', function(){
         it( 'generate read-only properties if function specified', function(){

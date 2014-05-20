@@ -55,7 +55,7 @@ define( function( require, exports, module ){
                 });
 
                 _.each( properties, function( prop, name ){
-                    if( name in Base ){
+                    if( name in CollectionProto ){
                         throw new TypeError( 'extend: property ' + name + ' conflicts with Backbone.Collection base class members!' );
                     }
 

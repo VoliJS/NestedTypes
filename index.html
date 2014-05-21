@@ -31,37 +31,194 @@
           <h1>
 <a name="backbonenestedtypes" class="anchor" href="#backbonenestedtypes"><span class="octicon octicon-link"></span></a>backbone.nestedTypes</h1>
 
-<p>Backbone.js extension adding model's native properties, type annotations, nested models and collections.
-Complete feature list:</p>
+<p>In case you're precisely know what you're looking for, it's backbone.js extension for modern browsers adding model's native properties, type annotations, nested models and collections.</p>
+
+<p>In case if you don't, here is a brief outline of problems we're solving with this little thing. There are two major goals behind:</p>
+
+<ol>
+<li>
+<p>Simplify maping of complex server-side entities to client's models. It should:</p>
 
 <ul>
-<li>Inherits default attributes form the base model.</li>
-<li>Generate native ECMAScript properties:
-
-<ul>
-<li>automatically for all default model attributes;</li>
-<li>manually with 'properties' specification.</li>
+<li>free you from writing type convertion code inside of <code>parse</code>, <code>toJSON</code>, and <code>initialize</code>. It's <em>not</em> trivial thing to do it right.</li>
+<li>automatically handle nested JSON objects.</li>
+<li>automatically handle simple types, such as Date.</li>
+<li>behave well for inherited models as well.</li>
+<li>Provide really easy way to handle different type of model's relations. Should have zero learingn curve. As we think, the way how it's done in backbone.relational is too restrictive and is an overkill for most applications.</li>
 </ul>
 </li>
-<li>Specify types for default attributes:
+<li>
+<p>Simplify usage of models as contexts for template rendering. What we've done for that:</p>
 
 <ul>
-<li>values converted to specified type when attribute value is being set;</li>
-<li>automatic JSON serialization and deserialization;</li>
+<li>support for nested models is mandatory, since view-models are usually hold the set of different models.</li>
+<li>implement event bubbling from nested models and collections <em>right</em>. It means, for example, that in case of bulk collection change with collection.set upper level model should trigger 'change' event only once. Very helpful, if you like to render you view in case of model's change.</li>
+<li>automatic generation of native JS properties, to make templates look good.</li>
 </ul>
 </li>
-<li>Model attributes of Model or Collection type:
+</ol><p>These issues are addressed in many different backbone plugins, but this one is defferent.</p>
+
+<p>We solve these problems encouraging you to type less, than you used to. 'Type specs' in model's 'defaults' section do all the magic. So, if your attribute is a date, just write in defaults, that it's Date. That's it. No, you don't need a compiler, it's still old good vanilla JS you're get used to.</p>
+
+<h2>
+<a name="models-native-properties" class="anchor" href="#models-native-properties"><span class="octicon octicon-link"></span></a>Model's native properties</h2>
+
+<p>For any model attributes mentioned in 'defaults', use</p>
+
+<div class="highlight highlight-javascript"><pre><span class="nx">model</span><span class="p">.</span><span class="nx">first</span> <span class="o">=</span> <span class="nx">model</span><span class="p">.</span><span class="nx">second</span><span class="p">;</span>
+<span class="nx">model</span><span class="p">.</span><span class="nx">deep</span><span class="p">.</span><span class="nx">nesting</span> <span class="o">=</span> <span class="nx">some</span><span class="p">.</span><span class="nx">thing</span><span class="p">.</span><span class="nx">from</span><span class="p">.</span><span class="nx">another</span><span class="p">.</span><span class="nx">model</span><span class="p">;</span>
+</pre></div>
+
+<p>instead of</p>
+
+<div class="highlight highlight-javascript"><pre><span class="nx">model</span><span class="p">.</span><span class="nx">set</span><span class="p">(</span> <span class="s1">'first'</span><span class="p">,</span> <span class="nx">model</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span> <span class="s1">'second'</span> <span class="p">)</span> <span class="p">);</span>
+<span class="nx">model</span><span class="p">.</span><span class="nx">deep</span><span class="p">.</span><span class="nx">set</span><span class="p">(</span> <span class="s1">'nesting'</span><span class="p">,</span> <span class="nx">some</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span> <span class="s1">'thing'</span> <span class="p">).</span><span class="nx">get</span><span class="p">(</span> <span class="s1">'from'</span> <span class="p">).</span><span class="nx">get</span><span class="p">(</span> <span class="s1">'another'</span> <span class="p">).</span><span class="nx">get</span><span class="p">(</span> <span class="err">'</span><span class="nx">model</span> <span class="p">);</span>
+</pre></div>
+
+<p>Great for accessing nested models from templates.</p>
+
+<p>Also, you can define calculated native properties for models and collections like this:</p>
+
+<div class="highlight highlight-javascript"><pre><span class="kd">var</span> <span class="nx">MyModel</span> <span class="o">=</span> <span class="nx">Model</span><span class="p">.</span><span class="nx">extend</span><span class="p">({</span>
+    <span class="nx">defaults</span> <span class="o">:</span> <span class="p">{</span>
+        <span class="nx">otherModel_id</span> <span class="o">:</span> <span class="mi">0</span><span class="p">,</span>
+        <span class="nx">yetAnotherModel_id</span> <span class="o">:</span> <span class="mi">2</span>
+    <span class="p">},</span>
+
+    <span class="nx">__otherModelsCollection</span> <span class="o">:</span> <span class="kc">null</span><span class="p">,</span>
+
+    <span class="nx">properties</span> <span class="o">:</span> <span class="p">{</span>
+        <span class="nx">otherModel</span> <span class="o">:</span> <span class="kd">function</span><span class="p">(){</span>
+            <span class="k">return</span> <span class="k">this</span><span class="p">.</span><span class="nx">__otherModelsCollection</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span> <span class="k">this</span><span class="p">.</span><span class="nx">otherModel_id</span> <span class="p">);</span>
+        <span class="p">},</span>
+
+        <span class="nx">yetAnotherModel</span> <span class="o">:</span> <span class="p">{</span>
+            <span class="nx">get</span> <span class="o">:</span> <span class="kd">function</span><span class="p">(){</span>
+                <span class="k">return</span> <span class="k">this</span><span class="p">.</span><span class="nx">__otherModelsCollection</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span> <span class="k">this</span><span class="p">.</span><span class="nx">yetAnotherModel_id</span> <span class="p">);</span>
+            <span class="p">},</span>
+
+            <span class="nx">set</span> <span class="o">:</span> <span class="kd">function</span><span class="p">(</span> <span class="nx">model</span> <span class="p">){</span>
+                <span class="k">this</span><span class="p">.</span><span class="nx">yetAnotherModel_id</span> <span class="o">=</span> <span class="nx">model</span><span class="p">.</span><span class="nx">id</span><span class="p">;</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+<span class="p">});</span>
+
+<span class="c1">// This could be done from some other place...</span>
+<span class="nx">MyModel</span><span class="p">.</span><span class="nx">prototype</span><span class="p">.</span><span class="nx">__otherModelsCollection</span> <span class="o">=</span> <span class="p">...</span>
+</pre></div>
+
+<p>Great for implementing collection joins which looks like nested models. Also, since custom properties definition override default properties, it's well suitable for setting hooks on attribute's modification. In case you'll need such a weird stuff, of course.</p>
+
+<h2>
+<a name="type-annotations-for-model-attributes" class="anchor" href="#type-annotations-for-model-attributes"><span class="octicon octicon-link"></span></a>Type annotations for Model attributes</h2>
+
+<p>You could use constructor functions as default value.</p>
+
+<div class="highlight highlight-javascript"><pre><span class="kd">var</span> <span class="nx">User</span> <span class="o">=</span> <span class="nx">Model</span><span class="p">.</span><span class="nx">extend</span><span class="p">({</span>
+    <span class="nx">defaults</span> <span class="o">:</span> <span class="p">{</span>
+        <span class="nx">name</span> <span class="o">:</span> <span class="nb">String</span><span class="p">,</span>
+        <span class="nx">created</span> <span class="o">:</span> <span class="nb">Date</span><span class="p">,</span>
+        <span class="nx">loginCount</span><span class="o">:</span> <span class="nb">Number</span>
+    <span class="p">}</span>
+<span class="p">});</span>
+</pre></div>
+
+<p>New object will be created automatically for any typed attribute, no need to override <code>initialize</code>.
+ When typed attribute assigned with value of different type, constructor will be invoked to
+convert it to defined type.</p>
+
+<div class="highlight highlight-javascript"><pre><span class="kd">var</span> <span class="nx">user</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">User</span><span class="p">();</span>
+<span class="nx">assert</span><span class="p">(</span> <span class="nx">user</span><span class="p">.</span><span class="nx">created</span> <span class="k">instanceof</span> <span class="nb">Date</span> <span class="p">);</span>
+
+<span class="nx">user</span><span class="p">.</span><span class="nx">created</span> <span class="o">=</span> <span class="s2">"2012-12-12 12:12"</span><span class="p">;</span> <span class="c1">// string will be converted to Date</span>
+<span class="nx">assert</span><span class="p">(</span> <span class="nx">user</span><span class="p">.</span><span class="nx">created</span> <span class="k">instanceof</span> <span class="nb">Date</span> <span class="p">);</span>
+
+<span class="nx">user</span><span class="p">.</span><span class="nx">loginCount</span> <span class="o">=</span> <span class="s2">"jhkhjhjhj"</span><span class="p">;</span>
+<span class="nx">assert</span><span class="p">(</span> <span class="nx">user</span><span class="p">.</span><span class="nx">loginCount</span> <span class="o">===</span> <span class="kc">NaN</span> <span class="p">);</span>
+</pre></div>
+
+<p>It means, that you don't need to override Model.parse and Model.initialize when you receive time and
+ date from the server. It will be parsed and serialized to JSON as ISO date automatically.</p>
+
+<h2>
+<a name="nested-models-and-collections" class="anchor" href="#nested-models-and-collections"><span class="octicon octicon-link"></span></a>Nested Models and Collections</h2>
+
+<p>To have nested models and collections, annotate attribute with Model or Collection type.</p>
+
+<div class="highlight highlight-javascript"><pre><span class="kd">var</span> <span class="nx">User</span> <span class="o">=</span> <span class="nx">Model</span><span class="p">.</span><span class="nx">extend</span><span class="p">({</span>
+    <span class="nx">defaults</span> <span class="o">:</span> <span class="p">{</span>
+        <span class="nx">name</span> <span class="o">:</span> <span class="nb">String</span><span class="p">,</span>
+        <span class="nx">created</span> <span class="o">:</span> <span class="nb">Date</span><span class="p">,</span>
+        <span class="nx">group</span> <span class="o">:</span> <span class="nx">GroupModel</span><span class="p">,</span>
+        <span class="nx">permissions</span> <span class="o">:</span> <span class="nx">PermissionCollection</span>
+    <span class="p">}</span>
+<span class="p">});</span>
+</pre></div>
+
+<p>No need to override <code>initialize</code>, <code>parse</code>, and <code>toJSON</code>, everything will be done automatically.</p>
+
+<p>There is a difference from regular types in 'set' behaviour. If attribute's current value is not null,
+and new value has different type, it will be delegated to 'set' method of nested model or collection.
+I.e. this code:</p>
+
+<div class="highlight highlight-javascript"><pre><span class="kd">var</span> <span class="nx">user</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">User</span><span class="p">();</span>
+<span class="nx">user</span><span class="p">.</span><span class="nx">group</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="nx">name</span><span class="o">:</span> <span class="s2">"Admin"</span>
+<span class="p">};</span>
+
+<span class="nx">user</span><span class="p">.</span><span class="nx">permissions</span> <span class="o">=</span> <span class="p">[{</span> <span class="nx">id</span><span class="o">:</span> <span class="mi">5</span><span class="p">,</span> <span class="nx">type</span><span class="o">:</span> <span class="s1">'full'</span> <span class="p">}];</span>
+</pre></div>
+
+<p>is equivalent of:</p>
+
+<div class="highlight highlight-javascript"><pre><span class="nx">user</span><span class="p">.</span><span class="nx">group</span><span class="p">.</span><span class="nx">set</span><span class="p">({</span>
+   <span class="nx">name</span><span class="o">:</span> <span class="s2">"Admin"</span>
+<span class="p">};</span>
+
+<span class="nx">user</span><span class="p">.</span><span class="nx">permissions</span><span class="p">.</span><span class="nx">set</span><span class="p">(</span> <span class="p">[{</span> <span class="nx">id</span><span class="o">:</span> <span class="mi">5</span><span class="p">,</span> <span class="nx">type</span><span class="o">:</span> <span class="s1">'full'</span> <span class="p">}]</span> <span class="p">);</span>
+</pre></div>
+
+<p>This mechanics of 'set' allows you to work with JSON from in case of deeply nested models and collections without the need to override 'parse'. This code (considering that nested attributes defined as models):</p>
+
+<div class="highlight highlight-javascript"><pre><span class="nx">user</span><span class="p">.</span><span class="nx">group</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="nx">nestedModel</span> <span class="o">:</span> <span class="p">{</span>
+        <span class="nx">deeplyNestedModel</span> <span class="o">:</span> <span class="p">{</span>
+            <span class="nx">attr</span> <span class="o">:</span> <span class="s1">'value'</span>
+        <span class="p">},</span>
+
+        <span class="nx">attr</span> <span class="o">:</span> <span class="mi">5</span>
+    <span class="p">}</span>
+<span class="p">};</span>
+</pre></div>
+
+<p>is almost equivalent of:</p>
+
+<div class="highlight highlight-javascript"><pre><span class="nx">user</span><span class="p">.</span><span class="nx">group</span><span class="p">.</span><span class="nx">nestedModel</span><span class="p">.</span><span class="nx">deeplyNestedModel</span><span class="p">.</span><span class="nx">set</span><span class="p">(</span> <span class="s1">'attr'</span><span class="p">,</span> <span class="s1">'value'</span> <span class="p">);</span>
+<span class="nx">user</span><span class="p">.</span><span class="nx">group</span><span class="p">.</span><span class="nx">nestedModel</span><span class="p">.</span><span class="nx">set</span><span class="p">(</span> <span class="s1">'attr'</span><span class="p">,</span> <span class="s1">'value'</span> <span class="p">);</span>
+</pre></div>
+
+<p>but it will fire just single <code>change</code> event.</p>
+
+<p>Change events will be bubbled from nested models and collections.</p>
 
 <ul>
-<li>fire 'change:attribute' events for any changes of nested models and collections;</li>
-<li>'replace:attribute' event is fired when model or collection is replaced;</li>
-<li>carefully bubble 'change' events to parent models and collections;</li>
-<li>Support for in-place models and collections updates;</li>
-<li>automatic JSON serialization and deserialization;</li>
-<li>deepClone operation for deep copy of nested models and collections.</li>
-</ul>
-</li>
-</ul>
+<li>
+<code>change</code> and <code>change:attribute</code> events for any changes in nested models and collections. Multiple <code>change</code> events from submodels during bulk updates are carefully joined together, which make it suitable to subscribe View.render to the top model's <code>change</code>.</li>
+<li>
+<code>replace:attribute</code> event when model or collection is replaced with new object. You might need it to subscribe for events from submodels.</li>
+</ul><h2>
+<a name="other-enhancements" class="anchor" href="#other-enhancements"><span class="octicon octicon-link"></span></a>Other enhancements</h2>
+
+<ul>
+<li>deepClone operation for deep copy of nested models, collections, and types.</li>
+<li>Default attributes are being inherited from the base class.</li>
+</ul><h2>
+<a name="installation-and-dependencies" class="anchor" href="#installation-and-dependencies"><span class="octicon octicon-link"></span></a>Installation and dependencies</h2>
+
+<p>You need a single file (nestedtypes.js) and backbone.js itself. It should work in browser with plain script tag, require.js or other AMD loader. Also, it's available as npm package for node.js (<a href="https://www.npmjs.org/package/backbone.nested-types">https://www.npmjs.org/package/backbone.nested-types</a>).</p>
+
+<p>Module exports two variables - Model and Collection. You need to use them instead of backbone's.</p>
         </section>
 
         <aside id="sidebar">

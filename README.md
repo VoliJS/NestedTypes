@@ -222,7 +222,7 @@ require.js or other AMD loader. Also, it's available as npm package for node.js 
 
 Module exports three variables - Class, Model, Collection. You need to use them instead of backbone's.
 
-And yes, you could expect this extension to be bug free enough to use. It is being developed as a part of commercial product. Volicon rely on this extension as a core part of architecture of next gen products.
+And yes, you could expect this extension to be bug free enough to use. It is being developed as a part of commercial product. Volicon rely on this extension as a core part of architecture for next gen products.
 
 
 

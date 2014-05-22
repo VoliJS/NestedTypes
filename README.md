@@ -23,7 +23,7 @@ We solve these problems encouraging you to type less, than you used to. 'Type sp
 
 Model's native properties
 -------------------------
-For any model attributes mentioned in 'defaults', use
+Fotget 'get'. For any model attributes mentioned in 'defaults', use
 
 ```javascript
 model.first = model.second;

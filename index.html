@@ -31,7 +31,7 @@
           <h1>
 <a name="backbonenestedtypes" class="anchor" href="#backbonenestedtypes"><span class="octicon octicon-link"></span></a>backbone.nestedTypes</h1>
 
-<p>In case you're precisely know what you're looking for, it's backbone.js extension for modern browsers adding model's native properties, type annotations, nested models and collections.</p>
+<p>In case you're precisely know what you're looking for, it's backbone.js extension adding type annotations to model attributes, easiest possible way of dealing with nested models and collections, and native properties for attributes. Providing you with a more or less complete, simple, and powerful object system for JavaScript.</p>
 
 <p>In case if you don't, here is a brief outline of problems we're solving with this little thing. There are two major goals behind:</p>
 
@@ -63,7 +63,7 @@
 <h2>
 <a name="models-native-properties" class="anchor" href="#models-native-properties"><span class="octicon octicon-link"></span></a>Model's native properties</h2>
 
-<p>For any model attributes mentioned in 'defaults', use</p>
+<p>Forget the 'get'. For any model attributes mentioned in 'defaults', use</p>
 
 <div class="highlight highlight-javascript"><pre><span class="nx">model</span><span class="p">.</span><span class="nx">first</span> <span class="o">=</span> <span class="nx">model</span><span class="p">.</span><span class="nx">second</span><span class="p">;</span>
 <span class="nx">model</span><span class="p">.</span><span class="nx">deep</span><span class="p">.</span><span class="nx">nesting</span> <span class="o">=</span> <span class="nx">some</span><span class="p">.</span><span class="nx">thing</span><span class="p">.</span><span class="nx">from</span><span class="p">.</span><span class="nx">another</span><span class="p">.</span><span class="nx">model</span><span class="p">;</span>
@@ -211,14 +211,53 @@ I.e. this code:</p>
 <a name="other-enhancements" class="anchor" href="#other-enhancements"><span class="octicon octicon-link"></span></a>Other enhancements</h2>
 
 <ul>
-<li>deepClone operation for deep copy of nested models, collections, and types.</li>
-<li>Default attributes are being inherited from the base class.</li>
-</ul><h2>
+<li>deepClone operation for deep copy of nested models, collections, and types. When you start working with nested stuff seriously, you'll need it soon.</li>
+</ul><div class="highlight highlight-javascript"><pre><span class="nx">model</span><span class="p">.</span><span class="nx">nestedModel</span> <span class="o">=</span> <span class="nx">other</span><span class="p">.</span><span class="nx">nestedModel</span><span class="p">.</span><span class="nx">deepClone</span><span class="p">();</span> <span class="c1">// will create a copy of nested objects tree</span>
+</pre></div>
+
+<ul>
+<li>Default attributes are being inherited from the base model. In vanilla backbone, base model defaults will be completely overriden by subclass, which is annoying.</li>
+</ul><div class="highlight highlight-javascript"><pre><span class="kd">var</span> <span class="nx">Base</span> <span class="o">=</span> <span class="nx">Model</span><span class="p">.</span><span class="nx">extend</span><span class="p">({</span>
+    <span class="nx">defaults</span><span class="o">:</span> <span class="p">{</span>
+        <span class="nx">a</span> <span class="o">:</span> <span class="mi">1</span>
+    <span class="p">}</span>
+<span class="p">});</span>
+
+<span class="kd">var</span> <span class="nx">Derived</span> <span class="o">=</span> <span class="nx">Base</span><span class="p">.</span><span class="nx">extend</span><span class="p">({</span>
+    <span class="nx">defaults</span><span class="o">:</span> <span class="p">{</span>
+        <span class="nx">b</span> <span class="o">:</span> <span class="mi">1</span>
+    <span class="p">}</span>
+<span class="p">});</span>
+
+<span class="kd">var</span> <span class="nx">instance</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">Derived</span><span class="p">();</span>
+<span class="nx">assert</span><span class="p">(</span> <span class="nx">instance</span><span class="p">.</span><span class="nx">b</span> <span class="o">===</span> <span class="mi">1</span> <span class="p">);</span>
+<span class="nx">assert</span><span class="p">(</span> <span class="nx">instance</span><span class="p">.</span><span class="nx">a</span> <span class="o">===</span> <span class="mi">1</span> <span class="p">);</span>
+</pre></div>
+
+<ul>
+<li>Class type, which can send and receive Backbone events and can be extended. Also, it can have native properties, as Model and Collection. The basic building block of Backbone, which was not exported from the library directly for some reason.</li>
+</ul><div class="highlight highlight-javascript"><pre><span class="kd">var</span> <span class="nx">myClass</span> <span class="o">=</span> <span class="nx">Class</span><span class="p">.</span><span class="nx">extend</span><span class="p">({</span>
+    <span class="nx">a</span> <span class="o">:</span> <span class="mi">1</span><span class="p">,</span>
+
+    <span class="nx">initialize</span> <span class="o">:</span> <span class="kd">function</span><span class="p">(</span> <span class="nx">options</span> <span class="p">){</span>
+        <span class="k">this</span><span class="p">.</span><span class="nx">a</span> <span class="o">=</span> <span class="nx">options</span><span class="p">.</span><span class="nx">a</span>
+    <span class="p">},</span>
+
+    <span class="nx">properties</span> <span class="o">:</span> <span class="p">{</span>
+        <span class="nx">b</span> <span class="o">:</span> <span class="kd">function</span><span class="p">(){</span> <span class="k">return</span> <span class="k">this</span><span class="p">.</span><span class="nx">a</span> <span class="o">+</span> <span class="mi">1</span><span class="p">;</span> <span class="p">}</span>
+    <span class="p">}</span>
+<span class="p">});</span>
+</pre></div>
+
+<h2>
 <a name="installation-and-dependencies" class="anchor" href="#installation-and-dependencies"><span class="octicon octicon-link"></span></a>Installation and dependencies</h2>
 
-<p>You need a single file (nestedtypes.js) and backbone.js itself. It should work in browser with plain script tag, require.js or other AMD loader. Also, it's available as npm package for node.js (<a href="https://www.npmjs.org/package/backbone.nested-types">https://www.npmjs.org/package/backbone.nested-types</a>).</p>
+<p>You need a single file (nestedtypes.js) and backbone.js itself. It should work in browser with plain script tag,
+require.js or other AMD loader. Also, it's available as npm package for node.js (<a href="https://www.npmjs.org/package/backbone.nested-types">https://www.npmjs.org/package/backbone.nested-types</a>).</p>
 
-<p>Module exports two variables - Model and Collection. You need to use them instead of backbone's.</p>
+<p>Module exports three variables - Class, Model, Collection. You need to use them instead of backbone's.</p>
+
+<p>And yes, you could expect this extension to be bug free enough to use. It is being developed as a part of commercial product. Volicon rely on this extension as a core part of architecture for next gen products. And we're actually interested in your bug reports. :)</p>
         </section>
 
         <aside id="sidebar">

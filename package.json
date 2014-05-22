@@ -1,7 +1,7 @@
 {
     "name": "backbone.nested-types",
     "main": "nestedtypes.js",
-    "description": "Native properties, defaults' type annotations, nested models and collections",
+    "description": "backbone.js extension adding type annotations to model attributes, easiest possible way of dealing with nested models and collections, and native properties for attributes. Providing you with a more or less complete, simple, and powerful object system for JavaScript.",
     "homepage": "https://github.com/Volicon/backbone.nestedTypes",
     "keywords": [ "backbone", "relation", "nested", "model", "types", "properties" ],
     "repository": {
@@ -15,5 +15,5 @@
         "backbone": ">=1.1.2"
     },
     "license": "MIT",
-    "version": "0.2.0"
+    "version": "0.5.0"
 }

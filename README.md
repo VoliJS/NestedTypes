@@ -199,7 +199,7 @@ var instance = new Derived();
 assert( instance.b === 1 );
 assert( instance.a === 1 );
 ```
-- Class type, which can send and receive Backbone events, can be extended, and can have native properties
+- Class type, which can send and receive Backbone events and can be extended. Also, it can have native properties, as Model and Collection. The basic building block of Backbone, which was not exported from the library directly for some reason.
 
 ```javascript
 var myClass = Class.extend({

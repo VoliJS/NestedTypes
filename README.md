@@ -176,7 +176,8 @@ Change events will be bubbled from nested models and collections.
 
 Other enhancements
 ------------------
-- deepClone operation for deep copy of nested models, collections, and types.
+- deepClone operation for deep copy of nested models, collections, and types. When you start working with nested stuff seriously, you'll need it soon.
+ 
 ```javascript
 model.nestedModel = other.nestedModel.deepClone(); // will create a copy of nested objects tree
 ```

@@ -1,7 +1,7 @@
 backbone.nestedTypes
 ====================
 
-In case you're precisely know what you're looking for, it's backbone.js extension adding model's native properties, type annotations, nested models and collections.
+In case you're precisely know what you're looking for, it's backbone.js extension adding type annotations to model attributes, easiest possible way of dealing with nested models and collections, and native properties for attributes. Providing you with a more or less complete, simple, and powerful object system for JavaScript.
 
 In case if you don't, here is a brief outline of problems we're solving with this little thing. There are two major goals behind:
 

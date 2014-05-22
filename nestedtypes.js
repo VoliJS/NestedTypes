@@ -13,11 +13,45 @@
     }
 }( this, function( exports, Backbone, _ ){
     'use strict';
+    var extend = Backbone.Model.extend;
+
+    function attachNativeProperties( This, properties, Base ){
+        _.each( properties, function( propDesc, name ){
+            var prop = typeof propDesc === 'function' ? {
+                get: propDesc,
+                enumerable: false
+            } : propDesc;
+
+            if( name in Base.prototype ){
+                throw new TypeError( 'extend: property ' + name + ' conflicts with base class members!' );
+            }
+
+            Object.defineProperty( This.prototype, name, prop );
+        });
+    }
+
+    function extendWithProperties( Base ){
+        return function( protoProps, staticProps ){
+            var This = extend.call( this, protoProps, staticProps );
+            attachNativeProperties( This, protoProps.properties, Base );
+            return This;
+        };
+    }
+
+    exports.Class = function(){
+        function Class(){
+            this.initialize.apply( this, arguments );
+        };
+
+        _.extend( Class.prototype, Backbone.Events, { initialize: function (){} } );
+        Class.extend = extendWithProperties( Class );
+
+        return Class;
+    }();
 
     exports.Collection = function(){
         var Collection,
-            CollectionProto = Backbone.Collection.prototype,
-            extend = Backbone.Collection.extend;
+            CollectionProto = Backbone.Collection.prototype;
 
         function wrapCall( func ){
             return function(){
@@ -54,34 +88,7 @@
             sort: wrapCall( CollectionProto.sort )
         });
 
-        function attachNativeProperties( This, spec ){
-            var properties = {};
-
-            if( spec.properties !== false ){
-                _.each( spec.properties, function( propDesc, name ){
-                    properties[ name ] = typeof propDesc === 'function' ? {
-                        get: propDesc,
-                        enumerable: false
-                    } : propDesc;
-                });
-
-                _.each( properties, function( prop, name ){
-                    if( name in CollectionProto ){
-                        throw new TypeError( 'extend: property ' + name + ' conflicts with Backbone.Collection base class members!' );
-                    }
-
-                    Object.defineProperty( This.prototype, name, prop );
-                });
-            }
-        }
-
-        Collection.extend = function( protoProps, staticProps ){
-            var This = extend.call( this, protoProps, staticProps );
-
-            attachNativeProperties( This, protoProps );
-
-            return This;
-        };
+        Collection.extend = extendWithProperties( Collection );
 
         return Collection;
     }();

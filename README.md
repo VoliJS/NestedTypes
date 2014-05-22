@@ -177,14 +177,49 @@ Change events will be bubbled from nested models and collections.
 Other enhancements
 ------------------
 - deepClone operation for deep copy of nested models, collections, and types.
-- Default attributes are being inherited from the base class.
+```javascript
+model.nestedModel = other.nestedModel.deepClone(); // will create a copy of nested objects tree
+```
 
+- Default attributes are being inherited from the base model. In vanilla backbone, base model defaults will be completely overriden by subclass, which is annoying.
+```javascript
+var Base = Model.extend({
+	defaults: {
+		a : 1
+	}
+});
+
+var Derived = Base.extend({
+	defaults: {
+		b : 1
+	}
+});
+
+var instance = new Derived();
+assert( instance.b === 1 );
+assert( instance.a === 1 );
+```
+- Class type, which can send and receive Backbone events, can be extended, and can have native properties
+
+```javascript
+var myClass = Class.extend({
+	a : 1,
+
+	initialize : function( options ){
+		this.a = options.a
+	},
+
+	properties : {
+		b : function(){ return this.a + 1; }
+	}
+});
+```
 Installation and dependencies
 -----------------------------
 You need a single file (nestedtypes.js) and backbone.js itself. It should work in browser with plain script tag,
 require.js or other AMD loader. Also, it's available as npm package for node.js (https://www.npmjs.org/package/backbone.nested-types).
 
-Module exports two variables - Model and Collection. You need to use them instead of backbone's.
+Module exports three variables - Class, Model, Collection. You need to use them instead of backbone's.
 
 
 

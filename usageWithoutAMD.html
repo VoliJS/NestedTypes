@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title></title>
+    <script type="application/javascript" src="lib/jquery.js"></script>
+    <script type="application/javascript" src="lib/underscore.js"></script>
+    <script type="application/javascript" src="lib/backbone.js"></script>
+
+    <script type="application/javascript" src="nestedtypes.js"></script>
+
+    <script type="application/javascript">
+        $( function(){
+            var MyModel = Model.extend({
+                defaults : {
+                    time : Date,
+                    text : 'Hello from Volicon!'
+                }
+            });
+
+            var data = new MyModel();
+
+            $( 'body' ).html( data.time + '<br/>' + data.text );
+        });
+    </script>
+</head>
+<body>
+
+</body>
+</html>

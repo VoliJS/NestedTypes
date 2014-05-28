@@ -208,6 +208,10 @@ var myClass = Class.extend({
 
 	initialize : function( options ){
 		this.a = options.a
+		
+		this.listenTo( options.nowhere, 'something', function(){
+			this.trigger( 'heardsomething', this );
+		});
 	},
 
 	properties : {

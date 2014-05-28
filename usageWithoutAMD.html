@@ -10,16 +10,22 @@
 
     <script type="application/javascript">
         $( function(){
+            var MyClass = Class.extend({
+                a: 1,
+                b: 'Just for example...'
+            });
+
             var MyModel = Model.extend({
                 defaults : {
                     time : Date,
-                    text : 'Hello from Volicon!'
+                    text : 'Hello from Volicon!',
+                    andClass : MyClass
                 }
             });
 
             var data = new MyModel();
 
-            $( 'body' ).html( data.time + '<br/>' + data.text );
+            $( 'body' ).html( data.time + '<br/>' + data.text + ' ' + data.andClass.b );
         });
     </script>
 </head>

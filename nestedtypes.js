@@ -9,7 +9,8 @@
         factory( exports, require( 'backbone' ), require( 'underscore' ) );
     }
     else{
-        factory( root.Backbone, root.Backbone, root._ );
+        root.NestedTypes = {};
+        factory( root.NestedTypes, root.Backbone, root._ );
     }
 }( this, function( exports, Backbone, _ ){
     'use strict';

@@ -221,7 +221,7 @@ var myClass = Class.extend({
 ```
 Installation and dependencies
 -----------------------------
-Ntive properties support is required. It means all modern browsers, IE from version 9.
+Native properties support is required. It means all modern browsers, IE from version 9.
 
 You need a single file (nestedtypes.js) and backbone.js itself. It should work in browser with plain script tag,
 require.js or other AMD loader. Also, it's available as npm package for node.js (https://www.npmjs.org/package/backbone.nested-types).

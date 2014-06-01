@@ -174,6 +174,9 @@
 
                 ModelProto.set.call( this, attrs, options );
             }
+            else if( a_attrs ){
+                ModelProto.set.call( this, a_attrs, options );
+            }
         }
 
         function onEnter(){

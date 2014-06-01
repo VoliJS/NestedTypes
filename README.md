@@ -228,4 +228,4 @@ require.js or other AMD loader. Also, it's available as npm package for node.js 
 
 Module exports three variables - Class, Model, Collection. You need to use them instead of backbone's. In browser environment with plain script tag import it will export these things under NestedTypes namespace - see an example in sources.
 
-And yes, you could expect this extension to be bug free enough to use. It is being developed as a part of commercial product. Volicon rely on this extension as a core part of architecture for next gen products. And we're actually interested in your bug reports. :)
+And yes, you could expect this extension to be stable and bug free enough to use. It is being developed as a part of commercial product. Volicon rely on this extension as a core part of architecture for next gen products. And we're actually interested in your bug reports. :)

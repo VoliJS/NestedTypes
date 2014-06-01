@@ -221,9 +221,11 @@ var myClass = Class.extend({
 ```
 Installation and dependencies
 -----------------------------
+Ntive properties support is required. It means all modern browsers, IE from version 9.
+
 You need a single file (nestedtypes.js) and backbone.js itself. It should work in browser with plain script tag,
 require.js or other AMD loader. Also, it's available as npm package for node.js (https://www.npmjs.org/package/backbone.nested-types).
 
-Module exports three variables - Class, Model, Collection. You need to use them instead of backbone's.
+Module exports three variables - Class, Model, Collection. You need to use them instead of backbone's. In browser environment with plain script tag import it will export these things under NestedTypes namespace - see an example in sources.
 
 And yes, you could expect this extension to be bug free enough to use. It is being developed as a part of commercial product. Volicon rely on this extension as a core part of architecture for next gen products. And we're actually interested in your bug reports. :)

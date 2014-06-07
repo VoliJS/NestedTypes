@@ -122,11 +122,9 @@ var User = Model.extend({
 });
 ```
 
-No need to override `initialize`, `parse`, and `toJSON`, everything will be done automatically.
+No need to override `initialize`, `parse`, and `toJSON`, nested JSON will be parsed and generated automatically. You still can override parse to transform JSON received from the server, but there is no need to create new Model/Collection instances, because of the modified 'set' behaviour.
 
-There is a difference from regular types in 'set' behaviour. If attribute's current value is not null,
-and new value has different type, it will be delegated to 'set' method of nested model or collection.
-I.e. this code:
+If attribute is defined as Model or Collection, new value is not an instance of the Model or Collection (for example, JSON received form the server), its current value is not null, it will be delegated to 'set' method of existig nested model or collection (!). If current value is null, new inscance of model/collection will be created. I.e. this code:
 
 ```javascript
 var user = new User();

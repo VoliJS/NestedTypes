@@ -91,6 +91,55 @@
 
         Collection.extend = extendWithProperties( Collection );
 
+        var refsCollectionSpec = {
+            isResolved : false,
+
+            toJSON : function(){
+                return _.pluck( this.models, 'id' );
+            },
+
+            parse : function( raw ){
+                this.isResolved = false;
+
+                return _.map( raw, function( id ){
+                    return { id: id };
+                });
+            },
+
+            resolve : function( collection ){
+                var values = this.map( function( ref ){
+                    return collection.get( ref.id );
+                });
+
+                this.reset( _.compact( values ), { silent : true } );
+                this.isResolved = true;
+
+                return this;
+            }
+        };
+
+        Collection.RefsTo = _.memoize( function( collectionOrFunc ){
+            return Collection.extend( refsCollectionSpec, {
+                property : function( name ){
+                    return {
+                        get : function(){
+                            var refs = this.attributes[ name ],
+                                master;
+
+                            if( !refs.isResolved ){
+                                master = _.isFunction( collectionOrFunc ) ? collectionOrFunc.call( this ) : collectionOrFunc;
+                                master && refs.resolve( master );
+                            }
+
+                            return refs;
+                        },
+
+                        enumerable : false
+                    }
+                }
+            });
+        });
+
         return Collection;
     }();
 
@@ -139,17 +188,23 @@
             }
         }
 
-        function typeCast( Ctor, name, value ){
+        function typeCast( Ctor, name, value, options ){
             var oldValue = this.attributes[ name ],
                 valueHasOtherType = ( value != null ) && !( value instanceof Ctor ),
                 newValue;
 
             if( oldValue && oldValue.set && valueHasOtherType ){
-                oldValue.set( value );
+                oldValue.set( value, options );
                 newValue = oldValue;
             }
             else{
-                newValue = valueHasOtherType ? new Ctor( value ) : value;
+                if( valueHasOtherType ){
+                    newValue = Ctor.extend ? new Ctor( value, options ) : new Ctor( value );
+                }
+                else{
+                    newValue = value;
+                }
+
                 delegateEvents.call( this, name, oldValue, newValue );
             }
 
@@ -212,7 +267,7 @@
                     var Ctor = types[ name ];
 
                     if( Ctor ){
-                        attrs[ name ] = typeCast.call( this, Ctor, name, value );
+                        attrs[ name ] = typeCast.call( this, Ctor, name, value, options );
                     }
                 }, this );
 
@@ -277,11 +332,12 @@
             };
         }
 
-        function createAttrPropDesc( name ){
-            return {
-                get: function(){
-                    return this.attributes[ name ];
-                },
+        function createAttrPropDesc( name, type ){
+            return _.isFunction( type ) && type.property ?
+                type.property( name ) : {
+                    get: function(){
+                        return this.attributes[ name ];
+                    },
 
                 set: function( val ){
                     this.set( name, val );
@@ -296,8 +352,8 @@
             var properties = {};
 
             if( spec.properties !== false ){
-                _.each( spec.defaults, function( notUsed, name ){
-                    properties[ name ] = createAttrPropDesc( name );
+                _.each( spec.defaults, function( type, name ){
+                    properties[ name ] = createAttrPropDesc( name, type );
                 } );
 
                 _.each( spec.properties, function( propDesc, name ){

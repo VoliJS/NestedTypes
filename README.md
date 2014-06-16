@@ -193,8 +193,8 @@ assert( user.roles instanceof Collection );
 assert( user.roles.first() instanceof Role );
 ```
 
-Collection.RefsTo is a collection of models. It overrides toJSON and parse to accept array of model ids. Also, it override its 'get' property in upper model, and resolve ids to real models from 
-the given collection on first attribute read attempt. If master collection is empty and thus references cannot be resolved, it will defer id resolution and just return collection of dummy models with ids. However, if master
+Collection.RefsTo is a collection of models. It overrides toJSON and parse to accept array of model ids. Also, it *override its 'get' property in upper model*, to resolve ids to real models from 
+the given master collection on first attribute read attempt. If master collection is empty and thus references cannot be resolved, it will defer id resolution and just return collection of dummy models with ids. However, if master
 collection is not empty, it will filter out ids of non-existent models.
 
 This semantic is required to deal with collections in asynchronous JS world. Also, there are 'lazy' option for passing reference to master collection:
@@ -209,6 +209,8 @@ var User = Model.extend({
     }
 });
 ```
+
+I'm planning to add more 'lazy evaluation' and reference handling features in future.
 
 Other enhancements
 ------------------

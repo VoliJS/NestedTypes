@@ -186,7 +186,7 @@ var User = Model.extend({
 });
 
 var user = new User({ id: 0 });
-user.fetch(); // <- and you'll receive from server "{ name : 'john', roles : [ 1, 2, 3 ] }"
+user.fetch(); // <- and you'll receive from server "{ id: 0, name : 'john', roles : [ 1, 2, 3 ] }"
 ...
 // however, user.roles behaves like collection of Roles.
 assert( user.roles instanceof Collection );

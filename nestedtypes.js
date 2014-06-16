@@ -107,12 +107,16 @@
             },
 
             resolve : function( collection ){
-                var values = this.map( function( ref ){
-                    return collection.get( ref.id );
-                });
+                var values;
 
-                this.reset( _.compact( values ), { silent : true } );
-                this.isResolved = true;
+                if( collection && collection.length ){
+                    values = this.map( function( ref ){
+                        return collection.get( ref.id );
+                    });
+
+                    this.reset( _.compact( values ), { silent : true } );
+                    this.isResolved = true;
+                }
 
                 return this;
             }
@@ -128,7 +132,7 @@
 
                             if( !refs.isResolved ){
                                 master = _.isFunction( collectionOrFunc ) ? collectionOrFunc.call( this ) : collectionOrFunc;
-                                master && refs.resolve( master );
+                                refs.resolve( master );
                             }
 
                             return refs;

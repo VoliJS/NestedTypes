@@ -172,6 +172,44 @@ Change events will be bubbled from nested models and collections.
 - `change` and `change:attribute` events for any changes in nested models and collections. Multiple `change` events from submodels during bulk updates are carefully joined together, which make it suitable to subscribe View.render to the top model's `change`.
 - `replace:attribute` event when model or collection is replaced with new object. You might need it to subscribe for events from submodels.
 
+Nested collections of model's references
+-------------------------------------------------
+
+When you have many-to-many relationships, it is suitable to transfer such a relationships from server as arrays of model ids. NestedTypes gives you special attribute data type to handle such a situation.
+
+```javascript
+var User = Model.extend({
+    defaults : {
+        name : String,
+        roles : Collection.RefsTo( rolesCollection ) // <- which is existing collection of Roles
+    }
+});
+
+var user = new User({ id: 0 });
+user.fetch(); // <- and you'll receive from server "{ name : 'john', roles : [ 1, 2, 3 ] }"
+...
+// however, user.roles behaves like collection of Roles.
+assert( user.roles instanceof Collection );
+assert( user.roles.first() instanceof Role );
+```
+
+Collection.RefsTo is a collection of models. It overrides toJSON and parse to accept array of model ids. Also, it override its 'get' property in upper model, and resolve ids to real models from 
+the given collection on first attribute read attempt. If master collection is empty and thus references cannot be resolved, it will defer id resolution and just return collection of dummy models with ids. However, if master
+collection is not empty, it will filter out ids of non-existent models.
+
+This semantic is required to deal with collections in asynchronous JS world. Also, there are 'lazy' option for passing reference to master collection:
+
+```javascript
+var User = Model.extend({
+    defaults : {
+        name : String,
+        roles : Collection.RefsTo( function(){
+		return this.collection.rolesCollection; // <- collection of Roles is the direct member of UsersCollection.
+	})
+    }
+});
+```
+
 Other enhancements
 ------------------
 - deepClone operation for deep copy of nested models, collections, and types. When you start working with nested stuff seriously, you'll need it soon.

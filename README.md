@@ -89,8 +89,9 @@ var User = Model.extend({
 ```
 
 New object will be created automatically for any typed attribute, no need to override `initialize`.
- When typed attribute assigned with value of different type, constructor will be invoked to
-convert it to defined type.
+
+When typed attribute assigned with value of different type, constructor will be invoked to
+convert it to defined type. There are no strict type checks by default, however, you may add "typeCastAssert( value, name )" member function to the prototype of your types to enable it. When exists, this function is being invoked before any attempt of attribute's assignment with value of different type. So, if you want to disable type casts, just throw an error when it's called. 
 
 ```javascript
 var user = new User();
@@ -105,6 +106,7 @@ assert( user.loginCount === NaN );
 
 It means, that you don't need to override Model.parse and Model.initialize when you receive time and
  date from the server. It will be parsed and serialized to JSON as ISO date automatically.
+
 
 Nested Models and Collections
 -----------------------------

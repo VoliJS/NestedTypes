@@ -50,103 +50,6 @@
         return Class;
     }();
 
-    exports.Collection = function(){
-        var Collection,
-            CollectionProto = Backbone.Collection.prototype;
-
-        function wrapCall( func ){
-            return function(){
-                if( !this.__changing++ ){
-                    this.trigger( 'before:change' );
-                }
-
-                func.apply( this, arguments );
-
-                if( !--this.__changing ){
-                    this.trigger( 'after:change' );
-                }
-            };
-        }
-
-        Collection = Backbone.Collection.extend({
-            triggerWhenChanged: 'change add remove reset sort',
-
-            deepClone: function(){
-                var copy = CollectionProto.clone.call( this );
-
-                copy.reset( this.map( function( model ){
-                    return model.deepClone();
-                } ) );
-
-                return copy;
-            },
-
-            __changing: 0,
-            set: wrapCall( CollectionProto.set ),
-            remove: wrapCall( CollectionProto.remove ),
-            add: wrapCall( CollectionProto.add ),
-            reset: wrapCall( CollectionProto.reset ),
-            sort: wrapCall( CollectionProto.sort )
-        });
-
-        Collection.extend = extendWithProperties( Collection );
-
-        var refsCollectionSpec = {
-            isResolved : false,
-
-            toJSON : function(){
-                return _.pluck( this.models, 'id' );
-            },
-
-            parse : function( raw ){
-                this.isResolved = false;
-
-                return _.map( raw, function( id ){
-                    return { id: id };
-                });
-            },
-
-            resolve : function( collection ){
-                var values;
-
-                if( collection && collection.length ){
-                    values = this.map( function( ref ){
-                        return collection.get( ref.id );
-                    });
-
-                    this.reset( _.compact( values ), { silent : true } );
-                    this.isResolved = true;
-                }
-
-                return this;
-            }
-        };
-
-        Collection.RefsTo = _.memoize( function( collectionOrFunc ){
-            return Collection.extend( refsCollectionSpec, {
-                property : function( name ){
-                    return {
-                        get : function(){
-                            var refs = this.attributes[ name ],
-                                master;
-
-                            if( !refs.isResolved ){
-                                master = _.isFunction( collectionOrFunc ) ? collectionOrFunc.call( this ) : collectionOrFunc;
-                                refs.resolve( master );
-                            }
-
-                            return refs;
-                        },
-
-                        enumerable : false
-                    }
-                }
-            });
-        });
-
-        return Collection;
-    }();
-
     exports.Model = function(){
         var extend = Backbone.Model.extend,
             ModelProto = Backbone.Model.prototype;
@@ -195,7 +98,12 @@
         function typeCast( Ctor, name, value, options ){
             var oldValue = this.attributes[ name ],
                 valueHasOtherType = ( value != null ) && !( value instanceof Ctor ),
-                newValue;
+                newValue, assert;
+
+            if( valueHasOtherType ){
+                assert = Ctor.prototype.typeCastAssert;
+                assert && assert.call( this, value, name, Ctor );
+            }
 
             if( oldValue && oldValue.set && valueHasOtherType ){
                 oldValue.set( value, options );
@@ -250,6 +158,13 @@
             __duringSet: 0,
             __defaults: {},
             __types: {},
+
+            typeCastAssert : function( value, name ){
+                if( value.constructor !== Object ){
+                    console.error( 'Attribute "' + name + '" of Model type assigned with incompatible value: ', value , this.attributes[ name ] );
+                    console.info( 'In model: ', this, 'Previous attribute value: ', this.attributes[ name ] );
+                }
+            },
 
             set: function( first, second, third ){
                 // handle different call options...
@@ -343,13 +258,13 @@
                         return this.attributes[ name ];
                     },
 
-                set: function( val ){
-                    this.set( name, val );
-                    return val;
-                },
+                    set: function( val ){
+                        this.set( name, val );
+                        return val;
+                    },
 
-                enumerable: false
-            };
+                    enumerable: false
+                };
         }
 
         function attachNativeProperties( This, spec ){
@@ -370,7 +285,7 @@
                 _.each( properties, function( prop, name ){
                     if( name in ModelProto ||
                         name === 'cid' || name === 'id' || name === 'attributes' ){
-                        throw new TypeError( 'extend: attribute ' + name + ' conflicts with Backbone.Model base class members!' );
+                        console.error( 'extend: attribute ' + name + ' conflicts with Backbone.Model base class members!', This );
                     }
 
                     Object.defineProperty( This.prototype, name, prop );
@@ -389,4 +304,108 @@
 
         return Model;
     }();
+	
+    exports.Collection = function(){
+        var Collection,
+            CollectionProto = Backbone.Collection.prototype;
+
+        function wrapCall( func ){
+            return function(){
+                if( !this.__changing++ ){
+                    this.trigger( 'before:change' );
+                }
+
+                func.apply( this, arguments );
+
+                if( !--this.__changing ){
+                    this.trigger( 'after:change' );
+                }
+            };
+        }
+
+        Collection = Backbone.Collection.extend({
+            triggerWhenChanged: 'change add remove reset sort',
+
+            typeCastAssert : function( value, name ){
+                if( value.constructor !== Array ){
+                    console.error( 'Attribute "' + name + '" of Collection type assigned with incompatible value: ', value );
+                    console.info( 'In model: ', this, 'Previous attribute value: ', this.attributes[ name ] );
+                }
+            },
+
+			model : exports.Model,
+			
+            deepClone: function(){
+                var copy = CollectionProto.clone.call( this );
+
+                copy.reset( this.map( function( model ){
+                    return model.deepClone();
+                } ) );
+
+                return copy;
+            },
+
+            __changing: 0,
+            set: wrapCall( CollectionProto.set ),
+            remove: wrapCall( CollectionProto.remove ),
+            add: wrapCall( CollectionProto.add ),
+            reset: wrapCall( CollectionProto.reset ),
+            sort: wrapCall( CollectionProto.sort )
+        });
+
+        Collection.extend = extendWithProperties( Collection );
+
+        var refsCollectionSpec = {
+            isResolved : false,
+
+            toJSON : function(){
+                return _.pluck( this.models, 'id' );
+            },
+
+            parse : function( raw ){
+                this.isResolved = false;
+
+                return _.map( raw, function( id ){
+                    return { id: id };
+                });
+            },
+
+            resolve : function( collection ){
+                var values = this.map( function( ref ){
+                    return collection.get( ref.id );
+                });
+
+                this.reset( _.compact( values ), { silent : true } );
+                this.isResolved = true;
+
+                return this;
+            }
+        };
+
+        Collection.RefsTo = _.memoize( function( collectionOrFunc ){
+            return Collection.extend( refsCollectionSpec, {
+                property : function( name ){
+                    return {
+                        get : function(){
+                            var refs = this.attributes[ name ],
+                                master;
+
+                            if( !refs.isResolved ){
+                                master = _.isFunction( collectionOrFunc ) ? collectionOrFunc.call( this ) : collectionOrFunc;
+                                master && refs.resolve( master );
+                            }
+
+                            return refs;
+                        },
+
+                        enumerable : false
+                    }
+                }
+            });
+        });
+
+        return Collection;
+    }();
+
+    
 }));

@@ -91,7 +91,7 @@ var User = Model.extend({
 New object will be created automatically for any typed attribute, no need to override `initialize`.
 
 When typed attribute assigned with value of different type, constructor will be invoked to
-convert it to defined type. There are no strict type checks by default, however, you may add "typeCastAssert( value, name )" member function to the prototype of your types to enable it. When exists, this function is being invoked before any attempt of attribute's assignment with value of different type. So, if you want to disable type casts, just throw an error when it's called. 
+convert it to defined type.
 
 ```javascript
 var user = new User();
@@ -107,6 +107,9 @@ assert( user.loginCount === NaN );
 It means, that you don't need to override Model.parse and Model.initialize when you receive time and
  date from the server. It will be parsed and serialized to JSON as ISO date automatically.
 
+It's important to note that defaults specs *are mandatory* with this plugin. Default implementation of Model.validate method will write an error in console if you attempt to save model with attributes which are not declared.
+
+Also, defaults spec *must* be an object, you can't use function as in plain Backbone.
 
 Nested Models and Collections
 -----------------------------
@@ -126,7 +129,7 @@ var User = Model.extend({
 
 No need to override `initialize`, `parse`, and `toJSON`, nested JSON will be parsed and generated automatically. You still can override parse to transform JSON received from the server, but there is no need to create new Model/Collection instances, because of the modified 'set' behaviour.
 
-If attribute is defined as Model or Collection, new value is an object or array (for example, JSON received form the server), its current value is not null, it will be delegated to 'set' method of existig nested model or collection (!). If current value is null, new inscance of model/collection will be created. I.e. this code:
+If attribute is defined as Model or Collection, new value is an object or array (for example, JSON received form the server), and its current value is not null, it will be delegated to 'set' method of existig nested model or collection (!). If current value is null, new inscance of model/collection will be created. I.e. this code:
 
 ```javascript
 var user = new User();

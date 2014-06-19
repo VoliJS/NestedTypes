@@ -24,7 +24,7 @@
             } : propDesc;
 
             if( name in Base.prototype ){
-                throw new TypeError( 'extend: property ' + name + ' conflicts with base class members!' );
+                console.error( '[Type error in Type.extend] Property ' + name + ' conflicts with base class members in spec:', properties );
             }
 
             Object.defineProperty( This.prototype, name, prop );
@@ -55,20 +55,11 @@
             ModelProto = Backbone.Model.prototype;
 
         function delegateEvents( name, oldValue, newValue ){
-            var replace = false;
-
-            if( _.isEqual( oldValue, newValue ) ){
-                return;
-            }
-
-            if( oldValue && oldValue.triggerWhenChanged ){
-                replace = true;
+            if( oldValue ){
                 this.stopListening( oldValue );
             }
 
-            if( newValue && newValue.triggerWhenChanged ){
-                replace = true;
-
+            if( newValue ){
                 this.listenTo( newValue, 'before:change', onEnter );
                 this.listenTo( newValue, 'after:change', onExit );
 
@@ -90,37 +81,35 @@
                 }, this );
             }
 
-            if( replace ){
-                this.trigger( 'replace:' + name, this, newValue, oldValue );
-            }
+            this.trigger( 'replace:' + name, this, newValue, oldValue );
         }
 
         function typeCast( Ctor, name, value, options ){
-            var oldValue = this.attributes[ name ],
-                valueHasOtherType = ( value != null ) && !( value instanceof Ctor ),
-                newValue, assert;
+            var incompatibleType = !( value == null || value instanceof Ctor ),
+                prevValue;
 
-            if( valueHasOtherType ){
-                assert = Ctor.prototype.typeCastAssert;
-                assert && assert.call( this, value, name, Ctor );
-            }
+            if( Ctor.prototype.triggerWhenChanged ){ // for models and collections...
+                prevValue = this.attributes[ name ];
 
-            if( oldValue && oldValue.set && valueHasOtherType ){
-                oldValue.set( value, options );
-                newValue = oldValue;
-            }
-            else{
-                if( valueHasOtherType ){
-                    newValue = Ctor.extend ? new Ctor( value, options ) : new Ctor( value );
-                }
-                else{
-                    newValue = value;
+                if( incompatibleType ){
+                    if( prevValue ){ // ...delegate update for existing object 'set' method
+                        prevValue.set( value, options );
+                        value = prevValue;
+                    }
+                    else{ // ...or create a new object, if it's not exist
+                        value = new Ctor( value, options );
+                    }
                 }
 
-                delegateEvents.call( this, name, oldValue, newValue );
+                if( value !== prevValue ){
+                    delegateEvents.call( this, name, prevValue, value );
+                }
+            }
+            else if( incompatibleType ){ // for other types use constructor to conver
+                value = new Ctor( value );
             }
 
-            return newValue;
+            return value;
         }
 
         function onExit( a_attrs, options ){
@@ -159,10 +148,18 @@
             __defaults: {},
             __types: {},
 
-            typeCastAssert : function( value, name ){
-                if( value.constructor !== Object ){
-                    console.error( 'Attribute "' + name + '" of Model type assigned with incompatible value: ', value , this.attributes[ name ] );
-                    console.info( 'In model: ', this, 'Previous attribute value: ', this.attributes[ name ] );
+            validate : function( attrs, options ){
+                var errors = [];
+
+                _.each( attrs, function( value, name ){
+                    if( !( name in this.__defaults || name == this.idAttribute ) ){
+                        errors.push( name );
+                    }
+                }, this );
+
+                if( errors.length ){
+                    console.error( '[Type Error in Model.validate] Attributes are not defined in Model.defaults',
+                        errors, 'In model:', this  );
                 }
             },
 
@@ -177,6 +174,10 @@
                 else{
                     attrs = first;
                     options = second;
+
+                    if( attrs.constructor !== Object ){
+                        console.error( '[Type Error in Model.set] Attribute hash is not an object:', attrs, 'In model:', this );
+                    }
                 }
 
                 onEnter.call( this );
@@ -285,7 +286,7 @@
                 _.each( properties, function( prop, name ){
                     if( name in ModelProto ||
                         name === 'cid' || name === 'id' || name === 'attributes' ){
-                        console.error( 'extend: attribute ' + name + ' conflicts with Backbone.Model base class members!', This );
+                        console.error( '[Type Error in Model.extend] Attribute ' + name + ' conflicts with Backbone.Model base class members in model:', spec );
                     }
 
                     Object.defineProperty( This.prototype, name, prop );
@@ -326,15 +327,14 @@
         Collection = Backbone.Collection.extend({
             triggerWhenChanged: 'change add remove reset sort',
 
-            typeCastAssert : function( value, name ){
-                if( value.constructor !== Array ){
-                    console.error( 'Attribute "' + name + '" of Collection type assigned with incompatible value: ', value );
-                    console.info( 'In model: ', this, 'Previous attribute value: ', this.attributes[ name ] );
-                }
+			model : exports.Model,
+
+            isValid : function( options ){
+                return this.every( function( model ){
+                    return model.isValid( options );
+                });
             },
 
-			model : exports.Model,
-			
             deepClone: function(){
                 var copy = CollectionProto.clone.call( this );
 
@@ -346,7 +346,23 @@
             },
 
             __changing: 0,
-            set: wrapCall( CollectionProto.set ),
+
+            set: function( value ){
+                if( !this.__changing++ ){
+                    this.trigger( 'before:change' );
+                }
+
+                if( !( typeof( value ) === 'undefined' || value.constructor === Array || value instanceof this.model || value.constructor === Object ) ){
+                    console.error( '[Type Error in Collection.set] Argument is not an array, compatible model, or attribute hash:', value, 'In collection:', this );
+                }
+
+                CollectionProto.set.apply( this, arguments );
+
+                if( !--this.__changing ){
+                    this.trigger( 'after:change' );
+                }
+            },
+
             remove: wrapCall( CollectionProto.remove ),
             add: wrapCall( CollectionProto.add ),
             reset: wrapCall( CollectionProto.reset ),

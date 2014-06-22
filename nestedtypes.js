@@ -426,7 +426,7 @@
             }
         };
 
-        Collection.RefsTo = _.memoize( function( collectionOrFunc ){
+        Collection.RefsTo = function( collectionOrFunc ){
             return this.extend( refsCollectionSpec, {
                 property : function( name ){
                     return {
@@ -446,7 +446,7 @@
                     }
                 }
             });
-        });
+        };
 
         return Collection;
     }();

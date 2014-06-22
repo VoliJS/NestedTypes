@@ -129,7 +129,7 @@ var User = Model.extend({
 
 No need to override `initialize`, `parse`, and `toJSON`, nested JSON will be parsed and generated automatically. You still can override parse to transform JSON received from the server, but there is no need to create new Model/Collection instances, because of the modified 'set' behaviour.
 
-If attribute is defined as Model or Collection, new value is an object or array (for example, JSON received form the server), and its current value is not null, it will be delegated to 'set' method of existig nested model or collection (!). If current value is null, new inscance of model/collection will be created. I.e. this code:
+If attribute is defined as Model or Collection, new value is an object or array (for example, JSON received form the server), and its current value is not null, it will be delegated to 'set' method of existig nested model or collection (!). If current value is null, new instance of model/collection will be created. I.e. this code:
 
 ```javascript
 var user = new User();
@@ -150,7 +150,7 @@ user.group.set({
 user.permissions.set( [{ id: 5, type: 'full' }] );
 ```
 
-Assignments to models and collection attributes are *strictly type checked*. You'll got error in the console on every attempt to assign them with incompatible type.
+'set' method for models and collection is *strictly type checked*. You'll got error in the console on every attempt to set values with incompatible type.
 
 This mechanics of 'set' allows you to work with JSON from in case of deeply nested models and collections without the need to override 'parse'. This code (considering that nested attributes defined as models):
 
@@ -188,7 +188,7 @@ When you have many-to-many relationships, it is suitable to transfer such a rela
 var User = Model.extend({
     defaults : {
         name : String,
-        roles : Collection.RefsTo( rolesCollection ) // <- which is existing collection of Roles
+        roles : RolesCollection.RefsTo( rolesCollection ) // <- subclass of existing RolesCollection
     }
 });
 

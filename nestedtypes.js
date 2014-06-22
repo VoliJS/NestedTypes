@@ -1,4 +1,4 @@
-// Backbone.nestedTypes 0.2 (https://github.com/Volicon/backbone.nestedTypes)
+// Backbone.nestedTypes 0.6.0 (https://github.com/Volicon/backbone.nestedTypes)
 // (c) 2014 Vlad Balin, may be freely distributed under the MIT license
 
 ( function( root, factory ){

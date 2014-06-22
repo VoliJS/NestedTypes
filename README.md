@@ -1,7 +1,7 @@
 backbone.nestedTypes
 ====================
 
-In case you're precisely know what you're looking for, it's backbone.js extension adding type annotations to model attributes, easiest possible way of dealing with nested models and collections, and native properties for attributes. Providing you with a more or less complete, simple, and powerful object system for JavaScript.
+In case you're precisely know what you're looking for, it's backbone.js extension adding type annotations, coercion and checks to model attributes, easiest possible way of dealing with nested models and collections, and native properties for attributes. Providing you with a more or less complete, simple, and powerful object system for JavaScript.
 
 In case if you don't, here is a brief outline of problems we're solving with this little thing. There are two major goals behind:
 
@@ -211,13 +211,13 @@ var User = Model.extend({
     defaults : {
         name : String,
         roles : Collection.RefsTo( function(){
-		return this.collection.rolesCollection; // <- collection of Roles is the direct member of UsersCollection.
-	})
+            return this.collection.rolesCollection; // <- collection of Roles is the direct member of UsersCollection.
+        })
     }
 });
 ```
 
-I'm planning to add more 'lazy evaluation' and reference handling features in future.
+Note, that 'change' events won't be bubbled from models in Collection.RefsTo. Collection's events will.
 
 Type checks and type coercion rules summary
 -------------------------------------------

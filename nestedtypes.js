@@ -84,54 +84,44 @@
             this.trigger( 'replace:' + name, this, newValue, oldValue );
         }
 
-        function typeCast( Ctor, name, value, options ){
-            var incompatibleType = !( value == null || value instanceof Ctor ),
-                prevValue;
+        function typeCastBackbone( ModelOrCollection, name, value, options ){
+            var incompatibleType = !( value == null || value instanceof ModelOrCollection ),
+                existingModelOrCollection = this.attributes[ name ];
 
-            if( Ctor.prototype.triggerWhenChanged ){ // for models and collections...
-                prevValue = this.attributes[ name ];
-
-                if( incompatibleType ){
-                    if( prevValue ){ // ...delegate update for existing object 'set' method
-                        prevValue.set( value, options );
-                        value = prevValue;
-                    }
-                    else{ // ...or create a new object, if it's not exist
-                        value = new Ctor( value, options );
-                    }
+            if( incompatibleType ){
+                if( existingModelOrCollection ){ // ...delegate update for existing object 'set' method
+                    existingModelOrCollection.set( value, options );
+                    value = existingModelOrCollection;
                 }
-
-                if( value !== prevValue ){
-                    delegateEvents.call( this, name, prevValue, value );
+                else{ // ...or create a new object, if it's not exist
+                    value = new ModelOrCollection( value, options );
                 }
             }
-            else if( incompatibleType ){ // for other types use constructor to conver
-                value = new Ctor( value );
+
+            if( value !== existingModelOrCollection ){
+                delegateEvents.call( this, name, existingModelOrCollection, value );
             }
 
             return value;
         }
 
-        function onExit( a_attrs, options ){
-            var attrs = a_attrs || {};
-
+        function onExit( attrs, options ){
             if( !--this.__duringSet ){
-                _.each( this.__nestedChanges, function( value, name ){
-                    if( !( name in attrs ) ){
-                        attrs[ name ] = value;
-                    }
+                attrs || ( attrs =  {} );
+
+                for( var name in this.__nestedChanges ){
+                    name in attrs || ( attrs[ name ] = this.__nestedChanges[ name ] );
 
                     if( attrs[ name ] === this.attributes[ name ] ){
                         this.attributes[ name ] = null;
                     }
-                }, this );
+                }
 
                 this.__nestedChanges = {};
-
-                ModelProto.set.call( this, attrs, options );
             }
-            else if( a_attrs ){
-                ModelProto.set.call( this, a_attrs, options );
+
+            if( attrs ){
+                ModelProto.set.call( this, attrs, options );
             }
         }
 
@@ -146,55 +136,82 @@
             listening: {},
             __duringSet: 0,
             __defaults: {},
-            __types: {},
+            __types: { id: null },
 
-            validate : function( attrs, options ){
-                var errors = [];
+            __setMany : function( attrs, options ){
+                var types = this.__types, Ctor, value;
 
-                _.each( attrs, function( value, name ){
-                    if( !( name in this.__defaults || name == this.idAttribute ) ){
-                        errors.push( name );
-                    }
-                }, this );
-
-                if( errors.length ){
-                    console.error( '[Type Error in Model.validate] Attributes are not defined in Model.defaults',
-                        errors, 'In model:', this  );
-                }
-            },
-
-            set: function( first, second, third ){
-                // handle different call options...
-                var attrs, options, types = this.__types;
-
-                if( typeof first === 'string' ){
-                    ( attrs = {} )[ first ] = second;
-                    options = third;
-                }
-                else{
-                    attrs = first;
-                    options = second;
-
-                    if( attrs.constructor !== Object ){
-                        console.error( '[Type Error in Model.set] Attribute hash is not an object:', attrs, 'In model:', this );
-                    }
+                if( attrs.constructor !== Object ){
+                    console.error( '[Type Error in Model.set] Attribute hash is not an object:', attrs, 'In model:', this );
                 }
 
                 onEnter.call( this );
 
                 // cast values to default types...
-                _.each( attrs, function( value, name ){
-                    var Ctor = types[ name ];
+                for( var name in attrs ){
+                    Ctor = types[ name ],
+                    value = attrs[ name ];
 
                     if( Ctor ){
-                        attrs[ name ] = typeCast.call( this, Ctor, name, value, options );
+                        if( Ctor.prototype.triggerWhenChanged ){ // for models and collections...
+                            attrs[ name ] = typeCastBackbone.call( this, Ctor, name, value, options );
+                        }
+                        else if( value != null && !( value instanceof Ctor ) ){ // use constructor to convert to default type
+                            attrs[ name ]  = new Ctor( value );
+                        }
                     }
-                }, this );
+                    else if( Ctor !== null ){
+                        console.error( '[Type Error in Model.set] Attribute "' + name + '" has no default value.', attrs, 'In model:', this );
+                    }
+                }
 
                 // apply changes
                 onExit.call( this, attrs, options );
 
                 return this;
+            },
+
+            isValid : function( options ){
+                return ModelProto.isValid( options ) && _.every( this.attribute, function( attr ){
+                    if( attr && attr.isValid ){
+                        return attr.isValid( options );
+                    }
+                    else if( attr instanceof Date ){
+                        return attr.getTime() !== NaN;
+                    }
+                    else{
+                        return attr !== NaN;
+                    }
+                });
+            },
+
+            set: function( name, value, options ){
+                var attrs, Ctor;
+
+                if( typeof name !== 'string' ){
+                    return this.__setMany( name, value );
+                }
+
+                // optimized set version for single argument
+                Ctor = this.__types[ name ];
+
+                if( Ctor ){
+                    if( Ctor.prototype.triggerWhenChanged ){
+                        onEnter.call( this );
+                        ( attrs = {} )[ name ] = typeCastBackbone.call( this, Ctor, name, value, options );
+                        onExit.call( this, attrs, options );
+
+                        return this;
+                    }
+                    else if( value != null && !( value instanceof Ctor ) ){
+                        value = new Ctor( value );
+                    }
+                }
+                else if( Ctor !== null ){
+                    console.error( '[Type Error in Model.set] Attribute "' + name + '" has no default value.', value, 'In model:', this );
+                }
+
+                return ModelProto.set.call( this, name, value, options );
             },
 
             // Create deep copy for all nested objects...
@@ -231,10 +248,18 @@
             var defaults    = _.defaults( spec.defaults || {}, Base.prototype.__defaults ),
                 fnames      = _.functions( defaults ),
                 values      = _.omit( defaults, fnames ),
-                types       = _.pick( defaults, fnames );
+                ctors       = _.pick( defaults, fnames ),
+                idAttr      = spec.idAttribute || Base.prototype.idAttribute,
+                types       = {};
+
+            types[ idAttr ] = null;
+
+            _.each( defaults, function( value, name ){
+                types[ name ] = _.isFunction( value ) ? value : null;
+            });
 
             return _.extend( {}, spec, {
-                defaults    : createDefaults( values, types ),
+                defaults    : createDefaults( values, ctors ),
                 __defaults  : defaults,
                 __types     : types
             });
@@ -244,9 +269,9 @@
             return function(){
                 var defaults = _.clone( values );
 
-                _.each( ctors, function( Ctor, name ){
-                    defaults[ name ] = new Ctor();
-                } );
+                for( var name in ctors ){
+                    defaults[ name ] = new ctors[ name ]();
+                }
 
                 return defaults;
             };
@@ -379,10 +404,13 @@
             },
 
             parse : function( raw ){
+                var idName = this.model.prototype.idAttribute;
                 this.isResolved = false;
 
                 return _.map( raw, function( id ){
-                    return { id: id };
+                    var res = {};
+                    res[ idName ] = id;
+                    return res;
                 });
             },
 
@@ -399,7 +427,7 @@
         };
 
         Collection.RefsTo = _.memoize( function( collectionOrFunc ){
-            return Collection.extend( refsCollectionSpec, {
+            return this.extend( refsCollectionSpec, {
                 property : function( name ){
                     return {
                         get : function(){
@@ -422,6 +450,4 @@
 
         return Collection;
     }();
-
-    
 }));

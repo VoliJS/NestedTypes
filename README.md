@@ -224,11 +224,13 @@ Type checks and type coercion rules summary
 
 Type checks and type coercions performed on every model 'set' call and assignment to the model's property. Failed type checks will be logged with console.error as "[Type Error...]..." message.
 
-There are two type cercion rules: 
+There are two type cercion rules:
+
 1. When model's attribute has default type, it's may either *hold null or instance of specified type* or its subclass. When it's set with value of different type, constructor will be invoked with this value as an argument to produce specified type.
 2. When model's attribute has Model (or Collection) type, it may hold either null or instance of specified Model (Collection) or its subclass. When it's being set with value of different type, it will be either *delegated to 'set' method of existing model/collection* (if current attribute value is not null), or *new model/collection will be created* with the given value as first argument.
 
 And there are two very fast runtime type checks in Model.set, which in combination with coercion rules listed above effectively isolating significant amount of type errors:
+
 1. All model's attributes *must* be declared in 'defaults'. Attempt to set attribute not having default value or type *is treated as an error*.
 2. For bulk attributes set operation *only plain JS object may be used* as an argument. Usage of complex objects as attributes hash *is treated as an error*.
 

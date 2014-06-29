@@ -269,19 +269,19 @@
 
         // Attribute metatype
         // ------------------
-
         function Attribute( spec ){
             if( 'typeOrValue' in spec ){
-                this.value = spec.typeOrValue;
+                var something = spec.typeOrValue;
 
-                if( _.isFunction( spec.typeOrValue ) ){
-                    this.type = spec.typeOrValue;
+                if( _.isFunction( something ) ){
+                    this.type = something;
+                }
+                else{
+                    this.value = something;
                 }
             }
             else{
                 _.extend( this, spec );
-
-                'value' in spec || ( this.value = this.type );
 
                 if( spec.get || spec.set ){
                     // inline property override...
@@ -331,18 +331,26 @@
         };
 
         function parseDefaults( spec, Base ){
-            var defaults    = _.defaults( spec.defaults || {}, Base.prototype.__defaults ),
-                idAttr      = spec.idAttribute || Base.prototype.idAttribute,
-                attributes = {};
-
             if( _.isFunction( spec.defaults ) ){
                 error.defaultsIsFunction( spec );
             }
 
-            attributes[ idAttr ] = new Attribute( idAttr === 'id' ? { property: false } : {} );
+            var defaults    = _.defaults( spec.defaults || {}, Base.prototype.__defaults ),
+                idAttr      = spec.idAttribute || Base.prototype.idAttribute,
+                attributes = {};
+
+            attributes[ idAttr ] = new Attribute( { value : undefined } );
+
+            if( idAttr === 'id' ){
+                attributes[ idAttr ].property = false;
+            }
 
             _.each( defaults, function( attr, name ){
                 attr instanceof Attribute || ( attr = new Attribute({ typeOrValue: attr }) );
+
+                if( name in Base.prototype.__defaults ){
+                    attr.property = false;
+                }
 
                 attributes[ name ] = attr;
             });
@@ -354,26 +362,54 @@
         }
 
         function createDefaults( attributes ){
-            var values = {}, ctors = {};
+            var json = [], init = {}, cast = {}, refs = {};
 
             _.each( attributes, function( attr, name ){
-                if( _.isFunction( attr.value ) ){
-                    ctors[ name ] = attr.value;
+                if( attr.value !== undefined ){
+                    if( attr.type ){ // when type is specified...
+                        if( attr.value === null ){ // null should be directly assigned
+                            json.push( name + ':' + JSON.stringify( attr.value ) );
+                        }
+                        else{
+                            refs[ name ] = attr.value; //otherwise, it's assigned by reference
+
+                            if( !( attr.value instanceof attr.type ) ){ // and if value has incompatible type...
+                                cast[ name ] = attr.type; // it must be type-casted
+                            }
+                        }
+                    }
+                    else{ // if no type information available...
+                        // ...guess if value is literal
+                        if( !attr.value || typeof attr.value !== 'object' || attr.value.constructor === Object || attr.value.constructor === Array ){
+                            json.push( name + ':' + JSON.stringify( attr.value ) ); // and make a deep copy
+                        }
+                        else{ // otherwise, copy it by reference.
+                            refs[ name ] = attr.value;
+                        }
+                    }
                 }
-                else if( attr.value !== undefined ){ // don't instantiate undefined attributes
-                    values[ name ] = attr.value;
+                else{
+                    attr.type && ( init[ name ] = attr.type );
                 }
             });
 
-            return function(){
-                var defaults = _.clone( values );
+            var literals = new Function( 'return {' + json.join( ',' ) + '}' );
 
-                for( var name in ctors ){
-                    defaults[ name ] = new ctors[ name ]();
+            return function(){
+                var defaults = literals();
+
+                _.extend( defaults, refs );
+
+                for( var name in init ){
+                    defaults[ name ] = new init[ name ]();
+                }
+
+                for( var name in cast ){
+                    defaults[ name ] = new cast[ name ]( defaults[ name ] );
                 }
 
                 return defaults;
-            };
+            }
         }
 
         function createNativeProperties( This, spec ){

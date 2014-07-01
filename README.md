@@ -109,7 +109,78 @@ It means, that you don't need to override Model.parse and Model.initialize when 
 
 It's important to note that defaults specs *are mandatory* with this plugin. Default implementation of Model.validate method will write an error in console if you attempt to save model with attributes which are not declared.
 
-Also, defaults spec *must* be an object, you can't use function as in plain Backbone.
+Also, defaults spec *must* be an object, at this time you can't use function as in plain Backbone. Support for them will be added later.
+
+Type annotations and defaults rules summary
+-----------------------------------
+
+- defaults spec must be an object
+- any function used as default value is treated as constructor, and will be invoked with 'new' to create an object.
+- JSON literals used as defaults will be compiled to function and efficiently  _deep_ _copied_.
+- non-JSON values (other than direct instances of Object and Array) will be passed by reference. I.e. in this example:
+```javascript
+var M = Model.extend({
+    defaults : {
+        num : 1,
+        str : "",
+        arr : [ 1, 2, 3 ],
+        obj : { a: 1, b: 2 },
+        date : Date,
+	shared : new Date()
+    }
+});
+
+// creation of default values will behave exactly as the following code in plain backbone:
+
+var _tmp = new Date();
+var M = Model.extend({
+    defaults : function(){
+    	return {
+       	    num : 1,
+            str : "",
+            arr : [ 1, 2, 3 ],
+            obj : { a: 1, b: 2 },
+            date : new Date(),
+            shared : _tmp
+        }
+    }
+});
+```
+- type and default value may be specified separately. Standard type coercion rules will be applied to default values.
+```javascript
+var M = Model.extend({
+    defaults : {
+        date1 : Model.Attribute( Date, null ),
+        date2 : Model.Attribute( Date, '2012-12-12 12:12' )
+    }
+});
+
+// will behave as:
+var M = Model.extend({
+    defaults : function(){
+    	return {
+            date1 : null,
+            date2 : new Date( '2012-12-12 12:12' )
+    	}
+    }
+});
+```
+- Native getter and setter may be overriden for every attribute using full notation:
+```javascript
+var M = Model.extend({
+    defaults : {
+        date1 : Model.Attribute({
+            type : Date,
+            value : null,
+            get : function(){
+                var time = this.attributes.date1;
+                return time ? time : new Date( '1900-01-01 00:00' );
+            })
+        }
+            
+    }
+});
+```
 
 Nested Models and Collections
 -----------------------------

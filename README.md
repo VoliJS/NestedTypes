@@ -342,6 +342,7 @@ var instance = new Derived();
 assert( instance.b === 1 );
 assert( instance.a === 1 );
 ```
+
 - Class type, which can send and receive Backbone events and can be extended. Also, it can have native properties, as well as Model and Collection. The basic building block of Backbone, which was not exported from the library directly for some reason.
 
 ```javascript
@@ -361,6 +362,8 @@ var myClass = Class.extend({
 	}
 });
 ```
+P.S.: There's an opinion that classes are not needed in JS since you can do fancy mixins with prototypes. What I would say? C'mon, we're really old-school guys here. :) We're get used to situation when class looks like a class, not as a random excerpt from Linux kernel or something :)
+
 Installation and dependencies
 -----------------------------
 Native properties support is required. It means all modern browsers, IE from version 9.

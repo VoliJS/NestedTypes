@@ -113,6 +113,7 @@ Also, defaults spec *must* be an object, at this time you can't use function as 
 
 Type annotations and defaults rules summary
 -----------------------------------
+Semantic of type annonation designed to be both intuitive and protective, in order to have minimal learning curve and help to overcome typical backbone.js mistakes usually done by newbies. Howewer, it's not as simple behind the scene. Here's more formal and detailed description of logic behind defaults:
 
 - defaults spec must be an object
 - any function used as default value is treated as constructor, and will be invoked with 'new' to create an object.

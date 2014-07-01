@@ -1,37 +1,40 @@
 <!DOCTYPE html>
 <html>
+
   <head>
-    <meta charset='utf-8'>
-    <meta http-equiv="X-UA-Compatible" content="chrome=1">
-    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-    <link href='https://fonts.googleapis.com/css?family=Architects+Daughter' rel='stylesheet' type='text/css'>
-    <link rel="stylesheet" type="text/css" href="stylesheets/stylesheet.css" media="screen" />
-    <link rel="stylesheet" type="text/css" href="stylesheets/pygment_trac.css" media="screen" />
-    <link rel="stylesheet" type="text/css" href="stylesheets/print.css" media="print" />
+    <meta charset='utf-8' />
+    <meta http-equiv="X-UA-Compatible" content="chrome=1" />
+    <meta name="description" content="Backbone.nestedtypes : Backbone.js extension adding native properties for models, defaults&#39; type annotations, nested models and collections." />
 
-    <!--[if lt IE 9]>
-    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
-    <![endif]-->
+    <link rel="stylesheet" type="text/css" media="screen" href="stylesheets/stylesheet.css">
 
-    <title>Backbone.nestedtypes by Volicon</title>
+    <title>Backbone.nestedtypes</title>
   </head>
 
   <body>
-    <header>
-      <div class="inner">
-        <h1>Backbone.nestedtypes</h1>
-        <h2>Backbone.js extension adding native properties for models, defaults&#39; type annotations, nested models and collections.</h2>
-        <a href="https://github.com/Volicon/backbone.nestedTypes" class="button"><small>View project on</small>GitHub</a>
-      </div>
-    </header>
 
-    <div id="content-wrapper">
-      <div class="inner clearfix">
-        <section id="main-content">
-          <h1>
+    <!-- HEADER -->
+    <div id="header_wrap" class="outer">
+        <header class="inner">
+          <a id="forkme_banner" href="https://github.com/Volicon/backbone.nestedTypes">View on GitHub</a>
+
+          <h1 id="project_title">Backbone.nestedtypes</h1>
+          <h2 id="project_tagline">Backbone.js extension adding native properties for models, defaults&#39; type annotations, nested models and collections.</h2>
+
+            <section id="downloads">
+              <a class="zip_download_link" href="https://github.com/Volicon/backbone.nestedTypes/zipball/master">Download this project as a .zip file</a>
+              <a class="tar_download_link" href="https://github.com/Volicon/backbone.nestedTypes/tarball/master">Download this project as a tar.gz file</a>
+            </section>
+        </header>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div id="main_content_wrap" class="outer">
+      <section id="main_content" class="inner">
+        <h1>
 <a name="backbonenestedtypes" class="anchor" href="#backbonenestedtypes"><span class="octicon octicon-link"></span></a>backbone.nestedTypes</h1>
 
-<p>In case you're precisely know what you're looking for, it's backbone.js extension adding type annotations to model attributes, easiest possible way of dealing with nested models and collections, and native properties for attributes. Providing you with a more or less complete, simple, and powerful object system for JavaScript.</p>
+<p>In case you're precisely know what you're looking for, it's backbone.js extension adding type annotations, type coercion and type checks (yes, <em>checks</em>) to model attributes, easiest possible way of dealing with nested models and collections, and native properties for attributes. Providing you with a more or less complete, simple, and powerful object system for JavaScript.</p>
 
 <p>In case if you don't, here is a brief outline of problems we're solving with this little thing. There are two major goals behind:</p>
 
@@ -56,9 +59,20 @@
 <li>automatic generation of native JS properties, to make templates look good.</li>
 </ul>
 </li>
+<li>
+<p>Seriously reduce backbone.js painfullness and shorten learning curve for backbone newbies.</p>
+
+<ul>
+<li>Model and Collection's semantic is designed in the way, that it hard to make typical newbie errors. Some of them are not mistakes any more, but the right way to do things. For example, defaults section is automatically inherited for you from the base class, it's safe to forget 'get', etc...</li>
+<li>Minimum of new concepts and keywords are introduced. If you know backbone, you already know NestedTypes.</li>
+<li>Attribute types are checked and automatically coerced in run time.</li>
+</ul>
+</li>
 </ol><p>These issues are addressed in many different backbone plugins, but this one is defferent.</p>
 
-<p>We solve these problems encouraging you to type less, than you used to. 'Type specs' in model's 'defaults' section do all the magic. So, if your attribute is a date, just write in defaults, that it's Date. That's it. No, you don't need a compiler, it's still old good vanilla JS you're get used to.</p>
+<p>We solve these problems encouraging you <em>to type less, than you used to</em>. Type specs in model's 'defaults' section do all the magic. So, if your attribute is a date, just write in defaults, that it's Date. That's it.</p>
+
+<p>No, you don't need a compiler, or learn some non-standard syntax. It's still old good vanilla JS you're get used to.</p>
 
 <h2>
 <a name="models-native-properties" class="anchor" href="#models-native-properties"><span class="octicon octicon-link"></span></a>Model's native properties</h2>
@@ -124,8 +138,9 @@
 <span class="p">});</span>
 </pre></div>
 
-<p>New object will be created automatically for any typed attribute, no need to override <code>initialize</code>.
- When typed attribute assigned with value of different type, constructor will be invoked to
+<p>New object will be created automatically for any typed attribute, no need to override <code>initialize</code>.</p>
+
+<p>When typed attribute assigned with value of different type, constructor will be invoked to
 convert it to defined type.</p>
 
 <div class="highlight highlight-javascript"><pre><span class="kd">var</span> <span class="nx">user</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">User</span><span class="p">();</span>
@@ -141,10 +156,89 @@ convert it to defined type.</p>
 <p>It means, that you don't need to override Model.parse and Model.initialize when you receive time and
  date from the server. It will be parsed and serialized to JSON as ISO date automatically.</p>
 
+<p>It's important to note that defaults specs <em>are mandatory</em> with this plugin. Default implementation of Model.validate method will write an error in console if you attempt to save model with attributes which are not declared.</p>
+
+<p>Also, defaults spec <em>must</em> be an object, at this time you can't use function as in plain Backbone. Support for them will be added later.</p>
+
+<h2>
+<a name="type-annotations-and-defaults-rules-summary" class="anchor" href="#type-annotations-and-defaults-rules-summary"><span class="octicon octicon-link"></span></a>Type annotations and defaults rules summary</h2>
+
+<p>Semantic of type annonation designed to be both intuitive and protective, in order to have minimal learning curve and help to overcome typical backbone.js mistakes usually done by newbies. Howewer, it's not as simple behind the scene. Here's more formal and detailed description of logic behind defaults:</p>
+
+<ul>
+<li>defaults spec must be an object</li>
+<li>any function used as default value is treated as constructor, and will be invoked with 'new' to create an object.</li>
+<li>JSON literals used as defaults will be compiled to function and efficiently  <em>deep</em> <em>copied</em>.</li>
+<li>non-JSON values (other than direct instances of Object and Array) will be passed by reference. I.e. in this example:</li>
+</ul><div class="highlight highlight-javascript"><pre><span class="kd">var</span> <span class="nx">M</span> <span class="o">=</span> <span class="nx">Model</span><span class="p">.</span><span class="nx">extend</span><span class="p">({</span>
+    <span class="nx">defaults</span> <span class="o">:</span> <span class="p">{</span>
+        <span class="nx">num</span> <span class="o">:</span> <span class="mi">1</span><span class="p">,</span>
+        <span class="nx">str</span> <span class="o">:</span> <span class="s2">""</span><span class="p">,</span>
+        <span class="nx">arr</span> <span class="o">:</span> <span class="p">[</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span> <span class="p">],</span>
+        <span class="nx">obj</span> <span class="o">:</span> <span class="p">{</span> <span class="nx">a</span><span class="o">:</span> <span class="mi">1</span><span class="p">,</span> <span class="nx">b</span><span class="o">:</span> <span class="mi">2</span> <span class="p">},</span>
+        <span class="nx">date</span> <span class="o">:</span> <span class="nb">Date</span><span class="p">,</span>
+    <span class="nx">shared</span> <span class="o">:</span> <span class="k">new</span> <span class="nb">Date</span><span class="p">()</span>
+    <span class="p">}</span>
+<span class="p">});</span>
+
+<span class="c1">// creation of default values will behave exactly as the following code in plain backbone:</span>
+
+<span class="kd">var</span> <span class="nx">_tmp</span> <span class="o">=</span> <span class="k">new</span> <span class="nb">Date</span><span class="p">();</span>
+<span class="kd">var</span> <span class="nx">M</span> <span class="o">=</span> <span class="nx">Model</span><span class="p">.</span><span class="nx">extend</span><span class="p">({</span>
+    <span class="nx">defaults</span> <span class="o">:</span> <span class="kd">function</span><span class="p">(){</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="nx">num</span> <span class="o">:</span> <span class="mi">1</span><span class="p">,</span>
+            <span class="nx">str</span> <span class="o">:</span> <span class="s2">""</span><span class="p">,</span>
+            <span class="nx">arr</span> <span class="o">:</span> <span class="p">[</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span> <span class="p">],</span>
+            <span class="nx">obj</span> <span class="o">:</span> <span class="p">{</span> <span class="nx">a</span><span class="o">:</span> <span class="mi">1</span><span class="p">,</span> <span class="nx">b</span><span class="o">:</span> <span class="mi">2</span> <span class="p">},</span>
+            <span class="nx">date</span> <span class="o">:</span> <span class="k">new</span> <span class="nb">Date</span><span class="p">(),</span>
+            <span class="nx">shared</span> <span class="o">:</span> <span class="nx">_tmp</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+<span class="p">});</span>
+</pre></div>
+
+<ul>
+<li>type and default value may be specified separately. Standard type coercion rules will be applied to default values.</li>
+</ul><div class="highlight highlight-javascript"><pre><span class="kd">var</span> <span class="nx">M</span> <span class="o">=</span> <span class="nx">Model</span><span class="p">.</span><span class="nx">extend</span><span class="p">({</span>
+    <span class="nx">defaults</span> <span class="o">:</span> <span class="p">{</span>
+        <span class="nx">date1</span> <span class="o">:</span> <span class="nx">Model</span><span class="p">.</span><span class="nx">Attribute</span><span class="p">(</span> <span class="nb">Date</span><span class="p">,</span> <span class="kc">null</span> <span class="p">),</span>
+        <span class="nx">date2</span> <span class="o">:</span> <span class="nx">Model</span><span class="p">.</span><span class="nx">Attribute</span><span class="p">(</span> <span class="nb">Date</span><span class="p">,</span> <span class="s1">'2012-12-12 12:12'</span> <span class="p">)</span>
+    <span class="p">}</span>
+<span class="p">});</span>
+
+<span class="c1">// will behave as:</span>
+<span class="kd">var</span> <span class="nx">M</span> <span class="o">=</span> <span class="nx">Model</span><span class="p">.</span><span class="nx">extend</span><span class="p">({</span>
+    <span class="nx">defaults</span> <span class="o">:</span> <span class="kd">function</span><span class="p">(){</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="nx">date1</span> <span class="o">:</span> <span class="kc">null</span><span class="p">,</span>
+            <span class="nx">date2</span> <span class="o">:</span> <span class="k">new</span> <span class="nb">Date</span><span class="p">(</span> <span class="s1">'2012-12-12 12:12'</span> <span class="p">)</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+<span class="p">});</span>
+</pre></div>
+
+<ul>
+<li>Native getter and setter may be overriden for every attribute using full notation:</li>
+</ul><div class="highlight highlight-javascript"><pre><span class="kd">var</span> <span class="nx">M</span> <span class="o">=</span> <span class="nx">Model</span><span class="p">.</span><span class="nx">extend</span><span class="p">({</span>
+    <span class="nx">defaults</span> <span class="o">:</span> <span class="p">{</span>
+        <span class="nx">date1</span> <span class="o">:</span> <span class="nx">Model</span><span class="p">.</span><span class="nx">Attribute</span><span class="p">({</span>
+            <span class="nx">type</span> <span class="o">:</span> <span class="nb">Date</span><span class="p">,</span>
+            <span class="nx">value</span> <span class="o">:</span> <span class="kc">null</span><span class="p">,</span>
+            <span class="nx">get</span> <span class="o">:</span> <span class="kd">function</span><span class="p">(){</span>
+                <span class="kd">var</span> <span class="nx">time</span> <span class="o">=</span> <span class="k">this</span><span class="p">.</span><span class="nx">attributes</span><span class="p">.</span><span class="nx">date1</span><span class="p">;</span>
+                <span class="k">return</span> <span class="nx">time</span> <span class="o">?</span> <span class="nx">time</span> <span class="o">:</span> <span class="k">new</span> <span class="nb">Date</span><span class="p">(</span> <span class="s1">'1900-01-01 00:00'</span> <span class="p">);</span>
+            <span class="p">})</span>
+        <span class="p">}</span>
+
+    <span class="p">}</span>
+<span class="p">});</span>
+</pre></div>
+
 <h2>
 <a name="nested-models-and-collections" class="anchor" href="#nested-models-and-collections"><span class="octicon octicon-link"></span></a>Nested Models and Collections</h2>
 
-<p>To have nested models and collections, annotate attribute with Model or Collection type.</p>
+<p>To use nested models and collections, just annotate attributes with Model or Collection type.</p>
 
 <div class="highlight highlight-javascript"><pre><span class="kd">var</span> <span class="nx">User</span> <span class="o">=</span> <span class="nx">Model</span><span class="p">.</span><span class="nx">extend</span><span class="p">({</span>
     <span class="nx">defaults</span> <span class="o">:</span> <span class="p">{</span>
@@ -156,11 +250,9 @@ convert it to defined type.</p>
 <span class="p">});</span>
 </pre></div>
 
-<p>No need to override <code>initialize</code>, <code>parse</code>, and <code>toJSON</code>, everything will be done automatically.</p>
+<p>No need to override <code>initialize</code>, <code>parse</code>, and <code>toJSON</code>, nested JSON will be parsed and generated automatically. You still can override parse to transform JSON received from the server, but there is no need to create new Model/Collection instances, because of the modified 'set' behaviour.</p>
 
-<p>There is a difference from regular types in 'set' behaviour. If attribute's current value is not null,
-and new value has different type, it will be delegated to 'set' method of nested model or collection.
-I.e. this code:</p>
+<p>If attribute is defined as Model or Collection, new value is an object or array (for example, JSON received form the server), and its current value is not null, it will be delegated to 'set' method of existig nested model or collection (!). If current value is null, new instance of model/collection will be created. I.e. this code:</p>
 
 <div class="highlight highlight-javascript"><pre><span class="kd">var</span> <span class="nx">user</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">User</span><span class="p">();</span>
 <span class="nx">user</span><span class="p">.</span><span class="nx">group</span> <span class="o">=</span> <span class="p">{</span>
@@ -178,6 +270,8 @@ I.e. this code:</p>
 
 <span class="nx">user</span><span class="p">.</span><span class="nx">permissions</span><span class="p">.</span><span class="nx">set</span><span class="p">(</span> <span class="p">[{</span> <span class="nx">id</span><span class="o">:</span> <span class="mi">5</span><span class="p">,</span> <span class="nx">type</span><span class="o">:</span> <span class="s1">'full'</span> <span class="p">}]</span> <span class="p">);</span>
 </pre></div>
+
+<p>'set' method for models and collection is <em>strictly type checked</em>. You'll got error in the console on every attempt to set values with incompatible type.</p>
 
 <p>This mechanics of 'set' allows you to work with JSON from in case of deeply nested models and collections without the need to override 'parse'. This code (considering that nested attributes defined as models):</p>
 
@@ -208,9 +302,65 @@ I.e. this code:</p>
 <li>
 <code>replace:attribute</code> event when model or collection is replaced with new object. You might need it to subscribe for events from submodels.</li>
 </ul><h2>
+<a name="nested-collections-of-models-references" class="anchor" href="#nested-collections-of-models-references"><span class="octicon octicon-link"></span></a>Nested collections of model's references</h2>
+
+<p>When you have many-to-many relationships, it is suitable to transfer such a relationships from server as arrays of model ids. NestedTypes gives you special attribute data type to handle such a situation.</p>
+
+<div class="highlight highlight-javascript"><pre><span class="kd">var</span> <span class="nx">User</span> <span class="o">=</span> <span class="nx">Model</span><span class="p">.</span><span class="nx">extend</span><span class="p">({</span>
+    <span class="nx">defaults</span> <span class="o">:</span> <span class="p">{</span>
+        <span class="nx">name</span> <span class="o">:</span> <span class="nb">String</span><span class="p">,</span>
+        <span class="nx">roles</span> <span class="o">:</span> <span class="nx">RolesCollection</span><span class="p">.</span><span class="nx">RefsTo</span><span class="p">(</span> <span class="nx">rolesCollection</span> <span class="p">)</span> <span class="c1">// &lt;- subclass of existing RolesCollection</span>
+    <span class="p">}</span>
+<span class="p">});</span>
+
+<span class="kd">var</span> <span class="nx">user</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">User</span><span class="p">({</span> <span class="nx">id</span><span class="o">:</span> <span class="mi">0</span> <span class="p">});</span>
+<span class="nx">user</span><span class="p">.</span><span class="nx">fetch</span><span class="p">();</span> <span class="c1">// &lt;- and you'll receive from server "{ id: 0, name : 'john', roles : [ 1, 2, 3 ] }"</span>
+<span class="p">...</span>
+<span class="c1">// however, user.roles behaves like collection of Roles.</span>
+<span class="nx">assert</span><span class="p">(</span> <span class="nx">user</span><span class="p">.</span><span class="nx">roles</span> <span class="k">instanceof</span> <span class="nx">Collection</span> <span class="p">);</span>
+<span class="nx">assert</span><span class="p">(</span> <span class="nx">user</span><span class="p">.</span><span class="nx">roles</span><span class="p">.</span><span class="nx">first</span><span class="p">()</span> <span class="k">instanceof</span> <span class="nx">Role</span> <span class="p">);</span>
+</pre></div>
+
+<p>Collection.RefsTo is a collection of models. It overrides toJSON and parse to accept array of model ids. Also, it <em>override its 'get' property in upper model</em>, to resolve ids to real models from 
+the given master collection on first attribute read attempt. If master collection is empty and thus references cannot be resolved, it will defer id resolution and just return collection of dummy models with ids. However, if master
+collection is not empty, it will filter out ids of non-existent models.</p>
+
+<p>This semantic is required to deal with collections in asynchronous JS world. Also, there are 'lazy' option for passing reference to master collection:</p>
+
+<div class="highlight highlight-javascript"><pre><span class="kd">var</span> <span class="nx">User</span> <span class="o">=</span> <span class="nx">Model</span><span class="p">.</span><span class="nx">extend</span><span class="p">({</span>
+    <span class="nx">defaults</span> <span class="o">:</span> <span class="p">{</span>
+        <span class="nx">name</span> <span class="o">:</span> <span class="nb">String</span><span class="p">,</span>
+        <span class="nx">roles</span> <span class="o">:</span> <span class="nx">Collection</span><span class="p">.</span><span class="nx">RefsTo</span><span class="p">(</span> <span class="kd">function</span><span class="p">(){</span>
+            <span class="k">return</span> <span class="k">this</span><span class="p">.</span><span class="nx">collection</span><span class="p">.</span><span class="nx">rolesCollection</span><span class="p">;</span> <span class="c1">// &lt;- collection of Roles is the direct member of UsersCollection.</span>
+        <span class="p">})</span>
+    <span class="p">}</span>
+<span class="p">});</span>
+</pre></div>
+
+<p>Note, that 'change' events won't be bubbled from models in Collection.RefsTo. Collection's events will.</p>
+
+<h2>
+<a name="type-checks-and-type-coercion-rules-summary" class="anchor" href="#type-checks-and-type-coercion-rules-summary"><span class="octicon octicon-link"></span></a>Type checks and type coercion rules summary</h2>
+
+<p>Type checks and type coercions performed on every model 'set' call and assignment to the model's property. Failed type checks will be logged with console.error as "[Type Error...]..." message.</p>
+
+<p>There are two type cercion rules:</p>
+
+<ol>
+<li>When model's attribute has default type, it's may either <em>hold null or instance of specified type</em> or its subclass. When it's set with value of different type, constructor will be invoked with this value as an argument to produce specified type.</li>
+<li>When model's attribute has Model (or Collection) type, it may hold either null or instance of specified Model (Collection) or its subclass. When it's being set with value of different type, it will be either <em>delegated to 'set' method of existing model/collection</em> (if current attribute value is not null), or <em>new model/collection will be created</em> with the given value as first argument.</li>
+</ol><p>And there are two very fast runtime type checks in Model.set, which in combination with coercion rules listed above effectively isolating significant amount of type errors:</p>
+
+<ol>
+<li>All model's attributes <em>must</em> be declared in 'defaults'. Attempt to set attribute not having default value or type <em>is treated as an error</em>.</li>
+<li>For bulk attributes set operation <em>only plain JS object may be used</em> as an argument. Usage of complex objects as attributes hash <em>is treated as an error</em>.</li>
+</ol><p>Also, there is a protection inside 'extend' from occasionally overriding base Model/Collection/Class members with attributes and properties. Required, since plugin creates native properties for attributes.</p>
+
+<h2>
 <a name="other-enhancements" class="anchor" href="#other-enhancements"><span class="octicon octicon-link"></span></a>Other enhancements</h2>
 
 <ul>
+<li>isValid method checks nested models, collections, and classes recursively.</li>
 <li>deepClone operation for deep copy of nested models, collections, and types. When you start working with nested stuff seriously, you'll need it soon.</li>
 </ul><div class="highlight highlight-javascript"><pre><span class="nx">model</span><span class="p">.</span><span class="nx">nestedModel</span> <span class="o">=</span> <span class="nx">other</span><span class="p">.</span><span class="nx">nestedModel</span><span class="p">.</span><span class="nx">deepClone</span><span class="p">();</span> <span class="c1">// will create a copy of nested objects tree</span>
 </pre></div>
@@ -235,12 +385,16 @@ I.e. this code:</p>
 </pre></div>
 
 <ul>
-<li>Class type, which can send and receive Backbone events and can be extended. Also, it can have native properties, as Model and Collection. The basic building block of Backbone, which was not exported from the library directly for some reason.</li>
+<li>Class type, which can send and receive Backbone events and can be extended. Also, it can have native properties, as well as Model and Collection. The basic building block of Backbone, which was not exported from the library directly for some reason.</li>
 </ul><div class="highlight highlight-javascript"><pre><span class="kd">var</span> <span class="nx">myClass</span> <span class="o">=</span> <span class="nx">Class</span><span class="p">.</span><span class="nx">extend</span><span class="p">({</span>
     <span class="nx">a</span> <span class="o">:</span> <span class="mi">1</span><span class="p">,</span>
 
     <span class="nx">initialize</span> <span class="o">:</span> <span class="kd">function</span><span class="p">(</span> <span class="nx">options</span> <span class="p">){</span>
         <span class="k">this</span><span class="p">.</span><span class="nx">a</span> <span class="o">=</span> <span class="nx">options</span><span class="p">.</span><span class="nx">a</span>
+
+        <span class="k">this</span><span class="p">.</span><span class="nx">listenTo</span><span class="p">(</span> <span class="nx">options</span><span class="p">.</span><span class="nx">nowhere</span><span class="p">,</span> <span class="s1">'something'</span><span class="p">,</span> <span class="kd">function</span><span class="p">(){</span>
+            <span class="k">this</span><span class="p">.</span><span class="nx">trigger</span><span class="p">(</span> <span class="s1">'heardsomething'</span><span class="p">,</span> <span class="k">this</span> <span class="p">);</span>
+        <span class="p">});</span>
     <span class="p">},</span>
 
     <span class="nx">properties</span> <span class="o">:</span> <span class="p">{</span>
@@ -252,31 +406,26 @@ I.e. this code:</p>
 <h2>
 <a name="installation-and-dependencies" class="anchor" href="#installation-and-dependencies"><span class="octicon octicon-link"></span></a>Installation and dependencies</h2>
 
+<p>Native properties support is required. It means all modern browsers, IE from version 9.</p>
+
 <p>You need a single file (nestedtypes.js) and backbone.js itself. It should work in browser with plain script tag,
 require.js or other AMD loader. Also, it's available as npm package for node.js (<a href="https://www.npmjs.org/package/backbone.nested-types">https://www.npmjs.org/package/backbone.nested-types</a>).</p>
 
-<p>Module exports three variables - Class, Model, Collection. You need to use them instead of backbone's.</p>
+<p>Module exports three variables - Class, Model, Collection. You need to use them instead of backbone's. In browser environment with plain script tag import it will export these things under NestedTypes namespace - see an example in sources.</p>
 
-<p>And yes, you could expect this extension to be bug free enough to use. It is being developed as a part of commercial product. Volicon rely on this extension as a core part of architecture for next gen products. And we're actually interested in your bug reports. :)</p>
-        </section>
-
-        <aside id="sidebar">
-          <a href="https://github.com/Volicon/backbone.nestedTypes/zipball/master" class="button">
-            <small>Download</small>
-            .zip file
-          </a>
-          <a href="https://github.com/Volicon/backbone.nestedTypes/tarball/master" class="button">
-            <small>Download</small>
-            .tar.gz file
-          </a>
-
-          <p class="repo-owner"><a href="https://github.com/Volicon/backbone.nestedTypes"></a> is maintained by <a href="https://github.com/Volicon">Volicon</a>.</p>
-
-          <p>This page was generated by <a href="https://pages.github.com">GitHub Pages</a> using the Architect theme by <a href="https://twitter.com/jasonlong">Jason Long</a>.</p>
-        </aside>
-      </div>
+<p>And yes, you could expect this extension to be stable and bug free enough to use. It is being developed as a part of commercial product. Volicon rely on this extension as a core part of architecture for next gen products. And we're actually interested in your bug reports. :)</p>
+      </section>
     </div>
 
-  
+    <!-- FOOTER  -->
+    <div id="footer_wrap" class="outer">
+      <footer class="inner">
+        <p class="copyright">Backbone.nestedtypes maintained by <a href="https://github.com/Volicon">Volicon</a></p>
+        <p>Published with <a href="http://pages.github.com">GitHub Pages</a></p>
+      </footer>
+    </div>
+
+    
+
   </body>
 </html>

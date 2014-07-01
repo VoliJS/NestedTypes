@@ -1,7 +1,7 @@
 backbone.nestedTypes
 ====================
 
-In case you're precisely know what you're looking for, it's backbone.js extension adding type annotations, coercion and checks to model attributes, easiest possible way of dealing with nested models and collections, and native properties for attributes. Providing you with a more or less complete, simple, and powerful object system for JavaScript.
+In case you're precisely know what you're looking for, it's backbone.js extension adding type annotations, type coercion and type checks (yes, _checks_) to model attributes, easiest possible way of dealing with nested models and collections, and native properties for attributes. Providing you with a more or less complete, simple, and powerful object system for JavaScript.
 
 In case if you don't, here is a brief outline of problems we're solving with this little thing. There are two major goals behind:
 
@@ -17,9 +17,16 @@ In case if you don't, here is a brief outline of problems we're solving with thi
     - implement event bubbling from nested models and collections _right_. It means, for example, that in case of bulk collection change with collection.set upper level model should trigger 'change' event only once. Very helpful, if you like to render you view in case of model's change.
     - automatic generation of native JS properties, to make templates look good.
 
+3. Seriously reduce backbone.js painfullness and shorten learning curve for backbone newbies.
+    - Model and Collection's semantic is designed in the way, that it hard to make typical newbie errors. Some of them are not mistakes any more, but the right way to do things. For example, defaults section is automatically inherited for you from the base class, it's safe to forget 'get', etc...
+    - Minimum of new concepts and keywords are introduced. If you know backbone, you already know NestedTypes.
+    - Attribute types are checked and automatically coerced in run time.
+ 
 These issues are addressed in many different backbone plugins, but this one is defferent.
 
-We solve these problems encouraging you to type less, than you used to. 'Type specs' in model's 'defaults' section do all the magic. So, if your attribute is a date, just write in defaults, that it's Date. That's it. No, you don't need a compiler, it's still old good vanilla JS you're get used to.
+We solve these problems encouraging you _to type less, than you used to_. Type specs in model's 'defaults' section do all the magic. So, if your attribute is a date, just write in defaults, that it's Date. That's it.
+
+No, you don't need a compiler, or learn some non-standard syntax. It's still old good vanilla JS you're get used to.
 
 Model's native properties
 -------------------------

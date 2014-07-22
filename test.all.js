@@ -387,4 +387,62 @@ define( function( require, exports, module ){
         });
     });
 
+    describe( 'pass options to nested', function(){
+        before( function(){
+            this.Book = Base.Model.extend({
+                defaults: {
+                    title: String,
+                    published: Date
+                },
+                parse: function(){
+                    this.parsed = true;
+                }
+            });
+            this.Books = Base.Collection.extend({
+                model: this.Book
+            });
+            this.Author = Base.Model.extend({
+                defaults: {
+                    name: String,
+                    biography: this.Book,
+                    books: this.Books
+                }
+            });
+       });
+
+        it( 'model with nested model', function(){
+            var author = new this.Author({
+                name: 'Jules Verne',
+                biography: {
+                    name: 'My Bio',
+                    published: '1990-01-02 13:14:15'
+                }
+            }, {
+                parse: true
+            });
+            author.biography.parsed.should.be.true;
+        });
+
+        it( 'model with nested collection', function(){
+            var author = new this.Author({
+                name: 'Jules Verne',
+                books: [
+                    {
+                        name: 'Five Weeks in a Balloon',
+                        published: '1990-01-02 13:14:15'
+                    },
+                    {
+                        name: 'Around the Moon',
+                        published: '1980-01-02 13:14:15'
+                    }
+                ]
+            }, {
+                parse: true
+            });
+
+            author.books.at(0).parsed.should.be.true;
+            author.books.at(1).parsed.should.be.true;
+        });
+    });
+
 });

@@ -76,11 +76,8 @@ define( function( require, exports, module ){
             }
         });
 
-        before( function(){
-            user = new User();
-        });
-
         it( 'create default values for constructor attributes', function(){
+            user = new User();
             user.created.should.be.instanceof( Date );
             user.name.should.eql( '' );
             user.loginCount.should.eql( 0 );
@@ -95,7 +92,6 @@ define( function( require, exports, module ){
 
             user.created = "2012-12-12 10:00";
             user.created.should.be.instanceof( Date );
-            user.created.toISOString().should.be.eql( '2012-12-12T10:00:00.000Z' );
 
             user.created = "rerwerwe";
             user.created.should.be.instanceof( Date );
@@ -104,39 +100,35 @@ define( function( require, exports, module ){
             user.name.should.be.string;
         });
 
-        describe( 'JSON', function(){
-            var comment, Comment = Base.Model.extend({
-                defaults: {
-                    created: Date,
-                    author: User,
-                    text: String
+        var comment, Comment = Base.Model.extend({
+            defaults: {
+                created: Date,
+                author: User,
+                text: String
+            }
+        });
+
+        it( 'create nested models from JSON', function(){
+            comment = new Comment({
+                created: '2012-12-12 12:12',
+                text: 'bla-bla-bla',
+                author: {
+                    created: '12-12-12 12:12',
+                    name: 'you'
                 }
             });
 
-            before( function(){
-                comment = new Comment({
-                    created: '2012-11-10T13:14:15.123Z',
-                    text: 'bla-bla-bla',
-                    author: {
-                        created: '2012-11-10 13:14:15',
-                        name: 'you'
-                    }
-                });
-            });
+            comment.created.should.eql( comment.author.created );
+            comment.created.should.be.instanceof( Date );
+            comment.author.created.should.be.instanceof( Date );
+        });
 
-            it( 'create nested models from JSON', function(){
-                comment.created.should.eql( comment.author.created );
-                comment.created.should.be.instanceof( Date );
-                comment.author.created.should.be.instanceof( Date );
-            });
+        it( 'serialize nested models to JSON', function(){
+            var json = comment.toJSON();
 
-            it( 'serialize nested models to JSON', function(){
-                var json = comment.toJSON();
-
-                json.created.should.be.string;
-                json.author.created.should.be.string;
-                json.created.should.eql( json.author.created );
-            });
+            json.created.should.be.string;
+            json.author.created.should.be.string;
+            json.created.should.eql( json.author.created );
         });
 
     });

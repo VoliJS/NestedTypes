@@ -175,8 +175,13 @@
                     if( Ctor.prototype.triggerWhenChanged ){ // for models and collections...
                         attrs[ name ] = typeCastBackbone.call( this, Ctor, name, value, options );
                     }
-                    else if( value != null && !( value instanceof Ctor ) ){ // use constructor to convert to default type
-                        attrs[ name ]  = new Ctor( value );
+                    else if( value != null && !( value instanceof Ctor ) ){ // simple type
+                        if( Ctor.fromJSON ){ // support custom constructors
+                            attrs[ name ]  = Ctor.fromJSON( value );
+                        }
+                        else { // use constructor to convert to default type
+                            attrs[ name ]  = new Ctor( value );
+                        }
                     }
                 }
                 else if( Ctor !== null ){
@@ -221,7 +226,7 @@
                 var Ctor = this.__types[ name ];
 
                 if( Ctor ){
-                    if( Ctor.prototype.triggerWhenChanged ){
+                    if( Ctor.prototype.triggerWhenChanged ){ // for models and collections...
                         var attrs = {};
 
                         onEnter.call( this );
@@ -230,8 +235,13 @@
 
                         return this;
                     }
-                    else if( value != null && !( value instanceof Ctor ) ){
-                        value = new Ctor( value );
+                    else if( value != null && !( value instanceof Ctor ) ){ // simple type
+                        if( Ctor.fromJSON ){ // support custom constructors
+                            value  = Ctor.fromJSON( value );
+                        }
+                        else { // use constructor to convert to default type
+                            value  = new Ctor( value );
+                        }
                     }
                 }
                 else if( Ctor !== null ){
@@ -512,7 +522,7 @@
 
         return Model;
     }();
-	
+
     exports.Collection = function(){
         var Collection,
             CollectionProto = Backbone.Collection.prototype;
@@ -627,4 +637,25 @@
 
         return Collection;
     }();
+
+    // Extend Date due to inconsistencies with Date.parse in browsers
+    // http://dygraphs.com/date-formats.html
+    if (!Date.fromJSON) {
+        Date.fromJSON = function(value) {
+            if (_.isDate(value)) {
+                return value;
+            }
+            if (_.isString(value)) {
+                var parsable = value
+                    .replace(/\.\d\d\d+/, '')
+                    .replace(/-/, '/')
+                    .replace(/-/, '/')
+                    .replace('T', ' ')
+                    .replace(/(Z)?$/, ' UTC');
+
+                return new Date(parsable);
+            }
+        };
+    }
+
 }));

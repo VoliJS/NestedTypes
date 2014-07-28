@@ -84,7 +84,8 @@
 
     exports.Model = function(){
         var ModelProto = Backbone.Model.prototype,
-            originalSet = ModelProto.set;
+            originalSet = ModelProto.set,
+            primitiveTypes = [String, Number, Boolean];
 
         function delegateEvents( name, oldValue, newValue ){
             oldValue && this.stopListening( oldValue );
@@ -175,8 +176,13 @@
                     if( Ctor.prototype.triggerWhenChanged ){ // for models and collections...
                         attrs[ name ] = typeCastBackbone.call( this, Ctor, name, value, options );
                     }
-                    else if( value != null && !( value instanceof Ctor ) ){ // use constructor to convert to default type
-                        attrs[ name ]  = new Ctor( value );
+                    else if( value != null ){
+                        if( primitiveTypes.indexOf( Ctor ) > -1 ){ // use primitive types as is
+                            attrs[ name ] = Ctor( value );
+                        }
+                        else if( !( value instanceof Ctor ) ){ // use constructor to convert to default type
+                            attrs[ name ]  = new Ctor( value );
+                        }
                     }
                 }
                 else if( Ctor !== null ){
@@ -230,8 +236,13 @@
 
                         return this;
                     }
-                    else if( value != null && !( value instanceof Ctor ) ){
-                        value = new Ctor( value );
+                    else if( value != null ){
+                        if( primitiveTypes.indexOf( Ctor ) > -1 ){ // use primitive types as is
+                            value = Ctor( value );
+                        }
+                        else if( !( value instanceof Ctor ) ){ // use constructor to convert to default type
+                            value  = new Ctor( value );
+                        }
                     }
                 }
                 else if( Ctor !== null ){

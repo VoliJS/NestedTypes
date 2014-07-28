@@ -84,8 +84,12 @@ define( function( require, exports, module ){
         });
 
         it( 'cast attribute values to defined types on assignment', function(){
+            var type;
+
             user.loginCount = "5";
             user.loginCount.should.be.number;
+            type = typeof user.loginCount;
+            type.should.eql( 'number' );
 
             user.loginCount = "djkjkj";
             user.loginCount.should.be.NaN;
@@ -98,6 +102,12 @@ define( function( require, exports, module ){
 
             user.name = 34;
             user.name.should.be.string;
+            user.name.should.be.eql( '34' );
+
+            user.name = 'Joe';
+            type = typeof user.name;
+            type.should.eql( 'string' );
+            user.name.should.be.eql( 'Joe' );
         });
 
         var comment, Comment = Base.Model.extend({
@@ -120,6 +130,9 @@ define( function( require, exports, module ){
 
             comment.created.should.eql( comment.author.created );
             comment.created.should.be.instanceof( Date );
+            comment.text.should.eql( 'bla-bla-bla' );
+            var type = typeof comment.text;
+            type.should.eql( 'string' );
             comment.author.created.should.be.instanceof( Date );
         });
 

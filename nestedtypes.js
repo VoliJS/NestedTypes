@@ -534,11 +534,13 @@
                     this.trigger( 'before:change' );
                 }
 
-                func.apply( this, arguments );
+                var res = func.apply( this, arguments );
 
                 if( !--this.__changing ){
                     this.trigger( 'after:change' );
                 }
+				
+				return res;
             };
         }
 

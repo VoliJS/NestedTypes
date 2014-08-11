@@ -186,6 +186,23 @@ define( function( require, exports, module ){
                 });
             });
 
+            it( "shouldn't bubble events if not required", function(){
+                var M = Base.Model.extend({
+                    defaults : {
+                        first : Main,
+                        second : Base.Attribute({
+                            type : Main,
+                            triggerWhenChanged : false
+                        })
+                    }
+                });
+
+                shouldFireChangeOnce( new M(), 'first', function( model ){
+                    model.first.first.text = "bubble";
+                    model.second.first.text = 'not bubble';
+                });
+            });
+
             it( 'emit single change event with local event handlers', function(){
                 shouldFireChangeOnce( new Main(), 'first', function( model ){
                     model.on( 'change:first', function(){

@@ -160,27 +160,42 @@
         var BackboneType = Attribute.extend({
             isBackboneType : true,
 
-            delegateEvents : function( model, oldValue, newValue ){
-                var name = this.name;
+            _name : '',
+            handleNestedChange : function(){},
 
-                function handleNestedChange(){
-                    var value = this.attributes[ name ];
+            properties : {
+                name : {
+                    set : function( name ){
+                        this._name = name;
 
-                    if( this.__duringSet ){
-                        this.__nestedChanges[ name ] = value;
-                    }
-                    else{
-                        this.attributes[ name ] = null;
-                        baseModelSet.call( this, name, value );
+                        this.handleNestedChange = function(){
+                            var value = this.attributes[ name ];
+
+                            if( this.__duringSet ){
+                                this.__nestedChanges[ name ] = value;
+                            }
+                            else{
+                                this.attributes[ name ] = null;
+                                baseModelSet.call( this, name, value );
+                            }
+                        }
+                    },
+
+                    get : function(){
+                        return this._name;
                     }
                 }
+            },
+
+            delegateEvents : function( model, oldValue, newValue ){
+                var name = this.name;
 
                 oldValue && model.stopListening( oldValue );
 
                 if( newValue ){
-                    model.listenTo( newValue, 'before:change', model.__beforeChange );
-                    model.listenTo( newValue, 'after:change', model.__afterChange );
-                    model.listenTo( newValue, this.triggerWhenChanged, handleNestedChange );
+                    model.listenTo( newValue, 'before:change', model.__beginChange );
+                    model.listenTo( newValue, 'after:change', model.__commitChange );
+                    model.listenTo( newValue, this.triggerWhenChanged, this.handleNestedChange );
 
                     _.each( model.listening[ name ], function( handler, events ){
                         var callback = typeof handler === 'string' ? this[ handler ] : handler;
@@ -210,10 +225,15 @@
                 }
 
                 return value;
+            },
+
+            initialize : function( spec ){
+                Attribute.prototype.initialize.apply( this, arguments );
+                _.isUndefined( this.triggerWhenChanged ) && ( this.triggerWhenChanged = spec.type.prototype.triggerWhenChanged );
             }
         });
 
-        Attribute.create = function( spec ){
+        function createAttribute( spec ){
             if( arguments.length == 2 ){
                 spec = {
                     type : arguments[ 0 ],
@@ -228,7 +248,7 @@
             if( spec.type === String || spec.type === Number || spec.type === Boolean ){
                 return new PrimitiveType( spec );
             }
-            else if( spec.type.prototype.triggerWhenChanged ){
+            else if( spec.type && spec.type.prototype.triggerWhenChanged ){
                 return new BackboneType( spec );
             }
             else if( spec.type === Date ){
@@ -240,22 +260,22 @@
             else{
                 return new Attribute( spec );
             }
-        };
+        }
 
-        return Attribute.create;
+        createAttribute.Type = Attribute;
+        return createAttribute;
     }();
 
     exports.Model = function(){
         var ModelProto = Backbone.Model.prototype,
-            originalSet = ModelProto.set,
-            primitiveTypes = [String, Number, Boolean];
+            baseModelSet = ModelProto.set;
 
         var Model = Backbone.Model.extend( {
             triggerWhenChanged: 'change',
             listening: {},
 
             __defaults: {},
-            __types: { id: null },
+            __attributes: {},
             __class : 'Model',
 
             __duringSet: 0,
@@ -279,7 +299,7 @@
                     this.__nestedChanges = {};
                 }
 
-                attrs && originalSet.call( this, attrs, options );
+                attrs && baseModelSet.call( this, attrs, options );
             },
 
             __setMany : function( attrs, options ){
@@ -336,7 +356,7 @@
                     error.unknownAttribute( this, name, value );
                 }
 
-                return originalSet.call( this, name, value, options );
+                return baseModelSet.call( this, name, value, options );
             },
 
             // Create deep copy for all nested objects...
@@ -379,6 +399,8 @@
             _: _ // add underscore to be accessible in templates
         } );
 
+        Model.Attribute = exports.Attribute;
+
         function parseDefaults( spec, Base ){
             if( _.isFunction( spec.defaults ) ){
                 error.defaultsIsFunction( spec );
@@ -396,8 +418,9 @@
             }
 
             _.each( defaults, function( attr, name ){
-                attr instanceof Attribute || ( attr = exports.Attribute({ typeOrValue: attr }) );
+                attr instanceof exports.Attribute.Type || ( attr = exports.Attribute({ typeOrValue: attr }) );
                 attr.name = name;
+
                 if( name in Base.prototype.__defaults ){
                     attr.property = false;
                 }
@@ -488,20 +511,9 @@
             }
         }
 
-        function extractTypes( attributes ){
-            var types = {};
-
-            _.each( attributes, function( attr, name ){
-                types[ name ] = attr.type;
-            });
-
-            return types;
-        }
-
         Model.extend = function( protoProps, staticProps ){
             var spec = parseDefaults( protoProps, this );
             spec.defaults = createDefaults( spec.__attributes );
-            spec.__types = extractTypes( spec.__attributes );
 
             var This = extend.call( this, spec, staticProps );
 

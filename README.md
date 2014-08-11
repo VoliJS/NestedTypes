@@ -22,7 +22,7 @@ In case if you don't, here is a brief outline of problems we're solving with thi
     - Minimum of new concepts and keywords are introduced. If you know backbone, you already know NestedTypes.
     - Attribute types are checked and automatically coerced in run time.
  
-These issues are addressed in many different backbone plugins, but this one is defferent.
+These issues are addressed in many backbone plugins, but this one is different.
 
 We solve these problems encouraging you _to type less, than you used to_. Type specs in model's 'defaults' section do all the magic. So, if your attribute is a date, just write in defaults, that it's Date. That's it.
 

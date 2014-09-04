@@ -1,5 +1,5 @@
 // Backbone.nestedTypes 0.8.0 (https://github.com/Volicon/backbone.nestedTypes)
-// © 2014 Vlad Balin & Volicon, may be freely distributed under the MIT license
+// (c) 2014 Vlad Balin & Volicon, may be freely distributed under the MIT license
 
 // Date.parse with progressive enhancement for ISO 8601 <https://github.com/csnover/js-iso8601>
 // © 2011 Colin Snover <http://zetafleet.com>

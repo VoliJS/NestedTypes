@@ -315,7 +315,7 @@
             listening: {},
 
             __defaults: {},
-            __attributes: {},
+            __attributes: { id : exports.Attribute({ name: 'id', value : undefined }) },
             __class : 'Model',
 
             __duringSet: 0,
@@ -676,6 +676,10 @@
 
             toJSON : function(){
                 return _.pluck( this.models, 'id' );
+            },
+
+            deepClone : function(){
+                return Collection.prototype.clone.apply( this, arguments );
             },
 
             parse : function( raw ){

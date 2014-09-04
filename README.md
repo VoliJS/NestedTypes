@@ -22,7 +22,7 @@ In case if you don't, here is a brief outline of problems we're solving with thi
     - Minimum of new concepts and keywords are introduced. If you know backbone, you already know NestedTypes.
     - Attribute types are checked and automatically coerced in run time.
  
-These issues are addressed in many different backbone plugins, but this one is defferent.
+These issues are addressed in many backbone plugins, but this one is different.
 
 We solve these problems encouraging you _to type less, than you used to_. Type specs in model's 'defaults' section do all the magic. So, if your attribute is a date, just write in defaults, that it's Date. That's it.
 
@@ -49,7 +49,7 @@ Great for accessing nested models from templates.
 Also, you can define calculated native properties for models and collections like this:
 
 ```javascript
-var MyModel = Model.extend({
+var MyModel = NestedTypes.Model.extend({
     defaults : {
         otherModel_id : 0,
         yetAnotherModel_id : 2
@@ -86,7 +86,7 @@ Type annotations for Model attributes
 You could use constructor functions as default value.
 
 ```javascript
-var User = Model.extend({
+var User = NestedTypes.Model.extend({
     defaults : {
         name : String,
         created : Date,
@@ -127,7 +127,7 @@ Semantic of type annonation designed to be both intuitive and protective, in ord
 - JSON literals used as defaults will be compiled to function and efficiently  _deep_ _copied_.
 - non-JSON values (other than direct instances of Object and Array) will be passed by reference. I.e. in this example:
 ```javascript
-var M = Model.extend({
+var M = NestedTypes.Model.extend({
     defaults : {
         num : 1,
         str : "",
@@ -141,7 +141,7 @@ var M = Model.extend({
 // creation of default values will behave exactly as the following code in plain backbone:
 
 var _tmp = new Date();
-var M = Model.extend({
+var M = NestedTypes.Model.extend({
     defaults : function(){
     	return {
        	    num : 1,
@@ -156,15 +156,15 @@ var M = Model.extend({
 ```
 - type and default value may be specified separately. Standard type coercion rules will be applied to default values.
 ```javascript
-var M = Model.extend({
+var M = NestedTypes.Model.extend({
     defaults : {
-        date1 : Model.Attribute( Date, null ),
-        date2 : Model.Attribute( Date, '2012-12-12 12:12' )
+        date1 : NestedTypes.Attribute( Date, null ),
+        date2 : NestedTypes.Attribute( Date, '2012-12-12 12:12' )
     }
 });
 
 // will behave as:
-var M = Model.extend({
+var M = NestedTypes.Model.extend({
     defaults : function(){
     	return {
             date1 : null,
@@ -175,9 +175,9 @@ var M = Model.extend({
 ```
 - Native getter and setter may be overriden for every attribute using full notation:
 ```javascript
-var M = Model.extend({
+var M = NestedTypes.Model.extend({
     defaults : {
-        date1 : Model.Attribute({
+        date1 : NestedTypes.Attribute({
             type : Date,
             value : null,
             get : function(){
@@ -196,7 +196,7 @@ Nested Models and Collections
 To use nested models and collections, just annotate attributes with Model or Collection type.
 
 ```javascript
-var User = Model.extend({
+var User = NestedTypes.Model.extend({
     defaults : {
         name : String,
         created : Date,
@@ -257,6 +257,25 @@ but it will fire just single `change` event.
 Change events will be bubbled from nested models and collections.
 - `change` and `change:attribute` events for any changes in nested models and collections. Multiple `change` events from submodels during bulk updates are carefully joined together, which make it suitable to subscribe View.render to the top model's `change`.
 - `replace:attribute` event when model or collection is replaced with new object. You might need it to subscribe for events from submodels.
+- It's possible to control event bubbling for every attribute. You can completely disable it, or override the list of events which would be counted as change:
+
+```javascript
+var M = NestedTypes.Model.extend({
+	defaults: {
+		bubbleChanges : ModelOrCollection,
+		
+		dontBubble : NestedTypes.Attribute({
+			type : ModelOrCollection,
+			triggerWhanChanged : false
+		}),
+		
+		bubbleCustomEvents : NestedTypes.Attribute({
+			type : ModelOrCollection,
+			triggerWhanChanged : 'event1 event2 whatever'
+		}),
+	}
+});
+```
 
 Nested collections of model's references
 -------------------------------------------------
@@ -264,7 +283,7 @@ Nested collections of model's references
 When you have many-to-many relationships, it is suitable to transfer such a relationships from server as arrays of model ids. NestedTypes gives you special attribute data type to handle such a situation.
 
 ```javascript
-var User = Model.extend({
+var User = NestedTypes.Model.extend({
     defaults : {
         name : String,
         roles : RolesCollection.RefsTo( rolesCollection ) // <- subclass of existing RolesCollection
@@ -286,7 +305,7 @@ collection is not empty, it will filter out ids of non-existent models.
 This semantic is required to deal with collections in asynchronous JS world. Also, there are 'lazy' option for passing reference to master collection:
 
 ```javascript
-var User = Model.extend({
+var User = NestedTypes.Model.extend({
     defaults : {
         name : String,
         roles : Collection.RefsTo( function(){
@@ -326,7 +345,7 @@ model.nestedModel = other.nestedModel.deepClone(); // will create a copy of nest
 
 - Default attributes are being inherited from the base model. In vanilla backbone, base model defaults will be completely overriden by subclass, which is annoying.
 ```javascript
-var Base = Model.extend({
+var Base = NestedTypes.Model.extend({
 	defaults: {
 		a : 1
 	}
@@ -346,7 +365,7 @@ assert( instance.a === 1 );
 - Class type, which can send and receive Backbone events and can be extended. Also, it can have native properties, as well as Model and Collection. The basic building block of Backbone, which was not exported from the library directly for some reason.
 
 ```javascript
-var myClass = Class.extend({
+var myClass = NestedTypes.Class.extend({
 	a : 1,
 
 	initialize : function( options ){

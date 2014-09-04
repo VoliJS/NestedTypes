@@ -1,5 +1,9 @@
 // Backbone.nestedTypes 0.7.1 (https://github.com/Volicon/backbone.nestedTypes)
-// (c) 2014 Vlad Balin & Volicon, may be freely distributed under the MIT license
+// © 2014 Vlad Balin & Volicon, may be freely distributed under the MIT license
+
+// Date.parse with progressive enhancement for ISO 8601 <https://github.com/csnover/js-iso8601>
+// © 2011 Colin Snover <http://zetafleet.com>
+// Released under MIT license.
 
 ( function( root, factory ){
     if( typeof define === 'function' && define.amd ) {
@@ -134,17 +138,52 @@
         });
 
         var DateType = Attribute.extend({
+            parse : function(){
+                var numericKeys = [ 1, 4, 5, 6, 7, 10, 11 ],
+                    msDatePattern = /\/Date\(([0-9]+)\)\//,
+                    isoDatePattern = /^(\d{4}|[+\-]\d{6})(?:-(\d{2})(?:-(\d{2}))?)?(?:T(\d{2}):(\d{2})(?::(\d{2})(?:\.(\d{3}))?)?(?:(Z)|([+\-])(\d{2})(?::(\d{2}))?)?)?$/;
+
+                return function( date ){
+                    var msDate, timestamp, struct, minutesOffset = 0;
+
+                    if( msDate = msDatePattern.exec( date ) ){
+                        timestamp = Number( msDate[ 1 ] );
+                    }
+                    else if(( struct = isoDatePattern.exec( date ))) {
+                        // avoid NaN timestamps caused by “undefined” values being passed to Date.UTC
+                        for( var i = 0, k; ( k = numericKeys[i] ); ++i ) {
+                            struct[ k ] = +struct[ k ] || 0;
+                        }
+
+                        // allow undefined days and months
+                        struct[ 2 ] = (+struct[ 2 ] || 1) - 1;
+                        struct[ 3 ] = +struct[ 3 ] || 1;
+
+                        if (struct[ 8 ] !== 'Z' && struct[ 9 ] !== undefined) {
+                            minutesOffset = struct[ 10 ] * 60 + struct[ 11 ];
+
+                            if (struct[ 9 ] === '+') {
+                                minutesOffset = 0 - minutesOffset;
+                            }
+                        }
+
+                        timestamp = Date.UTC(struct[ 1 ], struct[ 2 ], struct[ 3 ], struct[ 4 ], struct[ 5 ] + minutesOffset, struct[ 6 ], struct[ 7 ]);
+                    }
+                    else {
+                        timestamp = Date.parse( date );
+                    }
+
+                    return timestamp;
+                }
+            }(),
+
             cast : function( value ){
                 if( value == null || value instanceof Date ){
                     return value;
                 }
 
                 if( _.isString( value ) ){
-                    value = value
-                        .replace( /\.\d\d\d+/, '' )
-                        .replace( /-/g, '/' )
-                        .replace( 'T', ' ' )
-                        .replace( /(Z)?$/, ' UTC' );
+                    value = this.parse( value );
                 }
 
                 return new Date( value );
@@ -168,6 +207,7 @@
                     set : function( name ){
                         this._name = name;
 
+                        // (!) this handler will be called in the context of model
                         this.handleNestedChange = function(){
                             var value = this.attributes[ name ];
 

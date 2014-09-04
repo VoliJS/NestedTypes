@@ -98,7 +98,7 @@ define( function( require, exports, module ){
             user.loginCount.should.be.NaN;
 
             // parse Date from string
-            user.created = "2012-12-12 10:00";
+            user.created = "2012-12-12T10:00";
             user.created.should.be.instanceof( Date );
             user.created.toISOString().should.be.eql( '2012-12-12T10:00:00.000Z' );
 
@@ -131,7 +131,7 @@ define( function( require, exports, module ){
                     created: '2012-11-10T13:14:15.123Z',
                     text: 'bla-bla-bla',
                     author: {
-                        created: '2012-11-10 13:14:15',
+                        created: '2012-11-10T13:14:15.123Z',
                         name: 'you'
                     }
                 });
@@ -194,6 +194,16 @@ define( function( require, exports, module ){
                             type : Main,
                             triggerWhenChanged : false
                         })
+                    }
+                });
+
+                var M2 = Base.Model.extend({
+                    attributes : {
+                        first : Main,
+                        second : {
+                            type : Main,
+                            triggerWhenChanged : false
+                        }
                     }
                 });
 

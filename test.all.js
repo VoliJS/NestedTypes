@@ -137,6 +137,35 @@ define( function( require, exports, module ){
                 });
             });
 
+            it( 'initialize model with JSON defaults ', function(){
+                var M = Base.Model.extend({
+                    defaults : {
+                        a : [ 1, 2 ],
+                        b : { a: 1, b : [ 2 ] },
+                        f : Base.Attribute( Date, "2012-12-12T12:12" ),
+                        g : Base.Attribute({
+                            type : Date,
+                            value : "2012-12-12T12:12"
+                        })
+                    }
+                });
+
+                var m1 = new M(), m2 = new M();
+
+                m1.a.push( 3 );
+                m2.a.should.not.include( 3 );
+
+                m1.b.b.push( 3 );
+                m2.b.b.should.not.include( 3 );
+
+                m1.f.should.be.instanceOf( Date );
+                m1.g.should.be.instanceOf( Date );
+
+                m1.f.getTime().should.eql( 1355314320000 );
+                m1.g.getTime().should.eql( 1355314320000 );
+
+            });
+
             it( 'create nested models from JSON', function(){
                 comment.created.should.eql( comment.author.created );
                 comment.created.should.be.instanceof( Date );

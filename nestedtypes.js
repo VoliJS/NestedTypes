@@ -474,31 +474,31 @@
             });
         }
 
+        function isJsonLiteral( value ){
+            var type = typeof value,
+                isJSON = value === null || type === 'number' || type === 'string' || type === 'boolean';
+
+            if( !isJSON && type === 'object' ){
+                var proto = Object.getPrototypeOf( value );
+
+                if( proto === Object.prototype || proto === Array.prototype ){
+                    isJSON = _.every( value, isJsonLiteral );
+                }
+            }
+
+            return isJSON;
+        }
+
         function createDefaults( attributes ){
-            var json = [], init = {}, cast = {}, refs = {};
+            var json = [], init = {}, refs = {};
 
             _.each( attributes, function( attr, name ){
                 if( attr.value !== undefined ){
-                    if( attr.type ){ // when type is specified...
-                        if( attr.value === null ){ // null should be directly assigned
-                            json.push( name + ':' + JSON.stringify( attr.value ) );
-                        }
-                        else{
-                            refs[ name ] = attr.value; //otherwise, it's assigned by reference
-
-                            if( !( attr.value instanceof attr.type ) ){ // and if value has incompatible type...
-                                cast[ name ] = attr.type; // it must be type-casted
-                            }
-                        }
+                    if( isJsonLiteral( attr.value ) ){
+                        json.push( name + ':' + JSON.stringify( attr.value ) ); // and make a deep copy
                     }
-                    else{ // if no type information available...
-                        // ...guess if value is literal
-                        if( !attr.value || typeof attr.value !== 'object' || attr.value.constructor === Object || attr.value.constructor === Array ){
-                            json.push( name + ':' + JSON.stringify( attr.value ) ); // and make a deep copy
-                        }
-                        else{ // otherwise, copy it by reference.
-                            refs[ name ] = attr.value;
-                        }
+                    else{ // otherwise, copy it by reference.
+                        refs[ name ] = attr.value;
                     }
                 }
                 else{
@@ -515,10 +515,6 @@
 
                 for( var name in init ){
                     defaults[ name ] = new init[ name ]();
-                }
-
-                for( var name in cast ){
-                    defaults[ name ] = new cast[ name ]( defaults[ name ] );
                 }
 
                 return defaults;

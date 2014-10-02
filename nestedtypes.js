@@ -30,7 +30,7 @@
         },
 
         unknownAttribute : function( context, name, value ){
-            console.error( '[Type Error](' + context.__class + '.set) Attribute "' + name + '" has no default value.', value, 'In model:', context );
+            context.suppressTypeErrors || console.error( '[Type Error](' + context.__class + '.set) Attribute "' + name + '" has no default value.', value, 'In model:', context );
         },
 
         defaultsIsFunction : function( context ){
@@ -274,11 +274,15 @@
         });
 
         function createAttribute( spec ){
-            if( arguments.length == 2 ){
+            if( arguments.length >= 2 ){
                 spec = {
                     type : arguments[ 0 ],
                     value : arguments[ 1 ]
                 };
+
+                if( arguments.length >= 3 ){
+                    _.extend( spec, arguments[ 2 ] );
+                }
             }
             else if( 'typeOrValue' in spec ){
                 var typeOrValue = spec.typeOrValue;
@@ -416,10 +420,35 @@
                 var res = {};
 
                 _.each( this.attributes, function( value, key ){
-                    res[ key ] = value && value.toJSON ? value.toJSON() : value;
-                });
+                    var spec = this.__attributes[ key ],
+                        toJSON = spec && spec.toJSON;
+
+                    if( toJSON !== false ){
+                        if( _.isFunction( toJSON ) ){
+                            res[ key ] = toJSON.call( this, value, key );
+                        }
+                        else{
+                            res[ key ] = value && value.toJSON ? value.toJSON() : value;
+                        }
+                    }
+                }, this );
 
                 return res;
+            },
+
+            parse : function( data ){
+                var attrs = {},
+                    parsed = false;
+
+                _.each( data, function( value, name ){
+                    var spec = this.__attributes[ name ];
+                    if( spec && spec.parse ){
+                        parsed = true;
+                        attrs[ name ] = spec.parse.call( this, value, name );
+                    }
+                }, this );
+
+                return parsed ? _.defaults( attrs, data ) : data;
             },
 
             isValid : function( options ){

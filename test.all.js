@@ -522,4 +522,71 @@ define( function( require, exports, module ){
         });
     });
 
+    describe( 'Relations defined by model id references', function(){
+        var C = Base.Collection.extend({
+            model : Base.Model.extend({
+                defaults : {
+                    name : String
+                }
+            })
+        });
+
+        var models = new C( _.map( [ 1, 2, 3 ], function( id ){
+            return {
+                id : id,
+                name : id
+            };
+        }));
+
+        describe( 'Model.RefTo', function(){
+            var M = Base.Model.extend({
+                defaults : {
+                    ref : Base.Model.RefTo( models )
+                }
+            });
+
+            var m;
+
+            it( 'should parse references', function(){
+                m = new M({ id : 1, ref : 1 }, { parse: true });
+                m.ref.name.should.eql( '1' );
+            });
+
+            it( 'should accept assignments with models', function(){
+                m.ref = models.get( 2 );
+                m.ref.name.should.eql( '2' );
+            });
+
+            it( 'should be serialized to id', function(){
+                var json = m.toJSON();
+                json.ref.should.eql( 2 );
+            });
+        });
+
+        describe( 'Collection.RefsTo', function(){
+            var M = Base.Model.extend({
+                defaults : {
+                    refs : Base.Collection.RefsTo( models )
+                }
+            });
+
+            var m;
+
+            it( 'should parse references', function(){
+                m = new M({ id : 1, refs : [ 1, 2 ]}, { parse: true });
+                m.refs.get( 1 ).name.should.eql( '1' );
+                m.refs.get( 2 ).name.should.eql( '2' );
+            });
+
+            it( 'should accept assignments with models', function(){
+                m.refs = [ models.get( 2 ) ];
+                m.refs.first().name.should.eql( '2' );
+            });
+
+            it( 'should be serialized to id', function(){
+                var json = m.toJSON();
+                json.refs.should.eql( [ 2 ] );
+            });
+        });
+    });
 });

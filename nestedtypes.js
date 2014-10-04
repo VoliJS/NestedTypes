@@ -611,7 +611,7 @@
 
                             if( !ref.model ){
                                 var master = _.isFunction( collectionOrFunc ) ? collectionOrFunc.call( this ) : collectionOrFunc;
-                                master && master.length && ( ref.model = master.get( name ) );
+                                master && master.length && ( ref.model = master.get( ref.id ) );
                             }
 
                             return ref.model;
@@ -750,6 +750,10 @@
                             }
 
                             return refs;
+                        },
+
+                        set : function( values ){
+                            return this.set( name, values );
                         },
 
                         enumerable : false

@@ -497,7 +497,7 @@
                 attributes[ name ] = attr;
             });
 
-            return _.extend( {}, spec, {
+            return _.extend( _.omit( spec, 'collection' ), {
                 __defaults  : defaults, // needed for attributes inheritance
                 __attributes : attributes
             });
@@ -582,53 +582,14 @@
 
             var This = extend.call( this, spec, staticProps );
 
+            This.Collection = this.Collection.extend( _.defaults( protoProps.collection || {}, { model : This } ) );
+
             createNativeProperties( This, spec );
 
             return This;
         };
 
-        var ModelReference = Model.extend({
-            __class : 'Model.RefTo',
-
-            model : null,
-
-            toJSON : function(){
-                return this.id;
-            },
-
-            parse : function( id ){
-                return { id : id };
-            }
-        });
-
-        Model.RefTo = function( collectionOrFunc ){
-            return Model.Attribute({
-                type : ModelReference,
-                property : function( name ){
-                    return {
-                        get : function(){
-                            var ref = this.attributes[ name ];
-
-                            if( !ref.model ){
-                                var master = _.isFunction( collectionOrFunc ) ? collectionOrFunc.call( this ) : collectionOrFunc;
-                                master && master.length && ( ref.model = master.get( ref.id ) );
-                            }
-
-                            return ref.model;
-                        },
-
-                        set : function( model ){
-                            var ref = this.attributes[ name ];
-
-                            ref.model = model;
-                            ref.id = model.id;
-                        }
-                    }
-                }
-            });
-        };
-
-        Model.Property = function( fun ){
+        Model.Property = function( fun ){               // TODO: what's this and why it is here?
             return Model.Attribute({
                 type : exports.Class.extend({
                     toJSON : fun
@@ -640,7 +601,7 @@
         return Model;
     }();
 
-    exports.Collection = function(){
+    exports.Collection = exports.Model.Collection = function(){
         var Collection,
             CollectionProto = Backbone.Collection.prototype;
 
@@ -693,9 +654,57 @@
 
         Collection.extend = createExtendFor( Collection );
 
+        return Collection;
+    }();
+
+    exports.Model.From = exports.Model.RefTo = function(){
+        return function( collectionOrFunc ){
+            var getMaster = _.isFunction( collectionOrFunc ) ? collectionOrFunc : function(){ return collectionOrFunc; };
+
+            return exports.Model.Attribute({
+                value : null,
+
+                toJSON : function( value ){
+                    return typeof value === 'object' ? value.id : value;
+                },
+
+                property : function( name ){
+                    return {
+                        get : function(){
+                            var objOrId = this.attributes[ name ];
+
+                            if( typeof objOrId !== 'object' ){
+                                var master = getMaster.call( this );
+
+                                if( master && master.length ){
+                                    objOrId = master.get( objOrId ) || null;
+                                    this.set( name, objOrId, { silent: true });
+                                }
+                                else{
+                                    objOrId = { id: objOrId };
+                                }
+                            }
+
+                            return objOrId;
+                        },
+
+                        set : function( modelOrId ){
+                            this.set( name, modelOrId );
+
+                            return modelOrId;
+                        }
+                    }
+                }
+            });
+        };
+    }();
+
+    exports.Collection.SubsetOf = exports.Collection.RefsTo = function(){
+        var CollectionProto = exports.Collection.prototype;
+
         var refsCollectionSpec = {
             triggerWhenChanged : "add remove reset sort",
-            __class : 'Collection.RefsTo',
+            __class : 'Collection.SubsetOf',
 
             isResolved : false,
 
@@ -704,7 +713,7 @@
             },
 
             deepClone : function(){
-                return Collection.prototype.clone.apply( this, arguments );
+                return CollectionProto.clone.apply( this, arguments );
             },
 
             parse : function( raw ){
@@ -718,9 +727,23 @@
                 });
             },
 
-            set : function( models, options ){
-                options = _.extend( {}, options, { merge : false } );
-                CollectionProto.set.call( this, models, options  );
+            toggle : function( model ){
+                if( this.get( model ) ){
+                    this.remove( model );
+                }
+                else{
+                    this.add( model );
+                }
+            },
+
+            set : function( models, upperOptions ){
+                var options = { merge : false };
+
+                if( models instanceof Array && models.length && typeof models[ 0 ] !== 'object' ){
+                    options.parse = true;
+                }
+
+                CollectionProto.set.call( this, models, _.defaults( options, upperOptions ) );
             },
 
             resolve : function( collection ){
@@ -735,17 +758,18 @@
             }
         };
 
-        Collection.RefsTo = function( collectionOrFunc ){
+        return function( collectionOrFunc ){
+            var getMaster = _.isFunction( collectionOrFunc ) ? collectionOrFunc : function(){ return collectionOrFunc; };
+
             return exports.Model.Attribute({
                 type : this.extend( refsCollectionSpec ),
                 property : function( name ){
                     return {
                         get : function(){
-                            var refs = this.attributes[ name ],
-                                master;
+                            var refs = this.attributes[ name ];
 
                             if( !refs.isResolved ){
-                                master = _.isFunction( collectionOrFunc ) ? collectionOrFunc.call( this ) : collectionOrFunc;
+                                var master = getMaster.call( this );
                                 master && master.length && refs.resolve( master );
                             }
 
@@ -761,7 +785,5 @@
                 }
             });
         };
-
-        return Collection;
     }();
 }));

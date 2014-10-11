@@ -538,10 +538,10 @@ define( function( require, exports, module ){
             };
         }));
 
-        describe( 'Model.RefTo', function(){
+        describe( 'Model.From', function(){
             var M = Base.Model.extend({
                 defaults : {
-                    ref : Base.Model.RefTo( models )
+                    ref : Base.Model.From( models )
                 }
             });
 
@@ -563,10 +563,10 @@ define( function( require, exports, module ){
             });
         });
 
-        describe( 'Collection.RefsTo', function(){
+        describe( 'Collection.SubsetOf', function(){
             var M = Base.Model.extend({
                 defaults : {
-                    refs : Base.Collection.RefsTo( models )
+                    refs : Base.Collection.SubsetOf( models )
                 }
             });
 
@@ -586,6 +586,63 @@ define( function( require, exports, module ){
             it( 'should be serialized to id', function(){
                 var json = m.toJSON();
                 json.refs.should.eql( [ 2 ] );
+            });
+        });
+
+        describe( 'Model.Collection type', function(){
+            var M, M2, M3;
+
+            it( 'is defined for base Model type', function(){
+                Base.Model.Collection.should.eql( Base.Collection );
+            });
+
+            it( 'is generated for Model subclasses', function(){
+                M = Base.Model.extend({
+                    urlBase : '',
+                    save : function(){},
+
+                    defaults : {
+                        a : 1,
+                        b : 2
+                    }
+                });
+
+                var c = new M.Collection();
+                c.create({ a: 7 });
+                c.first().b.should.eql( 2 );
+            });
+
+            it( 'can be customized by defining Model.collection property', function(){
+                M2 = M.extend({
+                    defaults : {
+                        c : 3
+                    },
+
+                    collection : {
+                        something : 'useless',
+                        initialize : function(){
+                            this.create({ c : 0 });
+                        }
+                    }
+                });
+
+                var c = new M2.Collection();
+                c.something.should.eql( 'useless' );
+                c.first().a.should.eql( 1 );
+                c.first().c.should.eql( 0 );
+            });
+
+            it( 'is inherited from base Model.Collection', function(){
+                M3 = M2.extend({
+                    defaults : {
+                        d : 8
+                    }
+                });
+
+                var c = new M3.Collection();
+                c.something.should.eql( 'useless' );
+                c.first().a.should.eql( 1 );
+                c.first().d.should.eql( 8 );
             });
         });
     });

@@ -476,15 +476,8 @@
             }
 
             var defaults    = _.defaults( spec.defaults || {}, Base.prototype.__defaults ),
-                idAttr      = spec.idAttribute || Base.prototype.idAttribute,
+                idAttrName      = spec.idAttribute || Base.prototype.idAttribute,
                 attributes = {};
-
-            attributes[ idAttr ] = exports.Attribute( { value : undefined } );
-            attributes[ idAttr ].name = idAttr;
-
-            if( idAttr === 'id' ){
-                attributes[ idAttr ].property = false;
-            }
 
             _.each( defaults, function( attr, name ){
                 attr instanceof exports.Attribute.Type || ( attr = exports.Attribute({ typeOrValue: attr }) );
@@ -496,6 +489,16 @@
 
                 attributes[ name ] = attr;
             });
+
+            // Handle id attribute, whenever it was defined or not...
+            attributes[ idAttrName ] || ( attributes[ idAttrName ] = exports.Attribute({ value : undefined }) );
+            var idAttr = attributes[ idAttrName ];
+            'value' in idAttr || ( idAttr.value = undefined ); // id attribute must have no default value
+            idAttr.name = idAttrName;
+
+            if( idAttrName === 'id' ){
+                idAttr.property = false; // to prevent conflict with backbone's model 'id'
+            }
 
             return _.extend( _.omit( spec, 'collection' ), {
                 __defaults  : defaults, // needed for attributes inheritance

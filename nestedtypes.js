@@ -584,7 +584,9 @@
 
             var This = extend.call( this, spec, staticProps );
 
-            This.Collection = this.Collection.extend( _.defaults( protoProps.collection || {}, { model : This } ) );
+            var collectionSpec = { model : This };
+            spec.urlRoot && ( collectionSpec.url = spec.urlRoot );
+            This.Collection = this.Collection.extend( _.defaults( protoProps.collection || {}, collectionSpec ));
 
             createNativeProperties( This, spec );
 

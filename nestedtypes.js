@@ -491,8 +491,7 @@
             });
 
             // Handle id attribute, whenever it was defined or not...
-            attributes[ idAttrName ] || ( attributes[ idAttrName ] = exports.Attribute({ value : undefined }) );
-            var idAttr = attributes[ idAttrName ];
+            var idAttr = attributes[ idAttrName ] || ( attributes[ idAttrName ] = exports.Attribute({ value : undefined }) );
             'value' in idAttr || ( idAttr.value = undefined ); // id attribute must have no default value
             idAttr.name = idAttrName;
 

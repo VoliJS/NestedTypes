@@ -153,6 +153,12 @@
             }
         }).bind( Function.prototype );
 
+        var primitiveTypes = {
+            string : String,
+            number : Number,
+            boolean : Boolean
+        };
+
         function createAttribute( spec ){
             if( arguments.length >= 2 ){
                 spec = {
@@ -165,8 +171,15 @@
                 }
             }
             else if( 'typeOrValue' in spec ){
-                var typeOrValue = spec.typeOrValue;
-                spec = _.isFunction( typeOrValue ) ? { type : typeOrValue } : { value : typeOrValue };
+                var typeOrValue = spec.typeOrValue,
+                    primitiveType = primitiveTypes[ typeof typeOrValue ];
+
+                if( primitiveType ){
+                    spec = { type : primitiveType, value : typeOrValue };
+                }
+                else{
+                    spec = _.isFunction( typeOrValue ) ? { type : typeOrValue } : { value : typeOrValue };
+                }
             }
 
             if( spec.type ){

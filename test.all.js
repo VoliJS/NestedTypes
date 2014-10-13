@@ -42,7 +42,7 @@ define( function( require, exports, module ){
             m.some.should.eql( 4 );
 
             m.once( 'change:b', function(){
-                m.b.should.eql( 5 );
+                m.b.should.eql( '5' );
                 done();
             });
 

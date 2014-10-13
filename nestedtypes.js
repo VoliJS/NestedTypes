@@ -347,6 +347,9 @@
                 return baseModelSet.call( this, name, value, options );
             },
 
+            // override get to invoke native getter...
+            get : function( name ){ return this[ name ]; },
+
             // Create deep copy for all nested objects...
             deepClone: function(){
                 var attrs = {};

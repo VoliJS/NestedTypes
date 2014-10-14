@@ -199,6 +199,8 @@
         return createAttribute;
     })();
 
+    exports.value = function( value ){ return exports.options({ value: value }); };
+
     ( function(){
         var numericKeys = [ 1, 4, 5, 6, 7, 10, 11 ],
             msDatePattern = /\/Date\(([0-9]+)\)\//,

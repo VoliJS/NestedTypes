@@ -142,8 +142,8 @@ define( function( require, exports, module ){
                     defaults : {
                         a : [ 1, 2 ],
                         b : { a: 1, b : [ 2 ] },
-                        f : Date.Value( "2012-12-12T12:12" ),
-                        g : Date.Attribute({
+                        f : Date.value( "2012-12-12T12:12" ),
+                        g : Date.options({
                             value : "2012-12-12T12:12"
                         })
                     }
@@ -218,7 +218,7 @@ define( function( require, exports, module ){
                 var M = Base.Model.extend({
                     defaults : {
                         first : Main,
-                        second : Main.Attribute({
+                        second : Main.options({
                             triggerWhenChanged : false
                         })
                     }

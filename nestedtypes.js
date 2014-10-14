@@ -86,7 +86,7 @@
         - transparent typed attributes serialization and deserialization
      **************************************************/
 
-    exports.Attribute = ( function(){
+    exports.options = ( function(){
         var Attribute = exports.Class.extend({
             type : null,
 
@@ -103,6 +103,11 @@
 
                     enumerable : false
                 };
+            },
+
+            options : function( spec ){
+                _.extend( this, spec );
+                return this;
             },
 
             initialize : function( spec ){
@@ -129,12 +134,12 @@
         },{
             bind : ( function(){
                 var attributeMethods = {
-                    Attribute : function( spec ){
+                    options : function( spec ){
                         spec.type || ( spec.type = this );
                         return new this.NestedType( spec );
                     },
 
-                    Value : function( value ){
+                    value : function( value ){
                         return new this.NestedType({ type : this, value : value });
                     }
                 };
@@ -183,7 +188,7 @@
             }
 
             if( spec.type ){
-                return spec.type.Attribute( spec );
+                return spec.type.options( spec );
             }
             else{
                 return new Attribute( spec );
@@ -232,7 +237,7 @@
             return timestamp;
         }
 
-        exports.Attribute.Type.extend({
+        exports.options.Type.extend({
             cast : function( value ){
                 if( value == null || value instanceof Date ){
                     return value;
@@ -247,7 +252,7 @@
         }).bind( Date );
     })();
 
-    exports.Attribute.Type.extend({
+    exports.options.Type.extend({
         cast : function( value ){
             return value == null ? null : this.type( value );
         }
@@ -263,7 +268,7 @@
             listening: {},
 
             __defaults: {},
-            __attributes: { id : exports.Attribute({ name: 'id', value : undefined }) },
+            __attributes: { id : exports.options({ name: 'id', value : undefined }) },
             __class : 'Model',
 
             __duringSet: 0,
@@ -425,7 +430,7 @@
                 attributes = {};
 
             _.each( defaults, function( attr, name ){
-                attr instanceof exports.Attribute.Type || ( attr = exports.Attribute({ typeOrValue: attr }) );
+                attr instanceof exports.options.Type || ( attr = exports.options({ typeOrValue: attr }) );
                 attr.name = name;
 
                 if( name in Base.prototype.__defaults ){
@@ -436,7 +441,7 @@
             });
 
             // Handle id attribute, whenever it was defined or not...
-            var idAttr = attributes[ idAttrName ] || ( attributes[ idAttrName ] = exports.Attribute({ value : undefined }) );
+            var idAttr = attributes[ idAttrName ] || ( attributes[ idAttrName ] = exports.options({ value : undefined }) );
             'value' in idAttr || ( idAttr.value = undefined ); // id attribute must have no default value
             idAttr.name = idAttrName;
 
@@ -597,7 +602,7 @@
         return Collection;
     })();
 
-    exports.Attribute.Type.extend({
+    exports.options.Type.extend({
         isBackboneType : true,
 
         _name : '',
@@ -669,7 +674,7 @@
         },
 
         initialize : function( spec ){
-            exports.Attribute.Type.prototype.initialize.apply( this, arguments );
+            exports.options.Type.prototype.initialize.apply( this, arguments );
             _.isUndefined( this.triggerWhenChanged ) && ( this.triggerWhenChanged = spec.type.prototype.triggerWhenChanged );
         }
     }).bind( exports.Model, exports.Collection );
@@ -678,7 +683,7 @@
         return function( collectionOrFunc ){
             var getMaster = _.isFunction( collectionOrFunc ) ? collectionOrFunc : function(){ return collectionOrFunc; };
 
-            return exports.Attribute({
+            return exports.options({
                 value : null,
 
                 toJSON : function( value ){
@@ -778,7 +783,7 @@
         return function( collectionOrFunc ){
             var getMaster = _.isFunction( collectionOrFunc ) ? collectionOrFunc : function(){ return collectionOrFunc; };
 
-            return exports.Attribute({
+            return exports.options({
                 type : this.extend( refsCollectionSpec ),
                 property : function( name ){
                     return {

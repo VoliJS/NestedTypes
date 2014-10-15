@@ -93,18 +93,14 @@ or
     <script src="nestedtypes.js" type="text/javascript"></script>
 
 
-API Reference
-=================
-
-Basic features
---------------
-
-=== Model.defaults:
-    - Native properties are created for every entry.
-    - Entries are inherited from the base Model.defaults.
-    - JSON literals will be deep copied upon creation of model.
-    - defaults *must* be an object, functions are not supported.
-    - attributes *must* be declared in defaults.
+# API Reference
+## Basic features
+### Model.defaults:
+- Native properties are created for every entry.
+- Entries are inherited from the base Model.defaults.
+- JSON literals will be deep copied upon creation of model.
+- defaults *must* be an object, functions are not supported.
+- attributes *must* be declared in defaults.
 
 
 ```javascript
@@ -132,7 +128,7 @@ Basic features
     user.roles.push( 'admin' );
 ```
 
-- Inline collection definition (Model.collection).
+### Inline collection definition (Model.collection).
 
 By the way, our models from previous example has collections defined already.
 ```javascript
@@ -170,7 +166,7 @@ var DetailedUserInfo = UserInfo.extend({
 */
 ```
 
-- Class type, which can be extended and can throw/listen to events.
+### Class type, which can be extended and can throw/listen to events.
 
 ```javascript
     var A = NestedTypes.Class.extend({
@@ -197,7 +193,7 @@ var DetailedUserInfo = UserInfo.extend({
     var b = new B( options );
 ```
 
-- Explicit native properties definition (Model, Class, Collection).
+### Explicit native properties definition (Model, Class, Collection).
 
 Native properties are generated for model attributes, however, they also can be defined explicitly for Model, Class, Collection with 'properties' specification.
 
@@ -235,7 +231,7 @@ For Model, explicit property will override generated one, and "properties : fals
     console.assert( a.c === 2 );
 ```
 
-- Run-time errors
+### Run-time errors
 
 NestedTypes detect four error types in the runtime, which will be logged to console using console.error.
 
@@ -258,8 +254,7 @@ Attempt to set attribute which is not declared in defaults.
 [Type Error](Model.defaults) "defaults" must be an object, functions are not supported
 ```
 
-Model.defaults Type Specs
--------------------------
+## Model.defaults Type Specs
 
 Type specs can be optionally used instead of init values in Model.defaults. Type specs looks like this:
 
@@ -273,7 +268,7 @@ where Type is constructor function.
 
 For typed attributes, if it is assigned with the value of the specified type or null, it will be replaced. In other case NestedTypes try to convert value to the proper attribute's type during 'set'.
 
-- Primitive types (Boolean, Number, String)
+### Primitive types (Boolean, Number, String)
 
 Primitive types are being infered from their values, so in most cases special type annotation syntax is not really required.
 
@@ -308,7 +303,7 @@ a.boolean = 0;
 console.assert( a.boolean === false );
 ```
 
-- Date type
+### Date type
     - Automatically serialized to ISO string (don't need to override toJSON)
     - Cross-browser parse of ISO strings, integer timestamps, and MS date format
     - Automatic parsing of server's response
@@ -336,7 +331,7 @@ a.updated = '/Date(32323232323)/';
 console.assert( a.updated instanceof Date );
 ```
 
-- Class type and JS objects
+### Class type and JS objects
     - new object will be created automatically
     - constructor is used for type cast
 
@@ -356,8 +351,7 @@ a.obj2 = "dsds"; // a.obj2 = new Ctor( "dsds" );
 console.assert( a.obj2 instanceof Ctor );
 ```
 
-Attribute options
------------------
+### Attribute options
 - type and value
 - override native property
 - override parse/toJSON

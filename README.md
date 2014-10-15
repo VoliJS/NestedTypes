@@ -99,7 +99,7 @@ API Reference
 Basic features
 --------------
 
-- Model.defaults:
+=== Model.defaults:
     - Native properties are created for every entry.
     - Entries are inherited from the base Model.defaults.
     - JSON literals will be deep copied upon creation of model.

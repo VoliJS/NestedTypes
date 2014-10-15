@@ -378,13 +378,15 @@ Both long and short forms of attribute options are chainable. I.e. following con
     ...
 
 Available options so far are:
-    - type   : attribute's type (constructor function)
-    - value  : attribute's default value
-    - toJSON : false, to to remove attribute from JSON
-               function( attrValue, attrName ), to customize  toJSON for specific attribute
-    - parse  : function( data ) -> {attribute hash}, to customize parse for specific attribute
-    - get    : function() -> value, to override native property getter for specific attribute
-    - set    : function( value ) -> value, to override native property setter for specific attribute
+```
+    type   : attribute's type (constructor function)
+    value  : attribute's default value
+    toJSON : false, to to remove attribute from JSON
+             function( attrValue, attrName ), to customize  toJSON for specific attribute
+    parse  : function( data ) -> {attribute hash}, to customize parse for specific attribute
+    get    : function() -> value, to override native property getter for specific attribute
+    set    : function( value ) -> value, to override native property setter for specific attribute
+```
 
 Nested Models and Collections
 -----------------------------

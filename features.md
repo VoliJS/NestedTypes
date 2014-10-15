@@ -1,5 +1,17 @@
 NestedTypes feature list
 ========================
+Features:
+
+- Class type
+- Native properties for Model attributes, Collection, and Class.
+- Inline Collection definition syntax for Models.
+- Model.defaults inheritance and deep copying.
+- Type declarations and automatic type casts for Model attributes.
+- Nested models and collections.
+- One-to-many and many-to-many models relations.
+- 'change' event bubbling for nested models and collections.
+- Attribute-level control for parse/toJSON and event bubbling.
+- Run-time type error detection and logging.
 
 Basic features
 --------------
@@ -47,6 +59,7 @@ Nested Models and Collections
     - replace:attribute event
     - 'triggerWhenChanged' option
 
-
 Models Relations
 ----------------
+- Model.From
+- Collection.SubsetOf

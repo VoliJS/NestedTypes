@@ -1,3 +1,9 @@
+IMPORTANT. There changes in verion 9.x which is not compatible with previous versions. Following changes in code will be required:
+- NestedTypes.Attribute({ ... }) -> NestedTypes.options({ ... })
+- NestedTypes.Attribute( Type, value ) -> Type.value( value )
+
+See "Attribute options" section for details on new type annotation syntax.
+
 backbone.nestedTypes
 ====================
 

@@ -1,4 +1,4 @@
-// Backbone.nestedTypes 0.8.1 (https://github.com/Volicon/backbone.nestedTypes)
+// Backbone.nestedTypes 0.9.0 (https://github.com/Volicon/backbone.nestedTypes)
 // (c) 2014 Vlad Balin & Volicon, may be freely distributed under the MIT license
 
 // Date.parse with progressive enhancement for ISO 8601 <https://github.com/csnover/js-iso8601>
@@ -563,7 +563,7 @@
                 if( !--this.__changing ){
                     this.trigger( 'after:change' );
                 }
-				
+
 				return res;
             };
         }

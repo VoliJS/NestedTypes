@@ -42,7 +42,7 @@ define( function( require, exports, module ){
             m.some.should.eql( 4 );
 
             m.once( 'change:b', function(){
-                m.b.should.eql( 5 );
+                m.b.should.eql( '5' );
                 done();
             });
 
@@ -142,9 +142,8 @@ define( function( require, exports, module ){
                     defaults : {
                         a : [ 1, 2 ],
                         b : { a: 1, b : [ 2 ] },
-                        f : Base.Attribute( Date, "2012-12-12T12:12" ),
-                        g : Base.Attribute({
-                            type : Date,
+                        f : Date.value( "2012-12-12T12:12" ),
+                        g : Date.options({
                             value : "2012-12-12T12:12"
                         })
                     }
@@ -219,20 +218,9 @@ define( function( require, exports, module ){
                 var M = Base.Model.extend({
                     defaults : {
                         first : Main,
-                        second : Base.Attribute({
-                            type : Main,
+                        second : Main.options({
                             triggerWhenChanged : false
                         })
-                    }
-                });
-
-                var M2 = Base.Model.extend({
-                    attributes : {
-                        first : Main,
-                        second : {
-                            type : Main,
-                            triggerWhenChanged : false
-                        }
                     }
                 });
 

@@ -1,4 +1,4 @@
-// Backbone.nestedTypes 0.8.1 (https://github.com/Volicon/backbone.nestedTypes)
+// Backbone.nestedTypes 0.9.0 (https://github.com/Volicon/backbone.nestedTypes)
 // (c) 2014 Vlad Balin & Volicon, may be freely distributed under the MIT license
 
 // Date.parse with progressive enhancement for ISO 8601 <https://github.com/csnover/js-iso8601>
@@ -65,7 +65,7 @@
         - can send out and listen to backbone events
         - can have native properties
      **************************************************/
-    exports.Class = function(){
+    exports.Class = ( function(){
         function Class(){
             this.initialize.apply( this, arguments );
         }
@@ -74,7 +74,7 @@
         Class.extend = createExtendFor( Class );
 
         return Class;
-    }();
+    })();
 
     /*************************************************
         NestedTypes.Model
@@ -86,11 +86,8 @@
         - transparent typed attributes serialization and deserialization
      **************************************************/
 
-    exports.Attribute = function(){
-        var baseModelSet =  Backbone.Model.prototype.set;
-
+    exports.options = ( function(){
         var Attribute = exports.Class.extend({
-            isBackboneType : false,
             type : null,
 
             property : function( name ){
@@ -106,6 +103,11 @@
 
                     enumerable : false
                 };
+            },
+
+            options : function( spec ){
+                _.extend( this, spec );
+                return this;
             },
 
             initialize : function( spec ){
@@ -129,149 +131,38 @@
                     };
                 }
             }
+        },{
+            bind : ( function(){
+                var attributeMethods = {
+                    options : function( spec ){
+                        spec.type || ( spec.type = this );
+                        return new this.NestedType( spec );
+                    },
+
+                    value : function( value ){
+                        return new this.NestedType({ type : this, value : value });
+                    }
+                };
+
+                return function(){
+                    _.each( arguments, function( Type ){
+                        _.extend( Type, attributeMethods, { NestedType : this } );
+                    }, this );
+                };
+            })()
         });
 
-        var PrimitiveType = Attribute.extend({
-            cast : function( value ){
-                return value == null ? null : this.type( value );
-            }
-        });
-
-        var DateType = Attribute.extend({
-            parse : function(){
-                var numericKeys = [ 1, 4, 5, 6, 7, 10, 11 ],
-                    msDatePattern = /\/Date\(([0-9]+)\)\//,
-                    isoDatePattern = /^(\d{4}|[+\-]\d{6})(?:-(\d{2})(?:-(\d{2}))?)?(?:T(\d{2}):(\d{2})(?::(\d{2})(?:\.(\d{3}))?)?(?:(Z)|([+\-])(\d{2})(?::(\d{2}))?)?)?$/;
-
-                return function( date ){
-                    var msDate, timestamp, struct, minutesOffset = 0;
-
-                    if( msDate = msDatePattern.exec( date ) ){
-                        timestamp = Number( msDate[ 1 ] );
-                    }
-                    else if(( struct = isoDatePattern.exec( date ))) {
-                        // avoid NaN timestamps caused by “undefined” values being passed to Date.UTC
-                        for( var i = 0, k; ( k = numericKeys[i] ); ++i ) {
-                            struct[ k ] = +struct[ k ] || 0;
-                        }
-
-                        // allow undefined days and months
-                        struct[ 2 ] = (+struct[ 2 ] || 1) - 1;
-                        struct[ 3 ] = +struct[ 3 ] || 1;
-
-                        if (struct[ 8 ] !== 'Z' && struct[ 9 ] !== undefined) {
-                            minutesOffset = struct[ 10 ] * 60 + struct[ 11 ];
-
-                            if (struct[ 9 ] === '+') {
-                                minutesOffset = 0 - minutesOffset;
-                            }
-                        }
-
-                        timestamp = Date.UTC(struct[ 1 ], struct[ 2 ], struct[ 3 ], struct[ 4 ], struct[ 5 ] + minutesOffset, struct[ 6 ], struct[ 7 ]);
-                    }
-                    else {
-                        timestamp = Date.parse( date );
-                    }
-
-                    return timestamp;
-                }
-            }(),
-
-            cast : function( value ){
-                if( value == null || value instanceof Date ){
-                    return value;
-                }
-
-                if( _.isString( value ) ){
-                    value = this.parse( value );
-                }
-
-                return new Date( value );
-            }
-        });
-
-        var CtorType = Attribute.extend({
+        Attribute.extend({
             cast : function( value ){
                 return value == null || value instanceof this.type ? value : new this.type( value );
             }
-        });
+        }).bind( Function.prototype );
 
-        var BackboneType = Attribute.extend({
-            isBackboneType : true,
-
-            _name : '',
-            handleNestedChange : function(){},
-
-            properties : {
-                name : {
-                    set : function( name ){
-                        this._name = name;
-
-                        // (!) this handler will be called in the context of model
-                        this.handleNestedChange = function(){
-                            var value = this.attributes[ name ];
-
-                            if( this.__duringSet ){
-                                this.__nestedChanges[ name ] = value;
-                            }
-                            else{
-                                this.attributes[ name ] = null;
-                                baseModelSet.call( this, name, value );
-                            }
-                        }
-                    },
-
-                    get : function(){
-                        return this._name;
-                    }
-                }
-            },
-
-            delegateEvents : function( model, oldValue, newValue ){
-                var name = this.name;
-
-                oldValue && model.stopListening( oldValue );
-
-                if( newValue ){
-                    model.listenTo( newValue, 'before:change', model.__beginChange );
-                    model.listenTo( newValue, 'after:change', model.__commitChange );
-                    model.listenTo( newValue, this.triggerWhenChanged, this.handleNestedChange );
-
-                    _.each( model.listening[ name ], function( handler, events ){
-                        var callback = typeof handler === 'string' ? this[ handler ] : handler;
-                        this.listenTo( newValue, events, callback );
-                    }, this );
-                }
-
-                model.trigger( 'replace:' + name, model, newValue, oldValue );
-            },
-
-            cast : function( value, options, model ){
-                var incompatibleType = value != null && !( value instanceof this.type ),
-                    existingModelOrCollection = model.attributes[ this.name ];
-
-                if( incompatibleType ){
-                    if( existingModelOrCollection ){ // ...delegate update for existing object 'set' method
-                        existingModelOrCollection.set( value, options );
-                        value = existingModelOrCollection;
-                    }
-                    else{ // ...or create a new object, if it's not exist
-                        value = new this.type( value, options );
-                    }
-                }
-
-                if( this.triggerWhenChanged && value !== existingModelOrCollection ){
-                    this.delegateEvents( model, existingModelOrCollection, value );
-                }
-
-                return value;
-            },
-
-            initialize : function( spec ){
-                Attribute.prototype.initialize.apply( this, arguments );
-                _.isUndefined( this.triggerWhenChanged ) && ( this.triggerWhenChanged = spec.type.prototype.triggerWhenChanged );
-            }
-        });
+        var primitiveTypes = {
+            string : String,
+            number : Number,
+            boolean : Boolean
+        };
 
         function createAttribute( spec ){
             if( arguments.length >= 2 ){
@@ -285,21 +176,19 @@
                 }
             }
             else if( 'typeOrValue' in spec ){
-                var typeOrValue = spec.typeOrValue;
-                spec = _.isFunction( typeOrValue ) ? { type : typeOrValue } : { value : typeOrValue };
+                var typeOrValue = spec.typeOrValue,
+                    primitiveType = primitiveTypes[ typeof typeOrValue ];
+
+                if( primitiveType ){
+                    spec = { type : primitiveType, value : typeOrValue };
+                }
+                else{
+                    spec = _.isFunction( typeOrValue ) ? { type : typeOrValue } : { value : typeOrValue };
+                }
             }
 
-            if( spec.type === String || spec.type === Number || spec.type === Boolean ){
-                return new PrimitiveType( spec );
-            }
-            else if( spec.type && spec.type.prototype.triggerWhenChanged ){
-                return new BackboneType( spec );
-            }
-            else if( spec.type === Date ){
-                return new DateType( spec );
-            }
-            else if( _.isFunction( spec.type ) ){
-                return new CtorType( spec );
+            if( spec.type ){
+                return spec.type.options( spec );
             }
             else{
                 return new Attribute( spec );
@@ -308,18 +197,80 @@
 
         createAttribute.Type = Attribute;
         return createAttribute;
-    }();
+    })();
 
-    exports.Model = function(){
-        var ModelProto = Backbone.Model.prototype,
-            baseModelSet = ModelProto.set;
+    exports.value = function( value ){ return exports.options({ value: value }); };
+
+    ( function(){
+        var numericKeys = [ 1, 4, 5, 6, 7, 10, 11 ],
+            msDatePattern = /\/Date\(([0-9]+)\)\//,
+            isoDatePattern = /^(\d{4}|[+\-]\d{6})(?:-(\d{2})(?:-(\d{2}))?)?(?:T(\d{2}):(\d{2})(?::(\d{2})(?:\.(\d{3}))?)?(?:(Z)|([+\-])(\d{2})(?::(\d{2}))?)?)?$/;
+
+        function parseDate( date ){
+            var msDate, timestamp, struct, minutesOffset = 0;
+
+            if( msDate = msDatePattern.exec( date ) ){
+                timestamp = Number( msDate[ 1 ] );
+            }
+            else if(( struct = isoDatePattern.exec( date ))) {
+                // avoid NaN timestamps caused by “undefined” values being passed to Date.UTC
+                for( var i = 0, k; ( k = numericKeys[i] ); ++i ) {
+                    struct[ k ] = +struct[ k ] || 0;
+                }
+
+                // allow undefined days and months
+                struct[ 2 ] = (+struct[ 2 ] || 1) - 1;
+                struct[ 3 ] = +struct[ 3 ] || 1;
+
+                if (struct[ 8 ] !== 'Z' && struct[ 9 ] !== undefined) {
+                    minutesOffset = struct[ 10 ] * 60 + struct[ 11 ];
+
+                    if (struct[ 9 ] === '+') {
+                        minutesOffset = 0 - minutesOffset;
+                    }
+                }
+
+                timestamp = Date.UTC(struct[ 1 ], struct[ 2 ], struct[ 3 ], struct[ 4 ], struct[ 5 ] + minutesOffset, struct[ 6 ], struct[ 7 ]);
+            }
+            else {
+                timestamp = Date.parse( date );
+            }
+
+            return timestamp;
+        }
+
+        exports.options.Type.extend({
+            cast : function( value ){
+                if( value == null || value instanceof Date ){
+                    return value;
+                }
+
+                if( _.isString( value ) ){
+                    value = parseDate( value );
+                }
+
+                return new Date( value );
+            }
+        }).bind( Date );
+    })();
+
+    exports.options.Type.extend({
+        cast : function( value ){
+            return value == null ? null : this.type( value );
+        }
+    }).bind( Number, Boolean, String );
+
+    var baseModelSet =  Backbone.Model.prototype.set;
+
+    exports.Model = ( function(){
+        var ModelProto = Backbone.Model.prototype;
 
         var Model = Backbone.Model.extend( {
             triggerWhenChanged: 'change',
             listening: {},
 
             __defaults: {},
-            __attributes: { id : exports.Attribute({ name: 'id', value : undefined }) },
+            __attributes: { id : exports.options({ name: 'id', value : undefined }) },
             __class : 'Model',
 
             __duringSet: 0,
@@ -403,6 +354,9 @@
                 return baseModelSet.call( this, name, value, options );
             },
 
+            // override get to invoke native getter...
+            get : function( name ){ return this[ name ]; },
+
             // Create deep copy for all nested objects...
             deepClone: function(){
                 var attrs = {};
@@ -468,8 +422,6 @@
             _: _ // add underscore to be accessible in templates
         } );
 
-        Model.Attribute = exports.Attribute;
-
         function parseDefaults( spec, Base ){
             if( _.isFunction( spec.defaults ) ){
                 error.defaultsIsFunction( spec );
@@ -480,7 +432,7 @@
                 attributes = {};
 
             _.each( defaults, function( attr, name ){
-                attr instanceof exports.Attribute.Type || ( attr = exports.Attribute({ typeOrValue: attr }) );
+                attr instanceof exports.options.Type || ( attr = exports.options({ typeOrValue: attr }) );
                 attr.name = name;
 
                 if( name in Base.prototype.__defaults ){
@@ -491,7 +443,7 @@
             });
 
             // Handle id attribute, whenever it was defined or not...
-            var idAttr = attributes[ idAttrName ] || ( attributes[ idAttrName ] = exports.Attribute({ value : undefined }) );
+            var idAttr = attributes[ idAttrName ] || ( attributes[ idAttrName ] = exports.options({ value : undefined }) );
             'value' in idAttr || ( idAttr.value = undefined ); // id attribute must have no default value
             idAttr.name = idAttrName;
 
@@ -593,19 +545,10 @@
             return This;
         };
 
-        Model.Property = function( fun ){               // TODO: what's this and why it is here?
-            return Model.Attribute({
-                type : exports.Class.extend({
-                    toJSON : fun
-                }),
-                get : fun
-            });
-        };
-
         return Model;
-    }();
+    })();
 
-    exports.Collection = exports.Model.Collection = function(){
+    exports.Collection = exports.Model.Collection = ( function(){
         var Collection,
             CollectionProto = Backbone.Collection.prototype;
 
@@ -620,7 +563,7 @@
                 if( !--this.__changing ){
                     this.trigger( 'after:change' );
                 }
-				
+
 				return res;
             };
         }
@@ -659,13 +602,90 @@
         Collection.extend = createExtendFor( Collection );
 
         return Collection;
-    }();
+    })();
 
-    exports.Model.From = exports.Model.RefTo = function(){
+    exports.options.Type.extend({
+        isBackboneType : true,
+
+        _name : '',
+        handleNestedChange : function(){},
+
+        properties : {
+            name : {
+                set : function( name ){
+                    this._name = name;
+
+                    // (!) this handler will be called in the context of model
+                    this.handleNestedChange = function(){
+                        var value = this.attributes[ name ];
+
+                        if( this.__duringSet ){
+                            this.__nestedChanges[ name ] = value;
+                        }
+                        else{
+                            this.attributes[ name ] = null;
+                            baseModelSet.call( this, name, value );
+                        }
+                    }
+                },
+
+                get : function(){
+                    return this._name;
+                }
+            }
+        },
+
+        delegateEvents : function( model, oldValue, newValue ){
+            var name = this.name;
+
+            oldValue && model.stopListening( oldValue );
+
+            if( newValue ){
+                model.listenTo( newValue, 'before:change', model.__beginChange );
+                model.listenTo( newValue, 'after:change', model.__commitChange );
+                model.listenTo( newValue, this.triggerWhenChanged, this.handleNestedChange );
+
+                _.each( model.listening[ name ], function( handler, events ){
+                    var callback = typeof handler === 'string' ? this[ handler ] : handler;
+                    this.listenTo( newValue, events, callback );
+                }, this );
+            }
+
+            model.trigger( 'replace:' + name, model, newValue, oldValue );
+        },
+
+        cast : function( value, options, model ){
+            var incompatibleType = value != null && !( value instanceof this.type ),
+                existingModelOrCollection = model.attributes[ this.name ];
+
+            if( incompatibleType ){
+                if( existingModelOrCollection ){ // ...delegate update for existing object 'set' method
+                    existingModelOrCollection.set( value, options );
+                    value = existingModelOrCollection;
+                }
+                else{ // ...or create a new object, if it's not exist
+                    value = new this.type( value, options );
+                }
+            }
+
+            if( this.triggerWhenChanged && value !== existingModelOrCollection ){
+                this.delegateEvents( model, existingModelOrCollection, value );
+            }
+
+            return value;
+        },
+
+        initialize : function( spec ){
+            exports.options.Type.prototype.initialize.apply( this, arguments );
+            _.isUndefined( this.triggerWhenChanged ) && ( this.triggerWhenChanged = spec.type.prototype.triggerWhenChanged );
+        }
+    }).bind( exports.Model, exports.Collection );
+
+    exports.Model.From = exports.Model.RefTo = ( function(){
         return function( collectionOrFunc ){
             var getMaster = _.isFunction( collectionOrFunc ) ? collectionOrFunc : function(){ return collectionOrFunc; };
 
-            return exports.Model.Attribute({
+            return exports.options({
                 value : null,
 
                 toJSON : function( value ){
@@ -701,9 +721,9 @@
                 }
             });
         };
-    }();
+    })();
 
-    exports.Collection.SubsetOf = exports.Collection.RefsTo = function(){
+    exports.Collection.SubsetOf = exports.Collection.RefsTo = ( function(){
         var CollectionProto = exports.Collection.prototype;
 
         var refsCollectionSpec = {
@@ -765,7 +785,7 @@
         return function( collectionOrFunc ){
             var getMaster = _.isFunction( collectionOrFunc ) ? collectionOrFunc : function(){ return collectionOrFunc; };
 
-            return exports.Model.Attribute({
+            return exports.options({
                 type : this.extend( refsCollectionSpec ),
                 property : function( name ){
                     return {
@@ -789,5 +809,5 @@
                 }
             });
         };
-    }();
+    })();
 }));

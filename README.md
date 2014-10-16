@@ -1,214 +1,404 @@
+IMPORTANT. There changes in verion 9.x which is not compatible with previous versions. Following changes in code will be required:
+- NestedTypes.Attribute({ ... }) -> NestedTypes.options({ ... })
+- NestedTypes.Attribute( Type, value ) -> Type.value( value )
+
+See "Attribute options" section for details on new type annotation syntax.
+
 backbone.nestedTypes
 ====================
 
-In case you're precisely know what you're looking for, it's backbone.js extension adding type annotations, type coercion and type checks (yes, _checks_) to model attributes, easiest possible way of dealing with nested models and collections, and native properties for attributes. Providing you with a more or less complete, simple, and powerful object system for JavaScript.
+NestedTypes is the type system for JavaScript, implemented on top of  Backbone. It solve common architectural problems of Backbone applications, providing simple yet powerful tools to deal with complex nested data structures. Brief feature list:
 
-In case if you don't, here is a brief outline of problems we're solving with this little thing. There are two major goals behind:
+- Class type
+- *Native properties* for Model attributes, Collection, and Class.
+- Inline Collection definition syntax for Models.
+- Model.defaults inheritance and deep copying.
+- Type declarations and automatic type casts for Model attributes.
+- Easy handling of Date attributes.
+- *Nested models* and collections.
+- *One-to-many* and *many-to-many* models relations.
+- 'change' event bubbling for nested models and collections.
+- Attribute-level control for parse/toJSON and event bubbling.
+- Run-time type error detection and logging.
 
-1. Simplify maping of complex server-side entities to client's models. It should:
-    - free you from writing type convertion code inside of `parse`, `toJSON`, and `initialize`. It's _not_ trivial thing to do it right.
-    - automatically handle nested JSON objects.
-    - automatically handle simple types, such as Date.
-    - behave well for inherited models as well.
-    - Provide really easy way to handle different type of model's relations. Should have zero learingn curve. As we think, the way how it's done in backbone.relational is too restrictive and is an overkill for most applications.
+How it feels like
+-----------------
 
-2. Simplify usage of models as contexts for template rendering. What we've done for that:
-    - support for nested models is mandatory, since view-models are usually hold the set of different models.
-    - implement event bubbling from nested models and collections _right_. It means, for example, that in case of bulk collection change with collection.set upper level model should trigger 'change' event only once. Very helpful, if you like to render you view in case of model's change.
-    - automatic generation of native JS properties, to make templates look good.
-
-3. Seriously reduce backbone.js painfullness and shorten learning curve for backbone newbies.
-    - Model and Collection's semantic is designed in the way, that it hard to make typical newbie errors. Some of them are not mistakes any more, but the right way to do things. For example, defaults section is automatically inherited for you from the base class, it's safe to forget 'get', etc...
-    - Minimum of new concepts and keywords are introduced. If you know backbone, you already know NestedTypes.
-    - Attribute types are checked and automatically coerced in run time.
- 
-These issues are addressed in many backbone plugins, but this one is different.
-
-We solve these problems encouraging you _to type less, than you used to_. Type specs in model's 'defaults' section do all the magic. So, if your attribute is a date, just write in defaults, that it's Date. That's it.
-
-No, you don't need a compiler, or learn some non-standard syntax. It's still old good vanilla JS you're get used to.
-
-Model's native properties
--------------------------
-Forget the 'get'. For any model attributes mentioned in 'defaults', use
+It feels much like statically typed programming language. Yet, it's vanilla JavaScript.
 
 ```javascript
-model.first = model.second;
-model.deep.nesting = some.thing.from.another.model;
-```
+var User = NestedTypes.Model.extend({
+    urlRoot : '/api/users',
 
-instead of
-
-```javascript
-model.set( 'first', model.get( 'second' ) );
-model.deep.set( 'nesting', some.get( 'thing' ).get( 'from' ).get( 'another' ).get( 'model );
-```
-
-Great for accessing nested models from templates.
-
-Also, you can define calculated native properties for models and collections like this:
-
-```javascript
-var MyModel = NestedTypes.Model.extend({
     defaults : {
-        otherModel_id : 0,
-        yetAnotherModel_id : 2
+        // Primitive types
+        login    : String, // = ""
+        email    : String.value( null ), // = null
+        loginCount : Number.options({ toJSON : false }) // = 0, not serialized
+        active   : Boolean.value( true ), // = true
+
+        created  : Date, // = new Date()
+
+        settings : Settings, // nested model
+
+        // collection of models, received as an array of model ids
+        roles    : Role.Collection.SubsetOf( rolesCollection ),
+        // reference to model, received as model id.
+        office : Office.From( officeCollection )
+    }
+});
+
+var collection = new User.Collection(); // Collection is already there...
+collection.fetch().done( function(){
+    var user = collection.first();
+    console.log( user.name ); // native properties
+    console.log( user.office.name );
+    console.log( user.roles.first().name );
+});
+```
+
+Types are being checked in run-time on assignment, but instead of throwing exceptions it tries to cast values to defined types. For example:
+
+```javascript
+    user.login = 1;
+    console.assert( user.login === "1" );
+
+    user.active = undefined;
+    console.assert( user.active === false );
+
+    user.loginCount = "hjkhjkhfjkhjkfd";
+    console.assert( _.isNan( user.loginCount ) );
+
+    user.settings = { timeZone : 180 }; // same as user.settings.set({ timeZone : 180 })
+    console.assert( user.settings instanceof Settings );
+```
+
+Requirements & Installation
+---------------------------
+
+All modern browsers and IE9+ are supported. To install, type
+
+    bower install backbone.nested-types
+
+or
+
+    npm install backbone.nested-types
+
+or just copy 'nestedtypes.js' file to desired location.
+
+NestedTypes is compatible with node.js, CommonJS/AMD (e.g. RequireJS) module loaders, and could be included with plain script tag as well. To include it, use
+
+    var NestedTypes = require( 'nestedtypes');
+
+or
+
+    require([ 'nestedtypes' ], function( NestedTypes ){
+
+or
+
+    <script src="nestedtypes.js" type="text/javascript"></script>
+
+
+# API Reference
+## Basic features
+### Model.defaults:
+- Native properties are created for every entry.
+- Entries are inherited from the base Model.defaults.
+- JSON literals will be deep copied upon creation of model.
+- defaults *must* be an object, functions are not supported.
+- attributes *must* be declared in defaults.
+
+
+```javascript
+    var UserInfo = NestedTypes.Model.extend({
+        defaults : {
+            name : 'test',
+        }
+    });
+
+    var DetailedUserInfo = UserInfo.extend({
+        defaults : {
+            login : '',
+            roles : [ 'user' ]
+        }
+    });
+
+    var user = new DetailedUserInfo();
+
+    // user.get( 'name' ) would be undefined in plain Backbone.
+    console.assert( user.name === 'test' ); // you still can use 'get', but why...
+    user.name = 'admin';
+
+    // In Backbone all models will share the same instance of [ 'user' ] array.
+    // So, following line will create a bug. Not in NestedTypes.
+    user.roles.push( 'admin' );
+```
+
+### Inline collection definition (Model.collection).
+
+By the way, our models from previous example has collections defined already.
+```javascript
+    var users = new UserInfo.Collection();
+    var detailedUsers = new DetailedUserInfo.Collection();
+```
+
+Every model definition creates Collection type extending base Model.Collection.  Collection.model and Collection.url properties are taken from model. You could customize collection with a spec in Model.collection, which then will be passed to BaseModel.Collection.extend.
+
+```javascript
+var DetailedUserInfo = UserInfo.extend({
+    urlBase : '/api/detailed_user/',
+
+    defaults : {
+        login : '',
+        roles : [ 'user' ]
     },
 
-    __otherModelsCollection : null,
+    collection : {
+        initialize : function(){
+            this.fetch();
+        }
+    }
+});
 
-    properties : {
-        otherModel : function(){
-            return this.__otherModelsCollection.get( this.otherModel_id );
+/*
+    DetailedUserInfo.Collection = UserInfo.Collection.extend({
+        url : '/api/detailed_user/',
+        model : DetailedUserInfo,
+
+        initialize: function(){
+            this.fetch();
+        }
+    });
+*/
+```
+
+### Class type, which can be extended and can throw/listen to events.
+
+```javascript
+    var A = NestedTypes.Class.extend({
+        a : 1,
+
+        initialize : function( options ){
+            this.listenTo( options.other, 'event', doSomething )
         },
 
-        yetAnotherModel : {
-            get : function(){
-                return this.__otherModelsCollection.get( this.yetAnotherModel_id );
+        doSomething : function(){
+            this.trigger( 'something' );
+        }
+    });
+
+    var B = A.extend({
+        b : 2,
+
+        initialize : function( options ){
+            A.prototype.initialize.apply( this, arguments );
+            this.listenTo( options.another, 'event', doSomething )
+        },
+    });
+
+    var b = new B( options );
+```
+
+### Explicit native properties definition (Model, Class, Collection).
+
+Native properties are generated for model attributes, however, they also can be defined explicitly for Model, Class, Collection with 'properties' specification.
+
+For Model, explicit property will override generated one, and "properties : false" disable defaults native properties generation.
+
+```javascript
+    var A = NestedTypes.Model.extend({
+        defaults : {
+            a : 1,
+            b : 2
+        },
+
+        properties : {
+            c : function(){
+                return this.a + this.b;
             },
 
-            set : function( model ){
-                this.yetAnotherModel_id = model.id;
+            ax2 : {
+                get : function(){
+                    return this.a * 2;
+                },
+
+                set : function( value ){
+                    this.a = value / 2;
+                    return value;
+                }
             }
         }
+    });
+
+    var a = new A();
+    console.assert( a.c === 3 );
+
+    a.ax2 = 4;
+    console.assert( a.c === 2 );
+```
+
+### Run-time errors
+
+NestedTypes detect four error types in the runtime, which will be logged to console using console.error.
+
+```
+[Type error](Model.extend) Property "name" conflicts with base class members.
+```
+It's forbidden for native properties to override members of the base Model. Since native properties are generated for Model.defaults elements, its also forbidden to have attribute names which are the same as members of the base Model.
+
+```
+[Type Error](Model.set) Attribute hash is not an object: ...
+```
+First argument of Model.set must be either string, or literal object representing attribute hash.
+
+```
+[Type Error](Model.set) Attribute "name" has no default value.
+```
+Attempt to set attribute which is not declared in defaults.
+
+```
+[Type Error](Model.defaults) "defaults" must be an object, functions are not supported
+```
+
+## Model.defaults Type Specs
+### Basic type annotation syntax and rules
+
+Type specs can be optionally used instead of init values in Model.defaults. They looks like this:
+
+    name : Constructor
+
+or
+
+    name : Constructor.value( x )
+
+where Constructor is JS constructor function, and x is its default value.
+
+When default value is not specified, typed attribute is initialized invoking 'new Constructor()'.
+
+As a general rule, when typed attribute is assigned with the value...
+- which is null, attribute will be set to null.
+- which is an instance of Constructor, attribute's value will be replaced.
+- in other case, NestedTypes will try to convert value to the Constructor type, typically invoking "new Constructor( value )". This type conversion algorithm may be overriden for some selected types.
+
+When receiving data from server, type cast logic is used to parse JSON responce; typically you don't need to override Model.parse.
+
+When sending data to the server, Constructor.toJSON will be invoked to produce JSON for typed attributes, so you don't need to override Model.toJSON for that.
+
+```javascript
+var A = NestedTypes.Model.extend({
+    defaults : {
+        obj1 : Ctor, // = new Ctor()
+        obj2 : Ctor.value( null ), // = null
+        obj3 : Ctor.value( something ), // = new Ctor( something )
     }
 });
 
-// This could be done from some other place...
-MyModel.prototype.__otherModelsCollection = ...
+var a = A();
+
+a.obj2 = "dsds"; // a.obj2 = new Ctor( "dsds" );
+
+console.assert( a.obj2 instanceof Ctor );
 ```
 
-Great for implementing collection joins which looks like nested models. Also, since custom properties definition override default properties, it's well suitable for setting hooks on attribute's modification. In case you'll need such a weird stuff, of course.
+### Primitive types (Boolean, Number, String)
 
-Type annotations for Model attributes
--------------------------------------
+Primitive types are special in a sense that *they are infered from their values*, so they are always typed. In most cases special type annotation syntax is not really required.
 
-You could use constructor functions as default value.
+It means that if attribute has default value of 5 *then it's guaranteed to be Number or null* (it will be casted to Number on assignments). This is quite different from original Backbone's behaviour which you might expect, and it makes models safer. For polimorphic attributes holding different types you can disable type inference using 'NestedTypes.value'.
+
+```javascript
+var A = NestedTypes.Model.extend({
+    defaults : {
+        // Original backbone behaviour - no type, value is 3232
+        untyped : NestedTypes.value( 3232 )
+
+        // defaults with primitive types are always 'typed'
+        number  : 5,           // same as Number.value( 5 )
+        string  : 'something', // same as String.value( 'something' )
+        string1 : '',          // same as String
+        boolean : true,        // same as Boolean.value( true )
+
+        initWithNull  : String.value( null ), // Type is String, default value is null
+    }
+});
+
+var a = A();
+
+a.boolean = "hello";
+console.assert( a.boolean === true );
+
+a.number = "5";
+console.assert( a.number === 5 );
+
+a.number = "hjhjfd";
+console.assert( _.isNaN( a.number ) );
+
+a.string = 5;
+console.assert( a.string === "5" );
+
+a.boolean = 0;
+console.assert( a.boolean === false );
+```
+
+### Date type
+- Automatic parsing of common JSON date representations.
+- Automatically serialized to ISO string (don't need to override toJSON)
+
+Date attributes free you from overriding Model.parse or Model.toJSON when you want to transfer dates between server and client.
+
+Strings and numbers will be converted to date with Date constructor. NestedTypes contains additional logic to implement cross-browser ISO date parsing and handling of MS date format.
+
+On serialization, Date.toJSON will be invoked for date attribute, producing UTC-0 ISO date string representation.
+
+```javascript
+var A = NestedTypes.Model.extend({
+    defaults : {
+        created : Date, // = new Date()
+        updated : Date.value( null ), // = null
+        a : Date.value( 327943789 ), //  = new Date( 327943789 )
+        b : Date.value( "2012-12-12 12:12" ) //  = new Date( "2012-12-12 12:12" )
+    }
+});
+
+var a = A();
+
+a.updated = '2012-12-12 12:12';
+console.assert( a.updated instanceof Date );
+
+a.updated = '/Date(32323232323)/';
+console.assert( a.updated instanceof Date );
+```
+
+### Nested Models and Collections
+- automatic parsing and serialization
+- 'deep updates' and 'deep clone'
+- 'change' event bubbling
+
+To define nested model or collection, just annotate attributes with Model or Collection type.
+
+Note, that Backbone's .clone() method will create shallow copy of the root model, while Model.deepClone() and Collection.deepClone() will clone model and collection with all subitems.
 
 ```javascript
 var User = NestedTypes.Model.extend({
     defaults : {
-        name : String,
-        created : Date,
-        loginCount: Number
-    }
-});
-```
-
-New object will be created automatically for any typed attribute, no need to override `initialize`.
-
-When typed attribute assigned with value of different type, constructor will be invoked to
-convert it to defined type.
-
-```javascript
-var user = new User();
-assert( user.created instanceof Date );
-
-user.created = "2012-12-12 12:12"; // string will be converted to Date
-assert( user.created instanceof Date );
-
-user.loginCount = "jhkhjhjhj";
-assert( user.loginCount === NaN );
-```
-
-It means, that you don't need to override Model.parse and Model.initialize when you receive time and
- date from the server. It will be parsed and serialized to JSON as ISO date automatically.
-
-It's important to note that defaults specs *are mandatory* with this plugin. Default implementation of Model.validate method will write an error in console if you attempt to save model with attributes which are not declared.
-
-Also, defaults spec *must* be an object, at this time you can't use function as in plain Backbone. Support for them will be added later.
-
-Type annotations and defaults rules summary
------------------------------------
-Semantic of type annonation designed to be both intuitive and protective, in order to have minimal learning curve and help to overcome typical backbone.js mistakes usually done by newbies. Howewer, it's not as simple behind the scene. Here's more formal and detailed description of logic behind defaults:
-
-- defaults spec must be an object
-- any function used as default value is treated as constructor, and will be invoked with 'new' to create an object.
-- JSON literals used as defaults will be compiled to function and efficiently  _deep_ _copied_.
-- non-JSON values (other than direct instances of Object and Array) will be passed by reference. I.e. in this example:
-```javascript
-var M = NestedTypes.Model.extend({
-    defaults : {
-        num : 1,
-        str : "",
-        arr : [ 1, 2, 3 ],
-        obj : { a: 1, b: 2 },
-        date : Date,
-	shared : new Date()
-    }
-});
-
-// creation of default values will behave exactly as the following code in plain backbone:
-
-var _tmp = new Date();
-var M = NestedTypes.Model.extend({
-    defaults : function(){
-    	return {
-       	    num : 1,
-            str : "",
-            arr : [ 1, 2, 3 ],
-            obj : { a: 1, b: 2 },
-            date : new Date(),
-            shared : _tmp
-        }
-    }
-});
-```
-- type and default value may be specified separately. Standard type coercion rules will be applied to default values.
-```javascript
-var M = NestedTypes.Model.extend({
-    defaults : {
-        date1 : NestedTypes.Attribute( Date, null ),
-        date2 : NestedTypes.Attribute( Date, '2012-12-12 12:12' )
-    }
-});
-
-// will behave as:
-var M = NestedTypes.Model.extend({
-    defaults : function(){
-    	return {
-            date1 : null,
-            date2 : new Date( '2012-12-12 12:12' )
-    	}
-    }
-});
-```
-- Native getter and setter may be overriden for every attribute using full notation:
-```javascript
-var M = NestedTypes.Model.extend({
-    defaults : {
-        date1 : NestedTypes.Attribute({
-            type : Date,
-            value : null,
-            get : function(){
-                var time = this.attributes.date1;
-                return time ? time : new Date( '1900-01-01 00:00' );
-            })
-        }
-            
-    }
-});
-```
-
-Nested Models and Collections
------------------------------
-
-To use nested models and collections, just annotate attributes with Model or Collection type.
-
-```javascript
-var User = NestedTypes.Model.extend({
-    defaults : {
-        name : String,
-        created : Date,
-        group : GroupModel,
+        name        : String,
+        created     : Date,
+        group       : GroupModel,
         permissions : PermissionCollection
     }
 });
+
+var a = new User(),
+    b = a.deepClone();
 ```
 
-No need to override `initialize`, `parse`, and `toJSON`, nested JSON will be parsed and generated automatically. You still can override parse to transform JSON received from the server, but there is no need to create new Model/Collection instances, because of the modified 'set' behaviour.
+Model/Collection type cast behavior depends on attribute value before assignment:
+- If attribute value is null, Model/Collection constructor will be invoked as for usual types.
+- If attribute already holds model or collection, *deep update* will be performed instead.
 
-If attribute is defined as Model or Collection, new value is an object or array (for example, JSON received form the server), and its current value is not null, it will be delegated to 'set' method of existig nested model or collection (!). If current value is null, new instance of model/collection will be created. I.e. this code:
+"Deep update" means that model/collection object itself will remain in place, and 'set' method will be used to perform an update.
+
+I.e. this code:
 
 ```javascript
 var user = new User();
@@ -229,8 +419,6 @@ user.group.set({
 user.permissions.set( [{ id: 5, type: 'full' }] );
 ```
 
-'set' method for models and collection is *strictly type checked*. You'll got error in the console on every attempt to set values with incompatible type.
-
 This mechanics of 'set' allows you to work with JSON from in case of deeply nested models and collections without the need to override 'parse'. This code (considering that nested attributes defined as models):
 
 ```javascript
@@ -239,19 +427,19 @@ user.group = {
         deeplyNestedModel : {
             attr : 'value'
         },
-        
+
         attr : 5
     }
 };
 ```
-    
+
 is almost equivalent of:
 
 ```javascript
 user.group.nestedModel.deeplyNestedModel.set( 'attr', 'value' );
 user.group.nestedModel.set( 'attr', 'value' );
 ```
-    
+
 but it will fire just single `change` event.
 
 Change events will be bubbled from nested models and collections.
@@ -263,133 +451,100 @@ Change events will be bubbled from nested models and collections.
 var M = NestedTypes.Model.extend({
 	defaults: {
 		bubbleChanges : ModelOrCollection,
-		
-		dontBubble : NestedTypes.Attribute({
-			type : ModelOrCollection,
-			triggerWhanChanged : false
+
+		dontBubble : ModelOrCollection.options({ triggerWhanChanged : false })
 		}),
-		
-		bubbleCustomEvents : NestedTypes.Attribute({
-			type : ModelOrCollection,
-			triggerWhanChanged : 'event1 event2 whatever'
+
+		bubbleCustomEvents : ModelOrCollection.options({
+            triggerWhanChanged : 'event1 event2 whatever'
 		}),
 	}
 });
 ```
 
-Nested collections of model's references
--------------------------------------------------
+### Model relations
+- Model.From
+- Collection.SubsetOf
 
-When you have many-to-many relationships, it is suitable to transfer such a relationships from server as arrays of model ids. NestedTypes gives you special attribute data type to handle such a situation.
+Sometimes when you have one-to-many and many-to-many relationships between Models, it is suitable to transfer such a relationships from server as arrays of model ids. NestedTypes gives you special attribute data types for this situation.
 
 ```javascript
 var User = NestedTypes.Model.extend({
     defaults : {
         name : String,
-        roles : RolesCollection.RefsTo( rolesCollection ) // <- subclass of existing RolesCollection
+        roles : RolesCollection.SubsetOf( rolesCollection ) // <- serialized as array of model ids
+        location : Location.From( locationsCollection ) // <- serialized as model id
     }
 });
 
 var user = new User({ id: 0 });
-user.fetch(); // <- and you'll receive from server "{ id: 0, name : 'john', roles : [ 1, 2, 3 ] }"
+user.fetch(); // <- you'll receive from server "{ id: 0, name : 'john', roles : [ 1, 2, 3 ] }"
 ...
-// however, user.roles behaves like collection of Roles.
+// however, user.roles behaves like normal collection of Roles.
 assert( user.roles instanceof Collection );
 assert( user.roles.first() instanceof Role );
 ```
 
-Collection.RefsTo is a collection of models. It overrides toJSON and parse to accept array of model ids. Also, it *override its 'get' property in upper model*, to resolve ids to real models from 
-the given master collection on first attribute read attempt. If master collection is empty and thus references cannot be resolved, it will defer id resolution and just return collection of dummy models with ids. However, if master
-collection is not empty, it will filter out ids of non-existent models.
+Collection.SubsetOf is a collection of models taken from existing collection. On first access of attribute of this type, it will resolve ids to real models from the given master collection.
 
-This semantic is required to deal with collections in asynchronous JS world. Also, there are 'lazy' option for passing reference to master collection:
+If master collection is empty and thus references cannot be resolved, it will defer id resolution and just return collection of dummy models with ids. However, if master collection is not empty, it will filter out ids of non-existent models.
+
+There are 'lazy' option for passing reference to master collection:
 
 ```javascript
 var User = NestedTypes.Model.extend({
     defaults : {
         name : String,
         roles : Collection.RefsTo( function(){
-            return this.collection.rolesCollection; // <- collection of Roles is the direct member of UsersCollection.
+            return this.collection.rolesCollection; // <- collection of Roles is the direct member of Users.Collection
+        }),
+        location : Location.From( function(){
+            return this.collection.locationsCollection; // <- collection of Roles is the direct member of Users.Collection
         })
     }
 });
 ```
 
-Note, that 'change' events won't be bubbled from models in Collection.RefsTo. Collection's events will.
+Note, that 'change' events won't be bubbled from models in Collection.SubsetOf. Other collection's events will.
 
-Type checks and type coercion rules summary
--------------------------------------------
+For Model.From attribute no model changes will be bubbled.
 
-Type checks and type coercions performed on every model 'set' call and assignment to the model's property. Failed type checks will be logged with console.error as "[Type Error...]..." message.
+### Attribute options
+- type and value
+- override native property
+- override parse/toJSON
 
-There are two type cercion rules:
+Attribute options spec allow for a full control on the attribute options, including 'type' and 'value'. Attribute type specification is the special case of options spec, which, in its most general form, looks like this:
 
-1. When model's attribute has default type, it's may either *hold null or instance of specified type* or its subclass. When it's set with value of different type, constructor will be invoked with this value as an argument to produce specified type.
-2. When model's attribute has Model (or Collection) type, it may hold either null or instance of specified Model (Collection) or its subclass. When it's being set with value of different type, it will be either *delegated to 'set' method of existing model/collection* (if current attribute value is not null), or *new model/collection will be created* with the given value as first argument.
+    NestedTypes.options({ ... })
 
-And there are two very fast runtime type checks in Model.set, which in combination with coercion rules listed above effectively isolating significant amount of type errors:
+The relation between short and long forms of attribute options spec is summarized in the table below:
 
-1. All model's attributes *must* be declared in 'defaults'. Attempt to set attribute not having default value or type *is treated as an error*.
-2. For bulk attributes set operation *only plain JS object may be used* as an argument. Usage of complex objects as attributes hash *is treated as an error*.
+ Short form              | Long form
+-------------------------|-------
+ Type                    | NestedTypes.options({ type : Type })
+ Type.options({ ... })   | NestedTypes.options({ type : Type, ... })
+ NestedTypes.value( x )  | NestedTypes.options({ value : x })
+ Type.value( x )         | NestedTypes.options({ type : Type, value: x })
 
-Also, there is a protection inside 'extend' from occasionally overriding base Model/Collection/Class members with attributes and properties. Required, since plugin creates native properties for attributes.
 
-Other enhancements
-------------------
-- isValid method checks nested models, collections, and classes recursively.
-- deepClone operation for deep copy of nested models, collections, and types. When you start working with nested stuff seriously, you'll need it soon.
- 
-```javascript
-model.nestedModel = other.nestedModel.deepClone(); // will create a copy of nested objects tree
-```
+Both long and short forms of attribute options are chainable. I.e. following constructs are possible:
 
-- Default attributes are being inherited from the base model. In vanilla backbone, base model defaults will be completely overriden by subclass, which is annoying.
-```javascript
-var Base = NestedTypes.Model.extend({
-	defaults: {
-		a : 1
-	}
-});
+    Type.value( x ).options({ ... }) // same as NestedTypes.options({ type : Type, value : x, ... })
+    NestedTypes.value( x ).options({ ... }) // = NestedTypes.options({ value : x, ... })
+    NestedTypes.options({ ... }).value( x ) // = NestedTypes.options({ value : x, ... })
+    ...
 
-var Derived = Base.extend({
-	defaults: {
-		b : 1
-	}
-});
+Available options so far are:
 
-var instance = new Derived();
-assert( instance.b === 1 );
-assert( instance.a === 1 );
-```
-
-- Class type, which can send and receive Backbone events and can be extended. Also, it can have native properties, as well as Model and Collection. The basic building block of Backbone, which was not exported from the library directly for some reason.
-
-```javascript
-var myClass = NestedTypes.Class.extend({
-	a : 1,
-
-	initialize : function( options ){
-		this.a = options.a
-		
-		this.listenTo( options.nowhere, 'something', function(){
-			this.trigger( 'heardsomething', this );
-		});
-	},
-
-	properties : {
-		b : function(){ return this.a + 1; }
-	}
-});
-```
-P.S.: There's an opinion that classes are not needed in JS since you can do fancy mixins with prototypes. What I would say? C'mon, we're really old-school guys here. :) We're get used to situation when class looks like a class, not as a random excerpt from Linux kernel or something :)
-
-Installation and dependencies
------------------------------
-Native properties support is required. It means all modern browsers, IE from version 9.
-
-You need a single file (nestedtypes.js) and backbone.js itself. It should work in browser with plain script tag,
-require.js or other AMD loader. Also, it's available as npm package for node.js (https://www.npmjs.org/package/backbone.nested-types).
-
-Module exports three variables - Class, Model, Collection. You need to use them instead of backbone's. In browser environment with plain script tag import it will export these things under NestedTypes namespace - see an example in sources.
-
-And yes, you could expect this extension to be stable and bug free enough to use. It is being developed as a part of commercial product. Volicon rely on this extension as a core part of architecture for next gen products. And we're actually interested in your bug reports. :)
+Option      | Description
+------------|-----------
+type : Ctor | attribute's type (constructor function)
+value : x   | attribute's default value
+toJSON : false | attribute will not be serialized to JSON
+toJSON : function( attrValue, attrName ) -> JSON | serialize attribute to JSON with the given function
+parse  : function( data ) -> {attribute hash} | parse attribute with a given function
+get : function() -> value | override native property getter for the attribute
+set : function( value ) -> value | to override native property setter for the attribute
+triggerWhenChanged : String | bubble 'change' event when given list of events are triggered by the attribute
+triggerWhenChanged : false  | don't bubble 'change' events from the the attribute

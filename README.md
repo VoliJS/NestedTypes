@@ -513,14 +513,14 @@ Attribute options spec allow for a full control on the attribute options, includ
     NestedTypes.options({ ... })
 
 The relation between short and long forms of attribute options spec is summarized in the table below:
-```
+
  Short form              | Long form
 -------------------------|-------
  Type                    | NestedTypes.options({ type : Type })
  Type.options({ ... })   | NestedTypes.options({ type : Type, ... })
  NestedTypes.value( x )  | NestedTypes.options({ value : x })
  Type.value( x )         | NestedTypes.options({ type : Type, value: x })
-```
+
 
 Both long and short forms of attribute options are chainable. I.e. following constructs are possible:
 

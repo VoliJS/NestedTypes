@@ -1,4 +1,4 @@
-IMPORTANT. There changes in verion 9.x which is not compatible with previous versions. Following changes in code will be required:
+IMPORTANT. There are changes in verion 9.x breaking compatibility with previous versions. Following changes in your code are  required:
 - NestedTypes.Attribute({ ... }) -> NestedTypes.options({ ... })
 - NestedTypes.Attribute( Type, value ) -> Type.value( value )
 

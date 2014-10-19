@@ -90,6 +90,10 @@
         var Attribute = exports.Class.extend({
             type : null,
 
+            create : function(){
+                return new this.type();
+            },
+
             property : function( name ){
                 return {
                     get : function(){
@@ -255,6 +259,10 @@
     })();
 
     exports.options.Type.extend({
+        create : function(){
+            return this.type();
+        },
+
         cast : function( value ){
             return value == null ? null : this.type( value );
         }
@@ -485,7 +493,7 @@
                     }
                 }
                 else{
-                    attr.type && ( init[ name ] = attr.type );
+                    attr.type && ( init[ name ] = attr );
                 }
             });
 
@@ -497,7 +505,7 @@
                 _.extend( defaults, refs );
 
                 for( var name in init ){
-                    defaults[ name ] = new init[ name ]();
+                    defaults[ name ] = init[ name ].create();
                 }
 
                 return defaults;

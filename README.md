@@ -30,7 +30,7 @@ It feels much like statically typed programming language. Yet, it's vanilla Java
 var User = NestedTypes.Model.extend({
     urlRoot : '/api/users',
 
-    defaults : {
+    attributes : {
         // Primitive types
         login    : String, // = ""
         email    : String.value( null ), // = null
@@ -102,11 +102,12 @@ or
 # API Reference
 ## Basic features
 ### Model.defaults:
+- Models.attributes as an alternative to 'defaults'
 - Native properties are created for every entry.
-- Entries are inherited from the base Model.defaults.
+- Entries are inherited from the base Model.defaults/attributes.
 - JSON literals will be deep copied upon creation of model.
-- defaults *must* be an object, functions are not supported.
-- attributes *must* be declared in defaults.
+- defaults/attributes *must* be an object, functions are not supported.
+- attributes *must* be declared in defaults/attributes.
 
 
 ```javascript
@@ -117,7 +118,7 @@ or
     });
 
     var DetailedUserInfo = UserInfo.extend({
-        defaults : {
+        attributes : { // <- the same as 'defaults', use whatever you like
             login : '',
             roles : [ 'user' ]
         }

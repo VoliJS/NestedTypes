@@ -427,7 +427,7 @@
                 error.defaultsIsFunction( spec );
             }
 
-            var defaults    = _.defaults( spec.defaults || {}, Base.prototype.__defaults ),
+            var defaults    = _.defaults( spec.defaults || spec.attributes || {}, Base.prototype.__defaults ),
                 idAttrName      = spec.idAttribute || Base.prototype.idAttribute,
                 attributes = {};
 
@@ -451,7 +451,7 @@
                 idAttr.property = false; // to prevent conflict with backbone's model 'id'
             }
 
-            return _.extend( _.omit( spec, 'collection' ), {
+            return _.extend( _.omit( spec, 'collection', 'attributes' ), {
                 __defaults  : defaults, // needed for attributes inheritance
                 __attributes : attributes
             });

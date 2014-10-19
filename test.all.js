@@ -69,7 +69,7 @@ define( function( require, exports, module ){
 
     describe( 'constructors in defaults', function(){
         var user, User = Base.Model.extend({
-            defaults:{
+            attributes:{
                 created: Date,
                 name: String,
                 loginCount: Number

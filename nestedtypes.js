@@ -111,11 +111,6 @@
 
             options : function( spec ){
                 _.extend( this, spec );
-                return this;
-            },
-
-            initialize : function( spec ){
-                _.extend( this, spec );
 
                 if( spec.get || spec.set ){
                     // inline property override...
@@ -134,6 +129,12 @@
                         };
                     };
                 }
+
+                return this;
+            },
+
+            initialize : function( spec ){
+                this.options( spec );
             }
         },{
             bind : ( function(){
@@ -738,7 +739,7 @@
             triggerWhenChanged : "add remove reset sort",
             __class : 'Collection.SubsetOf',
 
-            isResolved : false,
+            resolvedWith : null,
 
             toJSON : function(){
                 return _.pluck( this.models, 'id' );
@@ -750,7 +751,7 @@
 
             parse : function( raw ){
                 var idName = this.model.prototype.idAttribute;
-                this.isResolved = false;
+                this.resolvedWith = null;
 
                 return _.map( raw, function( id ){
                     var res = {};
@@ -759,7 +760,9 @@
                 });
             },
 
-            toggle : function( model ){
+            toggle : function( modelOrId ){
+                var model = this.resolvedWith.get( modelOrId );
+
                 if( this.get( model ) ){
                     this.remove( model );
                 }
@@ -784,7 +787,7 @@
                 });
 
                 this.reset( _.compact( values ), { silent : true } );
-                this.isResolved = true;
+                this.resolvedWith = collection;
 
                 return this;
             }
@@ -800,7 +803,7 @@
                         get : function(){
                             var refs = this.attributes[ name ];
 
-                            if( !refs.isResolved ){
+                            if( !refs.resolvedWith ){
                                 var master = getMaster.call( this );
                                 master && master.length && refs.resolve( master );
                             }

@@ -1,7 +1,7 @@
 define( function( require, exports, module ){
-    var Base = require( 'nestedtypes' );
+    var Nested = require( 'nestedtypes' );
 
-    var Nested = Base.Model.extend({
+    var N = Nested.Model.extend({
         defaults:{
             time: Date,
             text: '',
@@ -13,10 +13,10 @@ define( function( require, exports, module ){
         save: function(){}
     });
 
-    var Main = Base.Model.extend({
+    var Main = Nested.Model.extend({
         defaults:{
-            first: Nested,
-            second: Nested,
+            first: N,
+            second: N,
             count: 0,
             sum: 0
         }
@@ -26,7 +26,7 @@ define( function( require, exports, module ){
         var M, M1;
 
         it( 'create native properties for defaults', function( done ){
-            M = Base.Model.extend({
+            M = Nested.Model.extend({
                 defaults: {
                     a: 1,
                     b: 'ds'
@@ -68,7 +68,7 @@ define( function( require, exports, module ){
     });
 
     describe( 'constructors in defaults', function(){
-        var user, User = Base.Model.extend({
+        var user, User = Nested.Model.extend({
             attributes:{
                 created: Date,
                 name: String,
@@ -118,7 +118,7 @@ define( function( require, exports, module ){
         });
 
         describe( 'JSON', function(){
-            var comment, Comment = Base.Model.extend({
+            var comment, Comment = Nested.Model.extend({
                 defaults: {
                     created: Date,
                     author: User,
@@ -138,7 +138,7 @@ define( function( require, exports, module ){
             });
 
             it( 'initialize model with JSON defaults ', function(){
-                var M = Base.Model.extend({
+                var M = Nested.Model.extend({
                     defaults : {
                         a : [ 1, 2 ],
                         b : { a: 1, b : [ 2 ] },
@@ -215,7 +215,7 @@ define( function( require, exports, module ){
             });
 
             it( "shouldn't bubble events if not required", function(){
-                var M = Base.Model.extend({
+                var M = Nested.Model.extend({
                     defaults : {
                         first : Main,
                         second : Main.options({
@@ -264,8 +264,8 @@ define( function( require, exports, module ){
         });
 
         describe( 'model with nested collection', function(){
-            var Coll = Base.Collection.extend({
-                model: Nested
+            var Coll = Nested.Collection.extend({
+                model: N
             });
 
             var Compound = Main.extend({
@@ -378,10 +378,10 @@ define( function( require, exports, module ){
 
     describe( 'automatic event subscription', function(){
         it( 'manage subscriptions automatically', function(){
-            var M = Base.Model.extend({
+            var M = Nested.Model.extend({
                 defaults:{
-                    left: Nested,
-                    right: Nested
+                    left: N,
+                    right: N
                 },
 
                 listening: {
@@ -405,7 +405,7 @@ define( function( require, exports, module ){
 
     describe( 'custom properties', function(){
         it( 'generate read-only properties if function specified', function(){
-            var M = Base.Model.extend({
+            var M = Nested.Model.extend({
                 properties: {
                     a: function(){ return 5; }
                 }
@@ -417,7 +417,7 @@ define( function( require, exports, module ){
 
         it( 'generate custom properties if standard spec provided', function(){
 
-            var M = Base.Model.extend({
+            var M = Nested.Model.extend({
                 state: 0,
 
                 properties: {
@@ -435,7 +435,7 @@ define( function( require, exports, module ){
         });
 
         it( 'override properties for defaults', function(){
-            var M = Base.Model.extend({
+            var M = Nested.Model.extend({
                 defaults: {
                     a: 10
                 },
@@ -454,7 +454,7 @@ define( function( require, exports, module ){
 
     describe( 'pass options to nested', function(){
         before( function(){
-            this.Book = Base.Model.extend({
+            this.Book = Nested.Model.extend({
                 defaults: {
                     title: String,
                     published: Date
@@ -463,10 +463,10 @@ define( function( require, exports, module ){
                     this.parsed = true;
                 }
             });
-            this.Books = Base.Collection.extend({
+            this.Books = Nested.Collection.extend({
                 model: this.Book
             });
-            this.Author = Base.Model.extend({
+            this.Author = Nested.Model.extend({
                 defaults: {
                     name: String,
                     biography: this.Book,
@@ -510,9 +510,49 @@ define( function( require, exports, module ){
         });
     });
 
+    describe( 'Attributes definition options', function(){
+        it( 'must override native properties', function(){
+            var M = Nested.Model.extend({
+                attributes : {
+                    attr : Number.value( 5 ).options({
+                        set : function( value ){
+                            this.set( 'attr', value * 2 );
+                            return value;
+                        }
+                    })
+                }
+            });
+
+            var m = new M();
+            m.attr.should.eql( 5 );
+            m.attr = 4;
+            m.attr.should.eql( 8 );
+
+            var M1 = Nested.Model.extend({
+                attributes : {
+                    attr : Number.value( 5 ).options({
+                        set : function( value ){
+                            this.set( 'attr', value * 2 );
+                            return value;
+                        },
+
+                        get : function(){
+                            return this.attributes.attr + 1;
+                        }
+                    })
+                }
+            });
+
+            var m1 = new M1();
+            m1.attr.should.eql( 6 );
+            m1.attr = 4;
+            m1.attr.should.eql( 9 );
+        });
+    });
+
     describe( 'Relations defined by model id references', function(){
-        var C = Base.Collection.extend({
-            model : Base.Model.extend({
+        var C = Nested.Collection.extend({
+            model : Nested.Model.extend({
                 defaults : {
                     name : String
                 }
@@ -527,9 +567,9 @@ define( function( require, exports, module ){
         }));
 
         describe( 'Model.From', function(){
-            var M = Base.Model.extend({
+            var M = Nested.Model.extend({
                 defaults : {
-                    ref : Base.Model.From( models )
+                    ref : Nested.Model.From( models )
                 }
             });
 
@@ -552,9 +592,9 @@ define( function( require, exports, module ){
         });
 
         describe( 'Collection.SubsetOf', function(){
-            var M = Base.Model.extend({
+            var M = Nested.Model.extend({
                 defaults : {
-                    refs : Base.Collection.SubsetOf( models )
+                    refs : Nested.Collection.SubsetOf( models )
                 }
             });
 
@@ -581,11 +621,11 @@ define( function( require, exports, module ){
             var M, M2, M3;
 
             it( 'is defined for base Model type', function(){
-                Base.Model.Collection.should.eql( Base.Collection );
+                Nested.Model.Collection.should.eql( Nested.Collection );
             });
 
             it( 'is generated for Model subclasses', function(){
-                M = Base.Model.extend({
+                M = Nested.Model.extend({
                     urlBase : '',
                     save : function(){},
 

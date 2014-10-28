@@ -17,6 +17,8 @@
         factory( root.NestedTypes, root.Backbone, root._ );
     }
 }( this, function( exports, Backbone, _ ){
+    Integer = function( x ){ return x ? Math.round( x ) : 0; };
+
     'use strict';
     var extend = Backbone.Model.extend;
 
@@ -267,7 +269,7 @@
         cast : function( value ){
             return value == null ? null : this.type( value );
         }
-    }).bind( Number, Boolean, String );
+    }).bind( Number, Boolean, String, Integer );
 
     var baseModelSet =  Backbone.Model.prototype.set;
 
@@ -714,7 +716,7 @@
                                     this.set( name, objOrId, { silent: true });
                                 }
                                 else{
-                                    objOrId = { id: objOrId };
+                                    objOrId = null;
                                 }
                             }
 

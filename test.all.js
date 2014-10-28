@@ -72,12 +72,17 @@ define( function( require, exports, module ){
             attributes:{
                 created: Date,
                 name: String,
-                loginCount: Number
+                loginCount: Integer
             }
         });
 
         before( function(){
             user = new User();
+        });
+
+        it( 'support Integer primitive type', function(){
+            user.loginCount = 0.5;
+            user.loginCount.should.eql( 0 );
         });
 
         it( 'create default values for constructor attributes', function(){
@@ -179,6 +184,7 @@ define( function( require, exports, module ){
                 json.created.should.eql( json.author.created );
             });
         });
+
 
     });
 

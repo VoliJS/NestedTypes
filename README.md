@@ -9,7 +9,7 @@ backbone.nestedTypes
 
 NestedTypes is the type system for JavaScript, implemented on top of  Backbone. It solve common architectural problems of Backbone applications, providing simple yet powerful tools to deal with complex nested data structures. Brief feature list:
 
-- Class type
+- Class and Integer types
 - *Native properties* for Model attributes, Collection, and Class.
 - Inline Collection definition syntax for Models.
 - Model.defaults inheritance and deep copying.

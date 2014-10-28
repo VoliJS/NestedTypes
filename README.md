@@ -301,11 +301,13 @@ a.obj2 = "dsds"; // a.obj2 = new Ctor( "dsds" );
 console.assert( a.obj2 instanceof Ctor );
 ```
 
-### Primitive types (Boolean, Number, String)
+### Primitive types (Boolean, Number, String, Integer)
 
-Primitive types are special in a sense that *they are infered from their values*, so they are always typed. In most cases special type annotation syntax is not really required.
+Primitive types are special in a sense that *they are inferred from their values*, so they are always typed. In most cases special type annotation syntax is not really required.
 
 It means that if attribute has default value of 5 *then it's guaranteed to be Number or null* (it will be casted to Number on assignments). This is quite different from original Backbone's behaviour which you might expect, and it makes models safer. For polimorphic attributes holding different types you can disable type inference using 'NestedTypes.value'.
+
+NestedTypes adds global Integer type, to be used in type annotations. It behaves the same as Number, but convert values to integer on attribute assignment using Math.round. Integer type is not being inferred from the values, and needs to be specified explicitly.
 
 ```javascript
 var A = NestedTypes.Model.extend({
@@ -315,6 +317,7 @@ var A = NestedTypes.Model.extend({
 
         // defaults with primitive types are always 'typed'
         number  : 5,           // same as Number.value( 5 )
+        integer : Integer.value( 6 ),
         string  : 'something', // same as String.value( 'something' )
         string1 : '',          // same as String
         boolean : true,        // same as Boolean.value( true )
@@ -333,6 +336,9 @@ console.assert( a.number === 5 );
 
 a.number = "hjhjfd";
 console.assert( _.isNaN( a.number ) );
+
+a.integer = 1.5423;
+console.assert( a.integer === 2 );
 
 a.string = 5;
 console.assert( a.string === "5" );

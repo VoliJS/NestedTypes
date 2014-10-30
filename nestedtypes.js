@@ -103,7 +103,7 @@
                     },
 
                     set : function( value ){
-                        this.set( name, value );
+                        this._setSingleAttr( name, value );
                         return value;
                     },
 
@@ -122,8 +122,8 @@
                                 return this.attributes[ name ];
                             },
 
-                            set : spec.set || function( value ){
-                                this.set( name, value );
+                            set : function( value ){
+                                this.set( value );
                                 return value;
                             },
 
@@ -308,25 +308,34 @@
                 attrs && baseModelSet.call( this, attrs, options );
             },
 
-            __setMany : function( attrs, options ){
-                var attrSpecs = this.__attributes;
+            set : function( attrs, options ){
+                if( typeof attrs === 'string' ){
+                    return this._setSingleAttr( attrs, options, arguments[ 2 ] );
+                }
 
                 if( attrs.constructor !== Object ){
                     error.argumentIsNotAnObject( this, attrs );
                 }
 
+                var attrSpecs = this.__attributes;
                 this.__beginChange();
 
                 for( var name in attrs ){
-                    var attrSpec = attrSpecs[ name ];
+                    var attrSpec = attrSpecs[ name ],
+                        value = attrs[ name ];
 
                     if( attrSpec ){
-                        if( attrSpec.cast ){
-                            attrs[ name ] = attrSpec.cast( attrs[ name ], options, this );
+                        if( attrSpec.set ){
+                            value = attrSpec.set.call( this, value );
+                            if( value === undefined ){
+                                continue;
+                            }
                         }
+
+                        attrSpec.cast && ( attrs[ name ] = attrSpec.cast( value, options, this ) );
                     }
                     else{
-                        error.unknownAttribute( this, name, attrs[ name ] );
+                        error.unknownAttribute( this, name, value );
                     }
                 }
 
@@ -334,28 +343,28 @@
                 return this;
             },
 
-            set: function( name, value, options ){
-                if( typeof name !== 'string' ){
-                    return this.__setMany( name, value );
-                }
-
-                // optimized set version for single argument
+            _setSingleAttr: function( name, value, options ){
                 var attrSpec = this.__attributes[ name ];
 
                 if( attrSpec ){
-                    if( attrSpec.cast ){
-                        if( attrSpec.isBackboneType ){
-                            var attrs = {};
-
-                            this.__beginChange();
-                            attrs[ name ] = attrSpec.cast( value, options, this );
-                            this.__commitChange( attrs, options );
-
+                    if( attrSpec.set ){
+                        value = attrSpec.set.call( this, value );
+                        if( value === undefined ){
                             return this;
                         }
-                        else{
-                            value = attrSpec.cast( value );
-                        }
+                    }
+
+                    if( attrSpec.isBackboneType ){
+                        var attrs = {};
+
+                        this.__beginChange();
+                        attrs[ name ] = attrSpec.cast( value, options, this );
+                        this.__commitChange( attrs, options );
+
+                        return this;
+                    }
+                    else if( attrSpec.cast ){
+                        value = attrSpec.cast( value );
                     }
                 }
                 else{

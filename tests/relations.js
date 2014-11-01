@@ -63,6 +63,21 @@ define( function( require, exports, module ){
                 m.ref = 1;
                 expect( m.ref.name ).to.equal( "1" );
             });
+
+            it( 'must return null when not resolved', function(){
+                var A = Nested.Model.extend({
+                    attributes : {
+                        ref : Something.from( function(){ return this.__collection; } )
+                    }
+                });
+
+                var m = new A();
+                m.ref = 1;
+                expect( m.ref ).to.be.null;
+
+                m.__collection = collection;
+                expect( m.ref.name ).to.equal( "1" );
+            });
         });
 
         describe( 'Collection.subsetOf', function(){

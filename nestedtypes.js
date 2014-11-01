@@ -733,6 +733,7 @@
             __class : 'Collection.SubsetOf',
 
             resolvedWith : null,
+            refs : null,
 
             toJSON : function(){
                 return _.pluck( this.models, 'id' );
@@ -743,14 +744,18 @@
             },
 
             parse : function( raw ){
-                var idName = this.model.prototype.idAttribute;
-                this.resolvedWith = null;
+                var models = [];
 
-                return _.map( raw, function( id ){
-                    var res = {};
-                    res[ idName ] = id;
-                    return res;
-                });
+                if( this.resolvedWith ){
+                    models = _.compact( _.map( raw, function( id ){
+                        return this.resolvedWith.get( id );
+                    }, this ) );
+                }
+                else{
+                    this.refs = raw;
+                }
+
+                return models;
             },
 
             toggle : function( modelOrId ){
@@ -775,12 +780,12 @@
             },
 
             resolve : function( collection ){
-                var values = this.map( function( ref ){
-                    return collection.get( ref.id );
-                });
-
-                this.reset( _.compact( values ), { silent : true } );
                 this.resolvedWith = collection;
+
+                if( this.refs ){
+                    this.reset( this.refs, { silent : true } );
+                    this.refs = null;
+                }
 
                 return this;
             }
@@ -805,7 +810,8 @@
                         },
 
                         set : function( values ){
-                            return this.set( name, values );
+                            this.set( name, values );
+                            return values;
                         },
 
                         enumerable : false

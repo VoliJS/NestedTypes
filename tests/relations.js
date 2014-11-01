@@ -19,7 +19,7 @@ define( function( require, exports, module ){
         describe( 'Model.from reference', function(){
             var A = Nested.Model.extend({
                 attributes : {
-                    ref : Something.From( collection )
+                    ref : Something.from( collection )
                 }
             });
 
@@ -55,7 +55,7 @@ define( function( require, exports, module ){
             it( 'can use lazy reference to collection', function(){
                 var A = Nested.Model.extend({
                     attributes : {
-                        ref : Something.From( function(){ return collection; } )
+                        ref : Something.from( function(){ return collection; } )
                     }
                 });
 
@@ -68,7 +68,7 @@ define( function( require, exports, module ){
         describe( 'Collection.subsetOf', function(){
             var A = Nested.Model.extend({
                 attributes : {
-                    refs : Something.Collection.SubsetOf( collection )
+                    refs : Something.Collection.subsetOf( collection )
                 }
             });
 
@@ -104,7 +104,7 @@ define( function( require, exports, module ){
             it( 'can use lazy reference to collection', function(){
                 var A = Nested.Model.extend({
                     attributes : {
-                        refs : Something.Collection.SubsetOf( function(){ return collection; } )
+                        refs : Something.Collection.subsetOf( function(){ return collection; } )
                     }
                 });
 

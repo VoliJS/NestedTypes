@@ -683,7 +683,7 @@
         }
     }).bind( exports.Model, exports.Collection );
 
-    exports.Model.From = exports.Model.RefTo = ( function(){
+    exports.Model.from = exports.Model.From = exports.Model.RefTo = ( function(){
         return function( collectionOrFunc ){
             var getMaster = _.isFunction( collectionOrFunc ) ? collectionOrFunc : function(){ return collectionOrFunc; };
 
@@ -725,7 +725,7 @@
         };
     })();
 
-    exports.Collection.SubsetOf = exports.Collection.RefsTo = ( function(){
+    exports.Collection.SubsetOf = exports.Collection.subsetOf = exports.Collection.RefsTo = ( function(){
         var CollectionProto = exports.Collection.prototype;
 
         var refsCollectionSpec = {

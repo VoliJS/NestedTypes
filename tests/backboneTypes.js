@@ -1,6 +1,7 @@
 define( function( require, exports, module ){
     describe( 'Nested Models and Collections', function(){
-        var Nested = require( '../nestedtypes' );
+        var Nested = require( '../nestedtypes' ),
+            expect = require( 'chai' ).expect;
 
         function shouldFireChangeOnce( model, attr, todo ){
             var change = sinon.spy(),
@@ -229,7 +230,17 @@ define( function( require, exports, module ){
                 });
             });
 
-            it( 'may be disabled for selected nested attributes' );
+            it( 'may be disabled for selected nested attributes', function(){
+                var m = new B(),
+                    spyTop = sinon.spy(),
+                    spyBottom = sinon.spy();
+
+                m.on( 'change', spyTop );
+                m.second.on( 'change', spyBottom );
+                m.second.a = 5;
+                expect( spyBottom ).to.be.calledOnce;
+                expect( spyBottom ).to.be.notCalled;
+            });
         })
     });
 });

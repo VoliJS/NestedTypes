@@ -293,17 +293,67 @@ define( function( require, exports, module ){
             });
 
             describe( 'toJSON hook', function(){
-                it( 'override attribute\'s toJSON when root model is serialized' );
-                it( 'can prevent attribute from serialization when root model is serialized' );
+                it( 'override attribute\'s toJSON', function(){
+                    var A = Nested.Model.extend({
+                        defaults : {
+                            a : Date.options({
+                                toJSON : function( date ){
+                                    return date.getTime();
+                                }
+                            })
+                        }
+                    });
+
+                    var m = new A(),
+                        json = m.toJSON();
+
+                    expect( json.a ).to.be.a( 'number' );
+                });
+
+                it( 'can prevent attribute from serialization', function(){
+                    var A = Nested.Model.extend({
+                        defaults : {
+                            a : Date.options({ toJSON : false }),
+                            b : true
+                        }
+                    });
+
+                    var m = new A(),
+                        json = m.toJSON();
+
+                    expect( json.a ).to.not.exist;
+                    expect( json.b ).to.be.true;
+                });
             });
 
             describe( 'parse hook', function(){
-                it( 'can override attribute\'s parse' );
+                it( 'can override attribute\'s parse', function(){
+                    var A = Nested.Model.extend({
+                        defaults : {
+                            a : Nested.options({
+                                parse : function( x ){ return "Hello " + x; }
+                            })
+                        }
+                    });
+
+                    var m = new A();
+                    m.set( m.parse({ a : 'Vlad' }) );
+                    expect( m.a ).to.equal( 'Hello Vlad' );
+                });
             });
 
-            it( 'can disable advanced features' );
-            it( 'can be expressed in full notation');
-            it( 'can be chained' );
+            it( 'can define untyped attribute', function(){
+                var A = Nested.Model.extend({
+                    defaults : {
+                        a : Nested.value( 1 )
+                    }
+                });
+
+                var m = new A();
+                expect( m.a ).to.equal( 1 );
+                m.a = "1";
+                expect( m.a ).to.equal( "1" );
+            });
         });
 
     });

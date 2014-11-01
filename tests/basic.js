@@ -1,5 +1,6 @@
 define( function( require, exports, module ){
-    var Nested = require( '../nestedtypes' );
+    var Nested = require( '../nestedtypes' ),
+        expect = require( 'chai' ).expect;
 
     describe( 'Basic functionality', function(){
         function canHaveNativeProperties( Type ){
@@ -56,7 +57,20 @@ define( function( require, exports, module ){
                 canHaveNativeProperties( Nested.Model );
             });
 
-            it( 'may turn off native properties for model\'s attributes' );
+            it( 'may turn off native properties for model\'s attributes', function(){
+                var M = Nested.Model.extend({
+                    attributes : {
+                        a : 'a'
+                    },
+
+                    properties : false
+                });
+
+                var m = new M();
+
+                expect( m.a ).to.be.an( 'undefined' );
+
+            });
 
             it( 'inherit default attributes from the base model', function(){
                 var B = M.extend({

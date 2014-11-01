@@ -178,11 +178,46 @@ define( function( require, exports, module ){
         });
 
         describe( 'Date type', function(){
-            it( 'create new Date object on construction')
-            it( 'parse ISO dates in all browsers on assignment' );
-            it( 'parse integer time stamps on assignment' );
-            it( 'parse MS time stamps on assignment' );
-            it( 'is serialized to ISO date' );
+            var user, User = Nested.Model.extend({
+                attributes:{
+                    created: Date,
+                    name: String,
+                    loginCount: Integer
+                }
+            });
+
+            before( function(){
+                user = new User();
+            });
+
+            it( 'create new Date object on construction', function(){
+                expect( user.created ).to.be.instanceOf( Date );
+            });
+
+            it( 'parse ISO dates in all browsers on assignment', function(){
+                // parse Date from string
+                user.created = "2012-12-12T10:00";
+                user.created.should.be.instanceof( Date );
+                user.created.toISOString().should.be.eql( '2012-12-12T10:00:00.000Z' );
+            });
+
+            it( 'parse integer time stamps on assignment', function(){
+                // parse Date from timestamp
+                user.created = 1234567890123;
+                user.created.should.be.instanceof( Date );
+                user.created.toISOString().should.be.eql( '2009-02-13T23:31:30.123Z' );
+            });
+
+            it( 'parse MS time stamps on assignment', function(){
+                user.created = "/Date(1234567890123)/";
+                user.created.should.be.instanceof( Date );
+                user.created.toISOString().should.be.eql( '2009-02-13T23:31:30.123Z' );
+            });
+
+            it( 'is serialized to ISO date', function(){
+                var json = user.toJSON();
+                json.created.should.be.eql( '2009-02-13T23:31:30.123Z' );
+            } );
         });
 
         describe( 'Attribute options', function(){

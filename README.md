@@ -544,14 +544,58 @@ Both long and short forms of attribute options are chainable. I.e. following con
 
 Available options so far are:
 
-Option      | Description
-------------|-----------
-type : Ctor | attribute's type (constructor function)
-value : x   | attribute's default value
-toJSON : false | attribute will not be serialized to JSON
-toJSON : function( attrValue, attrName ) -> JSON | serialize attribute to JSON with the given function
-parse  : function( data ) -> {attribute hash} | parse attribute with a given function
-get : function() -> value | override native property getter for the attribute
-set : function( value ) -> value | to override native property setter for the attribute
-triggerWhenChanged : String | bubble 'change' event when given list of events are triggered by the attribute
-triggerWhenChanged : false  | don't bubble 'change' events from the the attribute
+#### type
+```
+type : Ctor
+```
+Attribute's type (constructor function). When no type is provided, attribute behaves as regular backbone attribute.
+
+#### value
+```
+value : x
+```
+Attribute's default value. When type is specified, value will be casted to this type on construction.
+
+#### toJSON
+```
+toJSON : function( attrValue, attrName ){ return attrValue.toJSON(); }
+or
+toJSON : false
+```
+When attribute will be serialized as a part of model, given function will be used *instead* of attribute's toJSON.
+Function will be executed in the context of the model.
+
+Specifying 'false' will prevent attribute form serialization.
+
+#### parse
+```
+parse  : function( data ){ return data; }
+
+```
+When attribute is parsed as a part of the model, given function will be called *before* calling the attribute's parse.
+
+#### get hook
+
+    get : function( value ){ return value; }
+
+Called on Model.get in the context of the model, allowing you to modify returned value.
+
+#### set hook
+
+    set : function( value, options ){ return value; }
+
+Called on Model.set in the context of the model, allowing you to modify value before set ot cancel setting of the attribute, returning 'undefined'.
+
+set hook is executed on every attribute change, *after* type cast. So, it's guaranteed that value will be of the correct type.
+
+For nested models and collections it will be called only in case when model/collection
+ instance will be replaced, which makes it a perfect place to handle custom events subscriptions.
+
+#### triggerWhenCnaged
+
+    triggerWhenChanged : String
+    or
+    triggerWhenChanged : false
+
+trigger 'change' event on the model when given list of events are triggered by the attribute.
+Specify 'false' to turn off event bubbling.

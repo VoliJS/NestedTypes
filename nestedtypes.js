@@ -33,10 +33,6 @@
 
         unknownAttribute : function( context, name, value ){
             context.suppressTypeErrors || console.error( '[Type Error](' + context.__class + '.set) Attribute "' + name + '" has no default value.', value, 'In model:', context );
-        },
-
-        defaultsIsFunction : function( context ){
-            console.error( '[Type Error](' + context.__class + '.defaults] "defaults" must be an object, functions are not supported. In model:', context );
         }
     };
 
@@ -426,11 +422,8 @@
         } );
 
         function parseDefaults( spec, Base ){
-            if( _.isFunction( spec.defaults ) ){
-                error.defaultsIsFunction( spec );
-            }
-
-            var defaults    = _.defaults( spec.defaults || spec.attributes || {}, Base.prototype.__defaults ),
+            var defaultAttrs = _.isFunction( spec.defaults ) ? spec.defaults() : spec.defaults,
+                defaults    = _.defaults( defaultAttrs || spec.attributes || {}, Base.prototype.__defaults ),
                 idAttrName      = spec.idAttribute || Base.prototype.idAttribute,
                 attributes = {};
 
@@ -456,7 +449,8 @@
 
             return _.extend( _.omit( spec, 'collection', 'attributes' ), {
                 __defaults  : defaults, // needed for attributes inheritance
-                __attributes : attributes
+                __attributes : attributes,
+                defaults : _.isFunction( spec.defaults ) ? spec.defaults : createDefaults( attributes )
             });
         }
 
@@ -535,8 +529,6 @@
 
         Model.extend = function( protoProps, staticProps ){
             var spec = parseDefaults( protoProps, this );
-            spec.defaults = createDefaults( spec.__attributes );
-
             var This = extend.call( this, spec, staticProps );
 
             var collectionSpec = { model : This };

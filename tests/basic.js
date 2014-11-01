@@ -99,7 +99,24 @@ define( function( require, exports, module ){
                 n.a.first.should.eql( [ 1 ] );
             });
 
-            it( 'can handle function in Model.defaults' );
+            it( 'can handle function in Model.defaults', function(){
+                var M = Nested.Model.extend({
+                    defaults : function(){
+                        return {
+                            num : 1,
+                            date : new Date()
+                        };
+                    }
+                });
+
+                var m = new M();
+
+                expect( m.num ).to.equal( 1 );
+                expect( m.date ).to.be.instanceOf( Date );
+
+                m.num = "2";
+                expect( m.num ).to.equal( 2 );
+            });
         });
 
         describe( 'Nested.Collection', function(){

@@ -97,41 +97,27 @@
             },
 
             property : function( name ){
-                return {
-                    get : function(){
-                        return this.attributes[ name ];
-                    },
+                var spec = {
+                        set : function( value ){
+                            this.set( name, value );
+                            return value;
+                        },
 
-                    set : function( value ){
-                        this._setSingleAttr( name, value );
-                        return value;
+                        enumerable : false
                     },
+                    get = this.get;
 
-                    enumerable : false
+                spec.get = get ? function(){
+                    return get.call( this, this.attributes[ name ] );
+                } : function(){
+                    return this.attributes[ name ];
                 };
+
+                return spec;
             },
 
             options : function( spec ){
                 _.extend( this, spec );
-
-                if( spec.get || spec.set ){
-                    // inline property override...
-                    this.property = function( name ){
-                        return {
-                            get : spec.get || function(){
-                                return this.attributes[ name ];
-                            },
-
-                            set : function( value ){
-                                this.set( value );
-                                return value;
-                            },
-
-                            enumerable : false
-                        };
-                    };
-                }
-
                 return this;
             },
 
@@ -308,11 +294,7 @@
                 attrs && baseModelSet.call( this, attrs, options );
             },
 
-            set : function( attrs, options ){
-                if( typeof attrs === 'string' ){
-                    return this._setSingleAttr( attrs, options, arguments[ 2 ] );
-                }
-
+            _bulkSet : function( attrs, options ){
                 if( attrs.constructor !== Object ){
                     error.argumentIsNotAnObject( this, attrs );
                 }
@@ -325,14 +307,16 @@
                         value = attrs[ name ];
 
                     if( attrSpec ){
-                        if( attrSpec.set ){
-                            value = attrSpec.set.call( this, value );
+                        attrSpec.cast && ( value = attrSpec.cast( value, options, this ) );
+
+                        if( attrSpec.set && value !== this.attributes[ name ] ){
+                            value = attrSpec.set.call( this, value, options );
                             if( value === undefined ){
                                 continue;
                             }
                         }
 
-                        attrSpec.cast && ( attrs[ name ] = attrSpec.cast( value, options, this ) );
+                        attrs[ name ] = value;
                     }
                     else{
                         error.unknownAttribute( this, name, value );
@@ -343,28 +327,27 @@
                 return this;
             },
 
-            _setSingleAttr: function( name, value, options ){
+            set : function( name, value, options ){
+                if( typeof name === 'object' ){
+                    return this._bulkSet( name, value );
+                }
+
                 var attrSpec = this.__attributes[ name ];
 
                 if( attrSpec ){
-                    if( attrSpec.set ){
-                        value = attrSpec.set.call( this, value );
+                    if( attrSpec.isBackboneType ){
+                        var attrs = {};
+                        attrs[ name ] = value;
+                        return this._bulkSet( attrs, options );
+                    }
+
+                    attrSpec.cast && ( value = attrSpec.cast( value, options, this ) );
+
+                    if( attrSpec.set && value !== this.attributes[ name ] ){
+                        value = attrSpec.set.call( this, value, options );
                         if( value === undefined ){
                             return this;
                         }
-                    }
-
-                    if( attrSpec.isBackboneType ){
-                        var attrs = {};
-
-                        this.__beginChange();
-                        attrs[ name ] = attrSpec.cast( value, options, this );
-                        this.__commitChange( attrs, options );
-
-                        return this;
-                    }
-                    else if( attrSpec.cast ){
-                        value = attrSpec.cast( value );
                     }
                 }
                 else{
@@ -626,6 +609,7 @@
 
     exports.options.Type.extend({
         isBackboneType : true,
+        isModel : true,
 
         _name : '',
         handleNestedChange : function(){},
@@ -680,6 +664,10 @@
 
             if( incompatibleType ){
                 if( existingModelOrCollection ){ // ...delegate update for existing object 'set' method
+                    if( options && options.parse && this.isModel ){ // handle inconsistent backbone's parse implementation
+                        value = existingModelOrCollection.parse( value );
+                    }
+
                     existingModelOrCollection.set( value, options );
                     value = existingModelOrCollection;
                 }
@@ -698,6 +686,8 @@
         initialize : function( spec ){
             exports.options.Type.prototype.initialize.apply( this, arguments );
             _.isUndefined( this.triggerWhenChanged ) && ( this.triggerWhenChanged = spec.type.prototype.triggerWhenChanged );
+
+            this.isModel = this.type.prototype instanceof exports.Model;
         }
     }).bind( exports.Model, exports.Collection );
 

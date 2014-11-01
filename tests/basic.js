@@ -1,29 +1,182 @@
 define( function( require, exports, module ){
+    var Nested = require( '../nestedtypes' );
+
     describe( 'Basic functionality', function(){
-        describe( 'Model.defauls', function(){
-            it( 'can be substituted with "Model.attributes"' );
-            it( 'create native properties for every entry' );
-            it( 'inherit entries from the base model' );
-            it( 'deep copy JSON literals' );
+        function canHaveNativeProperties( Type ){
+            var C = Type.extend({
+                something : false,
+
+                properties : {
+                    readOnly : function(){ return this.something; },
+                    rw : {
+                        get : function(){ return this.something; },
+                        set : function( value ){
+                            return this.something = value;
+                        }
+                    }
+                }
+            });
+
+            var c = new C();
+            c.readOnly.should.be.false;
+            c.rw = true;
+            c.rw.should.be.true;
+            c.readOnly.should.be.true;
+        }
+
+        describe( 'Nested.Model', function(){
+            var M = Nested.Model.extend({
+                urlRoot : '/root',
+
+                defaults : {
+                    a : 'a'
+                }
+            });
+
+            it( 'may use "Model.attributes" instead of "Model.defaults"', function(){
+                var M = Nested.Model.extend({
+                    attributes : {
+                        a : 'a'
+                    }
+                });
+
+                var m = new M();
+                m.get( 'a' ).should.eql( 'a' );
+            });
+
+            it( 'create native properties for every default attribute', function(){
+                var m = new M();
+                m.a.should.eql( 'a' );
+                m.a = 'b';
+                m.get( 'a' ).should.eql( 'b' );
+                m.a.should.eql( 'b' );
+            });
+
+            it( 'can have explicitly defined native properties', function(){
+                canHaveNativeProperties( Nested.Model );
+            });
+
+            it( 'may turn off native properties for model\'s attributes' );
+
+            it( 'inherit default attributes from the base model', function(){
+                var B = M.extend({
+                    defaults : {
+                        b : 'b'
+                    }
+                });
+
+                m = new B();
+                m.a.should.eql( 'a' );
+                m.b.should.eql( 'b' );
+            });
+
+            it( 'deep copy defaults JSON literals on model creation', function(){
+                var A = Nested.Model.extend({
+                    defaults : {
+                        a : { first : [ 1 ], second : [ 2 ] }
+                    }
+                });
+
+                var m = new A(),
+                    n = new A();
+
+                m.a.first.push( 2 );
+                m.a.first.should.eql( [ 1, 2 ] );
+                n.a.first.should.eql( [ 1 ] );
+            });
+
+            it( 'can handle function in Model.defaults' );
         });
 
-        describe( 'Inline Collection definition', function(){
-            it( 'create Collection type for every model' );
-            it( 'inherit collection from the base model' );
-            it( 'takes Collection definition from Model.collection' );
+        describe( 'Nested.Collection', function(){
+            var M = Nested.Model.extend({
+                urlRoot : '/root',
+
+                defaults : {
+                    a : 'a'
+                },
+
+                collection : {
+                    initialize : function(){
+                        this.b = 'b';
+                    }
+                }
+            });
+
+            it( 'can have explicitly defined native properties', function(){
+                canHaveNativeProperties( Nested.Collection );
+            });
+
+            it( 'is automatically defined for every model', function(){
+                var c = new M.Collection();
+                c.url.should.eql( M.prototype.urlRoot );
+                c.model.should.eql( M );
+            });
+
+            it( 'can be defined in Model.collection', function(){
+                var c = new M.Collection();
+                c.b.should.eql( 'b' );
+            });
+
+            it( 'inherits from the base Model.collection', function(){
+                var B = M.extend({
+                    urlRoot : '/myroot',
+                    collection : {
+                        c : 'c'
+                    }
+                });
+
+                var c = new B.Collection();
+                c.c.should.eql( 'c' );
+                c.b.should.eql( 'b' );
+                c.url.should.eql( '/myroot' );
+            });
+
         });
 
         describe( 'Class type', function(){
-            it( 'can be extended' );
-            it( 'can throw/listen to events' );
-        });
+            var C = Nested.Class.extend({
+                a : 'a',
+                initialize : function(){
+                    this.b = 'b';
+                }
+            });
 
-        describe( 'Explicit native properties spec', function(){
-            it( 'can define read-only property' );
-            it( 'can define read-write property' );
-            it( 'is supported in Class, Model, and Collection' );
-            it( 'override native properties for model\'s attributes' );
-            it( 'may turn off native properties for model\'s attributes' );
+            it( 'has initialize method', function(){
+                var c = new C();
+                c.a.should.eql( 'a' );
+                c.b.should.eql( 'b' );
+            });
+
+            it( 'can be extended', function(){
+                var D = C.extend({
+                    d : 'd'
+                });
+
+                var d = new D();
+
+                d.a.should.eql( 'a' );
+                d.b.should.eql( 'b' );
+                d.d.should.eql( 'd' );
+            });
+
+            it( 'can trigger/listen to backbone events', function(){
+                var C = Nested.Class.extend({
+                    initialize : function(){
+                        this.listenTo( this, 'hello', function(){
+                            this.hello = true;
+                        })
+                    }
+                });
+
+                var c = new C();
+                c.trigger( 'hello' );
+                c.hello.should.be.true;
+            });
+
+            it( 'can have explicitly defined native properties', function(){
+                canHaveNativeProperties( Nested.Class );
+            });
         });
 
         describe( 'Run-time errors', function(){

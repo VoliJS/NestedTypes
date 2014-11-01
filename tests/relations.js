@@ -1,3 +1,3 @@
-/**
- * Created by Vlad on 10/30/2014.
- */
+define( function( require, exports, module ){
+
+});

@@ -106,9 +106,9 @@ or
 - Native properties are created for every entry.
 - Entries are inherited from the base Model.defaults/attributes.
 - JSON literals will be deep copied upon creation of model.
-- defaults/attributes *must* be an object, functions are not supported.
 - attributes *must* be declared in defaults/attributes.
 
+'defaults' spec may be a function or object, 'attributes' *must* be an object.
 
 ```javascript
     var UserInfo = NestedTypes.Model.extend({
@@ -240,7 +240,7 @@ For Model, explicit property will override generated one, and "properties : fals
 
 ### Run-time errors
 
-NestedTypes detect four error types in the runtime, which will be logged to console using console.error.
+NestedTypes detect three error types in the runtime, which will be logged to console using console.error.
 
 ```
 [Type error](Model.extend) Property "name" conflicts with base class members.
@@ -257,12 +257,12 @@ First argument of Model.set must be either string, or literal object representin
 ```
 Attempt to set attribute which is not declared in defaults.
 
-```
-[Type Error](Model.defaults) "defaults" must be an object, functions are not supported
-```
 
 ## Model.defaults Type Specs
 ### Basic type annotation syntax and rules
+
+IMPORTANT! Model.defaults must be an object to use attribute type annotations features described here.
+defaults function body is supported for backward compatibility with backbone only, in order to simplify transition.
 
 Type specs can be optionally used instead of init values in Model.defaults. They looks like this:
 
@@ -306,6 +306,8 @@ console.assert( a.obj2 instanceof Ctor );
 Primitive types are special in a sense that *they are inferred from their values*, so they are always typed. In most cases special type annotation syntax is not really required.
 
 It means that if attribute has default value of 5 *then it's guaranteed to be Number or null* (it will be casted to Number on assignments). This is quite different from original Backbone's behaviour which you might expect, and it makes models safer. For polimorphic attributes holding different types you can disable type inference using 'NestedTypes.value'.
+
+IMPORTANT! Although it's not possible to use type annotations in Model.defaults function body, primitive types will be inferred from their values in this case. So beware.
 
 NestedTypes adds global Integer type, to be used in type annotations. It behaves the same as Number, but convert values to integer on attribute assignment using Math.round. Integer type is not being inferred from the values, and needs to be specified explicitly.
 
@@ -470,8 +472,8 @@ var M = NestedTypes.Model.extend({
 ```
 
 ### Model relations
-- Model.From
-- Collection.SubsetOf
+- Model.from
+- Collection.subsetOf
 
 Sometimes when you have one-to-many and many-to-many relationships between Models, it is suitable to transfer such a relationships from server as arrays of model ids. NestedTypes gives you special attribute data types for this situation.
 
@@ -479,8 +481,8 @@ Sometimes when you have one-to-many and many-to-many relationships between Model
 var User = NestedTypes.Model.extend({
     defaults : {
         name : String,
-        roles : RolesCollection.SubsetOf( rolesCollection ) // <- serialized as array of model ids
-        location : Location.From( locationsCollection ) // <- serialized as model id
+        roles : RolesCollection.subsetOf( rolesCollection ) // <- serialized as array of model ids
+        location : Location.from( locationsCollection ) // <- serialized as model id
     }
 });
 
@@ -492,7 +494,7 @@ assert( user.roles instanceof Collection );
 assert( user.roles.first() instanceof Role );
 ```
 
-Collection.SubsetOf is a collection of models taken from existing collection. On first access of attribute of this type, it will resolve ids to real models from the given master collection.
+Collection.subsetOf is a collection of models taken from existing collection. On first access of attribute of this type, it will resolve ids to real models from the given master collection.
 
 If master collection is empty and thus references cannot be resolved, it will defer id resolution and just return collection of dummy models with ids. However, if master collection is not empty, it will filter out ids of non-existent models.
 
@@ -591,7 +593,7 @@ set hook is executed on every attribute change, *after* type cast. So, it's guar
 For nested models and collections it will be called only in case when model/collection
  instance will be replaced, which makes it a perfect place to handle custom events subscriptions.
 
-#### triggerWhenCnaged
+#### triggerWhenChanged
 
     triggerWhenChanged : String
     or

@@ -1,8 +1,18 @@
-IMPORTANT. There are changes in verion 9.x breaking compatibility with previous versions. Following changes in your code are  required:
+Important. Compatibility note
+==================
+There might be compatibility issues in you application when you upgrade to this release, so read this section carefully.
+
+There are changes in version 0.9.x breaking compatibility with previous versions. Following changes in your code are  required:
 - NestedTypes.Attribute({ ... }) -> NestedTypes.options({ ... })
 - NestedTypes.Attribute( Type, value ) -> Type.value( value )
 
 See "Attribute options" section for details on new type annotation syntax.
+
+There are changes in 0.9.10 breaking compatibility with previous versions.
+- Previously, attribute options 'set' and 'get' used to override native properties. Now they have different semantic; please, refer to "get hook" and "set hook" topics.
+- Model.from and Collection.subsefOf now started with lowercase letter, and will return null and [] when not resolved instead of dummy objects.
+
+Except of these issues, upgrade should go fine. If you will encounter any problems during upgrade which are not covered here, don't hesitate to report a bug.
 
 backbone.nestedTypes
 ====================
@@ -592,6 +602,30 @@ set hook is executed on every attribute change, *after* type cast. So, it's guar
 
 For nested models and collections it will be called only in case when model/collection
  instance will be replaced, which makes it a perfect place to handle custom events subscriptions.
+
+#### property
+    property : function( name ){
+        return {
+            get : function(){
+                return this.attribute[ name ];
+            },
+
+            set: function( value ){
+                this.set( name, value );
+                return value;
+            }
+        }
+    }
+
+or
+
+    property : false
+
+This option is used to override attribute's native property. 'false' option will disable native property generation for this attribute.
+
+It's low level, so use it with extreme care.
+
+
 
 #### triggerWhenChanged
 

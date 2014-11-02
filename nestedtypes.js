@@ -310,6 +310,8 @@
                             if( value === undefined ){
                                 continue;
                             }
+
+                            attrSpec.cast && ( value = attrSpec.cast( value, options, this ) );
                         }
 
                         attrs[ name ] = value;
@@ -344,6 +346,8 @@
                         if( value === undefined ){
                             return this;
                         }
+
+                        attrSpec.cast && ( value = attrSpec.cast( value, options, this ) );
                     }
                 }
                 else{

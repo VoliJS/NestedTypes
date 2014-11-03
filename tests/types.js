@@ -175,6 +175,19 @@ define( function( require, exports, module ){
                 expect( m.bool ).to.be.a( 'boolean' ).and.equal( true );
             });
 
+            it( 'execute 1 000 000 sets to Integer attribute', function(){
+                var A = Nested.Model.extend({
+                    defaults : {
+                        num : 1
+                    }
+                });
+
+                var m = new A();
+                for( var i = 0; i < 1000000; i++ ){
+                    m.num = i;
+                }
+            });
+
         });
 
         describe( 'Date type', function(){

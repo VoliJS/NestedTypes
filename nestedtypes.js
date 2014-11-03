@@ -740,7 +740,7 @@
             refs : null,
 
             toJSON : function(){
-                return _.pluck( this.models, 'id' );
+                return this.refs || _.pluck( this.models, 'id' );
             },
 
             deepClone : function(){

@@ -1,4 +1,9 @@
 define( function( require, exports, module ){
+    var _ = require( 'underscore' );
+
+    var array = [],
+        slice = array.slice;
+
     var Events = module.exports = {
         // Bind an event to a `callback` function. Passing `"all"` will bind
         // the callback to all events fired.
@@ -169,4 +174,83 @@ define( function( require, exports, module ){
     // Aliases for backwards compatibility.
     Events.bind   = Events.on;
     Events.unbind = Events.off;
+
+    exports.extend = function(protoProps, staticProps) {
+        var parent = this;
+        var child;
+
+        // The constructor function for the new subclass is either defined by you
+        // (the "constructor" property in your `extend` definition), or defaulted
+        // by us to simply call the parent's constructor.
+        if (protoProps && _.has(protoProps, 'constructor')) {
+            child = protoProps.constructor;
+        } else {
+            child = function(){ return parent.apply(this, arguments); };
+        }
+
+        // Add static properties to the constructor function, if supplied.
+        _.extend(child, parent, staticProps);
+
+        // Set the prototype chain to inherit from `parent`, without calling
+        // `parent`'s constructor function.
+        var Surrogate = function(){ this.constructor = child; };
+        Surrogate.prototype = parent.prototype;
+        child.prototype = new Surrogate;
+
+        // Add prototype properties (instance properties) to the subclass,
+        // if supplied.
+        if (protoProps) _.extend(child.prototype, protoProps);
+
+        // Set a convenience property in case the parent's prototype is needed
+        // later.
+        child.prototype.__super__ = child.__super__ = parent.prototype;
+
+        return child;
+    };
+
+    exports.attachNativeProperties = function( Type, Base, properties ){
+        properties || ( properties = {} );
+
+        if( Type.prototype.hasOwnProperty( 'properties' ) ){
+            _.extend( properties, Type.prototype.properties );
+        }
+
+        _.each( properties, function( propDesc, name ){
+            var prop = _.isFunction( propDesc ) ? {
+                get: propDesc,
+                enumerable: false
+            } : _.defaults( {}, propDesc, { enumerable : false } );
+
+            if( name in Base.prototype ){
+                exports.errors.propertyConflict( Type.prototype, name );
+            }
+
+            Object.defineProperty( Type.prototype, name, prop );
+        });
+    };
+
+    exports.errors = {
+        propertyConflict : function( context, name ){
+            console.error( '[Type error](' + context._typeName + '.extend) Property ' + name + ' conflicts with base class members' );
+        }
+    };
+
+    exports.Class = ( function(){
+        function Class(){
+            this.initialize.apply( this, arguments );
+        }
+
+        _.extend( Class.prototype, Backbone.Events, {
+            _typeName: 'Class',
+            initialize: function (){}
+        });
+
+        Class.extend = function( protoProps ){
+            var This = exports.extend.apply( this, arguments );
+            This.attachNativeProperties();
+            return This;
+        };
+
+        return Class;
+    })();
 });

@@ -1,6 +1,6 @@
 define( function( require, exports, module ){
     "use strict";
-    var Nested = require( '../nestedtypes' ),
+    var Nested = require( '../nestedrelations' ),
         expect = require( 'chai' ).expect;
 
     describe( 'One-to-many and many-to-many relations', function(){
@@ -127,6 +127,78 @@ define( function( require, exports, module ){
                 m.refs = [ 1 ];
                 expect( m.refs.first().name ).to.equal( "1" );
             });
+        });
+    });
+
+    describe( 'Nested relations', function(){
+        var User = Nested.Model.extend({
+            defaults : {
+                name : '',
+                roles : Nested.Collection.subsetOf( 'roles' )
+            },
+
+            collection : {
+                fetch : function(){
+                    this.reset([ {
+                        id : 1,
+                        name : 'admin',
+                        roles : [ 1 ]
+                    },{
+                        id : 2,
+                        name : 'user',
+                        roles : [ 2 ]
+                    }], { parse : true });
+
+                    this.trigger( 'sync', this );
+                }
+            }
+        });
+
+        var Role = Nested.Model.extend({
+            defaults : {
+                name : '',
+                users : Nested.Collection.subsetOf( 'users' )
+            },
+
+            collection : {
+                fetch : function(){
+                    this.reset([ {
+                        id : 1,
+                        name : 'Administrators',
+                        users : [ 1 ]
+                    },{
+                        id : 2,
+                        name : 'Users',
+                        users : [ 2 ]
+                    }], { parse : true });
+
+                    this.trigger( 'sync', this );
+                }
+            }
+        });
+
+        it( 'can be initialized with a list of attributes', function(){
+            Nested.relations = {
+                users : User.Collection,
+                roles : Role.Collection
+            };
+        });
+
+        it( 'doesn\'t fetch anything if an relations was not accessed', function(){
+            Nested.relations.fetch();
+            expect( Nested.relations.resolved.users ).to.not.exist;
+            expect( Nested.relations.resolved.roles ).to.not.exist;
+        });
+
+        it( 'can be prefetched', function(){
+            Nested.relations.users.fetch();
+            expect( Nested.relations.users.length ).to.equal( 2 );
+            expect( Nested.relations.resolved.users ).to.be.true;
+        });
+
+        it( 'fetched of the first attributes access', function(){
+            var role = Nested.relations.users.first().roles.first();
+            expect( role.name ).to.equal( 'Administrators' );
         });
     });
 });

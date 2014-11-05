@@ -184,7 +184,7 @@ define( function( require, exports, module ){
             };
         });
 
-        it( 'doesn\'t fetch anything if an relations was not accessed', function(){
+        it( 'doesn\'t fetch anything if relations was not accessed', function(){
             Nested.relations.fetch();
             expect( Nested.relations.resolved.users ).to.not.exist;
             expect( Nested.relations.resolved.roles ).to.not.exist;
@@ -192,13 +192,14 @@ define( function( require, exports, module ){
 
         it( 'can be prefetched', function(){
             Nested.relations.users.fetch();
-            expect( Nested.relations.users.length ).to.equal( 2 );
             expect( Nested.relations.resolved.users ).to.be.true;
+            expect( Nested.relations.users.length ).to.equal( 2 );
         });
 
         it( 'fetched of the first attributes access', function(){
             var role = Nested.relations.users.first().roles.first();
             expect( role.name ).to.equal( 'Administrators' );
+            expect( Nested.relations.resolved.roles ).to.be.true;
         });
     });
 });

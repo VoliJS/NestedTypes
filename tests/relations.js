@@ -37,6 +37,9 @@ define( function( require, exports, module ){
                 var m = new A();
                 m.ref = 1;
                 expect( m.ref.name ).to.equal( "1" );
+
+                m.set({ ref: 2 });
+                expect( m.ref.name ).to.equal( "2" );
             });
 
             it( 'can be assigned with model', function(){

@@ -179,7 +179,7 @@
                     },
 
                     set : function( value ){
-                        value.length || ( this.resolved.name = false );
+                        value.length || ( this.resolved[ name ] = false );
                         return value;
                     }
                 }) );
@@ -209,6 +209,12 @@
                         var attr = this.attributes[ name ];
                         attr.fetch && attr.fetch();
                     });
+                },
+
+                clear : function(){
+                    var attrs = this.defaults();
+                    arguments.length && ( attrs = _.pick( attrs, _.toArray( arguments ) ) );
+                    this.set( attrs );
                 }
             });
 

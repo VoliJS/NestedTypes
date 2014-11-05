@@ -201,5 +201,16 @@ define( function( require, exports, module ){
             expect( role.name ).to.equal( 'Administrators' );
             expect( Nested.relations.resolved.roles ).to.be.true;
         });
+
+        it( 'individual elements can be cleaned up ', function(){
+            Nested.relations.clear( 'users' );
+            expect( Nested.relations.resolved.users ).to.be.not.ok;
+        });
+
+        it( 'all cache can be cleaned up ', function(){
+            Nested.relations.clear();
+            expect( Nested.relations.resolved.users ).to.be.not.ok;
+            expect( Nested.relations.resolved.roles ).to.be.not.ok;
+        });
     });
 });

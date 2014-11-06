@@ -306,13 +306,19 @@
                         attrSpec.cast && ( value = attrSpec.cast( value, options, this ) );
 
                         if( attrSpec.set && value !== this.attributes[ name ] ){
-                            value = attrSpec.set.call( this, value, options );
-                            if( value === undefined ){
+                            var updatedValue = attrSpec.set.call( this, value, options );
+                            if( updatedValue === undefined ){
                                 continue;
                             }
 
-                            attrSpec.cast && ( value = attrSpec.cast( value, options, this ) );
+                            if( updatedValue !== value && attrSpec.cast ){
+                                updatedValue = attrSpec.cast( updatedValue, options, this );
+                            }
+
+                            value = updatedValue;
                         }
+
+                        attrSpec.delegateEvents && attrSpec.delegateEvents( this, this.attributes[ name ], value );
 
                         attrs[ name ] = value;
                     }
@@ -636,22 +642,28 @@
         },
 
         delegateEvents : function( model, oldValue, newValue ){
-            var name = this.name;
+            if( this.triggerWhenChanged && oldValue !== newValue ){
+                var name = this.name;
 
-            oldValue && model.stopListening( oldValue );
+                oldValue && model.stopListening( oldValue );
 
-            if( newValue ){
-                model.listenTo( newValue, 'before:change', model.__beginChange );
-                model.listenTo( newValue, 'after:change', model.__commitChange );
-                model.listenTo( newValue, this.triggerWhenChanged, this.handleNestedChange );
+                if( newValue ){
+                    model.listenTo( newValue, 'before:change', model.__beginChange );
+                    model.listenTo( newValue, 'after:change', model.__commitChange );
+                    model.listenTo( newValue, this.triggerWhenChanged, this.handleNestedChange );
 
-                _.each( model.listening[ name ], function( handler, events ){
-                    var callback = typeof handler === 'string' ? this[ handler ] : handler;
-                    this.listenTo( newValue, events, callback );
-                }, this );
+                    _.each( model.listening[ name ], function( handler, events ){
+                        var callback = typeof handler === 'string' ? this[handler] : handler;
+                        this.listenTo( newValue, events, callback );
+                    }, this );
+                }
+
+                model.trigger( 'replace:' + name, model, newValue, oldValue );
             }
+        },
 
-            model.trigger( 'replace:' + name, model, newValue, oldValue );
+        create : function( value, options ){
+            return arguments.length ? new this.type( value, options ) : new this.type();
         },
 
         cast : function( value, options, model ){
@@ -668,12 +680,8 @@
                     value = existingModelOrCollection;
                 }
                 else{ // ...or create a new object, if it's not exist
-                    value = new this.type( value, options );
+                    value = this.create( value, options );
                 }
-            }
-
-            if( this.triggerWhenChanged && value !== existingModelOrCollection ){
-                this.delegateEvents( model, existingModelOrCollection, value );
             }
 
             return value;

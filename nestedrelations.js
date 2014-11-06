@@ -83,9 +83,7 @@
                 return this.refs || _.pluck( this.models, 'id' );
             },
 
-            deepClone : function(){
-                return CollectionProto.clone.apply( this, arguments );
-            },
+            deepClone : CollectionProto.clone,
 
             parse : function( raw ){
                 var models = [];
@@ -124,11 +122,13 @@
             },
 
             resolve : function( collection ){
-                this.resolvedWith = collection;
+                if( collection.length ){
+                    this.resolvedWith = collection;
 
-                if( this.refs ){
-                    this.reset( this.refs, { silent : true } );
-                    this.refs = null;
+                    if( this.refs ){
+                        this.reset( this.refs, { silent : true } );
+                        this.refs = null;
+                    }
                 }
 
                 return this;
@@ -136,19 +136,27 @@
         };
 
         return function( masterCollection ){
-            var getMaster = parseReference( masterCollection );
+            var getMaster = parseReference( masterCollection ),
+                _master;
 
             return Nested.options({
-                type : this.extend( refsCollectionSpec ),
+                type : Nested.Collection,
+
+                create : function( value, options ){
+                    if( !_master ){
+                        _master = getMaster.call( this );
+                        this.type = _master.constructor.extend( refsCollectionSpec );
+                    }
+
+                    return arguments.length ? new this.type( value, options ) : new this.type();
+                },
+
                 property : function( name ){
                     return {
                         get : function(){
                             var refs = this.attributes[ name ];
 
-                            if( !refs.resolvedWith ){
-                                var master = getMaster.call( this );
-                                master && master.length && refs.resolve( master );
-                            }
+                            refs.resolvedWith || refs.resolve( _master );
 
                             return refs;
                         },

@@ -202,6 +202,11 @@ define( function( require, exports, module ){
             expect( Nested.relations.resolved.roles ).to.be.true;
         });
 
+        it( 'uses real collection types for subsetOf attributes', function(){
+            expect( Nested.relations.users.first().roles ).to.be.instanceOf( Role.Collection );
+            expect( Nested.relations.roles.first().users ).to.be.instanceOf( User.Collection );
+        });
+
         it( 'individual elements can be cleaned up ', function(){
             Nested.relations.clear( 'users' );
             expect( Nested.relations.resolved.users ).to.be.not.ok;

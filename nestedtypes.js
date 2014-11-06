@@ -306,20 +306,12 @@
                         attrSpec.cast && ( value = attrSpec.cast( value, options, this ) );
 
                         if( attrSpec.set && value !== this.attributes[ name ] ){
-                            var updatedValue = attrSpec.set.call( this, value, options );
-                            if( updatedValue === undefined ){
-                                continue;
-                            }
-
-                            if( updatedValue !== value && attrSpec.cast ){
-                                updatedValue = attrSpec.cast( updatedValue, options, this );
-                            }
-
-                            value = updatedValue;
+                            value = attrSpec.set.call( this, value, options );
+                            if( value === undefined ) continue;
+                            attrSpec.cast && ( value = attrSpec.cast( value, options, this ) );
                         }
 
                         attrSpec.delegateEvents && attrSpec.delegateEvents( this, this.attributes[ name ], value );
-
                         attrs[ name ] = value;
                     }
                     else{
@@ -349,10 +341,7 @@
 
                     if( attrSpec.set && value !== this.attributes[ name ] ){
                         value = attrSpec.set.call( this, value, options );
-                        if( value === undefined ){
-                            return this;
-                        }
-
+                        if( value === undefined ) return this;
                         attrSpec.cast && ( value = attrSpec.cast( value, options, this ) );
                     }
                 }

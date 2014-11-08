@@ -1,4 +1,4 @@
-// Backbone.NestedRelations 0.9.10 (https://github.com/Volicon/backbone.nestedTypes)
+// Backbone.NestedRelations 0.1.0 (https://github.com/Volicon/backbone.nestedTypes)
 // (c) 2014 Vlad Balin & Volicon, may be freely distributed under the MIT license
 
 ( function( root, factory ){

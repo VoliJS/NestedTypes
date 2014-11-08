@@ -1,15 +1,12 @@
-Important. Compatibility note
+IMPORTANT! Version 1.0.0 compatibility note
 ==================
 There might be compatibility issues in you application when you upgrade to this release, so read this section carefully.
 
-There are changes in version 0.9.x breaking compatibility with previous versions. Following changes in your code are  required:
-- NestedTypes.Attribute({ ... }) -> NestedTypes.options({ ... })
-- NestedTypes.Attribute( Type, value ) -> Type.value( value )
+NestedTypes.Attribute is deprecated. Use:
+- NestedTypes.options({ ... }) instead of NestedTypes.Attribute({ ... })
+- Type.value( value ) instead of NestedTypes.Attribute( Type, value )
 
-See "Attribute options" section for details on new type annotation syntax.
-
-There are changes in 0.9.10 breaking compatibility with previous versions.
-- Previously, attribute options 'set' and 'get' used to override native properties. Now they have different semantic; please, refer to "get hook" and "set hook" topics.
+- New semantic for attribute's get and set hooks. Previously, attribute options 'set' and 'get' used to override native properties. Please, refer to "get hook" and "set hook" topics.
 - Model.from and Collection.subsefOf now started with lowercase letter, and will return null and [] when not resolved instead of dummy objects.
 
 Except of these issues, upgrade should go fine. If you will encounter any problems during upgrade which are not covered here, don't hesitate to report a bug.
@@ -481,53 +478,6 @@ var M = NestedTypes.Model.extend({
 });
 ```
 
-### Model relations
-- Model.from
-- Collection.subsetOf
-
-Sometimes when you have one-to-many and many-to-many relationships between Models, it is suitable to transfer such a relationships from server as arrays of model ids. NestedTypes gives you special attribute data types for this situation.
-
-```javascript
-var User = NestedTypes.Model.extend({
-    defaults : {
-        name : String,
-        roles : RolesCollection.subsetOf( rolesCollection ) // <- serialized as array of model ids
-        location : Location.from( locationsCollection ) // <- serialized as model id
-    }
-});
-
-var user = new User({ id: 0 });
-user.fetch(); // <- you'll receive from server "{ id: 0, name : 'john', roles : [ 1, 2, 3 ] }"
-...
-// however, user.roles behaves like normal collection of Roles.
-assert( user.roles instanceof Collection );
-assert( user.roles.first() instanceof Role );
-```
-
-Collection.subsetOf is a collection of models taken from existing collection. On first access of attribute of this type, it will resolve ids to real models from the given master collection.
-
-If master collection is empty and thus references cannot be resolved, it will defer id resolution and just return collection of dummy models with ids. However, if master collection is not empty, it will filter out ids of non-existent models.
-
-There are 'lazy' option for passing reference to master collection:
-
-```javascript
-var User = NestedTypes.Model.extend({
-    defaults : {
-        name : String,
-        roles : Collection.RefsTo( function(){
-            return this.collection.rolesCollection; // <- collection of Roles is the direct member of Users.Collection
-        }),
-        location : Location.From( function(){
-            return this.collection.locationsCollection; // <- collection of Roles is the direct member of Users.Collection
-        })
-    }
-});
-```
-
-Note, that 'change' events won't be bubbled from models in Collection.SubsetOf. Other collection's events will.
-
-For Model.From attribute no model changes will be bubbled.
-
 ### Attribute options
 - type and value
 - override native property
@@ -625,8 +575,6 @@ This option is used to override attribute's native property. 'false' option will
 
 It's low level, so use it with extreme care.
 
-
-
 #### triggerWhenChanged
 
     triggerWhenChanged : String
@@ -635,3 +583,56 @@ It's low level, so use it with extreme care.
 
 trigger 'change' event on the model when given list of events are triggered by the attribute.
 Specify 'false' to turn off event bubbling.
+
+NestedRelations extension
+--------------------------
+
+Extension available in separate module, providing necessary tools to deal with model's references by id. Useful in situations when you want to receive ids and arrays of ids instead of nested models and collections.
+
+Usual problem with this approach is that you need to manage the state of several collections, required to resolve id references, which could be tricky. NestedRelations extend NestedTypes API with three elements:
+- Nested.relations <- define
+- Nested.Model.from()
+- Nested.Collection.subsetOf
+
+Sometimes when you have one-to-many and many-to-many relationships between Models, it is suitable to transfer such a relationships from server as arrays of model ids. NestedTypes gives you special attribute data types for this situation.
+
+```javascript
+var User = NestedTypes.Model.extend({
+    defaults : {
+        name : String,
+        roles : RolesCollection.subsetOf( rolesCollection ) // <- serialized as array of model ids
+        location : Location.from( locationsCollection ) // <- serialized as model id
+    }
+});
+
+var user = new User({ id: 0 });
+user.fetch(); // <- you'll receive from server "{ id: 0, name : 'john', roles : [ 1, 2, 3 ] }"
+...
+// however, user.roles behaves like normal collection of Roles.
+assert( user.roles instanceof Collection );
+assert( user.roles.first() instanceof Role );
+```
+
+Collection.subsetOf is a collection of models taken from existing collection. On first access of attribute of this type, it will resolve ids to real models from the given master collection.
+
+If master collection is empty and thus references cannot be resolved, it will defer id resolution and just return collection of dummy models with ids. However, if master collection is not empty, it will filter out ids of non-existent models.
+
+There are 'lazy' option for passing reference to master collection:
+
+```javascript
+var User = NestedTypes.Model.extend({
+    defaults : {
+        name : String,
+        roles : Collection.RefsTo( function(){
+            return this.collection.rolesCollection; // <- collection of Roles is the direct member of Users.Collection
+        }),
+        location : Location.From( function(){
+            return this.collection.locationsCollection; // <- collection of Roles is the direct member of Users.Collection
+        })
+    }
+});
+```
+
+Note, that 'change' events won't be bubbled from models in Collection.SubsetOf. Other collection's events will.
+
+For Model.From attribute no model changes will be bubbled.

@@ -590,7 +590,11 @@
             remove: wrapCall( CollectionProto.remove ),
             add: wrapCall( CollectionProto.add ),
             reset: wrapCall( CollectionProto.reset ),
-            sort: wrapCall( CollectionProto.sort )
+            sort: wrapCall( CollectionProto.sort ),
+
+            getModelIds : function(){
+                return _.pluck( this.models, 'id ');
+            }
         });
 
         Collection.extend = createExtendFor( Collection );

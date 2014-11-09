@@ -122,7 +122,7 @@
             },
 
             resolve : function( collection ){
-                if( collection.length ){
+                if( collection && collection.length ){
                     this.resolvedWith = collection;
 
                     if( this.refs ){
@@ -136,38 +136,14 @@
         };
 
         return function( masterCollection ){
-            var getMaster = parseReference( masterCollection ),
-                _master;
+            var getMaster = parseReference( masterCollection );
 
             return Nested.options({
-                type : Nested.Collection,
+                type : this.extend( refsCollectionSpec ),
 
-                create : function( value, options ){
-                    if( !_master ){
-                        _master = getMaster.call( this );
-                        this.type = _master.constructor.extend( refsCollectionSpec );
-                    }
-
-                    return arguments.length ? new this.type( value, options ) : new this.type();
-                },
-
-                property : function( name ){
-                    return {
-                        get : function(){
-                            var refs = this.attributes[ name ];
-
-                            refs.resolvedWith || refs.resolve( _master );
-
-                            return refs;
-                        },
-
-                        set : function( values ){
-                            this.set( name, values );
-                            return values;
-                        },
-
-                        enumerable : false
-                    }
+                get : function( refs ){
+                    refs.resolvedWith || refs.resolve( getMaster.call( this ) );
+                    return refs;
                 }
             });
         };
@@ -209,14 +185,23 @@
                                 return fetch.apply( this, arguments );
                             }
                         }
-                    });
+
+                        if( element instanceof Nested.Collection && element.length ){
+                            this.resolved[ name ] = true;
+                        }
+                    }, this );
                 },
 
                 fetch : function(){
-                    _.each( this.resolved, function( dontUse, name ){
+                    var xhr = [],
+                        objsToFetch = arguments.length ? arguments : _.keys( this.resolved );
+
+                    _.each( objsToFetch, function( name ){
                         var attr = this.attributes[ name ];
-                        attr.fetch && attr.fetch();
-                    });
+                        attr.fetch && xhr.push( attr.fetch() );
+                    }, this );
+
+                    return $.when.apply( $, xhr );
                 },
 
                 clear : function(){
@@ -226,7 +211,7 @@
                 }
             });
 
-            return _relations = new Cache();
+            _relations = new Cache();
         },
 
         get : function(){

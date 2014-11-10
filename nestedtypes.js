@@ -253,6 +253,12 @@
         }
     }).bind( Number, Boolean, String, Integer );
 
+    exports.options.Type.extend({
+        cast : function( value ){
+            return value === null || value instanceof Array ? value : [ value ];
+        }
+    }).bind( Array );
+
     var baseModelSet =  Backbone.Model.prototype.set;
 
     exports.Model = ( function(){

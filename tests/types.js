@@ -106,6 +106,28 @@ define( function( require, exports, module ){
             });
         });
 
+        describe( 'Array type', function(){
+            var M = Nested.Model.extend({
+                defaults : {
+                    arr : Array
+                }
+            });
+
+            it( 'creates an empty array by default', function(){
+                var m = new M();
+                expect( m.arr ).to.be.instanceOf( Array );
+                expect( m.arr.length ).to.be.equal( 0 );
+            });
+
+            it( 'wrap non-array value in array on assignment', function(){
+                var m = new M();
+                m.arr = 1;
+
+                expect( m.arr ).to.be.instanceOf( Array );
+                expect( m.arr[ 0 ] ).to.be.equal( 1 );
+            });
+        });
+
         describe( 'Primitive types (Number, Integer, Boolean, String)', function(){
             var A = Nested.Model.extend({
                 defaults : {

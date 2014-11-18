@@ -53,6 +53,8 @@
                 Object.defineProperty( This.prototype, name, prop );
             });
 
+            This.prototype.__super__ = this.prototype;
+
             return This;
         };
     }
@@ -243,6 +245,7 @@
         }).bind( Date );
     })();
 
+    // Fix incompatible constructor behaviour of primitive types...
     exports.options.Type.extend({
         create : function(){
             return this.type();
@@ -253,9 +256,10 @@
         }
     }).bind( Number, Boolean, String, Integer );
 
+    // Fix incompatible constructor behaviour of Array...
     exports.options.Type.extend({
         cast : function( value ){
-            return value === null || value instanceof Array ? value : [ value ];
+            return value == null || value instanceof Array ? value : [ value ];
         }
     }).bind( Array );
 
@@ -541,6 +545,7 @@
             This.Collection = this.Collection.extend( _.defaults( protoProps.collection || {}, collectionSpec ));
 
             createNativeProperties( This, spec );
+            This.prototype.__super__ = this.prototype;
 
             return This;
         };

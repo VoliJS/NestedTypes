@@ -35,7 +35,7 @@
                 value : null,
 
                 toJSON : function( value ){
-                    return typeof value === 'object' ? value.id : value;
+                    return value && typeof value === 'object' ? value.id : value;
                 },
 
                 property : function( name ){
@@ -208,6 +208,8 @@
                     var attrs = this.defaults();
                     arguments.length && ( attrs = _.pick( attrs, _.toArray( arguments ) ) );
                     this.set( attrs );
+
+                    return this;
                 }
             });
 

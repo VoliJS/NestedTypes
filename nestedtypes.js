@@ -375,6 +375,31 @@
                 return baseModelSet.call( this, name, value, options );
             },
 
+            deepGet : function( name ){
+                var path = name.split( '.' ),
+                    l = path.length,
+                    value = this;
+
+                for( var i = 0; i < l; i++ ){
+                    value = value.get( path[ i ] );
+                }
+
+                return value;
+            },
+
+            deepSet : function( name, value, options ){
+                var path = name.split( '.' ),
+                    l = path.length - 1,
+                    model = this,
+                    attr = path[ l ];
+
+                for( var i = 0; i < l; i++ ){
+                    model = model.get( path[ i ] );
+                }
+
+                return model.set( attr, value, options );
+            },
+
             // override get to invoke native getter...
             get : function( name ){ return this[ name ]; },
 

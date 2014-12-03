@@ -53,11 +53,24 @@
                 Object.defineProperty( This.prototype, name, prop );
             });
 
-            This.prototype.__super__ = this.prototype;
-
             return This;
         };
     }
+
+    var listenTo = Backbone.Model.prototype.listenTo;
+
+    Backbone.Events.listenTo = Backbone.Model.prototype.listenTo =
+        Backbone.Collection.prototype.listenTo = Backbone.View.prototype.listenTo =
+        function( source, events ){
+            if( typeof events === 'object' ){
+                _.each( events, function( handler, name ){
+                    listenTo.call( this, source, name, handler );
+                }, this );
+            }
+            else{
+                listenTo.apply( this, arguments );
+            }
+        };
 
     /*************************************************
         NestedTypes.Class
@@ -431,8 +444,8 @@
         } );
 
         function parseDefaults( spec, Base ){
-            var defaultAttrs = _.isFunction( spec.defaults ) ? spec.defaults() : spec.defaults,
-                defaults    = _.defaults( defaultAttrs || spec.attributes || {}, Base.prototype.__defaults ),
+            var defaultAttrs = _.isFunction( spec.defaults ) ? spec.defaults() : spec.defaults || spec.attributes || {},
+                defaults    = _.defaults( defaultAttrs, Base.prototype.__defaults ),
                 idAttrName      = spec.idAttribute || Base.prototype.idAttribute,
                 attributes = {};
 
@@ -440,9 +453,7 @@
                 attr instanceof exports.options.Type || ( attr = exports.options({ typeOrValue: attr }) );
                 attr.name = name;
 
-                if( name in Base.prototype.__defaults ){
-                    attr.property = false;
-                }
+                name in defaultAttrs || ( attr.property = false );
 
                 attributes[ name ] = attr;
             });
@@ -545,7 +556,6 @@
             This.Collection = this.Collection.extend( _.defaults( protoProps.collection || {}, collectionSpec ));
 
             createNativeProperties( This, spec );
-            This.prototype.__super__ = this.prototype;
 
             return This;
         };
@@ -604,7 +614,7 @@
             sort: wrapCall( CollectionProto.sort ),
 
             getModelIds : function(){
-                return _.pluck( this.models, 'id ');
+                return _.pluck( this.models, 'id' );
             }
         });
 

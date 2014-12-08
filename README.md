@@ -1,8 +1,15 @@
-IMPORTANT. There are changes in verion 9.x breaking compatibility with previous versions. Following changes in your code are  required:
-- NestedTypes.Attribute({ ... }) -> NestedTypes.options({ ... })
-- NestedTypes.Attribute( Type, value ) -> Type.value( value )
+IMPORTANT! Version 1.0.0 compatibility note
+==================
+There might be compatibility issues in you application when you upgrade to this release, so read this section carefully.
 
-See "Attribute options" section for details on new type annotation syntax.
+NestedTypes.Attribute is deprecated. Use:
+- NestedTypes.options({ ... }) instead of NestedTypes.Attribute({ ... })
+- Type.value( value ) instead of NestedTypes.Attribute( Type, value )
+
+- New semantic for attribute's get and set hooks. Previously, attribute options 'set' and 'get' used to override native properties. Please, refer to "get hook" and "set hook" topics.
+- Model.from and Collection.subsefOf now started with lowercase letter, and will return null and [] when not resolved instead of dummy objects.
+
+Except of these issues, upgrade should go fine. If you will encounter any problems during upgrade which are not covered here, don't hesitate to report a bug.
 
 backbone.nestedTypes
 ====================
@@ -106,9 +113,9 @@ or
 - Native properties are created for every entry.
 - Entries are inherited from the base Model.defaults/attributes.
 - JSON literals will be deep copied upon creation of model.
-- defaults/attributes *must* be an object, functions are not supported.
 - attributes *must* be declared in defaults/attributes.
 
+'defaults' spec may be a function or object, 'attributes' *must* be an object.
 
 ```javascript
     var UserInfo = NestedTypes.Model.extend({
@@ -240,7 +247,7 @@ For Model, explicit property will override generated one, and "properties : fals
 
 ### Run-time errors
 
-NestedTypes detect four error types in the runtime, which will be logged to console using console.error.
+NestedTypes detect three error types in the runtime, which will be logged to console using console.error.
 
 ```
 [Type error](Model.extend) Property "name" conflicts with base class members.
@@ -257,12 +264,12 @@ First argument of Model.set must be either string, or literal object representin
 ```
 Attempt to set attribute which is not declared in defaults.
 
-```
-[Type Error](Model.defaults) "defaults" must be an object, functions are not supported
-```
 
 ## Model.defaults Type Specs
 ### Basic type annotation syntax and rules
+
+IMPORTANT! Model.defaults must be an object to use attribute type annotations features described here.
+defaults function body is supported for backward compatibility with backbone only, in order to simplify transition.
 
 Type specs can be optionally used instead of init values in Model.defaults. They looks like this:
 
@@ -306,6 +313,8 @@ console.assert( a.obj2 instanceof Ctor );
 Primitive types are special in a sense that *they are inferred from their values*, so they are always typed. In most cases special type annotation syntax is not really required.
 
 It means that if attribute has default value of 5 *then it's guaranteed to be Number or null* (it will be casted to Number on assignments). This is quite different from original Backbone's behaviour which you might expect, and it makes models safer. For polimorphic attributes holding different types you can disable type inference using 'NestedTypes.value'.
+
+IMPORTANT! Although it's not possible to use type annotations in Model.defaults function body, primitive types will be inferred from their values in this case. So beware.
 
 NestedTypes adds global Integer type, to be used in type annotations. It behaves the same as Number, but convert values to integer on attribute assignment using Math.round. Integer type is not being inferred from the values, and needs to be specified explicitly.
 
@@ -469,53 +478,6 @@ var M = NestedTypes.Model.extend({
 });
 ```
 
-### Model relations
-- Model.From
-- Collection.SubsetOf
-
-Sometimes when you have one-to-many and many-to-many relationships between Models, it is suitable to transfer such a relationships from server as arrays of model ids. NestedTypes gives you special attribute data types for this situation.
-
-```javascript
-var User = NestedTypes.Model.extend({
-    defaults : {
-        name : String,
-        roles : RolesCollection.SubsetOf( rolesCollection ) // <- serialized as array of model ids
-        location : Location.From( locationsCollection ) // <- serialized as model id
-    }
-});
-
-var user = new User({ id: 0 });
-user.fetch(); // <- you'll receive from server "{ id: 0, name : 'john', roles : [ 1, 2, 3 ] }"
-...
-// however, user.roles behaves like normal collection of Roles.
-assert( user.roles instanceof Collection );
-assert( user.roles.first() instanceof Role );
-```
-
-Collection.SubsetOf is a collection of models taken from existing collection. On first access of attribute of this type, it will resolve ids to real models from the given master collection.
-
-If master collection is empty and thus references cannot be resolved, it will defer id resolution and just return collection of dummy models with ids. However, if master collection is not empty, it will filter out ids of non-existent models.
-
-There are 'lazy' option for passing reference to master collection:
-
-```javascript
-var User = NestedTypes.Model.extend({
-    defaults : {
-        name : String,
-        roles : Collection.RefsTo( function(){
-            return this.collection.rolesCollection; // <- collection of Roles is the direct member of Users.Collection
-        }),
-        location : Location.From( function(){
-            return this.collection.locationsCollection; // <- collection of Roles is the direct member of Users.Collection
-        })
-    }
-});
-```
-
-Note, that 'change' events won't be bubbled from models in Collection.SubsetOf. Other collection's events will.
-
-For Model.From attribute no model changes will be bubbled.
-
 ### Attribute options
 - type and value
 - override native property
@@ -544,14 +506,133 @@ Both long and short forms of attribute options are chainable. I.e. following con
 
 Available options so far are:
 
-Option      | Description
-------------|-----------
-type : Ctor | attribute's type (constructor function)
-value : x   | attribute's default value
-toJSON : false | attribute will not be serialized to JSON
-toJSON : function( attrValue, attrName ) -> JSON | serialize attribute to JSON with the given function
-parse  : function( data ) -> {attribute hash} | parse attribute with a given function
-get : function() -> value | override native property getter for the attribute
-set : function( value ) -> value | to override native property setter for the attribute
-triggerWhenChanged : String | bubble 'change' event when given list of events are triggered by the attribute
-triggerWhenChanged : false  | don't bubble 'change' events from the the attribute
+#### type
+```
+type : Ctor
+```
+Attribute's type (constructor function). When no type is provided, attribute behaves as regular backbone attribute.
+
+#### value
+```
+value : x
+```
+Attribute's default value. When type is specified, value will be casted to this type on construction.
+
+#### toJSON
+```
+toJSON : function( attrValue, attrName ){ return attrValue.toJSON(); }
+or
+toJSON : false
+```
+When attribute will be serialized as a part of model, given function will be used *instead* of attribute's toJSON.
+Function will be executed in the context of the model.
+
+Specifying 'false' will prevent attribute form serialization.
+
+#### parse
+```
+parse  : function( data ){ return data; }
+
+```
+When attribute is parsed as a part of the model, given function will be called *before* calling the attribute's parse.
+
+#### get hook
+
+    get : function( value ){ return value; }
+
+Called on Model.get in the context of the model, allowing you to modify returned value.
+
+#### set hook
+
+    set : function( value, options ){ return value; }
+
+Called on Model.set in the context of the model, allowing you to modify value before set ot cancel setting of the attribute, returning 'undefined'.
+
+set hook is executed on every attribute change, *after* type cast. So, it's guaranteed that value will be of the correct type.
+
+For nested models and collections it will be called only in case when model/collection
+ instance will be replaced, which makes it a perfect place to handle custom events subscriptions.
+
+#### property
+    property : function( name ){
+        return {
+            get : function(){
+                return this.attribute[ name ];
+            },
+
+            set: function( value ){
+                this.set( name, value );
+                return value;
+            }
+        }
+    }
+
+or
+
+    property : false
+
+This option is used to override attribute's native property. 'false' option will disable native property generation for this attribute.
+
+It's low level, so use it with extreme care.
+
+#### triggerWhenChanged
+
+    triggerWhenChanged : String
+    or
+    triggerWhenChanged : false
+
+trigger 'change' event on the model when given list of events are triggered by the attribute.
+Specify 'false' to turn off event bubbling.
+
+NestedRelations extension
+--------------------------
+
+Extension available in separate module, providing necessary tools to deal with model's references by id. Useful in situations when you want to receive ids and arrays of ids instead of nested models and collections.
+
+Usual problem with this approach is that you need to manage the state of several collections, required to resolve id references, which could be tricky. NestedRelations extend NestedTypes API with three elements:
+- Nested.relations <- define
+- Nested.Model.from()
+- Nested.Collection.subsetOf
+
+Sometimes when you have one-to-many and many-to-many relationships between Models, it is suitable to transfer such a relationships from server as arrays of model ids. NestedTypes gives you special attribute data types for this situation.
+
+```javascript
+var User = NestedTypes.Model.extend({
+    defaults : {
+        name : String,
+        roles : RolesCollection.subsetOf( rolesCollection ) // <- serialized as array of model ids
+        location : Location.from( locationsCollection ) // <- serialized as model id
+    }
+});
+
+var user = new User({ id: 0 });
+user.fetch(); // <- you'll receive from server "{ id: 0, name : 'john', roles : [ 1, 2, 3 ] }"
+...
+// however, user.roles behaves like normal collection of Roles.
+assert( user.roles instanceof Collection );
+assert( user.roles.first() instanceof Role );
+```
+
+Collection.subsetOf is a collection of models taken from existing collection. On first access of attribute of this type, it will resolve ids to real models from the given master collection.
+
+If master collection is empty and thus references cannot be resolved, it will defer id resolution and just return collection of dummy models with ids. However, if master collection is not empty, it will filter out ids of non-existent models.
+
+There are 'lazy' option for passing reference to master collection:
+
+```javascript
+var User = NestedTypes.Model.extend({
+    defaults : {
+        name : String,
+        roles : Collection.RefsTo( function(){
+            return this.collection.rolesCollection; // <- collection of Roles is the direct member of Users.Collection
+        }),
+        location : Location.From( function(){
+            return this.collection.locationsCollection; // <- collection of Roles is the direct member of Users.Collection
+        })
+    }
+});
+```
+
+Note, that 'change' events won't be bubbled from models in Collection.SubsetOf. Other collection's events will.
+
+For Model.From attribute no model changes will be bubbled.

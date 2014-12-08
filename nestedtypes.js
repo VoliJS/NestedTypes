@@ -1,4 +1,4 @@
-// Backbone.nestedTypes 0.9.1 (https://github.com/Volicon/backbone.nestedTypes)
+// Backbone.nestedTypes 0.9.10 (https://github.com/Volicon/backbone.nestedTypes)
 // (c) 2014 Vlad Balin & Volicon, may be freely distributed under the MIT license
 
 // Date.parse with progressive enhancement for ISO 8601 <https://github.com/csnover/js-iso8601>
@@ -22,7 +22,7 @@
     'use strict';
     var extend = Backbone.Model.extend;
 
-    var error = {
+    exports.error = {
         propertyConflict : function( context, name ){
             console.error( '[Type error](' + context.__class + '.extend) Property ' + name + ' conflicts with base class members' );
         },
@@ -33,10 +33,6 @@
 
         unknownAttribute : function( context, name, value ){
             context.suppressTypeErrors || console.error( '[Type Error](' + context.__class + '.set) Attribute "' + name + '" has no default value.', value, 'In model:', context );
-        },
-
-        defaultsIsFunction : function( context ){
-            console.error( '[Type Error](' + context.__class + '.defaults] "defaults" must be an object, functions are not supported. In model:', context );
         }
     };
 
@@ -51,7 +47,7 @@
                 } : propDesc;
 
                 if( name in Base.prototype ){
-                    error.propertyConflict( This.prototype, name );
+                    exports.error.propertyConflict( This.prototype, name );
                 }
 
                 Object.defineProperty( This.prototype, name, prop );
@@ -60,6 +56,21 @@
             return This;
         };
     }
+
+    var listenTo = Backbone.Model.prototype.listenTo;
+
+    Backbone.Events.listenTo = Backbone.Model.prototype.listenTo =
+        Backbone.Collection.prototype.listenTo = Backbone.View.prototype.listenTo =
+        function( source, events ){
+            if( typeof events === 'object' ){
+                _.each( events, function( handler, name ){
+                    listenTo.call( this, source, name, handler );
+                }, this );
+            }
+            else{
+                listenTo.apply( this, arguments );
+            }
+        };
 
     /*************************************************
         NestedTypes.Class
@@ -97,41 +108,27 @@
             },
 
             property : function( name ){
-                return {
-                    get : function(){
-                        return this.attributes[ name ];
-                    },
+                var spec = {
+                        set : function( value ){
+                            this.set( name, value );
+                            return value;
+                        },
 
-                    set : function( value ){
-                        this.set( name, value );
-                        return value;
+                        enumerable : false
                     },
+                    get = this.get;
 
-                    enumerable : false
+                spec.get = get ? function(){
+                    return get.call( this, this.attributes[ name ] );
+                } : function(){
+                    return this.attributes[ name ];
                 };
+
+                return spec;
             },
 
             options : function( spec ){
                 _.extend( this, spec );
-
-                if( spec.get || spec.set ){
-                    // inline property override...
-                    this.property = function( name ){
-                        return {
-                            get : spec.get || function(){
-                                return this.attributes[ name ];
-                            },
-
-                            set : spec.set || function( value ){
-                                this.set( name, value );
-                                return value;
-                            },
-
-                            enumerable : false
-                        };
-                    };
-                }
-
                 return this;
             },
 
@@ -261,6 +258,7 @@
         }).bind( Date );
     })();
 
+    // Fix incompatible constructor behaviour of primitive types...
     exports.options.Type.extend({
         create : function(){
             return this.type();
@@ -270,6 +268,13 @@
             return value == null ? null : this.type( value );
         }
     }).bind( Number, Boolean, String, Integer );
+
+    // Fix incompatible constructor behaviour of Array...
+    exports.options.Type.extend({
+        cast : function( value ){
+            return value == null || value instanceof Array ? value : [ value ];
+        }
+    }).bind( Array );
 
     var baseModelSet =  Backbone.Model.prototype.set;
 
@@ -308,25 +313,32 @@
                 attrs && baseModelSet.call( this, attrs, options );
             },
 
-            __setMany : function( attrs, options ){
-                var attrSpecs = this.__attributes;
-
+            _bulkSet : function( attrs, options ){
                 if( attrs.constructor !== Object ){
-                    error.argumentIsNotAnObject( this, attrs );
+                    exports.error.argumentIsNotAnObject( this, attrs );
                 }
 
+                var attrSpecs = this.__attributes;
                 this.__beginChange();
 
                 for( var name in attrs ){
-                    var attrSpec = attrSpecs[ name ];
+                    var attrSpec = attrSpecs[ name ],
+                        value = attrs[ name ];
 
                     if( attrSpec ){
-                        if( attrSpec.cast ){
-                            attrs[ name ] = attrSpec.cast( attrs[ name ], options, this );
+                        attrSpec.cast && ( value = attrSpec.cast( value, options, this ) );
+
+                        if( attrSpec.set && value !== this.attributes[ name ] ){
+                            value = attrSpec.set.call( this, value, options );
+                            if( value === undefined ) continue;
+                            attrSpec.cast && ( value = attrSpec.cast( value, options, this ) );
                         }
+
+                        attrSpec.delegateEvents && attrSpec.delegateEvents( this, this.attributes[ name ], value );
+                        attrs[ name ] = value;
                     }
                     else{
-                        error.unknownAttribute( this, name, attrs[ name ] );
+                        exports.error.unknownAttribute( this, name, value );
                     }
                 }
 
@@ -334,35 +346,58 @@
                 return this;
             },
 
-            set: function( name, value, options ){
-                if( typeof name !== 'string' ){
-                    return this.__setMany( name, value );
+            set : function( name, value, options ){
+                if( typeof name === 'object' ){
+                    return this._bulkSet( name, value );
                 }
 
-                // optimized set version for single argument
                 var attrSpec = this.__attributes[ name ];
 
                 if( attrSpec ){
-                    if( attrSpec.cast ){
-                        if( attrSpec.isBackboneType ){
-                            var attrs = {};
+                    if( attrSpec.isBackboneType ){
+                        var attrs = {};
+                        attrs[ name ] = value;
+                        return this._bulkSet( attrs, options );
+                    }
 
-                            this.__beginChange();
-                            attrs[ name ] = attrSpec.cast( value, options, this );
-                            this.__commitChange( attrs, options );
+                    attrSpec.cast && ( value = attrSpec.cast( value, options, this ) );
 
-                            return this;
-                        }
-                        else{
-                            value = attrSpec.cast( value );
-                        }
+                    if( attrSpec.set && value !== this.attributes[ name ] ){
+                        value = attrSpec.set.call( this, value, options );
+                        if( value === undefined ) return this;
+                        attrSpec.cast && ( value = attrSpec.cast( value, options, this ) );
                     }
                 }
                 else{
-                    error.unknownAttribute( this, name, value );
+                    exports.error.unknownAttribute( this, name, value );
                 }
 
                 return baseModelSet.call( this, name, value, options );
+            },
+
+            deepGet : function( name ){
+                var path = name.split( '.' ),
+                    l = path.length,
+                    value = this;
+
+                for( var i = 0; i < l; i++ ){
+                    value = value.get( path[ i ] );
+                }
+
+                return value;
+            },
+
+            deepSet : function( name, value, options ){
+                var path = name.split( '.' ),
+                    l = path.length - 1,
+                    model = this,
+                    attr = path[ l ];
+
+                for( var i = 0; i < l; i++ ){
+                    model = model.get( path[ i ] );
+                }
+
+                return model.set( attr, value, options );
             },
 
             // override get to invoke native getter...
@@ -434,11 +469,8 @@
         } );
 
         function parseDefaults( spec, Base ){
-            if( _.isFunction( spec.defaults ) ){
-                error.defaultsIsFunction( spec );
-            }
-
-            var defaults    = _.defaults( spec.defaults || spec.attributes || {}, Base.prototype.__defaults ),
+            var defaultAttrs = _.isFunction( spec.defaults ) ? spec.defaults() : spec.defaults || spec.attributes || {},
+                defaults    = _.defaults( defaultAttrs, Base.prototype.__defaults ),
                 idAttrName      = spec.idAttribute || Base.prototype.idAttribute,
                 attributes = {};
 
@@ -446,9 +478,7 @@
                 attr instanceof exports.options.Type || ( attr = exports.options({ typeOrValue: attr }) );
                 attr.name = name;
 
-                if( name in Base.prototype.__defaults ){
-                    attr.property = false;
-                }
+                name in defaultAttrs || ( attr.property = false );
 
                 attributes[ name ] = attr;
             });
@@ -464,7 +494,8 @@
 
             return _.extend( _.omit( spec, 'collection', 'attributes' ), {
                 __defaults  : defaults, // needed for attributes inheritance
-                __attributes : attributes
+                __attributes : attributes,
+                defaults : _.isFunction( spec.defaults ) ? spec.defaults : createDefaults( attributes )
             });
         }
 
@@ -533,7 +564,7 @@
                 _.each( properties, function( prop, name ){
                     if( name in ModelProto ||
                         name === 'cid' || name === 'id' || name === 'attributes' ){
-                        error.propertyConflict( This.prototype, name );
+                        exports.error.propertyConflict( This.prototype, name );
                     }
 
                     Object.defineProperty( This.prototype, name, prop );
@@ -543,8 +574,6 @@
 
         Model.extend = function( protoProps, staticProps ){
             var spec = parseDefaults( protoProps, this );
-            spec.defaults = createDefaults( spec.__attributes );
-
             var This = extend.call( this, spec, staticProps );
 
             var collectionSpec = { model : This };
@@ -607,7 +636,11 @@
             remove: wrapCall( CollectionProto.remove ),
             add: wrapCall( CollectionProto.add ),
             reset: wrapCall( CollectionProto.reset ),
-            sort: wrapCall( CollectionProto.sort )
+            sort: wrapCall( CollectionProto.sort ),
+
+            getModelIds : function(){
+                return _.pluck( this.models, 'id' );
+            }
         });
 
         Collection.extend = createExtendFor( Collection );
@@ -617,6 +650,7 @@
 
     exports.options.Type.extend({
         isBackboneType : true,
+        isModel : true,
 
         _name : '',
         handleNestedChange : function(){},
@@ -647,22 +681,28 @@
         },
 
         delegateEvents : function( model, oldValue, newValue ){
-            var name = this.name;
+            if( this.triggerWhenChanged && oldValue !== newValue ){
+                var name = this.name;
 
-            oldValue && model.stopListening( oldValue );
+                oldValue && model.stopListening( oldValue );
 
-            if( newValue ){
-                model.listenTo( newValue, 'before:change', model.__beginChange );
-                model.listenTo( newValue, 'after:change', model.__commitChange );
-                model.listenTo( newValue, this.triggerWhenChanged, this.handleNestedChange );
+                if( newValue ){
+                    model.listenTo( newValue, 'before:change', model.__beginChange );
+                    model.listenTo( newValue, 'after:change', model.__commitChange );
+                    model.listenTo( newValue, this.triggerWhenChanged, this.handleNestedChange );
 
-                _.each( model.listening[ name ], function( handler, events ){
-                    var callback = typeof handler === 'string' ? this[ handler ] : handler;
-                    this.listenTo( newValue, events, callback );
-                }, this );
+                    _.each( model.listening[ name ], function( handler, events ){
+                        var callback = typeof handler === 'string' ? this[handler] : handler;
+                        this.listenTo( newValue, events, callback );
+                    }, this );
+                }
+
+                model.trigger( 'replace:' + name, model, newValue, oldValue );
             }
+        },
 
-            model.trigger( 'replace:' + name, model, newValue, oldValue );
+        create : function( value, options ){
+            return arguments.length ? new this.type( value, options ) : new this.type();
         },
 
         cast : function( value, options, model ){
@@ -671,16 +711,16 @@
 
             if( incompatibleType ){
                 if( existingModelOrCollection ){ // ...delegate update for existing object 'set' method
+                    if( options && options.parse && this.isModel ){ // handle inconsistent backbone's parse implementation
+                        value = existingModelOrCollection.parse( value );
+                    }
+
                     existingModelOrCollection.set( value, options );
                     value = existingModelOrCollection;
                 }
                 else{ // ...or create a new object, if it's not exist
-                    value = new this.type( value, options );
+                    value = this.create( value, options );
                 }
-            }
-
-            if( this.triggerWhenChanged && value !== existingModelOrCollection ){
-                this.delegateEvents( model, existingModelOrCollection, value );
             }
 
             return value;
@@ -689,138 +729,8 @@
         initialize : function( spec ){
             exports.options.Type.prototype.initialize.apply( this, arguments );
             _.isUndefined( this.triggerWhenChanged ) && ( this.triggerWhenChanged = spec.type.prototype.triggerWhenChanged );
+
+            this.isModel = this.type.prototype instanceof exports.Model;
         }
     }).bind( exports.Model, exports.Collection );
-
-    exports.Model.From = exports.Model.RefTo = ( function(){
-        return function( collectionOrFunc ){
-            var getMaster = _.isFunction( collectionOrFunc ) ? collectionOrFunc : function(){ return collectionOrFunc; };
-
-            return exports.options({
-                value : null,
-
-                toJSON : function( value ){
-                    return typeof value === 'object' ? value.id : value;
-                },
-
-                property : function( name ){
-                    return {
-                        get : function(){
-                            var objOrId = this.attributes[ name ];
-
-                            if( typeof objOrId !== 'object' ){
-                                var master = getMaster.call( this );
-
-                                if( master && master.length ){
-                                    objOrId = master.get( objOrId ) || null;
-                                    this.set( name, objOrId, { silent: true });
-                                }
-                                else{
-                                    objOrId = null;
-                                }
-                            }
-
-                            return objOrId;
-                        },
-
-                        set : function( modelOrId ){
-                            this.set( name, modelOrId );
-
-                            return modelOrId;
-                        }
-                    }
-                }
-            });
-        };
-    })();
-
-    exports.Collection.SubsetOf = exports.Collection.RefsTo = ( function(){
-        var CollectionProto = exports.Collection.prototype;
-
-        var refsCollectionSpec = {
-            triggerWhenChanged : "add remove reset sort",
-            __class : 'Collection.SubsetOf',
-
-            resolvedWith : null,
-
-            toJSON : function(){
-                return _.pluck( this.models, 'id' );
-            },
-
-            deepClone : function(){
-                return CollectionProto.clone.apply( this, arguments );
-            },
-
-            parse : function( raw ){
-                var idName = this.model.prototype.idAttribute;
-                this.resolvedWith = null;
-
-                return _.map( raw, function( id ){
-                    var res = {};
-                    res[ idName ] = id;
-                    return res;
-                });
-            },
-
-            toggle : function( modelOrId ){
-                var model = this.resolvedWith.get( modelOrId );
-
-                if( this.get( model ) ){
-                    this.remove( model );
-                }
-                else{
-                    this.add( model );
-                }
-            },
-
-            set : function( models, upperOptions ){
-                var options = { merge : false };
-
-                if( models instanceof Array && models.length && typeof models[ 0 ] !== 'object' ){
-                    options.parse = true;
-                }
-
-                CollectionProto.set.call( this, models, _.defaults( options, upperOptions ) );
-            },
-
-            resolve : function( collection ){
-                var values = this.map( function( ref ){
-                    return collection.get( ref.id );
-                });
-
-                this.reset( _.compact( values ), { silent : true } );
-                this.resolvedWith = collection;
-
-                return this;
-            }
-        };
-
-        return function( collectionOrFunc ){
-            var getMaster = _.isFunction( collectionOrFunc ) ? collectionOrFunc : function(){ return collectionOrFunc; };
-
-            return exports.options({
-                type : this.extend( refsCollectionSpec ),
-                property : function( name ){
-                    return {
-                        get : function(){
-                            var refs = this.attributes[ name ];
-
-                            if( !refs.resolvedWith ){
-                                var master = getMaster.call( this );
-                                master && master.length && refs.resolve( master );
-                            }
-
-                            return refs;
-                        },
-
-                        set : function( values ){
-                            return this.set( name, values );
-                        },
-
-                        enumerable : false
-                    }
-                }
-            });
-        };
-    })();
 }));

@@ -1,7 +1,7 @@
 define( function( require, exports, module ){
     var Nested = require( 'nestedtypes' );
 
-    var N = Nested.Model.extend({
+    var NestedModel = Nested.Model.extend({
         defaults:{
             time: Date,
             text: '',
@@ -13,10 +13,10 @@ define( function( require, exports, module ){
         save: function(){}
     });
 
-    var Main = Nested.Model.extend({
+    var MainModel = Nested.Model.extend({
         defaults:{
-            first: N,
-            second: N,
+            first: NestedModel,
+            second: NestedModel,
             count: 0,
             sum: 0
         }
@@ -82,13 +82,12 @@ define( function( require, exports, module ){
 
         it( 'support Integer primitive type', function(){
             user.loginCount = 0.5;
-            user.loginCount.should.eql( 0 );
+            user.loginCount.should.eql( 1 );
         });
 
         it( 'create default values for constructor attributes', function(){
             user.created.should.be.instanceof( Date );
             user.name.should.eql( '' );
-            user.loginCount.should.eql( 0 );
         });
 
         it( 'cast attribute values to defined types on assignment', function(){
@@ -215,7 +214,7 @@ define( function( require, exports, module ){
         describe( 'model with nested model', function(){
 
             it( 'bubble single attribute local change event', function(){
-                shouldFireChangeOnce( new Main(), 'first', function( model ){
+                shouldFireChangeOnce( new MainModel(), 'first', function( model ){
                     model.first.text = 'bubble';
                 });
             });
@@ -223,8 +222,8 @@ define( function( require, exports, module ){
             it( "shouldn't bubble events if not required", function(){
                 var M = Nested.Model.extend({
                     defaults : {
-                        first : Main,
-                        second : Main.options({
+                        first : MainModel,
+                        second : MainModel.options({
                             triggerWhenChanged : false
                         })
                     }
@@ -237,7 +236,7 @@ define( function( require, exports, module ){
             });
 
             it( 'emit single change event with local event handlers', function(){
-                shouldFireChangeOnce( new Main(), 'first', function( model ){
+                shouldFireChangeOnce( new MainModel(), 'first', function( model ){
                     model.on( 'change:first', function(){
                         model.count += 1;
                     });
@@ -251,7 +250,7 @@ define( function( require, exports, module ){
             });
 
             it( 'emit single change event in case of bulk change', function(){
-                shouldFireChangeOnce( new Main(), 'first second', function( model ){
+                shouldFireChangeOnce( new MainModel(), 'first second', function( model ){
                     model.set({
                         count: 1,
 
@@ -271,10 +270,10 @@ define( function( require, exports, module ){
 
         describe( 'model with nested collection', function(){
             var Coll = Nested.Collection.extend({
-                model: N
+                model: NestedModel
             });
 
-            var Compound = Main.extend({
+            var Compound = MainModel.extend({
                 defaults:{
                     items: Coll
                 }
@@ -386,8 +385,8 @@ define( function( require, exports, module ){
         it( 'manage subscriptions automatically', function(){
             var M = Nested.Model.extend({
                 defaults:{
-                    left: N,
-                    right: N
+                    left: NestedModel,
+                    right: NestedModel
                 },
 
                 listening: {
@@ -522,15 +521,14 @@ define( function( require, exports, module ){
                 attributes : {
                     attr : Number.value( 5 ).options({
                         set : function( value ){
-                            this.set( 'attr', value * 2 );
-                            return value;
+                            return value * 2;
                         }
                     })
                 }
             });
 
             var m = new M();
-            m.attr.should.eql( 5 );
+            m.attr.should.eql( 10 );
             m.attr = 4;
             m.attr.should.eql( 8 );
 
@@ -538,19 +536,18 @@ define( function( require, exports, module ){
                 attributes : {
                     attr : Number.value( 5 ).options({
                         set : function( value ){
-                            this.set( 'attr', value * 2 );
-                            return value;
+                            return value * 2;
                         },
 
-                        get : function(){
-                            return this.attributes.attr + 1;
+                        get : function( value ){
+                            return value + 1;
                         }
                     })
                 }
             });
 
             var m1 = new M1();
-            m1.attr.should.eql( 6 );
+            m1.attr.should.eql( 11 );
             m1.attr = 4;
             m1.attr.should.eql( 9 );
         });

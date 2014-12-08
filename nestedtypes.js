@@ -737,17 +737,13 @@
     // Nested Relations
     //=================
 
-    var _relations = null;
+    var _store = null;
 
-    function parseReference( masterCollection ){
-        if( typeof masterCollection === 'function' ){
-            return masterCollection;
-        }
-        else if(  typeof masterCollection === 'object' ){
-            return function(){ return masterCollection; };
-        }
-        else{
-            return function(){ return _relations[ masterCollection ]; }
+    function parseReference( collectionRef ){
+        switch( typeof collectionRef ){
+            case 'function' : return collectionRef;
+            case 'object'   : return function(){ return collectionRef; };
+            case 'string'   : return new Function( 'return this.' + collectionRef );
         }
     }
 
@@ -873,7 +869,7 @@
         };
     })();
 
-    Object.defineProperty( Nested, 'relations', {
+    Object.defineProperty( Nested, 'store', {
         set : function( spec ){
             _.each( spec, function( Type, name ){
                 Type.options && ( spec[ name ] = Type.options({
@@ -937,11 +933,11 @@
                 }
             });
 
-            _relations = new Cache();
+            Nested.Model.prototype.store = _store = new Cache();
         },
 
         get : function(){
-            return _relations;
+            return _store;
         }
     });
 }));

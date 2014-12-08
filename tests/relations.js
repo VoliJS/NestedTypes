@@ -137,7 +137,7 @@ define( function( require, exports, module ){
         var User = Nested.Model.extend({
             defaults : {
                 name : '',
-                roles : Nested.Collection.subsetOf( 'roles' )
+                roles : Nested.Collection.subsetOf( 'store.roles' )
             },
 
             collection : {
@@ -160,7 +160,7 @@ define( function( require, exports, module ){
         var Role = Nested.Model.extend({
             defaults : {
                 name : '',
-                users : Nested.Collection.subsetOf( 'users' )
+                users : Nested.Collection.subsetOf( 'store.users' )
             },
 
             collection : {
@@ -181,44 +181,44 @@ define( function( require, exports, module ){
         });
 
         it( 'can be initialized with a list of attributes', function(){
-            Nested.relations = {
+            Nested.store = {
                 users : User.Collection,
                 roles : Role.Collection
             };
         });
 
         it( 'doesn\'t fetch anything if relations was not accessed', function(){
-            Nested.relations.fetch();
-            expect( Nested.relations.resolved.users ).to.not.exist;
-            expect( Nested.relations.resolved.roles ).to.not.exist;
+            Nested.store.fetch();
+            expect( Nested.store.resolved.users ).to.not.exist;
+            expect( Nested.store.resolved.roles ).to.not.exist;
         });
 
         it( 'can be prefetched', function(){
-            Nested.relations.users.fetch();
-            expect( Nested.relations.resolved.users ).to.be.true;
-            expect( Nested.relations.users.length ).to.equal( 2 );
+            Nested.store.users.fetch();
+            expect( Nested.store.resolved.users ).to.be.true;
+            expect( Nested.store.users.length ).to.equal( 2 );
         });
 
         it( 'fetched of the first attributes access', function(){
-            var role = Nested.relations.users.first().roles.first();
+            var role = Nested.store.users.first().roles.first();
             expect( role.name ).to.equal( 'Administrators' );
-            expect( Nested.relations.resolved.roles ).to.be.true;
+            expect( Nested.store.resolved.roles ).to.be.true;
         });
 
         it( 'uses real collection types for subsetOf attributes', function(){
-            expect( Nested.relations.users.first().roles ).to.be.instanceOf( Role.Collection );
-            expect( Nested.relations.roles.first().users ).to.be.instanceOf( User.Collection );
+            expect( Nested.store.users.first().roles ).to.be.instanceOf( Role.Collection );
+            expect( Nested.store.roles.first().users ).to.be.instanceOf( User.Collection );
         });
 
         it( 'individual elements can be cleaned up ', function(){
-            Nested.relations.clear( 'users' );
-            expect( Nested.relations.resolved.users ).to.be.not.ok;
+            Nested.store.clear( 'users' );
+            expect( Nested.store.resolved.users ).to.be.not.ok;
         });
 
         it( 'all cache can be cleaned up ', function(){
-            Nested.relations.clear();
-            expect( Nested.relations.resolved.users ).to.be.not.ok;
-            expect( Nested.relations.resolved.roles ).to.be.not.ok;
+            Nested.store.clear();
+            expect( Nested.store.resolved.users ).to.be.not.ok;
+            expect( Nested.store.resolved.roles ).to.be.not.ok;
         });
     });
 });

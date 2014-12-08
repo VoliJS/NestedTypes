@@ -457,10 +457,10 @@
                         return attr.isValid( options );
                     }
                     else if( attr instanceof Date ){
-                        return attr.getTime() !== NaN;
+                        return !_.isNaN( attr.getTime() );
                     }
                     else{
-                        return attr !== NaN;
+                        return !_.isNaN( attr );
                     }
                 });
             },

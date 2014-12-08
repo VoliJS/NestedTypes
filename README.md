@@ -1,4 +1,4 @@
-IMPORTANT! Version 1.0.0 compatibility note
+IMPORTANT! Version 0.9.11 compatibility note
 ==================
 There might be compatibility issues in you application when you upgrade to this release, so read this section carefully.
 
@@ -584,15 +584,8 @@ It's low level, so use it with extreme care.
 trigger 'change' event on the model when given list of events are triggered by the attribute.
 Specify 'false' to turn off event bubbling.
 
-NestedRelations extension
+One-to-many and many-to-many model relations
 --------------------------
-
-Extension available in separate module, providing necessary tools to deal with model's references by id. Useful in situations when you want to receive ids and arrays of ids instead of nested models and collections.
-
-Usual problem with this approach is that you need to manage the state of several collections, required to resolve id references, which could be tricky. NestedRelations extend NestedTypes API with three elements:
-- Nested.relations <- define
-- Nested.Model.from()
-- Nested.Collection.subsetOf
 
 Sometimes when you have one-to-many and many-to-many relationships between Models, it is suitable to transfer such a relationships from server as arrays of model ids. NestedTypes gives you special attribute data types for this situation.
 

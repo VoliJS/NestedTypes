@@ -1,6 +1,6 @@
 define( function( require, exports, module ){
     "use strict";
-    var Nested = require( '../nestedrelations' ),
+    var Nested = require( '../nestedtypes' ),
         expect = require( 'chai' ).expect;
 
     describe( 'One-to-many and many-to-many relations', function(){

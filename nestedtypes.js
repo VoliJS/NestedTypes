@@ -22,7 +22,7 @@
     'use strict';
     var extend = Backbone.Model.extend;
 
-    var error = {
+    exports.error = {
         propertyConflict : function( context, name ){
             console.error( '[Type error](' + context.__class + '.extend) Property ' + name + ' conflicts with base class members' );
         },
@@ -47,7 +47,7 @@
                 } : propDesc;
 
                 if( name in Base.prototype ){
-                    error.propertyConflict( This.prototype, name );
+                    exports.error.propertyConflict( This.prototype, name );
                 }
 
                 Object.defineProperty( This.prototype, name, prop );
@@ -315,7 +315,7 @@
 
             _bulkSet : function( attrs, options ){
                 if( attrs.constructor !== Object ){
-                    error.argumentIsNotAnObject( this, attrs );
+                    exports.error.argumentIsNotAnObject( this, attrs );
                 }
 
                 var attrSpecs = this.__attributes;
@@ -338,7 +338,7 @@
                         attrs[ name ] = value;
                     }
                     else{
-                        error.unknownAttribute( this, name, value );
+                        exports.error.unknownAttribute( this, name, value );
                     }
                 }
 
@@ -369,7 +369,7 @@
                     }
                 }
                 else{
-                    error.unknownAttribute( this, name, value );
+                    exports.error.unknownAttribute( this, name, value );
                 }
 
                 return baseModelSet.call( this, name, value, options );
@@ -564,7 +564,7 @@
                 _.each( properties, function( prop, name ){
                     if( name in ModelProto ||
                         name === 'cid' || name === 'id' || name === 'attributes' ){
-                        error.propertyConflict( This.prototype, name );
+                        exports.error.propertyConflict( This.prototype, name );
                     }
 
                     Object.defineProperty( This.prototype, name, prop );

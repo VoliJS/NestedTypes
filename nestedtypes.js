@@ -452,7 +452,7 @@
             },
 
             isValid : function( options ){
-                return ModelProto.isValid.call( this, options ) && _.every( this.attribute, function( attr ){
+                return ModelProto.isValid.call( this, options ) && _.every( this.attributes, function( attr ){
                     if( attr && attr.isValid ){
                         return attr.isValid( options );
                     }

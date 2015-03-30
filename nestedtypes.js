@@ -203,6 +203,9 @@
         return createAttribute;
     })();
 
+    Nested.defaults = function( x ){
+        return Nested.Model.defaults( x );
+    };
     Nested.value = function( value ){ return Nested.options({ value: value }); };
 
     ( function(){
@@ -585,6 +588,7 @@
             return This;
         };
 
+        Model.defaults = function( attrs ){ return this.extend({ defaults : attrs }); };
         return Model;
     })();
 
@@ -644,6 +648,9 @@
         });
 
         Collection.extend = createExtendFor( Collection );
+        Collection.defaults = function( attrs ){
+            return this.prototype.model.extend({ defaults : attrs }).Collection;
+        };
 
         return Collection;
     })();
@@ -894,8 +901,11 @@
                 resolved : {},
 
                 initialize : function(){
-                    var self = this;
                     this.resolved = {};
+                    this.installHooks();
+                },
+                installHooks : function(){
+                    var self = this;
 
                     _.each( this.attributes, function( element, name ){
                         var fetch = element.fetch;
@@ -928,7 +938,7 @@
                     var attrs = this.defaults();
                     arguments.length && ( attrs = _.pick( attrs, _.toArray( arguments ) ) );
                     this.set( attrs );
-
+                    this.installHooks();
                     return this;
                 }
             });

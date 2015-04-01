@@ -37,9 +37,7 @@
     };
 
     function createExtendFor( Base ){
-        return function( protoProps, staticProps ){
-            var This = extend.call( this, protoProps, staticProps );
-
+        function defineProperties( This, protoProps ){
             _.each( protoProps.properties, function( propDesc, name ){
                 var prop = _.isFunction( propDesc ) ? {
                     get: propDesc,
@@ -52,6 +50,17 @@
 
                 Object.defineProperty( This.prototype, name, prop );
             });
+        }
+
+        return function( protoProps, staticProps ){
+            var This = extend.call( this, protoProps, staticProps );
+            protoProps && defineProperties( This, protoProps );
+
+            This.define = function( protoProps, staticProps ){
+                _.extend( This.prototype, protoProps );
+                _.extend( This, staticProps );
+                defineProperties( this, protoProps );
+            }
 
             return This;
         };
@@ -576,12 +585,22 @@
         }
 
         Model.extend = function( protoProps, staticProps ){
-            var spec = parseDefaults( protoProps, this );
-            var This = extend.call( this, spec, staticProps );
+            var This = extend.call( this, {}, {} );
+            This.Collection = this.Collection.extend();//TBD: make the same for Collection
+            return arguments.length ? This.define( protoProps, staticProps ) : This;
+        };
+
+        Model.define = function( protoProps, staticProps ){
+            var Base = Object.getPrototypeOf( this.prototype ).constructor;
+                spec = parseDefaults( protoProps, Base ),
+                This = this;
+
+            _.extend( This.prototype, spec );
+            _.extend( This, staticProps );
 
             var collectionSpec = { model : This };
             spec.urlRoot && ( collectionSpec.url = spec.urlRoot );
-            This.Collection = this.Collection.extend( _.defaults( protoProps.collection || {}, collectionSpec ));
+            This.Collection.define( _.defaults( protoProps.collection || {}, collectionSpec ) );
 
             createNativeProperties( This, spec );
 

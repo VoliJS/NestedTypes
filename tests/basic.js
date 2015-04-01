@@ -99,6 +99,19 @@ define( function( require, exports, module ){
                 n.a.first.should.eql( [ 1 ] );
             });
 
+            it( 'can define a tree', function(){
+                var M = Nested.Model.extend();
+
+                M.define({
+                    defaults : {
+                        nested : M.value( null ),
+                        elements : M.Collection
+                    }
+                })
+
+                var m = new M();
+            });
+
             it( 'can handle function in Model.defaults', function(){
                 var M = Nested.Model.extend({
                     defaults : function(){

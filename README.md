@@ -1,15 +1,18 @@
-IMPORTANT! Version 0.9.11 compatibility note
-==================
-There might be compatibility issues in you application when you upgrade to this release, so read this section carefully.
-
-Nested.Attribute is deprecated. Use:
-- Nested.options({ ... }) instead of Nested.Attribute({ ... })
-- Type.value( value ) instead of Nested.Attribute( Type, value )
-
-- New semantic for attribute's get and set hooks. Previously, attribute options 'set' and 'get' used to override native properties. Please, refer to "get hook" and "set hook" topics.
-- Model.from and Collection.subsefOf now started with lowercase letter, and will return null and [] when not resolved instead of dummy objects.
-
-Except of these issues, upgrade should go fine. If you will encounter any problems during upgrade which are not covered here, don't hesitate to report a bug.
+0.10.0 Release Notes
+====================
+- attribute get and set hooks
+    - they can be chained now. Thus, they work on Model.from and Collection.subsetOf
+    - they takes attribute name as second argument
+    - fixed bug in set hook (returning undefined didn't prevent attribute modification in some cases)
+- Model
+    - .set now report error when not a plain object is passed as argument.
+    - .deepClone now pass options through the nested calls
+    - Model constructor now pass options to the nested constructors in defaults (except 'parse' and 'collection')
+- Model.from: fixed bug (assignment of the same id to resolved reference caused unnecessary 'change' event)
+- Collection: 'sort' event now doesn't count as nested attribute update, and won't bubble (it caused multiple problems)
+- Collection.subsetOf improvements:
+    - Collections of different types now can be assigned to each other (model arrays will be passed to .set).
+    - Added set manipulation methods: addAll, removeAll, justOne.
 
 backbone.nestedTypes
 ====================
@@ -538,13 +541,13 @@ When attribute is parsed as a part of the model, given function will be called *
 
 #### get hook
 
-    get : function( value ){ return value; }
+    get : function( value, attrName ){ return value; }
 
 Called on Model.get in the context of the model, allowing you to modify returned value.
 
 #### set hook
 
-    set : function( value, options ){ return value; }
+    set : function( value, attrName ){ return value; }
 
 Called on Model.set in the context of the model, allowing you to modify value before set ot cancel setting of the attribute, returning 'undefined'.
 

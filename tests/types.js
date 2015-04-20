@@ -283,10 +283,11 @@ define( function( require, exports, module ){
                 var A = Nested.Model.extend({
                     defaults : {
                         a : Number.options({
+                            value : 33,
                             set : function( value, options ){
                                 expect( value ).to.be.a( 'number' );
 
-                                if( !options || !options.doNothing ){
+                                if( value !== 0 ){
                                     return value * 2;
                                 }
                             }
@@ -321,9 +322,9 @@ define( function( require, exports, module ){
 
                 it( 'may prevent attribute\'s assignment', function(){
                     var m = new A();
-                    m.set( 'a', 5, { doNothing : true } );
+                    m.set( 'a', 0 );
 
-                    expect( m.a ).to.be.equal( 0 );
+                    expect( m.a ).to.be.equal( 66 );
                 });
             });
 

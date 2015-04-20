@@ -45,8 +45,15 @@ define( function( require, exports, module ){
             var collection = sinon.spy(),
                 model = sinon.spy();
 
-            A.Collection.prototype.parse = function( data ){ collection(); return data; }
-            A.prototype.parse = function( data ){ model(); return data; };
+            A.Collection.prototype.parse = function( data ){
+                collection();
+                return data;
+            };
+
+            A.prototype.parse = function( data ){
+                model();
+                return data;
+            };
 
             return { model : model, collection : collection };
         }

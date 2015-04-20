@@ -1,4 +1,4 @@
-// Backbone.nestedTypes 0.9.11 (https://github.com/Volicon/backbone.nestedTypes)
+// Backbone.nestedTypes 0.10.0 (https://github.com/Volicon/backbone.nestedTypes)
 // (c) 2014 Vlad Balin & Volicon, may be freely distributed under the MIT license
 
 // Date.parse with progressive enhancement for ISO 8601 <https://github.com/csnover/js-iso8601>
@@ -54,6 +54,8 @@
 
         return function( protoProps, staticProps ){
             var This = extend.call( this, protoProps, staticProps );
+            delete This._subsetOf;
+
             protoProps && defineProperties( This, protoProps );
 
             This.define = function( protoProps, staticProps ){
@@ -108,6 +110,11 @@
         - transparent typed attributes serialization and deserialization
      **************************************************/
 
+    function chainHooks( first, second ){
+        return function( value, name ){
+            return second.call( this, first.call( this, value, name ), name );
+        }
+    }
     Nested.options = ( function(){
         var Attribute = Nested.Class.extend({
             type : null,
@@ -128,7 +135,7 @@
                     get = this.get;
 
                 spec.get = get ? function(){
-                    return get.call( this, this.attributes[ name ] );
+                    return get.call( this, this.attributes[ name ], name );
                 } : function(){
                     return this.attributes[ name ];
                 };
@@ -137,6 +144,12 @@
             },
 
             options : function( spec ){
+                if( spec.get && this.get ){
+                    spec.get = chainHooks( this.get, spec.get );
+                }
+                if( spec.set && this.set ){
+                    spec.set = chainHooks( this.set, spec.set );
+                }
                 _.extend( this, spec );
                 return this;
             },
@@ -326,7 +339,7 @@
             },
 
             _bulkSet : function( attrs, options ){
-                if( attrs.constructor !== Object ){
+                if( Object.getPrototypeOf( attrs ) !== Object.prototype ){
                     Nested.error.argumentIsNotAnObject( this, attrs );
                 }
 
@@ -341,8 +354,11 @@
                         attrSpec.cast && ( value = attrSpec.cast( value, options, this ) );
 
                         if( attrSpec.set && value !== this.attributes[ name ] ){
-                            value = attrSpec.set.call( this, value, options );
-                            if( value === undefined ) continue;
+                            value = attrSpec.set.call( this, value, name );
+                            if( value === undefined ){
+                                delete attrs[ name ];
+                                continue;
+                            }
                             attrSpec.cast && ( value = attrSpec.cast( value, options, this ) );
                         }
 
@@ -375,7 +391,7 @@
                     attrSpec.cast && ( value = attrSpec.cast( value, options, this ) );
 
                     if( attrSpec.set && value !== this.attributes[ name ] ){
-                        value = attrSpec.set.call( this, value, options );
+                        value = attrSpec.set.call( this, value, name );
                         if( value === undefined ) return this;
                         attrSpec.cast && ( value = attrSpec.cast( value, options, this ) );
                     }
@@ -412,18 +428,30 @@
                 return model.set( attr, value, options );
             },
 
+            constructor : function(attributes, options){
+                var attrs       = attributes || {};
+                options || (options = {});
+                this.cid        = _.uniqueId( 'c' );
+                this.attributes = {};
+                if( options.collection ) this.collection = options.collection;
+                if( options.parse ) attrs = this.parse( attrs, options ) || {};
+                attrs        = _.defaults( {}, attrs, this.defaults( options ) );
+                this.set( attrs, options );
+                this.changed = {};
+                this.initialize.apply( this, arguments );
+            },
             // override get to invoke native getter...
             get : function( name ){ return this[ name ]; },
 
             // Create deep copy for all nested objects...
-            deepClone: function(){
+            deepClone: function( options ){
                 var attrs = {};
 
                 _.each( this.attributes, function( value, key ){
-                    attrs[ key ] = value && value.deepClone ? value.deepClone() : value;
+                    attrs[ key ] = value && value.deepClone ? value.deepClone( options ) : value;
                 });
 
-                return new this.constructor( attrs );
+                return new this.constructor( attrs, options );
             },
 
             // Support for nested models and objects.
@@ -545,13 +573,17 @@
 
             var literals = new Function( 'return {' + json.join( ',' ) + '}' );
 
-            return function(){
+            return function( options ){
+                if( options && ( options.collection || options.parse ) ){
+                    options = _.omit( options, 'collection', 'parse' );
+                }
+
                 var defaults = literals();
 
                 _.extend( defaults, refs );
 
                 for( var name in init ){
-                    defaults[ name ] = init[ name ].create();
+                    defaults[ name ] = init[ name ].create( null, options );
                 }
 
                 return defaults;
@@ -632,7 +664,7 @@
         }
 
         Collection = Backbone.Collection.extend({
-            triggerWhenChanged: 'change add remove reset sort',
+            triggerWhenChanged: 'change add remove reset', // sort
             __class : 'Collection',
 
 			model : Nested.Model,
@@ -655,7 +687,12 @@
 
             __changing: 0,
 
-            set: wrapCall( CollectionProto.set ),
+            set: wrapCall( function( models, options ){
+                if( models && models instanceof Nested.Collection ){
+                    models = models.models;
+                }
+                return CollectionProto.set.call( this, models, options );
+            }),
             remove: wrapCall( CollectionProto.remove ),
             add: wrapCall( CollectionProto.add ),
             reset: wrapCall( CollectionProto.reset ),
@@ -728,7 +765,7 @@
         },
 
         create : function( value, options ){
-            return arguments.length ? new this.type( value, options ) : new this.type();
+            return new this.type( value, options );
         },
 
         cast : function( value, options, model ){
@@ -784,10 +821,7 @@
                     return value && typeof value === 'object' ? value.id : value;
                 },
 
-                property : function( name ){
-                    return {
-                        get : function(){
-                            var objOrId = this.attributes[ name ];
+                get : function( objOrId, name ){
 
                             if( typeof objOrId !== 'object' ){
                                 var master = getMaster.call( this );
@@ -804,12 +838,13 @@
                             return objOrId;
                         },
 
-                        set : function( modelOrId ){
-                            this.set( name, modelOrId );
-
-                            return modelOrId;
+                set : function( modelOrId, name ){
+                    if( typeof modelOrId !== 'object' ){
+                        var current = this.attributes[ name ];
+                        if( current && typeof current === 'object' && current.id === modelOrId ) return;
                         }
-                    }
+
+                    return modelOrId;
                 }
             });
         };
@@ -819,7 +854,7 @@
         var CollectionProto = Nested.Collection.prototype;
 
         var refsCollectionSpec = {
-            triggerWhenChanged : "add remove reset sort",
+            triggerWhenChanged : "add remove reset",
             __class : 'Collection.SubsetOf',
 
             resolvedWith : null,
@@ -857,11 +892,23 @@
                 }
             },
 
+            addAll : function(){
+                this.reset( this.resolvedWith.models );
+            },
+            removeAll : function(){
+                this.reset();
+            },
+            justOne : function( arg ){
+                var model = arg instanceof Backbone.Model ? arg : this.resolvedWith.get( arg );
+                this.set( [ model ] );
+            },
             set : function( models, upperOptions ){
                 var options = { merge : false };
 
+                if( models ){
                 if( models instanceof Array && models.length && typeof models[ 0 ] !== 'object' ){
-                    options.parse = true;
+                        options.merge = options.parse = true;
+                    }
                 }
 
                 CollectionProto.set.call( this, models, _.defaults( options, upperOptions ) );
@@ -882,13 +929,14 @@
         };
 
         return function( masterCollection ){
+            var SubsetOf = this._subsetOf || ( this._subsetOf = this.extend( refsCollectionSpec ) );
             var getMaster = parseReference( masterCollection );
 
             return Nested.options({
-                type : this.extend( refsCollectionSpec ),
+                type : SubsetOf,
 
                 get : function( refs ){
-                    refs.resolvedWith || refs.resolve( getMaster.call( this ) );
+                    !refs || refs.resolvedWith || refs.resolve( getMaster.call( this ) );
                     return refs;
                 }
             });

@@ -16,7 +16,6 @@
     - 'sort' event now doesn't count as nested attribute update, and won't bubble (it caused multiple problems)
 - Collection.subsetOf improvements:
     - Collections of different types now can be assigned to each other (model arrays will be passed to .set).
-    - Added set manipulation methods: addAll, removeAll, justOne.
 
 backbone.nestedTypes
 ====================
@@ -645,7 +644,6 @@ Master collection reference may be:
 - string, designating reference to the current model's member relative to 'this'.
 - function, which returns reference to collection and executed in the context of the current model.
 
-
 ```javascript
 var User = Nested.Model.extend({
     defaults : {
@@ -655,6 +653,12 @@ var User = Nested.Model.extend({
     }
 });
 ```
+
+Collection.subsetOf supports some additional methods:
+- addAll() - add all models from master collection.
+- removeAll() - same as reset().
+- toggle( modelOrId ) - toggle specific model in set.
+- justOne( modelOrId ) - reset subset to contain just specified model.
 
 There's a global store for the collections, which might be useful in case of bi-directional relationships. It's available as a member of Model (this.store), and globally as Nested.store.
 

@@ -16,6 +16,7 @@
     - 'sort' event now doesn't count as nested attribute update, and won't bubble (it caused multiple problems)
 - Collection.subsetOf improvements:
     - Collections of different types now can be assigned to each other (model arrays will be passed to .set).
+    - Added set manipulation methods: toggle(), addAll(), removeAll(), justOne( model ).
 
 backbone.nestedTypes
 ====================

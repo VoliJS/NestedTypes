@@ -1,54 +1,26 @@
 <!DOCTYPE html>
-<html>
-
+<html lang="en-us">
   <head>
-    <meta charset='utf-8'>
-    <meta http-equiv="X-UA-Compatible" content="chrome=1">
-    <meta name="description" content="Backbone.nestedtypes : Backbone.js extension adding native properties for models, defaults&#39; type annotations, nested models and collections.">
-
-    <link rel="stylesheet" type="text/css" media="screen" href="stylesheets/stylesheet.css">
-
-    <title>Backbone.nestedtypes</title>
+    <meta charset="UTF-8">
+    <title>Backbone.nestedtypes by Volicon</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" type="text/css" href="stylesheets/normalize.css" media="screen">
+    <link href='http://fonts.googleapis.com/css?family=Open+Sans:400,700' rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" type="text/css" href="stylesheets/stylesheet.css" media="screen">
+    <link rel="stylesheet" type="text/css" href="stylesheets/github-light.css" media="screen">
   </head>
-
   <body>
+    <section class="page-header">
+      <h1 class="project-name">Backbone.nestedtypes</h1>
+      <h2 class="project-tagline">Essential Backbone.js extension for complex data model layer development</h2>
+      <a href="https://github.com/Volicon/backbone.nestedTypes" class="btn">View on GitHub</a>
+      <a href="https://github.com/Volicon/backbone.nestedTypes/zipball/master" class="btn">Download .zip</a>
+      <a href="https://github.com/Volicon/backbone.nestedTypes/tarball/master" class="btn">Download .tar.gz</a>
+    </section>
 
-    <!-- HEADER -->
-    <div id="header_wrap" class="outer">
-        <header class="inner">
-          <a id="forkme_banner" href="https://github.com/Volicon/backbone.nestedTypes">View on GitHub</a>
-
-          <h1 id="project_title">Backbone.nestedtypes</h1>
-          <h2 id="project_tagline">Backbone.js extension adding native properties for models, defaults&#39; type annotations, nested models and collections.</h2>
-
-            <section id="downloads">
-              <a class="zip_download_link" href="https://github.com/Volicon/backbone.nestedTypes/zipball/master">Download this project as a .zip file</a>
-              <a class="tar_download_link" href="https://github.com/Volicon/backbone.nestedTypes/tarball/master">Download this project as a tar.gz file</a>
-            </section>
-        </header>
-    </div>
-
-    <!-- MAIN CONTENT -->
-    <div id="main_content_wrap" class="outer">
-      <section id="main_content" class="inner">
-        <h1>
-<a id="important-version-0911-compatibility-note" class="anchor" href="#important-version-0911-compatibility-note" aria-hidden="true"><span class="octicon octicon-link"></span></a>IMPORTANT! Version 0.9.11 compatibility note</h1>
-
-<p>There might be compatibility issues in you application when you upgrade to this release, so read this section carefully.</p>
-
-<p>Nested.Attribute is deprecated. Use:</p>
-
-<ul>
-<li>Nested.options({ ... }) instead of Nested.Attribute({ ... })</li>
-<li><p>Type.value( value ) instead of Nested.Attribute( Type, value )</p></li>
-<li><p>New semantic for attribute's get and set hooks. Previously, attribute options 'set' and 'get' used to override native properties. Please, refer to "get hook" and "set hook" topics.</p></li>
-<li>Model.from and Collection.subsefOf now started with lowercase letter, and will return null and [] when not resolved instead of dummy objects.</li>
-</ul>
-
-<p>Except of these issues, upgrade should go fine. If you will encounter any problems during upgrade which are not covered here, don't hesitate to report a bug.</p>
-
-<h1>
-<a id="backbonenestedtypes" class="anchor" href="#backbonenestedtypes" aria-hidden="true"><span class="octicon octicon-link"></span></a>backbone.nestedTypes</h1>
+    <section class="main-content">
+      <h1>
+<a id="backbonenestedtypes" class="anchor" href="#backbonenestedtypes" aria-hidden="true"><span class="octicon octicon-link"></span></a>Backbone.NestedTypes</h1>
 
 <p>NestedTypes is the type system for JavaScript, implemented on top of  Backbone. It solve common architectural problems of Backbone applications, providing simple yet powerful tools to deal with complex nested data structures. Brief feature list:</p>
 
@@ -74,17 +46,17 @@
 
 <p>It feels much like statically typed programming language. Yet, it's vanilla JavaScript.</p>
 
-<div class="highlight highlight-javascript"><pre><span class="pl-s">var</span> User <span class="pl-k">=</span> Nested.Model.extend({
-    urlRoot <span class="pl-k">:</span> <span class="pl-s1"><span class="pl-pds">'</span>/api/users<span class="pl-pds">'</span></span>,
+<div class="highlight highlight-javascript"><pre><span class="pl-k">var</span> User <span class="pl-k">=</span> Nested.Model.extend({
+    urlRoot <span class="pl-k">:</span> <span class="pl-s"><span class="pl-pds">'</span>/api/users<span class="pl-pds">'</span></span>,
 
     attributes <span class="pl-k">:</span> {
         <span class="pl-c">// Primitive types</span>
-        login    <span class="pl-k">:</span> <span class="pl-s3">String</span>, <span class="pl-c">// = ""</span>
-        email    <span class="pl-k">:</span> <span class="pl-s3">String</span>.<span class="pl-sc">value</span>( <span class="pl-c1">null</span> ), <span class="pl-c">// = null</span>
-        loginCount <span class="pl-k">:</span> <span class="pl-s3">Number</span>.<span class="pl-sc">options</span>({ toJSON <span class="pl-k">:</span> <span class="pl-c1">false</span> }) <span class="pl-c">// = 0, not serialized</span>
-        active   <span class="pl-k">:</span> <span class="pl-s3">Boolean</span>.<span class="pl-sc">value</span>( <span class="pl-c1">true</span> ), <span class="pl-c">// = true</span>
+        login    <span class="pl-k">:</span> <span class="pl-c1">String</span>, <span class="pl-c">// = ""</span>
+        email    <span class="pl-k">:</span> <span class="pl-c1">String</span>.<span class="pl-c1">value</span>( <span class="pl-c1">null</span> ), <span class="pl-c">// = null</span>
+        loginCount <span class="pl-k">:</span> <span class="pl-c1">Number</span>.<span class="pl-c1">options</span>({ toJSON <span class="pl-k">:</span> <span class="pl-c1">false</span> }) <span class="pl-c">// = 0, not serialized</span>
+        active   <span class="pl-k">:</span> <span class="pl-c1">Boolean</span>.<span class="pl-c1">value</span>( <span class="pl-c1">true</span> ), <span class="pl-c">// = true</span>
 
-        created  <span class="pl-k">:</span> <span class="pl-s3">Date</span>, <span class="pl-c">// = new Date()</span>
+        created  <span class="pl-k">:</span> <span class="pl-c1">Date</span>, <span class="pl-c">// = new Date()</span>
 
         settings <span class="pl-k">:</span> Settings, <span class="pl-c">// nested model</span>
 
@@ -95,27 +67,66 @@
     }
 });
 
-<span class="pl-s">var</span> collection <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">User.Collection</span>(); <span class="pl-c">// Collection is already there...</span>
-collection.fetch().done( <span class="pl-st">function</span>(){
-    <span class="pl-s">var</span> user <span class="pl-k">=</span> collection.first();
-    <span class="pl-en">console</span><span class="pl-s3">.log</span>( user.<span class="pl-sc">name</span> ); <span class="pl-c">// native properties</span>
-    <span class="pl-en">console</span><span class="pl-s3">.log</span>( user.office.<span class="pl-sc">name</span> );
-    <span class="pl-en">console</span><span class="pl-s3">.log</span>( user.roles.first().<span class="pl-sc">name</span> );
+<span class="pl-k">var</span> collection <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">User.Collection</span>(); <span class="pl-c">// Collection is already there...</span>
+collection.fetch().done( <span class="pl-k">function</span>(){
+    <span class="pl-k">var</span> user <span class="pl-k">=</span> collection.first();
+    <span class="pl-en">console</span><span class="pl-c1">.log</span>( user.<span class="pl-c1">name</span> ); <span class="pl-c">// native properties</span>
+    <span class="pl-en">console</span><span class="pl-c1">.log</span>( user.office.<span class="pl-c1">name</span> );
+    <span class="pl-en">console</span><span class="pl-c1">.log</span>( user.roles.first().<span class="pl-c1">name</span> );
 });</pre></div>
 
 <p>Types are being checked in run-time on assignment, but instead of throwing exceptions it tries to cast values to defined types. For example:</p>
 
 <div class="highlight highlight-javascript"><pre>    user.login <span class="pl-k">=</span> <span class="pl-c1">1</span>;
-    <span class="pl-en">console</span><span class="pl-s3">.assert</span>( user.login <span class="pl-k">===</span> <span class="pl-s1"><span class="pl-pds">"</span>1<span class="pl-pds">"</span></span> );
+    <span class="pl-en">console</span><span class="pl-c1">.assert</span>( user.login <span class="pl-k">===</span> <span class="pl-s"><span class="pl-pds">"</span>1<span class="pl-pds">"</span></span> );
 
     user.active <span class="pl-k">=</span> <span class="pl-c1">undefined</span>;
-    <span class="pl-en">console</span><span class="pl-s3">.assert</span>( user.active <span class="pl-k">===</span> <span class="pl-c1">false</span> );
+    <span class="pl-en">console</span><span class="pl-c1">.assert</span>( user.active <span class="pl-k">===</span> <span class="pl-c1">false</span> );
 
-    user.loginCount <span class="pl-k">=</span> <span class="pl-s1"><span class="pl-pds">"</span>hjkhjkhfjkhjkfd<span class="pl-pds">"</span></span>;
-    <span class="pl-en">console</span><span class="pl-s3">.assert</span>( _.isNan( user.loginCount ) );
+    user.loginCount <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>hjkhjkhfjkhjkfd<span class="pl-pds">"</span></span>;
+    <span class="pl-en">console</span><span class="pl-c1">.assert</span>( _.isNan( user.loginCount ) );
 
     user.settings <span class="pl-k">=</span> { timeZone <span class="pl-k">:</span> <span class="pl-c1">180</span> }; <span class="pl-c">// same as user.settings.set({ timeZone : 180 })</span>
-    <span class="pl-en">console</span><span class="pl-s3">.assert</span>( user.settings <span class="pl-k">instanceof</span> Settings );</pre></div>
+    <span class="pl-en">console</span><span class="pl-c1">.assert</span>( user.settings <span class="pl-k">instanceof</span> Settings );</pre></div>
+
+<h2>
+<a id="0100-release-notes" class="anchor" href="#0100-release-notes" aria-hidden="true"><span class="octicon octicon-link"></span></a>0.10.0 Release Notes</h2>
+
+<ul>
+<li>attribute get and set hooks
+
+<ul>
+<li>they can be chained now. Thus, they work on Model.from and Collection.subsetOf</li>
+<li>they takes attribute name as second argument</li>
+<li>fixed bug in set hook (returning undefined didn't prevent attribute modification in some cases)</li>
+</ul>
+</li>
+<li>Model
+
+<ul>
+<li>Model.defaults() - added syntax for inline nested model definitions.</li>
+<li>.isValid - fixed exception</li>
+<li>.set now report error when not a plain object is passed as argument.</li>
+<li>.deepClone now pass options through the nested calls</li>
+<li>Model constructor now pass options to the nested constructors in defaults (except 'parse' and 'collection')</li>
+</ul>
+</li>
+<li>Model.from: fixed bug (assignment of the same id to resolved reference caused unnecessary 'change' event)</li>
+<li>Collection:
+
+<ul>
+<li>Collection.defaults() - added syntax for inline nested collection definitions.</li>
+<li>'sort' event now doesn't count as nested attribute update, and won't bubble (it caused multiple problems)</li>
+</ul>
+</li>
+<li>Collection.subsetOf improvements:
+
+<ul>
+<li>Collections of different types now can be assigned to each other (model arrays will be passed to .set).</li>
+<li>Added set manipulation methods: addAll, removeAll, justOne.</li>
+</ul>
+</li>
+</ul>
 
 <h2>
 <a id="requirements--installation" class="anchor" href="#requirements--installation" aria-hidden="true"><span class="octicon octicon-link"></span></a>Requirements &amp; Installation</h2>
@@ -166,49 +177,49 @@ collection.fetch().done( <span class="pl-st">function</span>(){
 
 <p>'defaults' spec may be a function or object, 'attributes' <em>must</em> be an object.</p>
 
-<div class="highlight highlight-javascript"><pre>    <span class="pl-s">var</span> UserInfo <span class="pl-k">=</span> Nested.Model.extend({
+<div class="highlight highlight-javascript"><pre>    <span class="pl-k">var</span> UserInfo <span class="pl-k">=</span> Nested.Model.extend({
         defaults <span class="pl-k">:</span> {
-            name <span class="pl-k">:</span> <span class="pl-s1"><span class="pl-pds">'</span>test<span class="pl-pds">'</span></span>,
+            name <span class="pl-k">:</span> <span class="pl-s"><span class="pl-pds">'</span>test<span class="pl-pds">'</span></span>,
         }
     });
 
-    <span class="pl-s">var</span> DetailedUserInfo <span class="pl-k">=</span> UserInfo.extend({
+    <span class="pl-k">var</span> DetailedUserInfo <span class="pl-k">=</span> UserInfo.extend({
         attributes <span class="pl-k">:</span> { <span class="pl-c">// &lt;- the same as 'defaults', use whatever you like</span>
-            login <span class="pl-k">:</span> <span class="pl-s1"><span class="pl-pds">'</span><span class="pl-pds">'</span></span>,
-            roles <span class="pl-k">:</span> [ <span class="pl-s1"><span class="pl-pds">'</span>user<span class="pl-pds">'</span></span> ]
+            login <span class="pl-k">:</span> <span class="pl-s"><span class="pl-pds">'</span><span class="pl-pds">'</span></span>,
+            roles <span class="pl-k">:</span> [ <span class="pl-s"><span class="pl-pds">'</span>user<span class="pl-pds">'</span></span> ]
         }
     });
 
-    <span class="pl-s">var</span> user <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">DetailedUserInfo</span>();
+    <span class="pl-k">var</span> user <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">DetailedUserInfo</span>();
 
     <span class="pl-c">// user.get( 'name' ) would be undefined in plain Backbone.</span>
-    <span class="pl-en">console</span><span class="pl-s3">.assert</span>( user.<span class="pl-sc">name</span> <span class="pl-k">===</span> <span class="pl-s1"><span class="pl-pds">'</span>test<span class="pl-pds">'</span></span> ); <span class="pl-c">// you still can use 'get', but why...</span>
-    user.<span class="pl-sc">name</span> <span class="pl-k">=</span> <span class="pl-s1"><span class="pl-pds">'</span>admin<span class="pl-pds">'</span></span>;
+    <span class="pl-en">console</span><span class="pl-c1">.assert</span>( user.<span class="pl-c1">name</span> <span class="pl-k">===</span> <span class="pl-s"><span class="pl-pds">'</span>test<span class="pl-pds">'</span></span> ); <span class="pl-c">// you still can use 'get', but why...</span>
+    user.<span class="pl-c1">name</span> <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">'</span>admin<span class="pl-pds">'</span></span>;
 
     <span class="pl-c">// In Backbone all models will share the same instance of [ 'user' ] array.</span>
     <span class="pl-c">// So, following line will create a bug. Not in NestedTypes.</span>
-    user.roles.<span class="pl-s3">push</span>( <span class="pl-s1"><span class="pl-pds">'</span>admin<span class="pl-pds">'</span></span> );</pre></div>
+    user.roles.<span class="pl-c1">push</span>( <span class="pl-s"><span class="pl-pds">'</span>admin<span class="pl-pds">'</span></span> );</pre></div>
 
 <h3>
 <a id="inline-collection-definition-modelcollection" class="anchor" href="#inline-collection-definition-modelcollection" aria-hidden="true"><span class="octicon octicon-link"></span></a>Inline collection definition (Model.collection).</h3>
 
 <p>By the way, our models from previous example has collections defined already.</p>
 
-<div class="highlight highlight-javascript"><pre>    <span class="pl-s">var</span> users <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">UserInfo.Collection</span>();
-    <span class="pl-s">var</span> detailedUsers <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">DetailedUserInfo.Collection</span>();</pre></div>
+<div class="highlight highlight-javascript"><pre>    <span class="pl-k">var</span> users <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">UserInfo.Collection</span>();
+    <span class="pl-k">var</span> detailedUsers <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">DetailedUserInfo.Collection</span>();</pre></div>
 
 <p>Every model definition creates Collection type extending base Model.Collection.  Collection.model and Collection.url properties are taken from model. You could customize collection with a spec in Model.collection, which then will be passed to BaseModel.Collection.extend.</p>
 
-<div class="highlight highlight-javascript"><pre><span class="pl-s">var</span> DetailedUserInfo <span class="pl-k">=</span> UserInfo.extend({
-    urlBase <span class="pl-k">:</span> <span class="pl-s1"><span class="pl-pds">'</span>/api/detailed_user/<span class="pl-pds">'</span></span>,
+<div class="highlight highlight-javascript"><pre><span class="pl-k">var</span> DetailedUserInfo <span class="pl-k">=</span> UserInfo.extend({
+    urlBase <span class="pl-k">:</span> <span class="pl-s"><span class="pl-pds">'</span>/api/detailed_user/<span class="pl-pds">'</span></span>,
 
     defaults <span class="pl-k">:</span> {
-        login <span class="pl-k">:</span> <span class="pl-s1"><span class="pl-pds">'</span><span class="pl-pds">'</span></span>,
-        roles <span class="pl-k">:</span> [ <span class="pl-s1"><span class="pl-pds">'</span>user<span class="pl-pds">'</span></span> ]
+        login <span class="pl-k">:</span> <span class="pl-s"><span class="pl-pds">'</span><span class="pl-pds">'</span></span>,
+        roles <span class="pl-k">:</span> [ <span class="pl-s"><span class="pl-pds">'</span>user<span class="pl-pds">'</span></span> ]
     },
 
     collection <span class="pl-k">:</span> {
-        <span class="pl-en">initialize</span> : <span class="pl-st">function</span>(){
+        <span class="pl-en">initialize</span> : <span class="pl-k">function</span>(){
             <span class="pl-v">this</span>.fetch();
         }
     }
@@ -228,28 +239,28 @@ collection.fetch().done( <span class="pl-st">function</span>(){
 <h3>
 <a id="class-type-which-can-be-extended-and-can-throwlisten-to-events" class="anchor" href="#class-type-which-can-be-extended-and-can-throwlisten-to-events" aria-hidden="true"><span class="octicon octicon-link"></span></a>Class type, which can be extended and can throw/listen to events.</h3>
 
-<div class="highlight highlight-javascript"><pre>    <span class="pl-s">var</span> A <span class="pl-k">=</span> Nested.Class.extend({
+<div class="highlight highlight-javascript"><pre>    <span class="pl-k">var</span> A <span class="pl-k">=</span> Nested.Class.extend({
         a <span class="pl-k">:</span> <span class="pl-c1">1</span>,
 
-        <span class="pl-en">initialize</span> : <span class="pl-st">function</span>( <span class="pl-vpf">options</span> ){
-            <span class="pl-v">this</span>.listenTo( options.other, <span class="pl-s1"><span class="pl-pds">'</span>event<span class="pl-pds">'</span></span>, doSomething )
+        <span class="pl-en">initialize</span> : <span class="pl-k">function</span>( <span class="pl-smi">options</span> ){
+            <span class="pl-v">this</span>.listenTo( options.other, <span class="pl-s"><span class="pl-pds">'</span>event<span class="pl-pds">'</span></span>, doSomething )
         },
 
-        <span class="pl-en">doSomething</span> : <span class="pl-st">function</span>(){
-            <span class="pl-v">this</span>.trigger( <span class="pl-s1"><span class="pl-pds">'</span>something<span class="pl-pds">'</span></span> );
+        <span class="pl-en">doSomething</span> : <span class="pl-k">function</span>(){
+            <span class="pl-v">this</span>.trigger( <span class="pl-s"><span class="pl-pds">'</span>something<span class="pl-pds">'</span></span> );
         }
     });
 
-    <span class="pl-s">var</span> B <span class="pl-k">=</span> A.extend({
+    <span class="pl-k">var</span> B <span class="pl-k">=</span> A.extend({
         b <span class="pl-k">:</span> <span class="pl-c1">2</span>,
 
-        <span class="pl-en">initialize</span> : <span class="pl-st">function</span>( <span class="pl-vpf">options</span> ){
-            A.<span class="pl-sc">prototype</span>.initialize.<span class="pl-s3">apply</span>( <span class="pl-v">this</span>, arguments );
-            <span class="pl-v">this</span>.listenTo( options.another, <span class="pl-s1"><span class="pl-pds">'</span>event<span class="pl-pds">'</span></span>, doSomething )
+        <span class="pl-en">initialize</span> : <span class="pl-k">function</span>( <span class="pl-smi">options</span> ){
+            A.<span class="pl-c1">prototype</span>.initialize.<span class="pl-c1">apply</span>( <span class="pl-v">this</span>, arguments );
+            <span class="pl-v">this</span>.listenTo( options.another, <span class="pl-s"><span class="pl-pds">'</span>event<span class="pl-pds">'</span></span>, doSomething )
         },
     });
 
-    <span class="pl-s">var</span> b <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">B</span>( options );</pre></div>
+    <span class="pl-k">var</span> b <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">B</span>( options );</pre></div>
 
 <h3>
 <a id="explicit-native-properties-definition-model-class-collection" class="anchor" href="#explicit-native-properties-definition-model-class-collection" aria-hidden="true"><span class="octicon octicon-link"></span></a>Explicit native properties definition (Model, Class, Collection).</h3>
@@ -258,23 +269,23 @@ collection.fetch().done( <span class="pl-st">function</span>(){
 
 <p>For Model, explicit property will override generated one, and "properties : false" disable defaults native properties generation.</p>
 
-<div class="highlight highlight-javascript"><pre>    <span class="pl-s">var</span> A <span class="pl-k">=</span> Nested.Model.extend({
+<div class="highlight highlight-javascript"><pre>    <span class="pl-k">var</span> A <span class="pl-k">=</span> Nested.Model.extend({
         defaults <span class="pl-k">:</span> {
             a <span class="pl-k">:</span> <span class="pl-c1">1</span>,
             b <span class="pl-k">:</span> <span class="pl-c1">2</span>
         },
 
         properties <span class="pl-k">:</span> {
-            <span class="pl-en">c</span> : <span class="pl-st">function</span>(){
+            <span class="pl-en">c</span> : <span class="pl-k">function</span>(){
                 <span class="pl-k">return</span> <span class="pl-v">this</span>.a <span class="pl-k">+</span> <span class="pl-v">this</span>.b;
             },
 
             ax2 <span class="pl-k">:</span> {
-                <span class="pl-en">get</span> : <span class="pl-st">function</span>(){
+                <span class="pl-en">get</span> : <span class="pl-k">function</span>(){
                     <span class="pl-k">return</span> <span class="pl-v">this</span>.a <span class="pl-k">*</span> <span class="pl-c1">2</span>;
                 },
 
-                <span class="pl-en">set</span> : <span class="pl-st">function</span>( <span class="pl-vpf">value</span> ){
+                <span class="pl-en">set</span> : <span class="pl-k">function</span>( <span class="pl-smi">value</span> ){
                     <span class="pl-v">this</span>.a <span class="pl-k">=</span> value / <span class="pl-c1">2</span>;
                     <span class="pl-k">return</span> value;
                 }
@@ -282,11 +293,11 @@ collection.fetch().done( <span class="pl-st">function</span>(){
         }
     });
 
-    <span class="pl-s">var</span> a <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">A</span>();
-    <span class="pl-en">console</span><span class="pl-s3">.assert</span>( a.c <span class="pl-k">===</span> <span class="pl-c1">3</span> );
+    <span class="pl-k">var</span> a <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">A</span>();
+    <span class="pl-en">console</span><span class="pl-c1">.assert</span>( a.c <span class="pl-k">===</span> <span class="pl-c1">3</span> );
 
     a.ax2 <span class="pl-k">=</span> <span class="pl-c1">4</span>;
-    <span class="pl-en">console</span><span class="pl-s3">.assert</span>( a.c <span class="pl-k">===</span> <span class="pl-c1">2</span> );</pre></div>
+    <span class="pl-en">console</span><span class="pl-c1">.assert</span>( a.c <span class="pl-k">===</span> <span class="pl-c1">2</span> );</pre></div>
 
 <h3>
 <a id="run-time-errors" class="anchor" href="#run-time-errors" aria-hidden="true"><span class="octicon octicon-link"></span></a>Run-time errors</h3>
@@ -343,19 +354,19 @@ defaults function body is supported for backward compatibility with backbone onl
 
 <p>When sending data to the server, Constructor.toJSON will be invoked to produce JSON for typed attributes, so you don't need to override Model.toJSON for that.</p>
 
-<div class="highlight highlight-javascript"><pre><span class="pl-s">var</span> A <span class="pl-k">=</span> Nested.Model.extend({
+<div class="highlight highlight-javascript"><pre><span class="pl-k">var</span> A <span class="pl-k">=</span> Nested.Model.extend({
     defaults <span class="pl-k">:</span> {
         obj1 <span class="pl-k">:</span> Ctor, <span class="pl-c">// = new Ctor()</span>
-        obj2 <span class="pl-k">:</span> Ctor.<span class="pl-sc">value</span>( <span class="pl-c1">null</span> ), <span class="pl-c">// = null</span>
-        obj3 <span class="pl-k">:</span> Ctor.<span class="pl-sc">value</span>( something ), <span class="pl-c">// = new Ctor( something )</span>
+        obj2 <span class="pl-k">:</span> Ctor.<span class="pl-c1">value</span>( <span class="pl-c1">null</span> ), <span class="pl-c">// = null</span>
+        obj3 <span class="pl-k">:</span> Ctor.<span class="pl-c1">value</span>( something ), <span class="pl-c">// = new Ctor( something )</span>
     }
 });
 
-<span class="pl-s">var</span> a <span class="pl-k">=</span> A();
+<span class="pl-k">var</span> a <span class="pl-k">=</span> A();
 
-a.obj2 <span class="pl-k">=</span> <span class="pl-s1"><span class="pl-pds">"</span>dsds<span class="pl-pds">"</span></span>; <span class="pl-c">// a.obj2 = new Ctor( "dsds" );</span>
+a.obj2 <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>dsds<span class="pl-pds">"</span></span>; <span class="pl-c">// a.obj2 = new Ctor( "dsds" );</span>
 
-<span class="pl-en">console</span><span class="pl-s3">.assert</span>( a.obj2 <span class="pl-k">instanceof</span> Ctor );</pre></div>
+<span class="pl-en">console</span><span class="pl-c1">.assert</span>( a.obj2 <span class="pl-k">instanceof</span> Ctor );</pre></div>
 
 <h3>
 <a id="primitive-types-boolean-number-string-integer" class="anchor" href="#primitive-types-boolean-number-string-integer" aria-hidden="true"><span class="octicon octicon-link"></span></a>Primitive types (Boolean, Number, String, Integer)</h3>
@@ -368,41 +379,41 @@ a.obj2 <span class="pl-k">=</span> <span class="pl-s1"><span class="pl-pds">"</s
 
 <p>NestedTypes adds global Integer type, to be used in type annotations. It behaves the same as Number, but convert values to integer on attribute assignment using Math.round. Integer type is not being inferred from the values, and needs to be specified explicitly.</p>
 
-<div class="highlight highlight-javascript"><pre><span class="pl-s">var</span> A <span class="pl-k">=</span> Nested.Model.extend({
+<div class="highlight highlight-javascript"><pre><span class="pl-k">var</span> A <span class="pl-k">=</span> Nested.Model.extend({
     defaults <span class="pl-k">:</span> {
         <span class="pl-c">// Original backbone behaviour - no type, value is 3232</span>
-        untyped <span class="pl-k">:</span> Nested.<span class="pl-sc">value</span>( <span class="pl-c1">3232</span> )
+        untyped <span class="pl-k">:</span> Nested.<span class="pl-c1">value</span>( <span class="pl-c1">3232</span> )
 
         <span class="pl-c">// defaults with primitive types are always 'typed'</span>
         number  <span class="pl-k">:</span> <span class="pl-c1">5</span>,           <span class="pl-c">// same as Number.value( 5 )</span>
-        integer <span class="pl-k">:</span> Integer.<span class="pl-sc">value</span>( <span class="pl-c1">6</span> ),
-        string  <span class="pl-k">:</span> <span class="pl-s1"><span class="pl-pds">'</span>something<span class="pl-pds">'</span></span>, <span class="pl-c">// same as String.value( 'something' )</span>
-        string1 <span class="pl-k">:</span> <span class="pl-s1"><span class="pl-pds">'</span><span class="pl-pds">'</span></span>,          <span class="pl-c">// same as String</span>
+        integer <span class="pl-k">:</span> Integer.<span class="pl-c1">value</span>( <span class="pl-c1">6</span> ),
+        string  <span class="pl-k">:</span> <span class="pl-s"><span class="pl-pds">'</span>something<span class="pl-pds">'</span></span>, <span class="pl-c">// same as String.value( 'something' )</span>
+        string1 <span class="pl-k">:</span> <span class="pl-s"><span class="pl-pds">'</span><span class="pl-pds">'</span></span>,          <span class="pl-c">// same as String</span>
         boolean <span class="pl-k">:</span> <span class="pl-c1">true</span>,        <span class="pl-c">// same as Boolean.value( true )</span>
 
-        initWithNull  <span class="pl-k">:</span> <span class="pl-s3">String</span>.<span class="pl-sc">value</span>( <span class="pl-c1">null</span> ), <span class="pl-c">// Type is String, default value is null</span>
+        initWithNull  <span class="pl-k">:</span> <span class="pl-c1">String</span>.<span class="pl-c1">value</span>( <span class="pl-c1">null</span> ), <span class="pl-c">// Type is String, default value is null</span>
     }
 });
 
-<span class="pl-s">var</span> a <span class="pl-k">=</span> A();
+<span class="pl-k">var</span> a <span class="pl-k">=</span> A();
 
-a.boolean <span class="pl-k">=</span> <span class="pl-s1"><span class="pl-pds">"</span>hello<span class="pl-pds">"</span></span>;
-<span class="pl-en">console</span><span class="pl-s3">.assert</span>( a.boolean <span class="pl-k">===</span> <span class="pl-c1">true</span> );
+a.boolean <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>hello<span class="pl-pds">"</span></span>;
+<span class="pl-en">console</span><span class="pl-c1">.assert</span>( a.boolean <span class="pl-k">===</span> <span class="pl-c1">true</span> );
 
-a.number <span class="pl-k">=</span> <span class="pl-s1"><span class="pl-pds">"</span>5<span class="pl-pds">"</span></span>;
-<span class="pl-en">console</span><span class="pl-s3">.assert</span>( a.number <span class="pl-k">===</span> <span class="pl-c1">5</span> );
+a.number <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>5<span class="pl-pds">"</span></span>;
+<span class="pl-en">console</span><span class="pl-c1">.assert</span>( a.number <span class="pl-k">===</span> <span class="pl-c1">5</span> );
 
-a.number <span class="pl-k">=</span> <span class="pl-s1"><span class="pl-pds">"</span>hjhjfd<span class="pl-pds">"</span></span>;
-<span class="pl-en">console</span><span class="pl-s3">.assert</span>( _.<span class="pl-s3">isNaN</span>( a.number ) );
+a.number <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>hjhjfd<span class="pl-pds">"</span></span>;
+<span class="pl-en">console</span><span class="pl-c1">.assert</span>( _.<span class="pl-c1">isNaN</span>( a.number ) );
 
 a.integer <span class="pl-k">=</span> <span class="pl-c1">1.5423</span>;
-<span class="pl-en">console</span><span class="pl-s3">.assert</span>( a.integer <span class="pl-k">===</span> <span class="pl-c1">2</span> );
+<span class="pl-en">console</span><span class="pl-c1">.assert</span>( a.integer <span class="pl-k">===</span> <span class="pl-c1">2</span> );
 
 a.string <span class="pl-k">=</span> <span class="pl-c1">5</span>;
-<span class="pl-en">console</span><span class="pl-s3">.assert</span>( a.string <span class="pl-k">===</span> <span class="pl-s1"><span class="pl-pds">"</span>5<span class="pl-pds">"</span></span> );
+<span class="pl-en">console</span><span class="pl-c1">.assert</span>( a.string <span class="pl-k">===</span> <span class="pl-s"><span class="pl-pds">"</span>5<span class="pl-pds">"</span></span> );
 
 a.boolean <span class="pl-k">=</span> <span class="pl-c1">0</span>;
-<span class="pl-en">console</span><span class="pl-s3">.assert</span>( a.boolean <span class="pl-k">===</span> <span class="pl-c1">false</span> );</pre></div>
+<span class="pl-en">console</span><span class="pl-c1">.assert</span>( a.boolean <span class="pl-k">===</span> <span class="pl-c1">false</span> );</pre></div>
 
 <h3>
 <a id="date-type" class="anchor" href="#date-type" aria-hidden="true"><span class="octicon octicon-link"></span></a>Date type</h3>
@@ -418,22 +429,22 @@ a.boolean <span class="pl-k">=</span> <span class="pl-c1">0</span>;
 
 <p>On serialization, Date.toJSON will be invoked for date attribute, producing UTC-0 ISO date string representation.</p>
 
-<div class="highlight highlight-javascript"><pre><span class="pl-s">var</span> A <span class="pl-k">=</span> Nested.Model.extend({
+<div class="highlight highlight-javascript"><pre><span class="pl-k">var</span> A <span class="pl-k">=</span> Nested.Model.extend({
     defaults <span class="pl-k">:</span> {
-        created <span class="pl-k">:</span> <span class="pl-s3">Date</span>, <span class="pl-c">// = new Date()</span>
-        updated <span class="pl-k">:</span> <span class="pl-s3">Date</span>.<span class="pl-sc">value</span>( <span class="pl-c1">null</span> ), <span class="pl-c">// = null</span>
-        a <span class="pl-k">:</span> <span class="pl-s3">Date</span>.<span class="pl-sc">value</span>( <span class="pl-c1">327943789</span> ), <span class="pl-c">//  = new Date( 327943789 )</span>
-        b <span class="pl-k">:</span> <span class="pl-s3">Date</span>.<span class="pl-sc">value</span>( <span class="pl-s1"><span class="pl-pds">"</span>2012-12-12 12:12<span class="pl-pds">"</span></span> ) <span class="pl-c">//  = new Date( "2012-12-12 12:12" )</span>
+        created <span class="pl-k">:</span> <span class="pl-c1">Date</span>, <span class="pl-c">// = new Date()</span>
+        updated <span class="pl-k">:</span> <span class="pl-c1">Date</span>.<span class="pl-c1">value</span>( <span class="pl-c1">null</span> ), <span class="pl-c">// = null</span>
+        a <span class="pl-k">:</span> <span class="pl-c1">Date</span>.<span class="pl-c1">value</span>( <span class="pl-c1">327943789</span> ), <span class="pl-c">//  = new Date( 327943789 )</span>
+        b <span class="pl-k">:</span> <span class="pl-c1">Date</span>.<span class="pl-c1">value</span>( <span class="pl-s"><span class="pl-pds">"</span>2012-12-12 12:12<span class="pl-pds">"</span></span> ) <span class="pl-c">//  = new Date( "2012-12-12 12:12" )</span>
     }
 });
 
-<span class="pl-s">var</span> a <span class="pl-k">=</span> A();
+<span class="pl-k">var</span> a <span class="pl-k">=</span> A();
 
-a.updated <span class="pl-k">=</span> <span class="pl-s1"><span class="pl-pds">'</span>2012-12-12 12:12<span class="pl-pds">'</span></span>;
-<span class="pl-en">console</span><span class="pl-s3">.assert</span>( a.updated <span class="pl-k">instanceof</span> <span class="pl-s3">Date</span> );
+a.updated <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">'</span>2012-12-12 12:12<span class="pl-pds">'</span></span>;
+<span class="pl-en">console</span><span class="pl-c1">.assert</span>( a.updated <span class="pl-k">instanceof</span> <span class="pl-c1">Date</span> );
 
-a.updated <span class="pl-k">=</span> <span class="pl-s1"><span class="pl-pds">'</span>/Date(32323232323)/<span class="pl-pds">'</span></span>;
-<span class="pl-en">console</span><span class="pl-s3">.assert</span>( a.updated <span class="pl-k">instanceof</span> <span class="pl-s3">Date</span> );</pre></div>
+a.updated <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">'</span>/Date(32323232323)/<span class="pl-pds">'</span></span>;
+<span class="pl-en">console</span><span class="pl-c1">.assert</span>( a.updated <span class="pl-k">instanceof</span> <span class="pl-c1">Date</span> );</pre></div>
 
 <h3>
 <a id="nested-models-and-collections" class="anchor" href="#nested-models-and-collections" aria-hidden="true"><span class="octicon octicon-link"></span></a>Nested Models and Collections</h3>
@@ -448,16 +459,16 @@ a.updated <span class="pl-k">=</span> <span class="pl-s1"><span class="pl-pds">'
 
 <p>Note, that Backbone's .clone() method will create shallow copy of the root model, while Model.deepClone() and Collection.deepClone() will clone model and collection with all subitems.</p>
 
-<div class="highlight highlight-javascript"><pre><span class="pl-s">var</span> User <span class="pl-k">=</span> Nested.Model.extend({
+<div class="highlight highlight-javascript"><pre><span class="pl-k">var</span> User <span class="pl-k">=</span> Nested.Model.extend({
     defaults <span class="pl-k">:</span> {
-        name        <span class="pl-k">:</span> <span class="pl-s3">String</span>,
-        created     <span class="pl-k">:</span> <span class="pl-s3">Date</span>,
+        name        <span class="pl-k">:</span> <span class="pl-c1">String</span>,
+        created     <span class="pl-k">:</span> <span class="pl-c1">Date</span>,
         group       <span class="pl-k">:</span> GroupModel,
         permissions <span class="pl-k">:</span> PermissionCollection
     }
 });
 
-<span class="pl-s">var</span> a <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">User</span>(),
+<span class="pl-k">var</span> a <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">User</span>(),
     b <span class="pl-k">=</span> a.deepClone();</pre></div>
 
 <p>Model/Collection type cast behavior depends on attribute value before assignment:</p>
@@ -471,27 +482,27 @@ a.updated <span class="pl-k">=</span> <span class="pl-s1"><span class="pl-pds">'
 
 <p>I.e. this code:</p>
 
-<div class="highlight highlight-javascript"><pre><span class="pl-s">var</span> user <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">User</span>();
+<div class="highlight highlight-javascript"><pre><span class="pl-k">var</span> user <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">User</span>();
 user.group <span class="pl-k">=</span> {
-    name<span class="pl-k">:</span> <span class="pl-s1"><span class="pl-pds">"</span>Admin<span class="pl-pds">"</span></span>
+    name<span class="pl-k">:</span> <span class="pl-s"><span class="pl-pds">"</span>Admin<span class="pl-pds">"</span></span>
 };
 
-user.permissions <span class="pl-k">=</span> [{ id<span class="pl-k">:</span> <span class="pl-c1">5</span>, type<span class="pl-k">:</span> <span class="pl-s1"><span class="pl-pds">'</span>full<span class="pl-pds">'</span></span> }];</pre></div>
+user.permissions <span class="pl-k">=</span> [{ id<span class="pl-k">:</span> <span class="pl-c1">5</span>, type<span class="pl-k">:</span> <span class="pl-s"><span class="pl-pds">'</span>full<span class="pl-pds">'</span></span> }];</pre></div>
 
 <p>is equivalent of:</p>
 
 <div class="highlight highlight-javascript"><pre>user.group.set({
-   name<span class="pl-k">:</span> <span class="pl-s1"><span class="pl-pds">"</span>Admin<span class="pl-pds">"</span></span>
+   name<span class="pl-k">:</span> <span class="pl-s"><span class="pl-pds">"</span>Admin<span class="pl-pds">"</span></span>
 };
 
-user.permissions.set( [{ id<span class="pl-k">:</span> <span class="pl-c1">5</span>, type<span class="pl-k">:</span> <span class="pl-s1"><span class="pl-pds">'</span>full<span class="pl-pds">'</span></span> }] );</pre></div>
+user.permissions.set( [{ id<span class="pl-k">:</span> <span class="pl-c1">5</span>, type<span class="pl-k">:</span> <span class="pl-s"><span class="pl-pds">'</span>full<span class="pl-pds">'</span></span> }] );</pre></div>
 
 <p>This mechanics of 'set' allows you to work with JSON from in case of deeply nested models and collections without the need to override 'parse'. This code (considering that nested attributes defined as models):</p>
 
 <div class="highlight highlight-javascript"><pre>user.group <span class="pl-k">=</span> {
     nestedModel <span class="pl-k">:</span> {
         deeplyNestedModel <span class="pl-k">:</span> {
-            attr <span class="pl-k">:</span> <span class="pl-s1"><span class="pl-pds">'</span>value<span class="pl-pds">'</span></span>
+            attr <span class="pl-k">:</span> <span class="pl-s"><span class="pl-pds">'</span>value<span class="pl-pds">'</span></span>
         },
 
         attr <span class="pl-k">:</span> <span class="pl-c1">5</span>
@@ -500,8 +511,8 @@ user.permissions.set( [{ id<span class="pl-k">:</span> <span class="pl-c1">5</sp
 
 <p>is almost equivalent of:</p>
 
-<div class="highlight highlight-javascript"><pre>user.group.nestedModel.deeplyNestedModel.set( <span class="pl-s1"><span class="pl-pds">'</span>attr<span class="pl-pds">'</span></span>, <span class="pl-s1"><span class="pl-pds">'</span>value<span class="pl-pds">'</span></span> );
-user.group.nestedModel.set( <span class="pl-s1"><span class="pl-pds">'</span>attr<span class="pl-pds">'</span></span>, <span class="pl-s1"><span class="pl-pds">'</span>value<span class="pl-pds">'</span></span> );</pre></div>
+<div class="highlight highlight-javascript"><pre>user.group.nestedModel.deeplyNestedModel.set( <span class="pl-s"><span class="pl-pds">'</span>attr<span class="pl-pds">'</span></span>, <span class="pl-s"><span class="pl-pds">'</span>value<span class="pl-pds">'</span></span> );
+user.group.nestedModel.set( <span class="pl-s"><span class="pl-pds">'</span>attr<span class="pl-pds">'</span></span>, <span class="pl-s"><span class="pl-pds">'</span>value<span class="pl-pds">'</span></span> );</pre></div>
 
 <p>but it will fire just single <code>change</code> event.</p>
 
@@ -515,18 +526,41 @@ user.group.nestedModel.set( <span class="pl-s1"><span class="pl-pds">'</span>att
 <li>It's possible to control event bubbling for every attribute. You can completely disable it, or override the list of events which would be counted as change:</li>
 </ul>
 
-<div class="highlight highlight-javascript"><pre><span class="pl-s">var</span> M <span class="pl-k">=</span> Nested.Model.extend({
+<div class="highlight highlight-javascript"><pre><span class="pl-k">var</span> M <span class="pl-k">=</span> Nested.Model.extend({
     defaults<span class="pl-k">:</span> {
         bubbleChanges <span class="pl-k">:</span> ModelOrCollection,
 
-        dontBubble <span class="pl-k">:</span> ModelOrCollection.<span class="pl-sc">options</span>({ triggerWhanChanged <span class="pl-k">:</span> <span class="pl-c1">false</span> })
+        dontBubble <span class="pl-k">:</span> ModelOrCollection.<span class="pl-c1">options</span>({ triggerWhanChanged <span class="pl-k">:</span> <span class="pl-c1">false</span> })
         }),
 
-        bubbleCustomEvents <span class="pl-k">:</span> ModelOrCollection.<span class="pl-sc">options</span>({
-            triggerWhanChanged <span class="pl-k">:</span> <span class="pl-s1"><span class="pl-pds">'</span>event1 event2 whatever<span class="pl-pds">'</span></span>
+        bubbleCustomEvents <span class="pl-k">:</span> ModelOrCollection.<span class="pl-c1">options</span>({
+            triggerWhanChanged <span class="pl-k">:</span> <span class="pl-s"><span class="pl-pds">'</span>event1 event2 whatever<span class="pl-pds">'</span></span>
         }),
     }
 });</pre></div>
+
+<h3>
+<a id="inline-nested-models-and-collections-definitions" class="anchor" href="#inline-nested-models-and-collections-definitions" aria-hidden="true"><span class="octicon octicon-link"></span></a>Inline nested Models and Collections definitions</h3>
+
+<p>Simple models and collections can be defined with special shortened syntax.</p>
+
+<p>It's useful in case of deeply nested JS objects, when you previously preferred plain objects and arrays in place of models and collections. Now you could easily convert them to nested types, enjoying nested changes detection and 'deep update' features.</p>
+
+<div class="highlight highlight-javascript"><pre><span class="pl-k">var</span> M <span class="pl-k">=</span> Nested.Model.extend({
+    defaults <span class="pl-k">:</span>{
+        nestedModel <span class="pl-k">:</span> Nested.defaults({ <span class="pl-c">// define model extending base Nested.Model</span>
+            a <span class="pl-k">:</span> <span class="pl-c1">1</span>,
+            b <span class="pl-k">:</span> MyModel.defaults({ <span class="pl-c">//define model extending specified model</span>
+                items <span class="pl-k">:</span> Collection.defaults({ <span class="pl-c">// define collection of nested models</span>
+                    a <span class="pl-k">:</span> <span class="pl-c1">1</span>,
+                    b <span class="pl-k">:</span> <span class="pl-c1">2</span>
+                })
+
+            })
+        })
+    }
+})
+</pre></div>
 
 <h3>
 <a id="attribute-options" class="anchor" href="#attribute-options" aria-hidden="true"><span class="octicon octicon-link"></span></a>Attribute options</h3>
@@ -622,7 +656,7 @@ Function will be executed in the context of the model.</p>
 <h4>
 <a id="get-hook" class="anchor" href="#get-hook" aria-hidden="true"><span class="octicon octicon-link"></span></a>get hook</h4>
 
-<pre><code>get : function( value ){ return value; }
+<pre><code>get : function( value, attrName ){ return value; }
 </code></pre>
 
 <p>Called on Model.get in the context of the model, allowing you to modify returned value.</p>
@@ -630,7 +664,7 @@ Function will be executed in the context of the model.</p>
 <h4>
 <a id="set-hook" class="anchor" href="#set-hook" aria-hidden="true"><span class="octicon octicon-link"></span></a>set hook</h4>
 
-<pre><code>set : function( value, options ){ return value; }
+<pre><code>set : function( value, attrName ){ return value; }
 </code></pre>
 
 <p>Called on Model.set in the context of the model, allowing you to modify value before set ot cancel setting of the attribute, returning 'undefined'.</p>
@@ -678,19 +712,19 @@ triggerWhenChanged : false
 Specify 'false' to turn off event bubbling.</p>
 
 <h2>
-<a id="one-to-many-and-many-to-many-model-relationships" class="anchor" href="#one-to-many-and-many-to-many-model-relationships" aria-hidden="true"><span class="octicon octicon-link"></span></a>One-to-many and many-to-many model relationships</h2>
+<a id="one-to-many-and-many-to-many-model-relations" class="anchor" href="#one-to-many-and-many-to-many-model-relations" aria-hidden="true"><span class="octicon octicon-link"></span></a>One-to-many and many-to-many model relations</h2>
 
 <p>Sometimes when you have one-to-many and many-to-many relationships between Models, it is suitable to transfer such a relationships from server as arrays of model ids. NestedTypes gives you special attribute data types for this situation.</p>
 
-<div class="highlight highlight-javascript"><pre><span class="pl-s">var</span> User <span class="pl-k">=</span> Nested.Model.extend({
+<div class="highlight highlight-javascript"><pre><span class="pl-k">var</span> User <span class="pl-k">=</span> Nested.Model.extend({
     defaults <span class="pl-k">:</span> {
-        name <span class="pl-k">:</span> <span class="pl-s3">String</span>,
+        name <span class="pl-k">:</span> <span class="pl-c1">String</span>,
         roles <span class="pl-k">:</span> RolesCollection.subsetOf( roles ) <span class="pl-c">// &lt;- serialized as array of model ids</span>
-        location <span class="pl-k">:</span> <span class="pl-s3">Location</span>.from( locations ) <span class="pl-c">// &lt;- serialized as model id</span>
+        location <span class="pl-k">:</span> <span class="pl-c1">Location</span>.from( locations ) <span class="pl-c">// &lt;- serialized as model id</span>
     }
 });
 
-<span class="pl-s">var</span> user <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">User</span>({ id<span class="pl-k">:</span> <span class="pl-c1">0</span> });
+<span class="pl-k">var</span> user <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">User</span>({ id<span class="pl-k">:</span> <span class="pl-c1">0</span> });
 user.fetch(); <span class="pl-c">// &lt;- you'll receive from server "{ id: 0, name : 'john', roles : [ 1, 2, 3 ] }"</span>
 ...
 <span class="pl-c">// however, user.roles behaves like normal collection of Roles.</span>
@@ -709,11 +743,11 @@ assert( user.roles.first() <span class="pl-k">instanceof</span> Role );</pre></d
 <li>function, which returns reference to collection and executed in the context of the current model.</li>
 </ul>
 
-<div class="highlight highlight-javascript"><pre><span class="pl-s">var</span> User <span class="pl-k">=</span> Nested.Model.extend({
+<div class="highlight highlight-javascript"><pre><span class="pl-k">var</span> User <span class="pl-k">=</span> Nested.Model.extend({
     defaults <span class="pl-k">:</span> {
-        name <span class="pl-k">:</span> <span class="pl-s3">String</span>,
-        roles <span class="pl-k">:</span> Collection.subsetOf( <span class="pl-s1"><span class="pl-pds">'</span>collection.roles<span class="pl-pds">'</span></span> ); <span class="pl-c">// this.collection.roles</span>
-        location <span class="pl-k">:</span> <span class="pl-s3">Location</span>.from( <span class="pl-st">function</span>(){ <span class="pl-k">return</span> <span class="pl-v">this</span>.collection.locations; }); <span class="pl-c">// this.collection.locations</span>
+        name <span class="pl-k">:</span> <span class="pl-c1">String</span>,
+        roles <span class="pl-k">:</span> Collection.subsetOf( <span class="pl-s"><span class="pl-pds">'</span>collection.roles<span class="pl-pds">'</span></span> ); <span class="pl-c">// this.collection.roles</span>
+        location <span class="pl-k">:</span> <span class="pl-c1">Location</span>.from( <span class="pl-k">function</span>(){ <span class="pl-k">return</span> <span class="pl-v">this</span>.collection.locations; }); <span class="pl-c">// this.collection.locations</span>
     }
 });</pre></div>
 
@@ -726,11 +760,11 @@ assert( user.roles.first() <span class="pl-k">instanceof</span> Role );</pre></d
     locations <span class="pl-k">:</span> Locations.Collection
 }
 
-<span class="pl-s">var</span> User <span class="pl-k">=</span> Nested.Model.extend({
+<span class="pl-k">var</span> User <span class="pl-k">=</span> Nested.Model.extend({
     defaults <span class="pl-k">:</span> {
-        name <span class="pl-k">:</span> <span class="pl-s3">String</span>,
-        roles <span class="pl-k">:</span> Collection.subsetOf( <span class="pl-s1"><span class="pl-pds">'</span>store.roles<span class="pl-pds">'</span></span> ); <span class="pl-c">// this.store.roles</span>
-        location <span class="pl-k">:</span> <span class="pl-s3">Location</span>.from( <span class="pl-st">function</span>(){ <span class="pl-k">return</span> <span class="pl-v">this</span>.store.locations; }); <span class="pl-c">// this.store.locations</span>
+        name <span class="pl-k">:</span> <span class="pl-c1">String</span>,
+        roles <span class="pl-k">:</span> Collection.subsetOf( <span class="pl-s"><span class="pl-pds">'</span>store.roles<span class="pl-pds">'</span></span> ); <span class="pl-c">// this.store.roles</span>
+        location <span class="pl-k">:</span> <span class="pl-c1">Location</span>.from( <span class="pl-k">function</span>(){ <span class="pl-k">return</span> <span class="pl-v">this</span>.store.locations; }); <span class="pl-c">// this.store.locations</span>
     }
 });</pre></div>
 
@@ -746,18 +780,16 @@ assert( user.roles.first() <span class="pl-k">instanceof</span> Role );</pre></d
 <p>Note, that 'change' events won't be bubbled from models in Collection.subsetOf. Other collection's events will.</p>
 
 <p>For Model.from attribute no model changes will be bubbled.</p>
-      </section>
-    </div>
 
-    <!-- FOOTER  -->
-    <div id="footer_wrap" class="outer">
-      <footer class="inner">
-        <p class="copyright">Backbone.nestedtypes maintained by <a href="https://github.com/Volicon">Volicon</a></p>
-        <p>Published with <a href="http://pages.github.com">GitHub Pages</a></p>
+      <footer class="site-footer">
+        <span class="site-footer-owner"><a href="https://github.com/Volicon/backbone.nestedTypes">Backbone.nestedtypes</a> is maintained by <a href="https://github.com/Volicon">Volicon</a>.</span>
+
+        <span class="site-footer-credits">This page was generated by <a href="https://pages.github.com">GitHub Pages</a> using the <a href="https://github.com/jasonlong/cayman-theme">Cayman theme</a> by <a href="https://twitter.com/jasonlong">Jason Long</a>.</span>
       </footer>
-    </div>
 
-    
+    </section>
 
+  
   </body>
 </html>
+

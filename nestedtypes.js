@@ -24,15 +24,18 @@
 
     Nested.error = {
         propertyConflict : function( context, name ){
-            console.error( '[Type error](' + context.__class + '.extend) Property ' + name + ' conflicts with base class members' );
+            console.error( '[Type error] Property name conflicts with base class members in ' + context.__class + '.extend({ properties : { ' + name + ' :...}); this =', context );
         },
 
         argumentIsNotAnObject : function( context, value ){
-            console.error( '[Type Error](' + context.__class + '.set) Attribute hash is not an object:', value, 'In model:', context );
+            console.error( '[Type Error] Attribute hash is not an object in ' + context.__class + '.set(', value, '); this =', context );
         },
 
         unknownAttribute : function( context, name, value ){
-            context.suppressTypeErrors || console.error( '[Type Error](' + context.__class + '.set) Attribute "' + name + '" has no default value.', value, 'In model:', context );
+            context.suppressTypeErrors || console.error( '[Type Error] Attribute has no default value in ' + context.__class + '.set( "' + name + '",', value, '); this =', context );
+        },
+        wrongCollectionSetArg : function( context, value ){
+            console.error( '[Type Error] Wrong argument type in ' + context.__class + '.set(', value, '); this =', context );
         }
     };
 
@@ -316,6 +319,7 @@
 
             __duringSet: 0,
 
+            defaults : function(){ return {}; },
             __beginChange : function(){
                 this.__duringSet++ || ( this.__nestedChanges = {} );
             },
@@ -408,8 +412,8 @@
                     l = path.length,
                     value = this;
 
-                for( var i = 0; i < l; i++ ){
-                    value = value.get( path[ i ] );
+                for( var i = 0; value && i < l; i++ ){
+                    value = value.get ? value.get( path[ i ] ) : value[ path[ i ] ];
                 }
 
                 return value;
@@ -422,7 +426,24 @@
                     attr = path[ l ];
 
                 for( var i = 0; i < l; i++ ){
-                    model = model.get( path[ i ] );
+                    var next = model.get( path[ i ] );
+                    if( !next ){
+                        if( model.defaults ){
+                            var newModel = model.__attributes[ path[ i ] ].create();
+                            if( options && options.nullify && newModel.defaults ){
+                                var nulls = newModel.defaults();
+                                _.each( nulls, function( spec, name ){
+                                    nulls[ name ] = null;
+                                });
+                                newModel.set( nulls );
+                            }
+                            model.set( path[ i ], newModel );
+                            next = model.get( path[ i ] );
+                        }else{
+                            return;
+                        }
+                    }
+                    model = next;
                 }
 
                 return model.set( attr, value, options );
@@ -448,8 +469,15 @@
                 var attrs = {};
 
                 _.each( this.attributes, function( value, key ){
+                    var spec = this.__attributes[ key ],
+                        deepClone = spec && spec.deepClone;
+                    if( deepClone ){
+                        attrs[ key ] =  value ? deepClone.call( value, options ) : value;
+                    }
+                    else{
                     attrs[ key ] = value && value.deepClone ? value.deepClone( options ) : value;
-                });
+                    }
+                }, this );
 
                 return new this.constructor( attrs, options );
             },
@@ -675,11 +703,15 @@
                 });
             },
 
+            get: function(obj) {
+                if (obj == null) return void 0;
+                return typeof obj === 'object' ? this._byId[obj.id] || this._byId[obj.cid] : this._byId[ obj ];
+            },
             deepClone: function(){
                 var copy = CollectionProto.clone.call( this );
 
                 copy.reset( this.map( function( model ){
-                    return model.deepClone();
+                    return model.deepClone({ collection : copy });
                 } ) );
 
                 return copy;
@@ -688,8 +720,11 @@
             __changing: 0,
 
             set: wrapCall( function( models, options ){
-                if( models && models instanceof Nested.Collection ){
-                    models = models.models;
+                if( models ){
+                    if( typeof models !== 'object' || !(
+                        models instanceof Array || models instanceof Nested.Model || Object.getPrototypeOf( models ) === Object.prototype ) ){
+                        Nested.error.wrongCollectionSetArg( this, models );
+                    }
                 }
                 return CollectionProto.set.call( this, models, options );
             }),
@@ -754,10 +789,7 @@
                     model.listenTo( newValue, 'after:change', model.__commitChange );
                     model.listenTo( newValue, this.triggerWhenChanged, this.handleNestedChange );
 
-                    _.each( model.listening[ name ], function( handler, events ){
-                        var callback = typeof handler === 'string' ? this[handler] : handler;
-                        this.listenTo( newValue, events, callback );
-                    }, this );
+                    this.events && model.listenTo( newValue, this.events );
                 }
 
                 model.trigger( 'replace:' + name, model, newValue, oldValue );
@@ -812,15 +844,18 @@
 
     Nested.Model.from = Nested.Model.From = Nested.Model.RefTo = ( function(){
         return function( masterCollection ){
-            var getMaster = parseReference( masterCollection );
+            var getMaster = parseReference( masterCollection ), attrSpec;
 
-            return Nested.options({
+            return attrSpec = Nested.options({
                 value : null,
 
                 toJSON : function( value ){
                     return value && typeof value === 'object' ? value.id : value;
                 },
 
+                deepClone : function(){
+                    return typeof this === 'object' ? this.id : this;
+                },
                 get : function( objOrId, name ){
 
                             if( typeof objOrId !== 'object' ){
@@ -828,7 +863,8 @@
 
                                 if( master && master.length ){
                                     objOrId = master.get( objOrId ) || null;
-                                    this.set( name, objOrId, { silent: true });
+                            this.attributes[ name ] = objOrId;
+                            objOrId && attrSpec.events && this.listenTo( objOrId, attrSpec.events );
                                 }
                                 else{
                                     objOrId = null;
@@ -839,9 +875,15 @@
                         },
 
                 set : function( modelOrId, name ){
+                    var current = this.attributes[ name ];
                     if( typeof modelOrId !== 'object' ){
-                        var current = this.attributes[ name ];
                         if( current && typeof current === 'object' && current.id === modelOrId ) return;
+                    }
+                    else if( attrSpec.events && modelOrId ){
+                        this.listenTo( modelOrId, attrSpec.events );
+                    }
+                    if( current && typeof current === 'object' ){
+                        this.stopListening( current );
                         }
 
                     return modelOrId;

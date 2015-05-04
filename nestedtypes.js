@@ -65,7 +65,7 @@
                 _.extend( This.prototype, protoProps );
                 _.extend( This, staticProps );
                 defineProperties( this, protoProps );
-            }
+            };
 
             return This;
         };
@@ -651,7 +651,7 @@
         };
 
         Model.define = function( protoProps, staticProps ){
-            var Base = Object.getPrototypeOf( this.prototype ).constructor;
+            var Base = Object.getPrototypeOf( this.prototype ).constructor,
                 spec = parseDefaults( protoProps, Base ),
                 This = this;
 

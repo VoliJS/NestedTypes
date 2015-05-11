@@ -63,3 +63,10 @@ Models Relations
 ----------------
 - Model.From
 - Collection.SubsetOf
+
+
+Some thoughts
+-------------
+- artificial properties are needed for type casts and hooks in any case.
+- base class could implement functionality without notifications. Just type casts + serialization control.
+- then, it could be merged into base Model.set, to add notifications.

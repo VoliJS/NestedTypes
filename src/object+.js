@@ -1,4 +1,4 @@
-Object.xmap = function( dest, source, fun, context ){
+Object.xMap = function( dest, source, fun, context ){
     context || ( context = null );
 
     for( var name in source ){
@@ -11,7 +11,7 @@ Object.xmap = function( dest, source, fun, context ){
     return dest;
 };
 
-Object.xcopy = function( dest ){
+Object.xCopy = function( dest ){
     for( var i = 1; i < arguments.length; i++ ){
         var source = arguments[ i ];
 
@@ -23,7 +23,7 @@ Object.xcopy = function( dest ){
     return dest;
 };
 
-Object.xevery = function( obj, fun, context ){
+Object.xEvery = function( obj, fun, context ){
     if( obj.every ) return obj.every( fun, context );
 
     for( var name in source ){
@@ -35,11 +35,11 @@ Object.xevery = function( obj, fun, context ){
     return true;
 };
 
-Object.xIsLiteral = function( value ){
+Object.xisliteral = function( value ){
     return value && typeof value === 'object' &&  Object.getPrototypeOf( value ) === Object.prototype;
 };
 
-Object.xmerge = function( destination, source ){
+Object.xMerge = function( destination, source ){
     Object.xmap( destination, source, function( value, name ){
         if( !destination.hasOwnProperty( name ) ){
             return value;
@@ -89,7 +89,7 @@ Object.extend = ( function(){
         Object.xcopy( this.prototype, protoProps );
         Object.xcopy( this, staticProps );
 
-        Object.defineProperies( this.prototype,
+        Object.defineProperties( this.prototype,
             Object.xmap( {}, protoProps.properties, function( spec ){
                 return spec instanceof Function ? { get : spec } : spec;
             })

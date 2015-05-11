@@ -6,6 +6,7 @@
 // Released under MIT license.
 
 ( function( root, factory ){
+    Integer = function( x ){ return x ? Math.round( x ) : 0; };
     if( typeof define === 'function' && define.amd ) {
         define( [ 'exports', 'backbone', 'underscore' ], factory );
     }
@@ -17,7 +18,6 @@
         factory( root.NestedTypes, root.Backbone, root._ );
     }
 }( this, function( Nested, Backbone, _ ){
-    Integer = function( x ){ return x ? Math.round( x ) : 0; };
 
     'use strict';
     var extend = Backbone.Model.extend;
@@ -125,6 +125,9 @@
             create : function(){
                 return new this.type();
             },
+            clone : function( value ){
+                return JSON.parse( JSON.stringify( value ) );
+            },
 
             property : function( name ){
                 var spec = {
@@ -184,6 +187,9 @@
         Attribute.extend({
             cast : function( value ){
                 return value == null || value instanceof this.type ? value : new this.type( value );
+            },
+            clone : function( value ){
+                return this.cast( JSON.parse( JSON.stringify( value ) ) );
             }
         }).bind( Function.prototype );
 
@@ -282,6 +288,9 @@
                 }
 
                 return new Date( value );
+            },
+            clone : function( value ){
+                return new Date( +value );
             }
         }).bind( Date );
     })();
@@ -294,7 +303,8 @@
 
         cast : function( value ){
             return value == null ? null : this.type( value );
-        }
+        },
+        clone : function( value ){ return value; }
     }).bind( Number, Boolean, String, Integer );
 
     // Fix incompatible constructor behaviour of Array...
@@ -426,7 +436,7 @@
                     attr = path[ l ];
 
                 for( var i = 0; i < l; i++ ){
-                    var next = model.get( path[ i ] );
+                    var next = model.get ? model.get( path[ i ] ) : model[ path[ i ] ];
                     if( !next ){
                         if( model.defaults ){
                             var newModel = model.__attributes[ path[ i ] ].create();
@@ -446,7 +456,7 @@
                     model = next;
                 }
 
-                return model.set( attr, value, options );
+                return model.set ? model.set( attr, value, options ) : model[ attr ] = value;
             },
 
             constructor : function(attributes, options){
@@ -464,23 +474,25 @@
             // override get to invoke native getter...
             get : function( name ){ return this[ name ]; },
 
-            // Create deep copy for all nested objects...
-            deepClone: function( options ){
-                var attrs = {};
+            clone : function( options ){
+                var attrs;
+
+                if( options && options.deep ){
+                    attrs = {};
 
                 _.each( this.attributes, function( value, key ){
-                    var spec = this.__attributes[ key ],
-                        deepClone = spec && spec.deepClone;
-                    if( deepClone ){
-                        attrs[ key ] =  value ? deepClone.call( value, options ) : value;
+                        var spec = this.__attributes[ key ];
+                        spec && ( attrs[ key ] = spec.clone( value, options ) );
+                    }, this );
                     }
                     else{
-                    attrs[ key ] = value && value.deepClone ? value.deepClone( options ) : value;
+                    attrs = this.attributes;
                     }
-                }, this );
 
                 return new this.constructor( attrs, options );
             },
+            // Create deep copy for all nested objects...
+            deepClone: function( options ){ return this.clone({ deep : true }); },
 
             // Support for nested models and objects.
             // Apply toJSON recursively to produce correct JSON.
@@ -707,14 +719,16 @@
                 if (obj == null) return void 0;
                 return typeof obj === 'object' ? this._byId[obj.id] || this._byId[obj.cid] : this._byId[ obj ];
             },
-            deepClone: function(){
-                var copy = CollectionProto.clone.call( this );
 
-                copy.reset( this.map( function( model ){
-                    return model.deepClone({ collection : copy });
-                } ) );
+            deepClone : function(){ return this.clone({ deep : true }); },
 
-                return copy;
+            clone: function( options ){
+                var models = options && options.deep ?
+                    this.map( function( model ){
+                        return model.clone( options );
+                    } ) : this.models;
+
+                return new this.constructor( models );
             },
 
             __changing: 0,
@@ -800,6 +814,7 @@
             return new this.type( value, options );
         },
 
+        clone : function( value, options ){ return value && value.clone( options ); },
         cast : function( value, options, model ){
             var incompatibleType = value != null && !( value instanceof this.type ),
                 existingModelOrCollection = model.attributes[ this.name ];
@@ -846,16 +861,15 @@
         return function( masterCollection ){
             var getMaster = parseReference( masterCollection ), attrSpec;
 
+            function clone( value ){
+                return value && typeof value === 'object' ? value.id : value;
+            }
             return attrSpec = Nested.options({
                 value : null,
 
-                toJSON : function( value ){
-                    return value && typeof value === 'object' ? value.id : value;
-                },
+                toJSON : clone,
+                clone : clone,
 
-                deepClone : function(){
-                    return typeof this === 'object' ? this.id : this;
-                },
                 get : function( objOrId, name ){
 
                             if( typeof objOrId !== 'object' ){
@@ -906,7 +920,13 @@
                 return this.refs || _.pluck( this.models, 'id' );
             },
 
-            deepClone : CollectionProto.clone,
+            clone : function( options ){
+                var copy = CollectionProto.clone.call( this, _.omit( options, 'deep' ) );
+                copy.resolvedWith = this.resolvedWith;
+                copy.refs = this.refs;
+
+                return copy;
+            },
 
             parse : function( raw ){
                 var models = [];

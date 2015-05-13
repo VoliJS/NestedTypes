@@ -110,6 +110,11 @@ define( function( require, exports, module ){
                 })
 
                 var m = new M();
+
+                m.elements.add({});
+
+                m.elements.first().elements.length.should.be.zero;
+
             });
 
             it( 'can handle function in Model.defaults', function(){

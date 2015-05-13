@@ -133,21 +133,22 @@ Object.extend = ( function(){
         return value;
     }
 
-    function define( protoProps, staticProps ) {
+    function preparePropSpec( spec, name ){
+        var prop = Object.xgetPropertyDescriptor( this.prototype, name );
+
+        if( prop && typeof prop.value === 'function' ){
+            Object.xwarnings.overrideMethodWithValue( this, name, prop );
+        }
+
+        return spec instanceof Function ? { get : spec } : spec;
+    }
+
+    function define( protoProps, staticProps, mixinProps ) {
         Object.xmap( this.prototype, protoProps, warnOnError, this );
         Object.xmap( this, staticProps, warnOnError, this );
 
-        Object.defineProperties( this.prototype,
-            Object.xmap( {}, protoProps.properties, function( spec, name ){
-                var prop = Object.xgetPropertyDescriptor( this.prototype, name );
-
-                if( prop && typeof prop.value === 'function' ){
-                    Object.xwarnings.overrideMethodWithValue( this, name, prop );
-                }
-
-                return spec instanceof Function ? { get : spec } : spec;
-            }, this )
-        );
+        mixinProps && Object.defineProperties( this.prototype, Object.xmap( {}, mixinProps, preparePropSpec, this ) );
+        Object.defineProperties( this.prototype, Object.xmap( {}, protoProps.properties, preparePropSpec, this ) );
 
         return this;
     }

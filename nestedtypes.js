@@ -12,6 +12,21 @@
 
     // Object extensions: backbone-style OO functions and helpers...
     // -------------------------------------------------------------
+    JSON.isValid = function( value ){
+        var type = typeof value,
+            isJSON = value === null || type === 'number' || type === 'string' || type === 'boolean';
+
+        if( !isJSON && type === 'object' ){
+            var proto = Object.getPrototypeOf( value );
+
+            if( proto === Object.prototype || proto === Array.prototype ){
+                isJSON = Object.every( value, JSON.isValid );
+            }
+        }
+
+        return isJSON;
+    };
+
     ( function( spec ){
         for( var name in spec ){
             Object[ name ] || Object.defineProperty( Object, name, {
@@ -21,7 +36,35 @@
                 value: spec[ name ]
             });
         }
-    })( {
+    })({
+        each : function( source, fun, context ){
+            var res;
+
+            for( var name in source ){
+                if( source.hasOwnProperty( name ) ){
+                    res = fun.call( context, source[ name ], name );
+                    if( res !== void 0 ){
+                        return res;
+                    }
+                }
+            }
+
+            return res;
+        },
+
+        every : function( source, fun, context ){
+            for( var name in source ){
+                if( source.hasOwnProperty( name ) ){
+                    if( !fun.call( context, source[ name ], name ) ){
+                        return false;
+                    }
+
+                }
+            }
+
+            return true;
+        },
+
         assign : function( target, firstSource ){
             if( target == null ){
                 throw new TypeError( 'Cannot convert first argument to object' );
@@ -98,7 +141,7 @@
                 Child.prototype.constructor = Child;
                 Child.__super__             = Parent.prototype;
 
-                Child.define( protoProps, staticProps );
+                protoProps && Child.define( protoProps, staticProps );
 
                 return Child;
             }
@@ -142,8 +185,8 @@
                 for( var i = 0; i < arguments.length; i++ ){
                     var Ctor = arguments[ i ];
 
-                    Ctor.extend || ( Ctor.extend = extend );
-                    Ctor.define || ( Ctor.define = define );
+                    Ctor.extend = extend;
+                    Ctor.define = define;
                     Ctor.prototype.initialize || ( Ctor.prototype.initialize = function(){} );
                 }
             };
@@ -197,7 +240,7 @@
     });
 
     Nested.Class = Object.extend.Class;
-    
+
     // Extend Object+ type errors with NestedTypes specific error types...
     Nested.error = Object.assign( Object.extend.error, {
         argumentIsNotAnObject : function( context, value ){
@@ -229,11 +272,11 @@
             create : function(){
                 return new this.type();
             },
-            
+
             clone : function( value, options ){
                 if( value && typeof value === 'object' ){
                     var proto = Object.getPrototypeOf( value );
-                    
+
                     if( proto === Object.prototype || proto === Array.prototype ){
                         return JSON.parse( JSON.stringify( value ) );
                     }
@@ -241,7 +284,7 @@
                         return value.clone( options );
                     }
                 }
-                
+
                 return value;
             },
 
@@ -587,14 +630,14 @@
                 if( options && options.deep ){
                     attrs = {};
 
-                _.each( this.attributes, function( value, key ){
+                    _.each( this.attributes, function( value, key ){
                         var spec = this.__attributes[ key ];
                         spec && ( attrs[ key ] = spec.clone( value, options ) );
                     }, this );
-                    }
-                    else{
+                }
+                else{
                     attrs = this.attributes;
-                    }
+                }
 
                 return new this.constructor( attrs, options );
             },
@@ -657,9 +700,9 @@
             defaults : function( attrs ){ return this.extend({ defaults : attrs }); },
 
             extend : function( protoProps, staticProps ){
-                staticProps || ( staticProps = {} );
-                staticProps.Collection || ( staticProps.Collection = this.Collection.extend() );
-                return Object.extend.call( this, protoProps, staticProps );
+                var This = Object.extend.call( this );
+                This.Collection = this.Collection.extend();
+                return protoProps ? This.define( protoProps, staticProps ) : This;
             },
 
             define : function( protoProps, staticProps ){
@@ -708,27 +751,12 @@
             });
         }
 
-        function isJsonLiteral( value ){
-            var type = typeof value,
-                isJSON = value === null || type === 'number' || type === 'string' || type === 'boolean';
-
-            if( !isJSON && type === 'object' ){
-                var proto = Object.getPrototypeOf( value );
-
-                if( proto === Object.prototype || proto === Array.prototype ){
-                    isJSON = _.every( value, isJsonLiteral );
-                }
-            }
-
-            return isJSON;
-        }
-
         function createDefaults( attributes ){
             var json = [], init = {}, refs = {};
 
             _.each( attributes, function( attr, name ){
                 if( attr.value !== undefined ){
-                    if( isJsonLiteral( attr.value ) ){
+                    if( JSON.isValid( attr.value ) ){
                         json.push( name + ':' + JSON.stringify( attr.value ) ); // and make a deep copy
                     }
                     else{ // otherwise, copy it by reference.

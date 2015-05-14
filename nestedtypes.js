@@ -89,6 +89,17 @@
             return to;
         },
 
+        pluck : function( obj, name ){
+            var dest = obj instanceof Array ? [] : {};
+            return Object.transform( dest, obj, function( value, name ){
+                return value[ name ];
+            });
+        },
+
+        pick : function( obj, arr ){},
+        omit : function( obj, arr ){},
+        defaults : function( dest ){},
+
         transform : function( dest, source, fun, context ){
             for( var name in source ){
                 if( source.hasOwnProperty( name ) ){
@@ -396,6 +407,7 @@
     Nested.defaults = function( x ){
         return Nested.Model.defaults( x );
     };
+
     Nested.value = function( value ){ return Nested.options({ value: value }); };
 
     ( function(){

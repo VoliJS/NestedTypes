@@ -6,7 +6,158 @@
 // Released under MIT license.
 
 ( function( root, factory ){
-    Integer = function( x ){ return x ? Math.round( x ) : 0; };
+    // Mock for missing Integer data type...
+    // -------------------------------------
+    root.Integer = function( x ){ return x ? Math.round( x ) : 0; };
+
+    // Object extensions: backbone-style OO functions and helpers...
+    // -------------------------------------------------------------
+    ( function( spec ){
+        for( var name in spec ){
+            Object[ name ] || Object.defineProperty( Object, name, {
+                enumerable: false,
+                configurable: true,
+                writable: true,
+                value: spec[ name ]
+            });
+        }
+    })( {
+        assign : function( target, firstSource ){
+            if( target == null ){
+                throw new TypeError( 'Cannot convert first argument to object' );
+            }
+
+            var to = Object( target );
+            for( var i = 1; i < arguments.length; i++ ){
+                var nextSource = arguments[ i ];
+                if( nextSource == null ){
+                    continue;
+                }
+
+                var keysArray = Object.keys( Object( nextSource ) );
+                for( var nextIndex = 0, len = keysArray.length; nextIndex < len; nextIndex++ ){
+                    var nextKey = keysArray[ nextIndex ];
+                    var desc    = Object.getOwnPropertyDescriptor( nextSource, nextKey );
+                    if( desc !== void 0 && desc.enumerable ){
+                        to[ nextKey ] = nextSource[ nextKey ];
+                    }
+                }
+            }
+            return to;
+        },
+
+        transform : function( dest, source, fun, context ){
+            for( var name in source ){
+                if( source.hasOwnProperty( name ) ){
+                    var value = fun.call( context, source[ name ], name );
+                    typeof value === 'undefined' || ( dest[ name ] = value );
+                }
+            }
+
+            return dest;
+        },
+
+        getPropertyDescriptor : function( obj, prop ){
+            for( var desc; !desc && obj; obj = Object.getPrototypeOf( obj ) ){
+                desc = Object.getOwnPropertyDescriptor( obj, prop );
+            }
+
+            return desc;
+        },
+
+        extend : (function(){
+            var error = {
+                overrideMethodWithValue : function( Ctor, name, value ){
+                    console.warn( '[Type Warning] Base class method overriden with value in Object.extend({ ' + name + ' : ' + value + ' }); Object =', Ctor.prototype );
+                }
+            };
+
+            function Class(){
+                this.initialize.apply( this, arguments );
+            }
+
+            // Backbone-style extend with native properties and late definition support
+            function extend( protoProps, staticProps ){
+                var Parent = this === Object ? Class : this,
+                    Child;
+
+                if( typeof protoProps === 'function' ){
+                    Child      = protoProps;
+                    protoProps = null;
+                }
+                else if( protoProps && protoProps.hasOwnProperty( 'constructor' ) ){
+                    Child = protoProps.constructor;
+                }
+                else{
+                    Child = function Constructor(){ return Parent.apply( this, arguments ); };
+                }
+
+                Object.assign( Child, Parent );
+
+                Child.prototype             = Object.create( Parent.prototype );
+                Child.prototype.constructor = Child;
+                Child.__super__             = Parent.prototype;
+
+                Child.define( protoProps, staticProps );
+
+                return Child;
+            }
+
+            function warnOnError( value, name ){
+                var prop = Object.getPropertyDescriptor( this.prototype, name );
+
+                if( prop ){
+                    var baseIsFunction  = typeof prop.value === 'function',
+                        valueIsFunction = typeof value === 'function';
+
+                    if( baseIsFunction && !valueIsFunction ){
+                        error.overrideMethodWithValue( this, name, prop );
+                    }
+                }
+
+                return value;
+            }
+
+            function preparePropSpec( spec, name ){
+                var prop = Object.getPropertyDescriptor( this.prototype, name );
+
+                if( prop && typeof prop.value === 'function' ){
+                    error.overrideMethodWithValue( this, name, prop );
+                }
+
+                return spec instanceof Function ? { get : spec } : spec;
+            }
+
+            function define( protoProps, staticProps, mixinProps ){
+                Object.transform( this.prototype, protoProps,  warnOnError, this );
+                Object.transform( this,           staticProps, warnOnError, this );
+
+                mixinProps && Object.defineProperties( this.prototype, Object.transform( {}, mixinProps, preparePropSpec, this ) );
+                protoProps && Object.defineProperties( this.prototype, Object.transform( {}, protoProps.properties, preparePropSpec, this ) );
+
+                return this;
+            }
+
+            extend.attach = function(){
+                for( var i = 0; i < arguments.length; i++ ){
+                    var Ctor = arguments[ i ];
+
+                    Ctor.extend || ( Ctor.extend = extend );
+                    Ctor.define || ( Ctor.define = define );
+                    Ctor.prototype.initialize || ( Ctor.prototype.initialize = function(){} );
+                }
+            };
+
+            extend.attach( Class );
+            extend.Class = Class;
+            extend.error = error;
+
+            return extend;
+        })()
+    });
+
+    // Universal module adapter
+    // ------------------------
     if( typeof define === 'function' && define.amd ) {
         define( [ 'exports', 'backbone', 'underscore' ], factory );
     }
@@ -18,15 +169,37 @@
         factory( root.NestedTypes, root.Backbone, root._ );
     }
 }( this, function( Nested, Backbone, _ ){
-
     'use strict';
-    var extend = Backbone.Model.extend;
 
-    Nested.error = {
-        propertyConflict : function( context, name ){
-            console.error( '[Type error] Property name conflicts with base class members in ' + context.__class + '.extend({ properties : { ' + name + ' :...}); this =', context );
-        },
+    // Override Backbone Events.listenTo to support message maps...
+    Backbone.Events.listenTo =
+        ( function( baseListenTo ){
+            return function( source, events ){
+                if( typeof events === 'object' ){
+                    _.each( events, function( handler, name ){
+                        baseListenTo.call( this, source, name, handler );
+                    }, this );
+                }
+                else{
+                    baseListenTo.apply( this, arguments );
+                }
+            };
+        })( Backbone.Events.listenTo );
 
+    // Make Object.extend classes capable of sending and receiving Backbone Events...
+    Object.assign( Object.extend.Class.prototype, Backbone.Events );
+
+    // Override Backbone's objects .extend and .listenTo...
+    [ 'Model', 'Collection', 'View', 'Router', 'History' ].forEach( function( name ){
+        var BackboneType = Backbone[ name ];
+        Object.extend.attach( BackboneType );
+        BackboneType.prototype.listenTo = Backbone.Events.listenTo;
+    });
+
+    Nested.Class = Object.extend.Class;
+    
+    // Extend Object+ type errors with NestedTypes specific error types...
+    Nested.error = Object.assign( Object.extend.error, {
         argumentIsNotAnObject : function( context, value ){
             console.error( '[Type Error] Attribute hash is not an object in ' + context.__class + '.set(', value, '); this =', context );
         },
@@ -34,93 +207,23 @@
         unknownAttribute : function( context, name, value ){
             context.suppressTypeErrors || console.error( '[Type Error] Attribute has no default value in ' + context.__class + '.set( "' + name + '",', value, '); this =', context );
         },
+
         wrongCollectionSetArg : function( context, value ){
             console.error( '[Type Error] Wrong argument type in ' + context.__class + '.set(', value, '); this =', context );
         }
-    };
+    });
 
-    function createExtendFor( Base ){
-        function defineProperties( This, protoProps ){
-            _.each( protoProps.properties, function( propDesc, name ){
-                var prop = _.isFunction( propDesc ) ? {
-                    get: propDesc,
-                    enumerable: false
-                } : propDesc;
+    // Attribute Metatypes Definitions
+    // -------------------------------
 
-                if( name in Base.prototype ){
-                    Nested.error.propertyConflict( This.prototype, name );
-                }
-
-                Object.defineProperty( This.prototype, name, prop );
-            });
-        }
-
-        return function( protoProps, staticProps ){
-            var This = extend.call( this, protoProps, staticProps );
-            delete This._subsetOf;
-
-            protoProps && defineProperties( This, protoProps );
-
-            This.define = function( protoProps, staticProps ){
-                _.extend( This.prototype, protoProps );
-                _.extend( This, staticProps );
-                defineProperties( this, protoProps );
-            };
-
-            return This;
-        };
-    }
-
-    var listenTo = Backbone.Model.prototype.listenTo;
-
-    Backbone.Events.listenTo = Backbone.Model.prototype.listenTo =
-        Backbone.Collection.prototype.listenTo = Backbone.View.prototype.listenTo =
-        function( source, events ){
-            if( typeof events === 'object' ){
-                _.each( events, function( handler, name ){
-                    listenTo.call( this, source, name, handler );
-                }, this );
-            }
-            else{
-                listenTo.apply( this, arguments );
-            }
-        };
-
-    /*************************************************
-        NestedTypes.Class
-        - can be extended as native Backbone objects
-        - can send out and listen to backbone events
-        - can have native properties
-     **************************************************/
-    Nested.Class = ( function(){
-        function Class(){
-            this.initialize.apply( this, arguments );
-        }
-
-        _.extend( Class.prototype, Backbone.Events, { __class: 'Class', initialize: function (){} } );
-        Class.extend = createExtendFor( Class );
-
-        return Class;
-    })();
-
-    /*************************************************
-        NestedTypes.Model
-        - extension of Backbone.Model
-        - creates native properties for attributes
-        - support optional type specs for attributes
-        - perform dynamic types coercion and checks
-        - support nested models and collections with 'change' events bubbling
-        - transparent typed attributes serialization and deserialization
-     **************************************************/
-
-    function chainHooks( first, second ){
-        return function( value, name ){
-            return second.call( this, first.call( this, value, name ), name );
-        };
-    }
-    
     Nested.options = ( function(){
-        var Attribute = Nested.Class.extend({
+        function chainHooks( first, second ){
+            return function( value, name ){
+                return second.call( this, first.call( this, value, name ), name );
+            };
+        }
+
+        var Attribute = Object.extend({
             type : null,
 
             create : function(){
@@ -292,19 +395,11 @@
 
         Nested.options.Type.extend({
             cast : function( value ){
-                if( value == null || value instanceof Date ){
-                    return value;
-                }
-
-                if( _.isString( value ) ){
-                    value = parseDate( value );
-                }
-
-                return new Date( value );
+                return value == null || value instanceof Date ? value :
+                    new Date( typeof value === 'string' ? parseDate( value ) : value )
             },
-            clone : function( value ){
-                return new Date( +value );
-            }
+
+            clone : function( value ){ return new Date( +value ); }
         }).bind( Date );
     })();
 
@@ -332,9 +427,8 @@
     Nested.Model = ( function(){
         var ModelProto = Backbone.Model.prototype;
 
-        var Model = Backbone.Model.extend( {
+        var Model = Backbone.Model.extend({
             triggerWhenChanged: 'change',
-            listening: {},
 
             __defaults: {},
             __attributes: { id : Nested.options({ name: 'id', value : undefined }) },
@@ -559,7 +653,29 @@
             },
 
             _: _ // add underscore to be accessible in templates
-        } );
+        },{
+            defaults : function( attrs ){ return this.extend({ defaults : attrs }); },
+
+            extend : function( protoProps, staticProps ){
+                staticProps || ( staticProps = {} );
+                staticProps.Collection || ( staticProps.Collection = this.Collection.extend() );
+                return Object.extend.call( this, protoProps, staticProps );
+            },
+
+            define : function( protoProps, staticProps ){
+                var Base = Object.getPrototypeOf( this.prototype ).constructor,
+                    spec = parseDefaults( protoProps, Base ),
+                    This = this;
+
+                Object.extend.Class.define.call( This, spec, staticProps, createNativeProperties( This, spec ) );
+
+                var collectionSpec = { model : This };
+                spec.urlRoot && ( collectionSpec.url = spec.urlRoot );
+                This.Collection.define( _.defaults( protoProps.collection || {}, collectionSpec ) );
+
+                return This;
+            }
+        });
 
         function parseDefaults( spec, Base ){
             var defaultAttrs = _.isFunction( spec.defaults ) ? spec.defaults() : spec.defaults || spec.attributes || {},
@@ -658,41 +774,10 @@
                     } : _.defaults( {}, propDesc, { enumerable : false } );
                 });
 
-                _.each( properties, function( prop, name ){
-                    if( name in ModelProto ||
-                        name === 'cid' || name === 'id' || name === 'attributes' ){
-                        Nested.error.propertyConflict( This.prototype, name );
-                    }
-
-                    Object.defineProperty( This.prototype, name, prop );
-                });
+                return properties;
             }
         }
 
-        Model.extend = function( protoProps, staticProps ){
-            var This = extend.call( this, {}, {} );
-            This.Collection = this.Collection.extend();//TBD: make the same for Collection
-            return arguments.length ? This.define( protoProps, staticProps ) : This;
-        };
-
-        Model.define = function( protoProps, staticProps ){
-            var Base = Object.getPrototypeOf( this.prototype ).constructor,
-                spec = parseDefaults( protoProps, Base ),
-                This = this;
-
-            _.extend( This.prototype, spec );
-            _.extend( This, staticProps );
-
-            var collectionSpec = { model : This };
-            spec.urlRoot && ( collectionSpec.url = spec.urlRoot );
-            This.Collection.define( _.defaults( protoProps.collection || {}, collectionSpec ) );
-
-            createNativeProperties( This, spec );
-
-            return This;
-        };
-
-        Model.defaults = function( attrs ){ return this.extend({ defaults : attrs }); };
         return Model;
     })();
 
@@ -763,12 +848,11 @@
             getModelIds : function(){
                 return _.pluck( this.models, 'id' );
             }
+        },{
+            defaults : function( attrs ){
+                return this.prototype.model.extend({ defaults : attrs }).Collection;
+            }
         });
-
-        Collection.extend = createExtendFor( Collection );
-        Collection.defaults = function( attrs ){
-            return this.prototype.model.extend({ defaults : attrs }).Collection;
-        };
 
         return Collection;
     })();

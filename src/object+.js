@@ -1,3 +1,6 @@
+/* Backbone-style OO functions and helpers
+ * (c) Vlad Balin & Volicon, 2015
+ */
 ( function( spec ){
     for( var name in spec ){
         Object[ name ] || Object.defineProperty( Object, name, {

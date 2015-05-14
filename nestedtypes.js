@@ -116,8 +116,9 @@
     function chainHooks( first, second ){
         return function( value, name ){
             return second.call( this, first.call( this, value, name ), name );
-        }
+        };
     }
+    
     Nested.options = ( function(){
         var Attribute = Nested.Class.extend({
             type : null,
@@ -125,8 +126,20 @@
             create : function(){
                 return new this.type();
             },
-            clone : function( value ){
-                return JSON.parse( JSON.stringify( value ) );
+            
+            clone : function( value, options ){
+                if( value && typeof value === 'object' ){
+                    var proto = Object.getPrototypeOf( value );
+                    
+                    if( proto === Object.prototype || proto === Array.prototype ){
+                        return JSON.parse( JSON.stringify( value ) );
+                    }
+                    else if( value.clone ){
+                        return value.clone( options );
+                    }
+                }
+                
+                return value;
             },
 
             property : function( name ){

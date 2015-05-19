@@ -277,6 +277,19 @@
             };
         }
 
+        function transform( val, options, model, name ){
+            var value = this.cast ? this.cast( value, options, model ) : val,
+                prev  = model.attributes[ name ];
+
+            if( this.isChanged( value, prev ) ){
+                value = this.set.call( model, value, name );
+                if( value === undefined ) return prev;
+                this.cast && ( value = this.cast( value, options, model ) );
+            }
+
+            return value;
+        }
+
         var Attribute = Object.extend({
             type : null,
 
@@ -299,11 +312,16 @@
                 return value;
             },
 
+            isChanged : genericIsChanged,
+
+            transform : function( x ){ return x; },
+
             property : function( name ){
+                var self = this;
+
                 var spec = {
                         set : function( value ){
-                            this.set( name, value );
-                            return value;
+                            setSingleAttr( this, name, value, self );
                         },
 
                         enumerable : false
@@ -332,6 +350,15 @@
 
             initialize : function( spec ){
                 this.options( spec );
+
+                if( this.set ){
+                    if( this.cast ){
+                        this.cast = createCastWithHook( this.cast, this.set );
+                    }
+                    else{
+                        this.cast = createCast( this.set );
+                    }
+                }
             }
         },{
             bind : ( function(){
@@ -482,6 +509,26 @@
     Nested.Model = ( function(){
         var ModelProto = Backbone.Model.prototype;
 
+        function setAttrs( self, attrs, options ){
+            var attrSpecs = self.__attributes;
+            self.__beginChange();
+
+            for( var name in attrs ){
+                var attrSpec = attrSpecs[ name ],
+                    value = attrs[ name ];
+
+                if( attrSpec ){
+                    attrs[ name ] = attrSpec.transform( value, options, this, name );
+                }
+                else{
+                    Nested.error.unknownAttribute( self, name, value );
+                }
+            }
+
+            self.__commitChange( attrs, options );
+            return self;
+        }
+
         var Model = Backbone.Model.extend({
             triggerWhenChanged: 'change',
 
@@ -511,72 +558,29 @@
                     this.__nestedChanges = {};
                 }
 
-                attrs && baseModelSet.call( this, attrs, options );
+                attrs && setManyAttrs( this, attrs, options );
             },
 
-            _bulkSet : function( attrs, options ){
-                if( Object.getPrototypeOf( attrs ) !== Object.prototype ){
-                    Nested.error.argumentIsNotAnObject( this, attrs );
-                }
+            set : function( a, b, c ){
+                switch( typeof a ){
+                    case 'string' :
+                        var attrSpec = this.__attributes[ a ];
 
-                var attrSpecs = this.__attributes;
-                this.__beginChange();
-
-                for( var name in attrs ){
-                    var attrSpec = attrSpecs[ name ],
-                        value = attrs[ name ];
-
-                    if( attrSpec ){
-                        attrSpec.cast && ( value = attrSpec.cast( value, options, this ) );
-
-                        if( attrSpec.set && value !== this.attributes[ name ] ){
-                            value = attrSpec.set.call( this, value, name );
-                            if( value === undefined ){
-                                delete attrs[ name ];
-                                continue;
-                            }
-                            attrSpec.cast && ( value = attrSpec.cast( value, options, this ) );
+                        if( attrSpec && !attrSpec.isBackboneType && !c ){
+                            return setSingleAttr( this, a, b, attrSpec );
+                        }
+                        else{
+                            var attrs = {};
+                            attrs[ a ] = b;
+                            return setAttrs( this, attrs, c );
                         }
 
-                        attrSpec.delegateEvents && attrSpec.delegateEvents( this, this.attributes[ name ], value );
-                        attrs[ name ] = value;
-                    }
-                    else{
-                        Nested.error.unknownAttribute( this, name, value );
-                    }
+                    case 'object' :
+                        if( a && Object.getPrototypeOf( a ) === Object.prototype ) return setAttrs( this, a, b );
+
+                    default :
+                        throw new TypeError( 'Wrong Model.set argument' );
                 }
-
-                this.__commitChange( attrs, options );
-                return this;
-            },
-
-            set : function( name, value, options ){
-                if( typeof name === 'object' ){
-                    return this._bulkSet( name, value );
-                }
-
-                var attrSpec = this.__attributes[ name ];
-
-                if( attrSpec ){
-                    if( attrSpec.isBackboneType ){
-                        var attrs = {};
-                        attrs[ name ] = value;
-                        return this._bulkSet( attrs, options );
-                    }
-
-                    attrSpec.cast && ( value = attrSpec.cast( value, options, this ) );
-
-                    if( attrSpec.set && value !== this.attributes[ name ] ){
-                        value = attrSpec.set.call( this, value, name );
-                        if( value === undefined ) return this;
-                        attrSpec.cast && ( value = attrSpec.cast( value, options, this ) );
-                    }
-                }
-                else{
-                    Nested.error.unknownAttribute( this, name, value );
-                }
-
-                return baseModelSet.call( this, name, value, options );
             },
 
             deepGet : function( name ){
@@ -904,6 +908,29 @@
         _name : '',
         handleNestedChange : function(){},
 
+        property : function( name ){
+            var self = this;
+
+            var spec = {
+                    set : function( value ){
+                        var attrs = {};
+                        attrs[ name ] = value;
+                        setManyAttrs( this, attrs );
+                    },
+
+                    enumerable : false
+                },
+                get = this.get;
+
+            spec.get = get ? function(){
+                return get.call( this, this.attributes[ name ], name );
+            } : function(){
+                return this.attributes[ name ];
+            };
+
+            return spec;
+        },
+
         properties : {
             name : {
                 set : function( name ){
@@ -915,6 +942,7 @@
 
                         if( this.__duringSet ){
                             this.__nestedChanges[ name ] = value;
+                            this.changed[ name ] = value;
                         }
                         else{
                             this.attributes[ name ] = null;

@@ -130,34 +130,42 @@ Nested.options = ( function(){
         type : null,
         value : undefined,
 
-        cast : null, // untyped attribute cannot be casted
+        // cast function
+        // may be overriden in subclass
+        cast : null, // function( value, options, model ),
 
         // get and set hooks...
         get : null,
         set : null,
 
-        // custom events subscription...
-        events : null,
+        // custom events subscription event map...
+        events : null, // { event : handler, ... }
 
-        // don't copy typeless values...
-        create : function(){ return this.value; },
+        // create empty object passing backbone options to constructor...
+        // must be overriden for backbone types only
+        create : function( options ){ return new this.type(); },
 
+        // generic clone function for typeless attributes
+        // Usually, must be overriden in sublass
         clone : function( value, options ){
             if( value && typeof value === 'object' ){
                 var proto = Object.getPrototypeOf( value );
 
-                if( proto === Object.prototype || proto === Array.prototype ){
-                    return JSON.parse( JSON.stringify( value ) );
-                }
-                else if( value.clone ){
+                if( proto.clone ){
+                    // delegate to object's clone if it exist
                     return value.clone( options );
+                }
+
+                if( options && options.deep && proto === Object.prototype || proto === Array.prototype ){
+                    // attempt to deep copy raw objects, assuming they are JSON
+                    return JSON.parse( JSON.stringify( value ) );
                 }
             }
 
             return value;
         },
 
-        property : function( name ){
+        createPropertySpec : function(){
             var spec = {
                     set : function( value ){
                         this.set( name, value );
@@ -177,6 +185,8 @@ Nested.options = ( function(){
             return spec;
         },
 
+        // optimized automatically generated transform function
+        // do not touch.
         _transform : null,
         transform : function( value ){ return value; },
 
@@ -200,11 +210,6 @@ Nested.options = ( function(){
 
                 return value;
             }, this );
-
-            // deep copy typeless JSON values on creation...
-            if( !this.type && JSON.isValid( this.value ) ){
-                this.create = new Function( "return " + JSON.stringify( this.value ) + ";" );
-            }
 
             // assemble optimized transform function...
             if( this.cast )   this.transform = this._transform = this.cast;
@@ -243,9 +248,9 @@ Nested.options = ( function(){
     return createOptions;
 })();
 
+// All Constructors
+// ----------------
 Nested.options.Type.extend({
-    create : function(){ return new this.type(); },
-
     cast : function( value ){
         return value == null || value instanceof this.type ? value : new this.type( value );
     },
@@ -254,3 +259,53 @@ Nested.options.Type.extend({
         return this.cast( JSON.parse( JSON.stringify( value ) ) );
     }
 }).bind( Function.prototype );
+
+// Date
+// ----------------------
+( function(){
+    var numericKeys = [ 1, 4, 5, 6, 7, 10, 11 ],
+        msDatePattern = /\/Date\(([0-9]+)\)\//,
+        isoDatePattern = /^(\d{4}|[+\-]\d{6})(?:-(\d{2})(?:-(\d{2}))?)?(?:T(\d{2}):(\d{2})(?::(\d{2})(?:\.(\d{3}))?)?(?:(Z)|([+\-])(\d{2})(?::(\d{2}))?)?)?$/;
+
+    function parseDate( date ){
+        var msDate, timestamp, struct, minutesOffset = 0;
+
+        if( msDate = msDatePattern.exec( date ) ){
+            timestamp = Number( msDate[ 1 ] );
+        }
+        else if(( struct = isoDatePattern.exec( date ))) {
+            // avoid NaN timestamps caused by “undefined” values being passed to Date.UTC
+            for( var i = 0, k; ( k = numericKeys[i] ); ++i ) {
+                struct[ k ] = +struct[ k ] || 0;
+            }
+
+            // allow undefined days and months
+            struct[ 2 ] = (+struct[ 2 ] || 1) - 1;
+            struct[ 3 ] = +struct[ 3 ] || 1;
+
+            if (struct[ 8 ] !== 'Z' && struct[ 9 ] !== undefined) {
+                minutesOffset = struct[ 10 ] * 60 + struct[ 11 ];
+
+                if (struct[ 9 ] === '+') {
+                    minutesOffset = 0 - minutesOffset;
+                }
+            }
+
+            timestamp = Date.UTC(struct[ 1 ], struct[ 2 ], struct[ 3 ], struct[ 4 ], struct[ 5 ] + minutesOffset, struct[ 6 ], struct[ 7 ]);
+        }
+        else {
+            timestamp = Date.parse( date );
+        }
+
+        return timestamp;
+    }
+
+    Nested.options.Type.extend({
+        cast : function( value ){
+            return value == null || value instanceof Date ? value :
+                new Date( typeof value === 'string' ? parseDate( value ) : value )
+        },
+
+        clone : function( value ){ return new Date( +value ); }
+    }).bind( Date );
+})();

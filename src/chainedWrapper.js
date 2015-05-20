@@ -2,14 +2,8 @@ Nested.options = ( function(){
     var Options = Object.extend({
         _options : {},
 
-        constructor : function( obj ){
-            this._options = {};
-
-            Object.xmap( this, obj, function( v, name ){
-                if( !this[ name ] ){
-                    return function( value ){ this._options[ name ] = value };
-                }
-            });
+        constructor : function( spec ){
+            this._options = Object.assign( {}, spec );
         },
 
         get : function( getter ){
@@ -38,6 +32,10 @@ Nested.options = ( function(){
 
             return new Type( name, options );
         }
+    });
+
+    [ 'triggerWhenChanged', 'value', 'cast', 'create' ].forEach( function( name ){
+        Options.prototype[ name ] = function( value ){ this._options[ name ] = value };
     });
 
     function chainHooks( array ){
@@ -114,7 +112,7 @@ Nested.options = ( function(){
         },
 
         trHookAndDelegate : function ( val, options, model, attr ){
-            return this.delegateEvents( this.hookedCast( val, options, model ), options, model, attr );
+            return this.delegateEvents( this.intermediate( val, options, model ), options, model, attr );
         },
 
         trDelegate : function( value, options, model, attr ){
@@ -160,17 +158,21 @@ Nested.options = ( function(){
             var attributeMethods = {
                 options : function( spec ){
                     spec.type || ( spec.type = this );
-                    return new this.NestedType( spec );
+                    return new Options( spec );
                 },
 
                 value : function( value ){
-                    return new this.NestedType({ type : this, value : value });
+                    return new Options({ type : this, value : value });
                 }
             };
 
             return function(){
                 _.each( arguments, function( Type ){
                     _.extend( Type, attributeMethods, { NestedType : this } );
+
+                    Object.defineProperty( Type, 'has', {
+                        get : function(){ return new Options({ type : this }); }
+                    });
                 }, this );
             };
         })()
@@ -180,6 +182,7 @@ Nested.options = ( function(){
         cast : function( value ){
             return value == null || value instanceof this.type ? value : new this.type( value );
         },
+
         clone : function( value ){
             return this.cast( JSON.parse( JSON.stringify( value ) ) );
         }

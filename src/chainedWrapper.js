@@ -145,8 +145,14 @@ Nested.options = ( function(){
         // must be overriden for backbone types only
         create : function( options ){ return new this.type(); },
 
+        // optimized general purpose isEqual function for typeless attributes
+        // must be overriden in subclass
+        isChanged : function( a, b ){
+            return !( a === b || ( a && b && typeof a == 'object' && typeof b == 'object' && _.isEqual( a, b ) ) );
+        },
+
         // generic clone function for typeless attributes
-        // Usually, must be overriden in sublass
+        // Must be overriden in sublass
         clone : function( value, options ){
             if( value && typeof value === 'object' ){
                 var proto = Object.getPrototypeOf( value );
@@ -165,27 +171,21 @@ Nested.options = ( function(){
             return value;
         },
 
+        // must be overriden for backbone types...
         createPropertySpec : function(){
-            var spec = {
-                    set : function( value ){
-                        this.set( name, value );
-                        return value;
-                    },
+            ( function( self, name, get ){
+                return {
+                    // call to optimized set function for single argument. Doesn't work for backbone types.
+                    set : function( value ){ setSingleAttr( this, name, value, self ); },
 
-                    enumerable : false
-                },
-                get = this.get;
-
-            spec.get = get ? function(){
-                return get.call( this, this.attributes[ name ], name );
-            } : function(){
-                return this.attributes[ name ];
-            };
-
-            return spec;
+                    // attach get hook to the getter function, if present
+                    get : get ? function(){ return get.call( this, this.attributes[ name ], name ); } :
+                                function(){ return this.attributes[ name ]; }
+                }
+            } )( this, this.name, this.get );
         },
 
-        // optimized automatically generated transform function
+        // automatically generated optimized transform function
         // do not touch.
         _transform : null,
         transform : function( value ){ return value; },
@@ -248,19 +248,20 @@ Nested.options = ( function(){
     return createOptions;
 })();
 
-// All Constructors
+// Constructors Attribute
 // ----------------
 Nested.options.Type.extend({
     cast : function( value ){
         return value == null || value instanceof this.type ? value : new this.type( value );
     },
 
-    clone : function( value ){
-        return this.cast( JSON.parse( JSON.stringify( value ) ) );
+    clone : function( value, options ){
+        // delegate to clone function or deep clone through serialization
+        return value.clone ? value.clone( value, options ) : this.cast( JSON.parse( JSON.stringify( value ) ) );
     }
 }).bind( Function.prototype );
 
-// Date
+// Date Attribute
 // ----------------------
 ( function(){
     var numericKeys = [ 1, 4, 5, 6, 7, 10, 11 ],
@@ -306,6 +307,25 @@ Nested.options.Type.extend({
                 new Date( typeof value === 'string' ? parseDate( value ) : value )
         },
 
+        isChanged : function( a, b ){ return ( a && +a ) !== ( b && +b ); },
         clone : function( value ){ return new Date( +value ); }
     }).bind( Date );
 })();
+
+// Fix incompatible constructor behaviour of primitive types...
+Nested.options.Type.extend({
+    create : function(){ return this.type(); },
+
+    cast : function( value ){ return value == null ? null : this.type( value ); },
+
+    isChanged : function( a, b ){ return a !== b; },
+
+    clone : function( value ){ return value; }
+}).bind( Number, Boolean, String, Integer );
+
+// Fix incompatible constructor behaviour of Array...
+Nested.options.Type.extend({
+    cast : function( value ){
+        return value == null || value instanceof Array ? value : [ value ];
+    }
+}).bind( Array );

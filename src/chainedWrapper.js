@@ -1,8 +1,28 @@
 Nested.options = ( function(){
+    var primitiveTypes = {
+        string : String,
+        number : Number,
+        boolean : Boolean
+    };
+
+    var availableOptions = [ 'triggerWhenChanged', 'parse', 'toJSON', 'value', 'cast', 'create' ];
+
     var Options = Object.extend({
         _options : {},
 
         constructor : function( spec ){
+            if( 'typeOrValue' in spec ){
+                var typeOrValue = spec.typeOrValue,
+                    primitiveType = primitiveTypes[ typeof typeOrValue ];
+
+                if( primitiveType ){
+                    spec = { type : primitiveType, value : typeOrValue };
+                }
+                else{
+                    spec = typeof typeOrValue == 'function' ? { type : typeOrValue } : { value : typeOrValue };
+                }
+            }
+
             this._options = Object.assign( {}, spec );
         },
 
@@ -34,7 +54,7 @@ Nested.options = ( function(){
         }
     });
 
-    [ 'triggerWhenChanged', 'value', 'cast', 'create' ].forEach( function( name ){
+    availableOptions.forEach( function( name ){
         Options.prototype[ name ] = function( value ){ this._options[ name ] = value };
     });
 
@@ -88,7 +108,14 @@ Nested.options = ( function(){
         type : null,
         value : undefined,
 
+        cast : null,
+        get : null,
+        set : null,
+        events : null,
+        name : null,
+
         create : function(){ return new this.type(); },
+
 
         clone : function( value, options ){
             if( value && typeof value === 'object' ){
@@ -128,7 +155,7 @@ Nested.options = ( function(){
         _transform : null,
         transform : function( value ){ return value; },
 
-        initialize : function( name, spec ){
+        constructor : function( name, spec ){
             this.name = name;
 
             Object.xmap( this, spec, function( value, name ){
@@ -156,71 +183,43 @@ Nested.options = ( function(){
         }
     },{
         bind : ( function(){
-            var attributeMethods = {
-                options : function( spec ){
-                    spec.type || ( spec.type = this );
-                    return new Options( spec );
-                },
+            function options( spec ){
+                spec || ( spec = {} );
+                spec.type || ( spec.type = this );
+                return new Options( spec );
+            }
 
-                value : function( value ){
-                    return new Options({ type : this, value : value });
-                }
-            };
+            function value( value ){
+                return new Options({ type : this, value : value });
+            }
 
             return function(){
-                _.each( arguments, function( Type ){
-                    _.extend( Type, attributeMethods, { NestedType : this } );
-
-                    Object.defineProperty( Type, 'has', {
-                        get : function(){ return new Options({ type : this }); }
-                    });
-                }, this );
+                for( var i = 0; i < arguments.length; i++ ){
+                    var Type = arguments[ i ];
+                    Type.options    = options;
+                    Type.value      = value;
+                    Type.NestedType = this;
+                    Object.defineProperty( Type, 'has', { get : options } );
+                }
             };
         })()
     });
 
-    Attribute.extend({
-        cast : function( value ){
-            return value == null || value instanceof this.type ? value : new this.type( value );
-        },
-
-        clone : function( value ){
-            return this.cast( JSON.parse( JSON.stringify( value ) ) );
-        }
-    }).bind( Function.prototype );
-
-    var primitiveTypes = {
-        string : String,
-        number : Number,
-        boolean : Boolean
-    };
-
     function createOptions( spec ){
-        if( arguments.length >= 2 ){
-            spec = {
-                type : arguments[ 0 ],
-                value : arguments[ 1 ]
-            };
-
-            if( arguments.length >= 3 ){
-                _.extend( spec, arguments[ 2 ] );
-            }
-        }
-        else if( 'typeOrValue' in spec ){
-            var typeOrValue = spec.typeOrValue,
-                primitiveType = primitiveTypes[ typeof typeOrValue ];
-
-            if( primitiveType ){
-                spec = { type : primitiveType, value : typeOrValue };
-            }
-            else{
-                spec = _.isFunction( typeOrValue ) ? { type : typeOrValue } : { value : typeOrValue };
-            }
-        }
-
-        return spec.type ? spec.type.options( spec ) : new Options( spec );
+        return new Options( spec );
     }
 
     createOptions.Type = Attribute;
     return createOptions;
 })();
+
+
+Nested.options.Type.extend({
+    cast : function( value ){
+        return value == null || value instanceof this.type ? value : new this.type( value );
+    },
+
+    clone : function( value ){
+        return this.cast( JSON.parse( JSON.stringify( value ) ) );
+    }
+}).bind( Function.prototype );

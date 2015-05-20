@@ -1,16 +1,21 @@
 Nested.options = ( function(){
+    // Options wrapper for chained and safe type specs...
+    // --------------------------------------------------
+
     var primitiveTypes = {
         string : String,
         number : Number,
         boolean : Boolean
     };
 
+    // list of simple accessor methods available in options
     var availableOptions = [ 'triggerWhenChanged', 'parse', 'toJSON', 'value', 'cast', 'create' ];
 
     var Options = Object.extend({
         _options : {},
 
         constructor : function( spec ){
+            // special option used to guess types of primitive values and to distinguish value from type
             if( 'typeOrValue' in spec ){
                 var typeOrValue = spec.typeOrValue,
                     primitiveType = primitiveTypes[ typeof typeOrValue ];
@@ -23,29 +28,40 @@ Nested.options = ( function(){
                 }
             }
 
-            this._options = Object.assign( {}, spec );
+            this._options = {};
+            this.options( spec );
         },
 
+        // get hooks stored as an array
         get : function( getter ){
             var options = this._options;
-            options.get = options.get ? options.get.push( getter ) : [ getter ];
+            options.get = options.get ? options.get.unshift( getter ) : [ getter ];
+            return this;
         },
 
+        // set hooks stored as an array
         set : function( setter ){
             var options = this._options;
             options.set = options.set ? options.set.push( setter ) : [ setter ];
+            return this;
         },
 
+        // events must be merged
         events : function( events ){
             this._options.events = Object.assign( this._options.events || {}, events );
+            return this;
         },
 
+        // options must be merged using rules for individual accessors
         options : function( options ){
             for( var i in options ){
                 this[ i ]( options[ i ]);
             }
+
+            return this;
         },
 
+        // construct attribute with a given name and proper type.
         createAttribute : function( name ){
             var options = this._options,
                 Type = options.type ? options.type.NestedType : Attribute;
@@ -55,7 +71,10 @@ Nested.options = ( function(){
     });
 
     availableOptions.forEach( function( name ){
-        Options.prototype[ name ] = function( value ){ this._options[ name ] = value };
+        Options.prototype[ name ] = function( value ){
+            this._options[ name ] = value;
+            return this;
+        };
     });
 
     function chainHooks( array ){
@@ -64,7 +83,6 @@ Nested.options = ( function(){
         return l === 1 ? array[ 0 ] : function( value, name ){
             var res = value;
             for( var i = 0; i < l; i++ ) res = array[ i ].call( this, res, name );
-
             return res;
         };
     }
@@ -104,18 +122,25 @@ Nested.options = ( function(){
         }
     };
 
+    // Base class for Attribute metatype
+    // ---------------------------------
+
     var Attribute = Object.extend({
+        name : null,
         type : null,
         value : undefined,
 
-        cast : null,
+        cast : null, // untyped attribute cannot be casted
+
+        // get and set hooks...
         get : null,
         set : null,
+
+        // custom events subscription...
         events : null,
-        name : null,
 
-        create : function(){ return new this.type(); },
-
+        // don't copy typeless values...
+        create : function(){ return this.value; },
 
         clone : function( value, options ){
             if( value && typeof value === 'object' ){
@@ -176,6 +201,11 @@ Nested.options = ( function(){
                 return value;
             }, this );
 
+            // deep copy typeless JSON values on creation...
+            if( !this.type && JSON.isValid( this.value ) ){
+                this.create = new Function( "return " + JSON.stringify( this.value ) + ";" );
+            }
+
             // assemble optimized transform function...
             if( this.cast )   this.transform = this._transform = this.cast;
             if( this.set )    this.transform = this._transform = this.cast ? transform.hookAndCast : transform.hook;
@@ -213,8 +243,9 @@ Nested.options = ( function(){
     return createOptions;
 })();
 
-
 Nested.options.Type.extend({
+    create : function(){ return new this.type(); },
+
     cast : function( value ){
         return value == null || value instanceof this.type ? value : new this.type( value );
     },

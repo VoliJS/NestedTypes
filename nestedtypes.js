@@ -225,21 +225,6 @@
 }( this, function( Nested, Backbone, _ ){
     'use strict';
 
-    // Override Backbone Events.listenTo to support message maps...
-    Backbone.Events.listenTo =
-        ( function( baseListenTo ){
-            return function( source, events ){
-                if( typeof events === 'object' ){
-                    _.each( events, function( handler, name ){
-                        baseListenTo.call( this, source, name, handler );
-                    }, this );
-                }
-                else{
-                    baseListenTo.apply( this, arguments );
-                }
-            };
-        })( Backbone.Events.listenTo );
-
     // Make Object.extend classes capable of sending and receiving Backbone Events...
     Object.assign( Object.extend.Class.prototype, Backbone.Events );
 
@@ -247,7 +232,6 @@
     [ 'Model', 'Collection', 'View', 'Router', 'History' ].forEach( function( name ){
         var BackboneType = Backbone[ name ];
         Object.extend.attach( BackboneType );
-        BackboneType.prototype.listenTo = Backbone.Events.listenTo;
     });
 
     Nested.Class = Object.extend.Class;

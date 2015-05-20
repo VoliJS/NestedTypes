@@ -107,18 +107,6 @@ Nested.options = ( function(){
 
         delegateAndMore : function ( val, options, model, attr ){
             return this.delegateEvents( this._transform( val, options, model ), options, model, attr );
-        },
-
-        delegate : function( value, options, model, attr ){
-            var prev = model.attributes[ attr ];
-
-            if( prev !== value ){
-                prev && model.stopListening( prev );
-                value && model.listenTo( value, this.events );
-                model.trigger( 'replace:' + attr, model, prev, value );
-            }
-
-            return value;
         }
     };
 
@@ -138,8 +126,11 @@ Nested.options = ( function(){
         get : null,
         set : null,
 
-        // custom events subscription event map...
+        // user events
         events : null, // { event : handler, ... }
+
+        // system events
+        _events : null, // { event : handler, ... }
 
         // create empty object passing backbone options to constructor...
         // must be overriden for backbone types only
@@ -190,6 +181,24 @@ Nested.options = ( function(){
         _transform : null,
         transform : function( value ){ return value; },
 
+        // delegate user and system events
+        delegateEvents : function( value, options, model, attr ){
+            var prev = model.attributes[ attr ];
+
+            if( prev !== value ){
+                prev && model.stopListening( prev );
+
+                if( value ){
+                    this.events && model.listenTo( value, this.events );
+                    this._events && model.listenTo( value, this._events );
+                }
+
+                model.trigger( 'replace:' + attr, model, prev, value );
+            }
+
+            return value;
+        },
+
         constructor : function( name, spec ){
             this.name = name;
 
@@ -211,10 +220,12 @@ Nested.options = ( function(){
                 return value;
             }, this );
 
+            this.initialize( spec );
+
             // assemble optimized transform function...
             if( this.cast )   this.transform = this._transform = this.cast;
             if( this.set )    this.transform = this._transform = this.cast ? transform.hookAndCast : transform.hook;
-            if( this.events ) this.transform = this._transform ? transform.delegate : transform.delegateAndMore;
+            if( this.events || this._events ) this.transform = this._transform ? this.delegateEvents : transform.delegateAndMore;
         }
     },{
         bind : ( function(){
@@ -248,6 +259,8 @@ Nested.options = ( function(){
     return createOptions;
 })();
 
+// Attribute Type definitions for core JS types
+// ============================================
 // Constructors Attribute
 // ----------------
 Nested.options.Type.extend({
@@ -312,7 +325,8 @@ Nested.options.Type.extend({
     }).bind( Date );
 })();
 
-// Fix incompatible constructor behaviour of primitive types...
+// Primitive Types
+// ----------------
 Nested.options.Type.extend({
     create : function(){ return this.type(); },
 
@@ -323,9 +337,91 @@ Nested.options.Type.extend({
     clone : function( value ){ return value; }
 }).bind( Number, Boolean, String, Integer );
 
-// Fix incompatible constructor behaviour of Array...
+// Array Type
+// ---------------
 Nested.options.Type.extend({
     cast : function( value ){
+        // Fix incompatible constructor behaviour of Array...
         return value == null || value instanceof Array ? value : [ value ];
     }
 }).bind( Array );
+
+// Backbone Type
+// ----------------
+Nested.options.Type.extend({
+    create : function( options ){ return new this.type( null, options ); },
+    clone : function( value, options ){ return value && value.clone( options ); },
+    isChanged : function( a, b ){ return a !== b; },
+
+    isBackboneType : true,
+    isModel : true,
+
+    handleNestedChange : function(){},
+
+    createPropertySpec : function(){
+        ( function( self, name, get ){
+            return {
+                set : function( value ){
+                    var attrs = {};
+                    attrs[ name ] = value;
+                    setAttrs( this, attrs ); //todo: direct call to optimized setMany
+                },
+
+                get : get ? function(){ return get.call( this, this.attributes[ name ], name ); } :
+                    function(){ return this.attributes[ name ]; }
+            }
+        } )( this, this.name, this.get );
+    },
+
+    cast : function( value, options, model ){
+        var incompatibleType = value != null && !( value instanceof this.type ),
+            existingModelOrCollection = model.attributes[ this.name ];
+
+        if( incompatibleType ){
+            if( existingModelOrCollection ){ // ...delegate update for existing object 'set' method
+                if( options && options.parse && this.isModel ){ // handle inconsistent backbone's parse implementation
+                    value = existingModelOrCollection.parse( value );
+                }
+
+                existingModelOrCollection.set( value, options );
+                value = existingModelOrCollection;
+            }
+            else{ // ...or create a new object, if it's not exist
+                value = new this.type( value, options );
+            }
+        }
+
+        return value;
+    },
+
+    initialize : function( spec ){
+        var name = this.name,
+            triggerWhenChanged = this.triggerWhenChanged || spec.type.prototype.triggerWhenChanged;
+
+        if( triggerWhenChanged ){
+            this._events = {
+                'before:change' : beginModelChange, //todo: refactor these things too
+                'after:change'  : commitModelChange
+            };
+
+            // this._events[ triggerWhenChanged ] = this.type.prototype.handleNestedChange;
+            this._events[ triggerWhenChanged ] = function(){ //TODO: move this func to model? this.type.prototype.handleNestedChange
+                var value = this.attributes[ name ];
+
+                if( this.__duringSet ){
+                    this.__nestedChanges[ name ] = value;
+                }
+                else{
+                    this.attributes[ name ] = null;
+
+                    // TODO: need to fix it. Need to use optimized typeless set
+                    // todo: With smart logic turned off
+                    baseModelSet.call( this, name, value );
+
+                }
+            }
+        }
+
+        this.isModel = this.type.prototype instanceof Nested.Model;
+    }
+}).bind( Nested.Model, Nested.Collection );

@@ -49,6 +49,41 @@ Nested.options = ( function(){
         };
     }
 
+    var transform = {
+        hookAndCast : function( val, options, model ){
+            var name = this.name,
+                value = this.cast( val, options, model ),
+                prev = model.attributes[ name ];
+
+            if( value === prev ) return prev;
+
+            value = this.set.call( model, value, name );
+            return value === undefined ? prev : this.cast( value, options, model );
+        },
+
+        hook : function( value, options, model ){
+            var name = this.name;
+            var prev = model.attributes[ name ];
+            return value === prev ? prev : this.set.call( model, value, name );
+        },
+
+        delegateAndMore : function ( val, options, model, attr ){
+            return this.delegateEvents( this._transform( val, options, model ), options, model, attr );
+        },
+
+        delegate : function( value, options, model, attr ){
+            var prev = model.attributes[ attr ];
+
+            if( prev !== value ){
+                prev && model.stopListening( prev );
+                value && model.listenTo( value, this.events );
+                model.trigger( 'replace:' + attr, model, prev, value );
+            }
+
+            return value;
+        }
+    };
+
     var Attribute = Object.extend({
         type : null,
         value : undefined,
@@ -90,42 +125,8 @@ Nested.options = ( function(){
             return spec;
         },
 
-        intermediate : null,
-
+        _transform : null,
         transform : function( value ){ return value; },
-
-        trCastAnsHook : function( val, options, model ){
-            var name = this.name,
-                value = this.cast( val, options, model ),
-                prev = model.attributes[ name ];
-
-            if( value === prev ) return prev;
-
-            value = this.set.call( model, value, name );
-            return value === undefined ? prev : this.cast( value, options, model );
-        },
-
-        trHook : function( value, options, model ){
-            var name = this.name;
-            var prev = model.attributes[ name ];
-            return value === prev ? prev : this.set.call( model, value, name );
-        },
-
-        trHookAndDelegate : function ( val, options, model, attr ){
-            return this.delegateEvents( this.intermediate( val, options, model ), options, model, attr );
-        },
-
-        trDelegate : function( value, options, model, attr ){
-            var prev = model.attributes[ attr ];
-
-            if( prev !== value ){
-                prev && model.stopListening( prev );
-                value && model.listenTo( value, this.events );
-                model.trigger( 'replace:' + attr, model, prev, value );
-            }
-
-            return value;
-        },
 
         initialize : function( name, spec ){
             this.name = name;
@@ -149,9 +150,9 @@ Nested.options = ( function(){
             }, this );
 
             // assemble optimized transform function...
-            if( this.cast )   this.transform = this.intermediate = this.cast;
-            if( this.set )    this.transform = this.intermediate = this.cast ? this.trCastAnsHook : this.trHook;
-            if( this.events ) this.transform = this.intermediate ? this.trDelegate : this.trHookAndDelegate;
+            if( this.cast )   this.transform = this._transform = this.cast;
+            if( this.set )    this.transform = this._transform = this.cast ? transform.hookAndCast : transform.hook;
+            if( this.events ) this.transform = this._transform ? transform.delegate : transform.delegateAndMore;
         }
     },{
         bind : ( function(){

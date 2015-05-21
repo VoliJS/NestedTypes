@@ -252,31 +252,25 @@
     function bbSetSingleAttr(model, key, value, attrSpec) {
         'use strict';
         // Extract attributes and options.
-        var changing     = model._changing;
-        model._changing  = true;
+        var changing = model._changing,
+            current  = model.attributes;
 
-        var current = model.attributes,
-            isChanged = attrSpec.isChanged;
+        model._changing  = true;
 
         if( !changing ){
             model._previousAttributes = new model.Attributes( current );
             model.changed = {};
         }
 
-        var prev = model._previousAttributes,
-            options = {},
-            val = attrSpec.transform( value, options, model, key );
+        var prev      = model._previousAttributes,
+            options   = {},
+            val       = attrSpec.transform( value, options, model, key ),
+            isChanged = attrSpec.isChanged;
 
-        if( isChanged( prev[ key ], val) ){
-            model.changed[ key ] = val;
-        } else {
-            delete model.changed[ key ];
-        }
+        isChanged( prev[ key ], val ) ? model.changed[ key ] = val : delete model.changed[ key ];
 
-        // Trigger all relevant attribute changes.
         if( isChanged( current[ key ], val ) ){
             current[ key ] = val;
-
             model._pending = options;
             model.trigger( 'change:' + key, model, val, options );
         }

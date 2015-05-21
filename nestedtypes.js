@@ -225,10 +225,162 @@
 }( this, function( Nested, Backbone, _ ){
     'use strict';
 
+    // Optimized Backbone Core functions
+    // =================================
+
+    /* AttrSpec required to implement two things:
+     transform( value, options, model, name ) -> value
+
+     isChanged( value1, value2 ) -> bool
+     to detect whenever attribute must be assigned and counted as changed
+
+     Model is required to implement Attributes constructor
+     */
+
+    // trigger update for selected model attribute
+    function bbTriggerUpdate(model, key){
+        bbSetSingleAttr( model, key, model.attributes[ key ], bbForceUpdateAttr );
+    }
+
+    var bbForceUpdateAttr = {
+        isChanged : function(){ return true; },
+        transform : function( x ){ return x; }
+    };
+
+    // Special case:
+    // single attribute change, no options, no nested changes
+    function bbSetSingleAttr(model, key, value, attrSpec) {
+        'use strict';
+        // Extract attributes and options.
+        var changing     = model._changing;
+        model._changing  = true;
+
+        var current = model.attributes,
+            isChanged = attrSpec.isChanged;
+
+        if( !changing ){
+            model._previousAttributes = new model.Attributes( current );
+            model.changed = {};
+        }
+
+        var prev = model._previousAttributes;
+
+        if ( key === model.idAttribute ) model.id = val;
+
+        var val = attrSpec.transform( model, value );
+
+        if( isChanged( prev[ key ], val) ){
+            model.changed[ key ] = val;
+        } else {
+            delete model.changed[ key ];
+        }
+
+        var options = {};
+
+        // Trigger all relevant attribute changes.
+        if( isChanged( current[ key ], val ) ){
+            current[ key ] = val;
+
+            model._pending = options;
+            model.trigger( 'change:' + key, model, val, options );
+        }
+
+        if( changing ) return model;
+
+        while( model._pending ){
+            options = model._pending;
+            model._pending = false;
+            model.trigger( 'change', model, options );
+        }
+
+        model._pending  = false;
+        model._changing = false;
+        return model;
+    }
+
+    var bbGenericAttr = {
+        isChanged : function( a, b ){
+            return !( a === b || ( a && b && typeof a == 'object' && typeof b == 'object' && _.isEqual( a, b ) ) );
+        }
+    };
+
+    function bbSetAttrs( model, attrs, options ){
+        'use strict';
+
+        options || (options = {});
+
+        // Run validation.
+        if (!model._validate(attrs, options)) return false;
+
+        // Extract attributes and options.
+        var unset           = options.unset,
+            silent          = options.silent,
+            changes         = [],
+            changing        = model._changing,
+            current         = model.attributes,
+            attrSpecs       = model.__attributes;
+
+        model._changing  = true;
+
+        if (!changing) {
+            model._previousAttributes = new model.Attributes( current );
+            model.changed = {};
+            model.__nestedChanges = {};
+        }
+
+        var prev = model._previousAttributes;
+
+        // Check for changes of `id`.
+        if( model.idAttribute in attrs ) model.id = attrs[ model.idAttribute ];
+
+        // For each `set` attribute, update or delete the current value.
+        for( var attr in attrs ){
+            var isChanged = ( attrSpecs[ attr ] || bbGenericAttr ).isChanged,
+                val = attrs[ attr ];
+
+            if ( isChanged( current[attr], val ) ) changes.push( attr );
+
+            if ( isChanged( prev[attr], val ) ) {
+                model.changed[attr] = val;
+            } else {
+                delete model.changed[attr];
+            }
+
+            unset ? delete current[attr] : current[ attr ] = val;
+        }
+
+        // Trigger all relevant attribute changes.
+        if( !silent ) {
+            if (changes.length) model._pending = options;
+            for (var i = 0, l = changes.length; i < l; i++) {
+                model.trigger('change:' + changes[i], model, current[changes[i]], options);
+            }
+        }
+
+        // You might be wondering why there's a `while` loop here. Changes can
+        // be recursively nested within `"change"` events.
+        if (changing) return model;
+        if (!silent) {
+            while (model._pending) {
+                options = model._pending;
+                model._pending = false;
+                model.trigger('change', model, options);
+            }
+        }
+
+        model._pending = false;
+        model._changing = false;
+
+        return model;
+    }
+
+    // Wire up Backbone and customisations
+    // ===================================
+
     // Make Object.extend classes capable of sending and receiving Backbone Events...
     Object.assign( Object.extend.Class.prototype, Backbone.Events );
 
-    // Override Backbone's objects .extend and .listenTo...
+    // Override Backbone's objects .extend...
     [ 'Model', 'Collection', 'View', 'Router', 'History' ].forEach( function( name ){
         var BackboneType = Backbone[ name ];
         Object.extend.attach( BackboneType );
@@ -251,128 +403,11 @@
         }
     });
 
-    // Attribute Metatypes Definitions
-    // -------------------------------
-
+    // Nested Attribute and Options
+    // ========================================
     Nested.options = ( function(){
-        function chainHooks( first, second ){
-            return function( value, name ){
-                return second.call( this, first.call( this, value, name ), name );
-            };
-        }
-
-        function transform( val, options, model, name ){
-            var value = this.cast ? this.cast( value, options, model ) : val,
-                prev  = model.attributes[ name ];
-
-            if( this.isChanged( value, prev ) ){
-                value = this.set.call( model, value, name );
-                if( value === undefined ) return prev;
-                this.cast && ( value = this.cast( value, options, model ) );
-            }
-
-            return value;
-        }
-
-        var Attribute = Object.extend({
-            type : null,
-
-            create : function(){
-                return new this.type();
-            },
-
-            clone : function( value, options ){
-                if( value && typeof value === 'object' ){
-                    var proto = Object.getPrototypeOf( value );
-
-                    if( proto === Object.prototype || proto === Array.prototype ){
-                        return JSON.parse( JSON.stringify( value ) );
-                    }
-                    else if( value.clone ){
-                        return value.clone( options );
-                    }
-                }
-
-                return value;
-            },
-
-            isChanged : genericIsChanged,
-
-            transform : function( x ){ return x; },
-
-            property : function( name ){
-                var self = this;
-
-                var spec = {
-                        set : function( value ){
-                            setSingleAttr( this, name, value, self );
-                        },
-
-                        enumerable : false
-                    },
-                    get = this.get;
-
-                spec.get = get ? function(){
-                    return get.call( this, this.attributes[ name ], name );
-                } : function(){
-                    return this.attributes[ name ];
-                };
-
-                return spec;
-            },
-
-            options : function( spec ){
-                if( spec.get && this.get ){
-                    spec.get = chainHooks( this.get, spec.get );
-                }
-                if( spec.set && this.set ){
-                    spec.set = chainHooks( this.set, spec.set );
-                }
-                _.extend( this, spec );
-                return this;
-            },
-
-            initialize : function( spec ){
-                this.options( spec );
-
-                if( this.set ){
-                    if( this.cast ){
-                        this.cast = createCastWithHook( this.cast, this.set );
-                    }
-                    else{
-                        this.cast = createCast( this.set );
-                    }
-                }
-            }
-        },{
-            bind : ( function(){
-                var attributeMethods = {
-                    options : function( spec ){
-                        spec.type || ( spec.type = this );
-                        return new this.NestedType( spec );
-                    },
-
-                    value : function( value ){
-                        return new this.NestedType({ type : this, value : value });
-                    }
-                };
-
-                return function(){
-                    _.each( arguments, function( Type ){
-                        _.extend( Type, attributeMethods, { NestedType : this } );
-                    }, this );
-                };
-            })()
-        });
-
-        Attribute.extend({
-            cast : function( value ){
-                return value == null || value instanceof this.type ? value : new this.type( value );
-            },
-            clone : function( value ){
-                return this.cast( JSON.parse( JSON.stringify( value ) ) );
-            }
-        }).bind( Function.prototype );
+        // Options wrapper for chained and safe type specs...
+        // --------------------------------------------------
 
         var primitiveTypes = {
             string : String,
@@ -380,39 +415,253 @@
             boolean : Boolean
         };
 
-        function createAttribute( spec ){
-            if( arguments.length >= 2 ){
-                spec = {
-                    type : arguments[ 0 ],
-                    value : arguments[ 1 ]
-                };
+        // list of simple accessor methods available in options
+        var availableOptions = [ 'triggerWhenChanged', 'parse', 'toJSON', 'value', 'cast', 'create' ];
 
-                if( arguments.length >= 3 ){
-                    _.extend( spec, arguments[ 2 ] );
-                }
-            }
-            else if( 'typeOrValue' in spec ){
-                var typeOrValue = spec.typeOrValue,
-                    primitiveType = primitiveTypes[ typeof typeOrValue ];
+        var Options = Object.extend({
+            _options : {},
 
-                if( primitiveType ){
-                    spec = { type : primitiveType, value : typeOrValue };
-                }
-                else{
-                    spec = _.isFunction( typeOrValue ) ? { type : typeOrValue } : { value : typeOrValue };
-                }
-            }
+            constructor : function( spec ){
+                // special option used to guess types of primitive values and to distinguish value from type
+                if( 'typeOrValue' in spec ){
+                    var typeOrValue = spec.typeOrValue,
+                        primitiveType = primitiveTypes[ typeof typeOrValue ];
 
-            if( spec.type ){
-                return spec.type.options( spec );
+                    if( primitiveType ){
+                        spec = { type : primitiveType, value : typeOrValue };
+                    }
+                    else{
+                        spec = typeof typeOrValue == 'function' ? { type : typeOrValue } : { value : typeOrValue };
+                    }
+                }
+
+                this._options = {};
+                this.options( spec );
+            },
+
+            // get hooks stored as an array
+            get : function( getter ){
+                var options = this._options;
+                options.get = options.get ? options.get.unshift( getter ) : [ getter ];
+                return this;
+            },
+
+            // set hooks stored as an array
+            set : function( setter ){
+                var options = this._options;
+                options.set = options.set ? options.set.push( setter ) : [ setter ];
+                return this;
+            },
+
+            // events must be merged
+            events : function( events ){
+                this._options.events = Object.assign( this._options.events || {}, events );
+                return this;
+            },
+
+            // options must be merged using rules for individual accessors
+            options : function( options ){
+                for( var i in options ){
+                    this[ i ]( options[ i ]);
+                }
+
+                return this;
+            },
+
+            // construct attribute with a given name and proper type.
+            createAttribute : function( name ){
+                var options = this._options,
+                    Type = options.type ? options.type.NestedType : Attribute;
+
+                return new Type( name, options );
             }
-            else{
-                return new Attribute( spec );
-            }
+        });
+
+        availableOptions.forEach( function( name ){
+            Options.prototype[ name ] = function( value ){
+                this._options[ name ] = value;
+                return this;
+            };
+        });
+
+        function chainHooks( array ){
+            var l = array.length;
+
+            return l === 1 ? array[ 0 ] : function( value, name ){
+                var res = value;
+                for( var i = 0; i < l; i++ ) res = array[ i ].call( this, res, name );
+                return res;
+            };
         }
 
-        createAttribute.Type = Attribute;
-        return createAttribute;
+        var transform = {
+            hookAndCast : function( val, options, model ){
+                var name = this.name,
+                    value = this.cast( val, options, model ),
+                    prev = model.attributes[ name ];
+
+                if( value === prev ) return prev;
+
+                value = this.set.call( model, value, name );
+                return value === undefined ? prev : this.cast( value, options, model );
+            },
+
+            hook : function( value, options, model ){
+                var name = this.name;
+                var prev = model.attributes[ name ];
+                return value === prev ? prev : this.set.call( model, value, name );
+            },
+
+            delegateAndMore : function ( val, options, model, attr ){
+                return this.delegateEvents( this._transform( val, options, model ), options, model, attr );
+            }
+        };
+
+        // Base class for Attribute metatype
+        // ---------------------------------
+
+        var Attribute = Object.extend({
+            name : null,
+            type : null,
+            value : undefined,
+
+            // cast function
+            // may be overriden in subclass
+            cast : null, // function( value, options, model ),
+
+            // get and set hooks...
+            get : null,
+            set : null,
+
+            // user events
+            events : null, // { event : handler, ... }
+
+            // system events
+            _events : null, // { event : handler, ... }
+
+            // create empty object passing backbone options to constructor...
+            // must be overriden for backbone types only
+            create : function( options ){ return new this.type(); },
+
+            // optimized general purpose isEqual function for typeless attributes
+            // must be overriden in subclass
+            isChanged : bbGenericAttr.isChanged,
+
+            // generic clone function for typeless attributes
+            // Must be overriden in sublass
+            clone : function( value, options ){
+                if( value && typeof value === 'object' ){
+                    var proto = Object.getPrototypeOf( value );
+
+                    if( proto.clone ){
+                        // delegate to object's clone if it exist
+                        return value.clone( options );
+                    }
+
+                    if( options && options.deep && proto === Object.prototype || proto === Array.prototype ){
+                        // attempt to deep copy raw objects, assuming they are JSON
+                        return JSON.parse( JSON.stringify( value ) );
+                    }
+                }
+
+                return value;
+            },
+
+            // must be overriden for backbone types...
+            createPropertySpec : function(){
+                ( function( self, name, get ){
+                    return {
+                        // call to optimized set function for single argument. Doesn't work for backbone types.
+                        set : function( value ){ bbSetSingleAttr( this, name, value, self ); },
+
+                        // attach get hook to the getter function, if present
+                        get : get ? function(){ return get.call( this, this.attributes[ name ], name ); } :
+                            function(){ return this.attributes[ name ]; }
+                    }
+                } )( this, this.name, this.get );
+            },
+
+            // automatically generated optimized transform function
+            // do not touch.
+            _transform : null,
+            transform : function( value ){ return value; },
+
+            // delegate user and system events
+            delegateEvents : function( value, options, model, attr ){
+                var prev = model.attributes[ attr ];
+
+                if( prev !== value ){
+                    prev && model.stopListening( prev );
+
+                    if( value ){
+                        this.events && model.listenTo( value, this.events );
+                        this._events && model.listenTo( value, this._events );
+                    }
+
+                    model.trigger( 'replace:' + attr, model, prev, value );
+                }
+
+                return value;
+            },
+
+            constructor : function( name, spec ){
+                this.name = name;
+
+                Object.xmap( this, spec, function( value, name ){
+                    if( name === 'events' && this.events ){
+                        return Object.assign( this.events, value );
+                    }
+
+                    if( name === 'get' ){
+                        if( this.get ) value.unshift( this.get );
+                        return chainHooks( value );
+                    }
+
+                    if( name === 'set' ){
+                        if( this.set ) value.push( this.set );
+                        return chainHooks( value );
+                    }
+
+                    return value;
+                }, this );
+
+                this.initialize( spec );
+
+                // assemble optimized transform function...
+                if( this.cast )   this.transform = this._transform = this.cast;
+                if( this.set )    this.transform = this._transform = this.cast ? transform.hookAndCast : transform.hook;
+                if( this.events || this._events ) this.transform = this._transform ? this.delegateEvents : transform.delegateAndMore;
+            }
+        },{
+            bind : ( function(){
+                function options( spec ){
+                    spec || ( spec = {} );
+                    spec.type || ( spec.type = this );
+                    return new Options( spec );
+                }
+
+                function value( value ){
+                    return new Options({ type : this, value : value });
+                }
+
+                return function(){
+                    for( var i = 0; i < arguments.length; i++ ){
+                        var Type = arguments[ i ];
+                        Type.options    = options;
+                        Type.value      = value;
+                        Type.NestedType = this;
+                        Object.defineProperty( Type, 'has', { get : options } );
+                    }
+                };
+            })()
+        });
+
+        function createOptions( spec ){
+            return new Options( spec );
+        }
+
+        createOptions.Type = Attribute;
+        return createOptions;
     })();
 
     Nested.defaults = function( x ){
@@ -421,6 +670,23 @@
 
     Nested.value = function( value ){ return Nested.options({ value: value }); };
 
+    // Attribute Type definitions for core JS types
+    // ============================================
+    // Constructors Attribute
+    // ----------------
+    Nested.options.Type.extend({
+        cast : function( value ){
+            return value == null || value instanceof this.type ? value : new this.type( value );
+        },
+
+        clone : function( value, options ){
+            // delegate to clone function or deep clone through serialization
+            return value.clone ? value.clone( value, options ) : this.cast( JSON.parse( JSON.stringify( value ) ) );
+        }
+    }).bind( Function.prototype );
+
+    // Date Attribute
+    // ----------------------
     ( function(){
         var numericKeys = [ 1, 4, 5, 6, 7, 10, 11 ],
             msDatePattern = /\/Date\(([0-9]+)\)\//,
@@ -465,53 +731,59 @@
                     new Date( typeof value === 'string' ? parseDate( value ) : value )
             },
 
+            isChanged : function( a, b ){ return ( a && +a ) !== ( b && +b ); },
             clone : function( value ){ return new Date( +value ); }
         }).bind( Date );
     })();
 
-    // Fix incompatible constructor behaviour of primitive types...
+    // Primitive Types
+    // ----------------
     Nested.options.Type.extend({
-        create : function(){
-            return this.type();
-        },
+        create : function(){ return this.type(); },
 
-        cast : function( value ){
-            return value == null ? null : this.type( value );
-        },
+        cast : function( value ){ return value == null ? null : this.type( value ); },
+
+        isChanged : function( a, b ){ return a !== b; },
+
         clone : function( value ){ return value; }
     }).bind( Number, Boolean, String, Integer );
 
-    // Fix incompatible constructor behaviour of Array...
+    // Array Type
+    // ---------------
     Nested.options.Type.extend({
         cast : function( value ){
+            // Fix incompatible constructor behaviour of Array...
             return value == null || value instanceof Array ? value : [ value ];
         }
     }).bind( Array );
 
-    var baseModelSet =  Backbone.Model.prototype.set;
+    // Nested Backbone Types
+    // =========================
 
+    function setAttrs( self, attrs, options ){
+        var attrSpecs = self.__attributes;
+        self.__beginChange();
+
+        for( var name in attrs ){
+            var attrSpec = attrSpecs[ name ],
+                value = attrs[ name ];
+
+            if( attrSpec ){
+                attrs[ name ] = attrSpec.transform( value, options, this, name );
+            }
+            else{
+                Nested.error.unknownAttribute( self, name, value );
+            }
+        }
+
+        self.__commitChange( attrs, options );
+        return self;
+    }
+
+    // Nested Model Definition
+    // -----------------------
     Nested.Model = ( function(){
         var ModelProto = Backbone.Model.prototype;
-
-        function setAttrs( self, attrs, options ){
-            var attrSpecs = self.__attributes;
-            self.__beginChange();
-
-            for( var name in attrs ){
-                var attrSpec = attrSpecs[ name ],
-                    value = attrs[ name ];
-
-                if( attrSpec ){
-                    attrs[ name ] = attrSpec.transform( value, options, this, name );
-                }
-                else{
-                    Nested.error.unknownAttribute( self, name, value );
-                }
-            }
-
-            self.__commitChange( attrs, options );
-            return self;
-        }
 
         var Model = Backbone.Model.extend({
             triggerWhenChanged: 'change',
@@ -551,7 +823,7 @@
                         var attrSpec = this.__attributes[ a ];
 
                         if( attrSpec && !attrSpec.isBackboneType && !c ){
-                            return setSingleAttr( this, a, b, attrSpec );
+                            return bbSetSingleAttr( this, a, b, attrSpec );
                         }
 
                         var attrs = {};
@@ -719,6 +991,15 @@
             }
         });
 
+        function createCloneCtor( attrs ){
+            var statements = [];
+            for( var name in attrs ){
+                statements.push( "this." + name + "=x." + name + ";" );
+            }
+
+            return new Function( "x", statements.join('') );
+        }
+
         function parseDefaults( spec, Base ){
             var defaultAttrs = _.isFunction( spec.defaults ) ? spec.defaults() : spec.defaults || spec.attributes || {},
                 defaults    = _.defaults( defaultAttrs, Base.prototype.__defaults ),
@@ -746,7 +1027,8 @@
             return _.extend( _.omit( spec, 'collection', 'attributes' ), {
                 __defaults  : defaults, // needed for attributes inheritance
                 __attributes : attributes,
-                defaults : _.isFunction( spec.defaults ) ? spec.defaults : createDefaults( attributes )
+                defaults : _.isFunction( spec.defaults ) ? spec.defaults : createDefaults( attributes ),
+                Attributes : createCloneCtor( attributes )
             });
         }
 
@@ -808,6 +1090,8 @@
         return Model;
     })();
 
+    // Nested Collection Definition
+    // ----------------------------
     Nested.Collection = Nested.Model.Collection = ( function(){
         var Collection,
             CollectionProto = Backbone.Collection.prototype;
@@ -829,7 +1113,7 @@
         }
 
         Collection = Backbone.Collection.extend({
-            triggerWhenChanged: 'change add remove reset', // sort
+            triggerWhenChanged: 'change update reset',
             __class : 'Collection',
 
 			model : Nested.Model,
@@ -884,85 +1168,35 @@
         return Collection;
     })();
 
+    // Backbone Attribute
+    // ----------------
     Nested.options.Type.extend({
+        create : function( options ){ return new this.type( null, options ); },
+        clone : function( value, options ){ return value && value.clone( options ); },
+        isChanged : function( a, b ){ return a !== b; },
+
         isBackboneType : true,
         isModel : true,
 
-        _name : '',
-        handleNestedChange : function(){},
+        createPropertySpec : function(){
+            // if there are nested changes detection enabled, disable optimized setter
+            if( this._events ){
+                ( function( self, name, get ){
+                    return {
+                        set : function( value ){
+                            var attrs = {};
+                            attrs[ name ] = value;
+                            setAttrs( this, attrs );
+                        },
 
-        property : function( name ){
-            var self = this;
-
-            var spec = {
-                    set : function( value ){
-                        var attrs = {};
-                        attrs[ name ] = value;
-                        setManyAttrs( this, attrs );
-                    },
-
-                    enumerable : false
-                },
-                get = this.get;
-
-            spec.get = get ? function(){
-                return get.call( this, this.attributes[ name ], name );
-            } : function(){
-                return this.attributes[ name ];
-            };
-
-            return spec;
-        },
-
-        properties : {
-            name : {
-                set : function( name ){
-                    this._name = name;
-
-                    // (!) this handler will be called in the context of model
-                    this.handleNestedChange = function(){
-                        var value = this.attributes[ name ];
-
-                        if( this.__duringSet ){
-                            this.__nestedChanges[ name ] = value;
-                            this.changed[ name ] = value;
-                        }
-                        else{
-                            this.attributes[ name ] = null;
-                            baseModelSet.call( this, name, value );
-                        }
+                        get : get ? function(){ return get.call( this, this.attributes[ name ], name ); } :
+                            function(){ return this.attributes[ name ]; }
                     }
-                },
-
-                get : function(){
-                    return this._name;
-                }
+                } )( this, this.name, this.get );
             }
+            else Nested.options.Type.prototype.createPropertySpec.call( this );
         },
 
-        delegateEvents : function( model, oldValue, newValue ){
-            if( this.triggerWhenChanged && oldValue !== newValue ){
-                var name = this.name;
-
-                oldValue && model.stopListening( oldValue );
-
-                if( newValue ){
-                    model.listenTo( newValue, 'before:change', model.__beginChange );
-                    model.listenTo( newValue, 'after:change', model.__commitChange );
-                    model.listenTo( newValue, this.triggerWhenChanged, this.handleNestedChange );
-
-                    this.events && model.listenTo( newValue, this.events );
-                }
-
-                model.trigger( 'replace:' + name, model, newValue, oldValue );
-            }
-        },
-
-        create : function( options ){
-            return new this.type( null, options );
-        },
-
-        clone : function( value, options ){ return value && value.clone( options ); },
         cast : function( value, options, model ){
             var incompatibleType = value != null && !( value instanceof this.type ),
                 existingModelOrCollection = model.attributes[ this.name ];
@@ -985,10 +1219,29 @@
         },
 
         initialize : function( spec ){
-            Nested.options.Type.prototype.initialize.apply( this, arguments );
-            _.isUndefined( this.triggerWhenChanged ) && ( this.triggerWhenChanged = spec.type.prototype.triggerWhenChanged );
+            var name = this.name,
+                triggerWhenChanged = this.triggerWhenChanged || spec.type.prototype.triggerWhenChanged;
 
             this.isModel = this.type.prototype instanceof Nested.Model;
+
+            if( triggerWhenChanged ){
+                // for collection, add transactional methods to join change events on bubbling
+                this._events = this.isModel ? {} : {
+                    'before:change' : Nested.Model.prototype.__beginChange,
+                    'after:change'  : Nested.Model.prototype.__commitChange
+                };
+
+                this._events[ triggerWhenChanged ] = function(){
+                    if( this.__duringSet ){
+                        this.__nestedChanges[ name ] = this.attributes[ name ];
+                    }
+                    else{
+                        bbTriggerUpdate( this, name );
+                    }
+                }
+            }
+
+
         }
     }).bind( Nested.Model, Nested.Collection );
 
@@ -1058,7 +1311,7 @@
         var CollectionProto = Nested.Collection.prototype;
 
         var refsCollectionSpec = {
-            triggerWhenChanged : "add remove reset",
+            triggerWhenChanged : "update reset",
             __class : 'Collection.SubsetOf',
 
             resolvedWith : null,

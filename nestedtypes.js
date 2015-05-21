@@ -275,7 +275,6 @@
 
         // Trigger all relevant attribute changes.
         if( isChanged( current[ key ], val ) ){
-            if ( key === model.idAttribute ) model.id = val;
             current[ key ] = val;
 
             model._pending = options;
@@ -326,9 +325,6 @@
         }
 
         var prev = model._previousAttributes;
-
-        // Check for changes of `id`.
-        if( model.idAttribute in attrs ) model.id = attrs[ model.idAttribute ];
 
         // For each `set` attribute, update or delete the current value.
         for( var attr in attrs ){
@@ -792,6 +788,20 @@
 
         var Model = Backbone.Model.extend({
             triggerWhenChanged: 'change',
+
+            properties : {
+                id : {
+                    get : function(){
+                        var name = this.idAttribute; // TODO: add get event handling for id attr
+                        return name === 'id' ? this.attributes.id : this[ this.idAttribute ];
+                    },
+
+                    set : function( value ){
+                        var name = this.idAttribute;
+                        bbSetSingleAttr( this, name, value, this.__attributes[ name ] );
+                    }
+                }
+            },
 
             __defaults: {},
             __attributes: { id : Nested.options({ name: 'id', value : undefined }) },

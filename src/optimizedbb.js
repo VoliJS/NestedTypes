@@ -1,18 +1,30 @@
-/*
 
-AttrSpec required to implement two things:
+// Optimized Backbone Core functions
+// =================================
+
+/* AttrSpec required to implement two things:
     transform( value, options, model, name ) -> value
-        may change model.__nestedChanges and model.changed
 
     isChanged( value1, value2 ) -> bool
         to detect whenever attribute must be assigned and counted as changed
+
+    Model is required to implement Attributes constructor
  */
 
+// trigger update for selected model attribute
+function bbTriggerUpdate(model, key){
+    bbSetSingleAttr( model, key, model.attributes[ key ], bbForceUpdateAttr );
+}
+
+var bbForceUpdateAttr = {
+    isChanged : function(){ return true; },
+    transform : function( x ){ return x; }
+};
 
 // Special case:
 // single attribute change, no options, no nested changes
-
-function setSingleAttr(model, key, value, attrSpec) {
+function bbSetSingleAttr(model, key, value, attrSpec) {
+    'use strict';
     // Extract attributes and options.
     var changing     = model._changing;
     model._changing  = true;
@@ -60,45 +72,14 @@ function setSingleAttr(model, key, value, attrSpec) {
     return model;
 }
 
-function simulateAttrChange( model, attr ){
-    // Extract attributes and options.
-    var changing     = model._changing;
-    model._changing  = true;
-
-    var current = model.attributes,
-        val = current[ attr ];
-
-    if( !changing ){
-        model._previousAttributes = new model.Attributes( current );
-        model.changed = {};
+var bbGenericAttr = {
+    isChanged : function( a, b ){
+        return !( a === b || ( a && b && typeof a == 'object' && typeof b == 'object' && _.isEqual( a, b ) ) );
     }
+};
 
-    model.changed[ attr ] = val;
-
-    var options = {};
-
-    model._pending = options;
-    model.trigger( 'change:' + attr, model, val, options );
-
-    if( changing ) return model;
-
-    while( model._pending ){
-        options = model._pending;
-        model._pending = false;
-        model.trigger( 'change', model, options );
-    }
-
-    model._pending  = false;
-    model._changing = false;
-    return model;
-}
-
-function genericIsChanged( a, b ){
-    return !( a === b || ( typeof a == 'object' && a && typeof b == 'object' && b && _.isEqual( a, b ) ) );
-}
-
-function setManyAttrs( model, attrs, options ){
-    var attr, unset, changes, silent, changing, prev, current;
+function bbSetAttrs( model, attrs, options ){
+    'use strict';
 
     options || (options = {});
 
@@ -106,13 +87,14 @@ function setManyAttrs( model, attrs, options ){
     if (!model._validate(attrs, options)) return false;
 
     // Extract attributes and options.
-    unset           = options.unset;
-    silent          = options.silent;
-    changes         = [];
-    changing        = model._changing;
-    model._changing  = true;
+    var unset           = options.unset,
+        silent          = options.silent,
+        changes         = [],
+        changing        = model._changing,
+        current         = model.attributes,
+        attrSpecs       = model.__attributes;
 
-    current = model.attributes;
+    model._changing  = true;
 
     if (!changing) {
         model._previousAttributes = new model.Attributes( current );
@@ -120,21 +102,17 @@ function setManyAttrs( model, attrs, options ){
         model.__nestedChanges = {};
     }
 
-    prev = model._previousAttributes;
-    var nestedChanges = model.__nestedChanges;
+    var prev = model._previousAttributes;
 
     // Check for changes of `id`.
-    if (model.idAttribute in attrs) model.id = attrs[model.idAttribute];
-
-    var attrSpecs = model.__attributes, attrSpec, hasNestedChange;
+    if( model.idAttribute in attrs ) model.id = attrs[ model.idAttribute ];
 
     // For each `set` attribute, update or delete the current value.
-    for (attr in attrs) {
-        attrSpec = attrSpecs[ attr ];
-        val = attrs[attr];
-        isChanged = attrSpec ? attrSpec.isChanged : genericIsChanged;
+    for( var attr in attrs ){
+        var isChanged = ( attrSpecs[ attr ] || bbGenericAttr ).isChanged,
+            val = attrs[ attr ];
 
-        if ( isChanged( current[attr], val ) ) changes.push(attr);
+        if ( isChanged( current[attr], val ) ) changes.push( attr );
 
         if ( isChanged( prev[attr], val ) ) {
             model.changed[attr] = val;
@@ -142,11 +120,11 @@ function setManyAttrs( model, attrs, options ){
             delete model.changed[attr];
         }
 
-        unset ? delete current[attr] : current[attr] = val;
+        unset ? delete current[attr] : current[ attr ] = val;
     }
 
     // Trigger all relevant attribute changes.
-    if (!silent) {
+    if( !silent ) {
         if (changes.length) model._pending = options;
         for (var i = 0, l = changes.length; i < l; i++) {
             model.trigger('change:' + changes[i], model, current[changes[i]], options);

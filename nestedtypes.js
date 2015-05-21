@@ -780,7 +780,7 @@
                 _.extend( defaults, refs );
 
                 for( var name in init ){
-                    defaults[ name ] = init[ name ].create( null, options );
+                    defaults[ name ] = init[ name ].create( options );
                 }
 
                 return defaults;
@@ -959,8 +959,8 @@
             }
         },
 
-        create : function( value, options ){
-            return new this.type( value, options );
+        create : function( options ){
+            return new this.type( null, options );
         },
 
         clone : function( value, options ){ return value && value.clone( options ); },
@@ -978,7 +978,7 @@
                     value = existingModelOrCollection;
                 }
                 else{ // ...or create a new object, if it's not exist
-                    value = this.create( value, options );
+                    value = new this.type( value, options );
                 }
             }
 

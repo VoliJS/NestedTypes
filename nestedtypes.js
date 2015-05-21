@@ -416,7 +416,7 @@
         };
 
         // list of simple accessor methods available in options
-        var availableOptions = [ 'triggerWhenChanged', 'parse', 'toJSON', 'value', 'cast', 'create' ];
+        var availableOptions = [ 'triggerWhenChanged', 'parse', 'clone', 'toJSON', 'value', 'cast', 'create', 'name', 'value', 'type' ];
 
         var Options = Object.extend({
             _options : {},
@@ -607,7 +607,7 @@
             constructor : function( name, spec ){
                 this.name = name;
 
-                Object.xmap( this, spec, function( value, name ){
+                Object.transform( this, spec, function( value, name ){
                     if( name === 'events' && this.events ){
                         return Object.assign( this.events, value );
                     }
@@ -661,6 +661,14 @@
         }
 
         createOptions.Type = Attribute;
+        createOptions.create = function( options, name ){
+            if( !( options && options instanceof Options )){
+                options = new Options({ typeOrValue : options });
+            }
+
+            return options.createAttribute( name );
+        };
+
         return createOptions;
     })();
 
@@ -1007,21 +1015,21 @@
                 attributes = {};
 
             _.each( defaults, function( attr, name ){
-                attr instanceof Nested.options.Type || ( attr = Nested.options({ typeOrValue: attr }) );
-                attr.name = name;
+                var attrSpec = Nested.options.create( attr, name );
 
-                name in defaultAttrs || ( attr.property = false );
+                name in defaultAttrs || ( attrSpec.createPropertySpec = false );
 
-                attributes[ name ] = attr;
+                attributes[ name ] = attrSpec;
             });
 
             // Handle id attribute, whenever it was defined or not...
-            var idAttr = attributes[ idAttrName ] || ( attributes[ idAttrName ] = Nested.options({ value : undefined }) );
+            var idAttr = attributes[ idAttrName ] ||
+                ( attributes[ idAttrName ] = Nested.options({ value : undefined } ).createAttribute( idAttrName ) );
+
             'value' in idAttr || ( idAttr.value = undefined ); // id attribute must have no default value
-            idAttr.name = idAttrName;
 
             if( idAttrName === 'id' ){
-                idAttr.property = false; // to prevent conflict with backbone's model 'id'
+                idAttr.createPropertySpec = false; // to prevent conflict with backbone's model 'id'
             }
 
             return _.extend( _.omit( spec, 'collection', 'attributes' ), {
@@ -1073,7 +1081,7 @@
 
             if( spec.properties !== false ){
                 _.each( spec.__attributes, function( attr, name ){
-                    attr.property && ( properties[ name ] = attr.property( name ) );
+                    attr.createPropertySpec && ( properties[ name ] = attr.createPropertySpec() );
                 } );
 
                 _.each( spec.properties, function( propDesc, name ){

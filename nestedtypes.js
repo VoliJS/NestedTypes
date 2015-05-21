@@ -239,7 +239,7 @@
     // Extend Object+ type errors with NestedTypes specific error types...
     Nested.error = Object.assign( Object.extend.error, {
         argumentIsNotAnObject : function( context, value ){
-            console.error( '[Type Error] Attribute hash is not an object in ' + context.__class + '.set(', value, '); this =', context );
+            throw new TypeError( 'Attribute hash is not an object in ' + context.__class + '.set(', value, ')' );
         },
 
         unknownAttribute : function( context, name, value ){
@@ -562,7 +562,7 @@
                         if( a && Object.getPrototypeOf( a ) === Object.prototype ) return setAttrs( this, a, b );
 
                     default :
-                        throw new TypeError( 'Wrong Model.set argument' );
+                        Nested.error.argumentIsNotAnObject( this, a );
                 }
             },
 

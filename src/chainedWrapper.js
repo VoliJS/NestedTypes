@@ -359,18 +359,22 @@ Nested.options.Type.extend({
     handleNestedChange : function(){},
 
     createPropertySpec : function(){
-        ( function( self, name, get ){
-            return {
-                set : function( value ){
-                    var attrs = {};
-                    attrs[ name ] = value;
-                    setAttrs( this, attrs ); //todo: direct call to optimized setMany
-                },
+        // if there are nested changes detection enabled, disable optimized setter
+        if( this._events ){
+            ( function( self, name, get ){
+                return {
+                    set : function( value ){
+                        var attrs = {};
+                        attrs[ name ] = value;
+                        setAttrs( this, attrs ); //todo: direct call to optimized setMany
+                    },
 
-                get : get ? function(){ return get.call( this, this.attributes[ name ], name ); } :
-                    function(){ return this.attributes[ name ]; }
-            }
-        } )( this, this.name, this.get );
+                    get : get ? function(){ return get.call( this, this.attributes[ name ], name ); } :
+                        function(){ return this.attributes[ name ]; }
+                }
+            } )( this, this.name, this.get );
+        }
+        else Nested.options.Type.prototype.createPropertySpec.call( this );
     },
 
     cast : function( value, options, model ){
@@ -417,7 +421,6 @@ Nested.options.Type.extend({
                     // TODO: need to fix it. Need to use optimized typeless set
                     // todo: With smart logic turned off
                     baseModelSet.call( this, name, value );
-
                 }
             }
         }

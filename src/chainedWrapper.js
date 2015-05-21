@@ -558,12 +558,9 @@ Nested.options.Type.extend({
                 'after:change'  : commitModelChange
             };
 
-            // this._events[ triggerWhenChanged ] = this.type.prototype.handleNestedChange;
-            this._events[ triggerWhenChanged ] = function(){ //TODO: move this func to model? this.type.prototype.handleNestedChange
-                var value = this.attributes[ name ];
-
+            this._events[ triggerWhenChanged ] = function(){
                 if( this.__duringSet ){
-                    this.__nestedChanges[ name ] = value;
+                    this.__nestedChanges[ name ] = this.attributes[ name ];
                 }
                 else{
                     bbTriggerUpdate( this, name );

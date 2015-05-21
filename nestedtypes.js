@@ -569,7 +569,7 @@
 
             // must be overriden for backbone types...
             createPropertySpec : function(){
-                ( function( self, name, get ){
+                return ( function( self, name, get ){
                     return {
                         // call to optimized set function for single argument. Doesn't work for backbone types.
                         set : function( value ){ bbSetSingleAttr( this, name, value, self ); },

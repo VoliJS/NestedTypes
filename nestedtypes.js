@@ -267,7 +267,8 @@
 
         if ( key === model.idAttribute ) model.id = val;
 
-        var val = attrSpec.transform( value );
+        var options = {};
+        var val = attrSpec.transform( value, options, model, key );
 
         if( isChanged( prev[ key ], val) ){
             model.changed[ key ] = val;
@@ -275,7 +276,7 @@
             delete model.changed[ key ];
         }
 
-        var options = {};
+
 
         // Trigger all relevant attribute changes.
         if( isChanged( current[ key ], val ) ){

@@ -777,7 +777,7 @@
                 value = attrs[ name ];
 
             if( attrSpec ){
-                attrs[ name ] = attrSpec.transform( value, options, this, name );
+                attrs[ name ] = attrSpec.transform( value, options, self, name );
             }
             else{
                 Nested.error.unknownAttribute( self, name, value );
@@ -1189,7 +1189,7 @@
         createPropertySpec : function(){
             // if there are nested changes detection enabled, disable optimized setter
             if( this._events ){
-                ( function( self, name, get ){
+                return ( function( self, name, get ){
                     return {
                         set : function( value ){
                             var attrs = {};

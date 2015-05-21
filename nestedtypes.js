@@ -617,7 +617,7 @@
                 // assemble optimized transform function...
                 if( this.cast )   this.transform = this._transform = this.cast;
                 if( this.set )    this.transform = this._transform = this.cast ? transform.hookAndCast : transform.hook;
-                if( this.events || this._events ) this.transform = this._transform ? this.delegateEvents : transform.delegateAndMore;
+                if( this.events || this._events ) this.transform = this._transform ? transform.delegateAndMore : this.delegateEvents ;
             }
         },{
             bind : ( function(){

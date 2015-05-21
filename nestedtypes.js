@@ -263,12 +263,9 @@
             model.changed = {};
         }
 
-        var prev = model._previousAttributes;
-
-        if ( key === model.idAttribute ) model.id = val;
-
-        var options = {};
-        var val = attrSpec.transform( value, options, model, key );
+        var prev = model._previousAttributes,
+            options = {},
+            val = attrSpec.transform( value, options, model, key );
 
         if( isChanged( prev[ key ], val) ){
             model.changed[ key ] = val;
@@ -276,10 +273,9 @@
             delete model.changed[ key ];
         }
 
-
-
         // Trigger all relevant attribute changes.
         if( isChanged( current[ key ], val ) ){
+            if ( key === model.idAttribute ) model.id = val;
             current[ key ] = val;
 
             model._pending = options;

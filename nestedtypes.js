@@ -1240,14 +1240,20 @@
                     'after:change'  : Nested.Model.prototype.__commitChange
                 };
 
-                this._events[ triggerWhenChanged ] = function(){
+                var handleNestedChange = function(){
                     if( this.__duringSet ){
                         this.__nestedChanges[ name ] = this.attributes[ name ];
                     }
                     else{
                         bbTriggerUpdate( this, name );
                     }
-                }
+                };
+
+                // TODO: Bug in backbone. Multiple events in map are not supported.
+                // Move workaround at to the base class...
+                triggerWhenChanged.split( ' ' ).forEach( function( event ){
+                    this._events[ event ] = handleNestedChange;
+                }, this );
             }
 
 

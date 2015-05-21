@@ -542,7 +542,7 @@
                     this.__nestedChanges = {};
                 }
 
-                attrs && setManyAttrs( this, attrs, options );
+                attrs && bbSetAttrs( this, attrs, options );
             },
 
             set : function( a, b, c ){
@@ -553,11 +553,10 @@
                         if( attrSpec && !attrSpec.isBackboneType && !c ){
                             return setSingleAttr( this, a, b, attrSpec );
                         }
-                        else{
-                            var attrs = {};
-                            attrs[ a ] = b;
-                            return setAttrs( this, attrs, c );
-                        }
+
+                        var attrs = {};
+                        attrs[ a ] = b;
+                        return setAttrs( this, attrs, c );
 
                     case 'object' :
                         if( a && Object.getPrototypeOf( a ) === Object.prototype ) return setAttrs( this, a, b );

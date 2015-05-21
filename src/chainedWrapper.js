@@ -506,8 +506,6 @@ Nested.options.Type.extend({
     isBackboneType : true,
     isModel : true,
 
-    handleNestedChange : function(){},
-
     createPropertySpec : function(){
         // if there are nested changes detection enabled, disable optimized setter
         if( this._events ){
@@ -552,10 +550,13 @@ Nested.options.Type.extend({
         var name = this.name,
             triggerWhenChanged = this.triggerWhenChanged || spec.type.prototype.triggerWhenChanged;
 
+        this.isModel = this.type.prototype instanceof Nested.Model;
+
         if( triggerWhenChanged ){
-            this._events = {
-                'before:change' : beginModelChange, //todo: refactor these things too
-                'after:change'  : commitModelChange
+            // for collection, add transactional methods to join change events on bubbling
+            this._events = this.isModel ? {} : {
+                'before:change' : Nested.Model.prototype.__beginChange,
+                'after:change'  : Nested.Model.prototype.__commitChange
             };
 
             this._events[ triggerWhenChanged ] = function(){
@@ -568,6 +569,6 @@ Nested.options.Type.extend({
             }
         }
 
-        this.isModel = this.type.prototype instanceof Nested.Model;
+
     }
 }).bind( Nested.Model, Nested.Collection );

@@ -267,7 +267,7 @@
 
         if ( key === model.idAttribute ) model.id = val;
 
-        var val = attrSpec.transform( model, value );
+        var val = attrSpec.transform( value );
 
         if( isChanged( prev[ key ], val) ){
             model.changed[ key ] = val;

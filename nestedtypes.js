@@ -780,6 +780,16 @@
     Nested.Model = ( function(){
         var ModelProto = Backbone.Model.prototype;
 
+        function cloneAttrs( attrSpecs, attrs, options ){
+            var cloned = {};
+
+            for( var name in attrSpecs ){
+                cloned[ name ] = attrSpecs[ name ].clone( attrs[ name ], options );
+            }
+
+            return cloned;
+        }
+
         var Model = Backbone.Model.extend({
             triggerWhenChanged: 'change',
 
@@ -897,8 +907,9 @@
                 if( options.collection ) this.collection = options.collection;
                 if( options.parse ) attrs = this.parse( attrs, options ) || {};
 
-                var withDefaults = this.defaults( options );
-                for( var name in attrs ) withDefaults[ name ] = attrs[ name ];
+                var withDefaults = options.deep ?
+                                        cloneAttrs( this.__attributes, attrs, options ) :
+                                        this.defaults( attrs, options );
 
                 setAttrs( this, withDefaults, options );
                 this.changed = {};
@@ -908,24 +919,11 @@
             get : function( name ){ return this[ name ]; },
 
             clone : function( options ){
-                var attrs;
-
-                if( options && options.deep ){
-                    attrs = {};
-
-                    _.each( this.attributes, function( value, key ){
-                        var spec = this.__attributes[ key ];
-                        spec && ( attrs[ key ] = spec.clone( value, options ) );
-                    }, this );
-                }
-                else{
-                    attrs = this.attributes;
-                }
-
-                return new this.constructor( attrs, options );
+                return new this.constructor( this.attributes, options );
             },
+
             // Create deep copy for all nested objects...
-            deepClone: function( options ){ return this.clone({ deep : true }); },
+            deepClone: function(){ return new this.constructor( this.attributes, { deep : true } ); },
 
             // Support for nested models and objects.
             // Apply toJSON recursively to produce correct JSON.
@@ -1066,9 +1064,9 @@
                 }
             });
 
-            var Literals = new Function( 'r', 'i', 'o', json.join( '' ) );
+            var Defaults = new Function( 'r', 'i', 'o', json.join( '' ) );
 
-            return function( options ){
+            return function( attrs, options ){
                 var opts = options, name;
 
                 if( options && ( options.collection || options.parse ) ){
@@ -1078,7 +1076,11 @@
                     }
                 }
 
-                return new Literals( refs, init, opts );
+                var defaults = new Defaults( refs, init, opts );
+
+                for( var name in attrs ) defaults[ name ] = attrs[ name ];
+
+                return defaults;
             }
         }
 

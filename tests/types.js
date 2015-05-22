@@ -349,22 +349,6 @@ define( function( require, exports, module ){
                 });
             });
 
-            describe( 'parse hook', function(){
-                it( 'can override attribute\'s parse', function(){
-                    var A = Nested.Model.extend({
-                        defaults : {
-                            a : Nested.options({
-                                parse : function( x ){ return "Hello " + x; }
-                            })
-                        }
-                    });
-
-                    var m = new A();
-                    m.set( m.parse({ a : 'Vlad' }) );
-                    expect( m.a ).to.equal( 'Hello Vlad' );
-                });
-            });
-
             it( 'can define untyped attribute', function(){
                 var A = Nested.Model.extend({
                     defaults : {

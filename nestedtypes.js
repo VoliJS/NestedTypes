@@ -936,37 +936,18 @@
 
             // Support for nested models and objects.
             // Apply toJSON recursively to produce correct JSON.
-            toJSON : function(){ //todo : refactor in the same way as clone
+            toJSON : function(){
                 var res = {},
-                    attrSpecs = this.__attributes,
-                    attrs = this.attributes;
+                    attrs = this.attributes, attrSpecs = this.__attributes;
 
                 for( var key in attrs ){
-                    var value = attrs[ key ],
-                        attrSpec = attrSpecs[ key],
+                    var value = attrs[ key ], attrSpec = attrSpecs[ key],
                         toJSON = attrSpec && attrSpec.toJSON;
 
-                    if( toJSON ){
-                        res[ key ] = toJSON.call( this, value, key );
-                    }
+                    if( toJSON ) res[ key ] = toJSON.call( this, value, key );
                 }
 
                 return res;
-            },
-
-            parse : function( data ){ //todo : refactor in the same way as clone
-                var attrs = {},
-                    parsed = false;
-
-                _.each( data, function( value, name ){
-                    var spec = this.__attributes[ name ];
-                    if( spec && spec.parse ){
-                        parsed = true;
-                        attrs[ name ] = spec.parse.call( this, value, name );
-                    }
-                }, this );
-
-                return parsed ? _.defaults( attrs, data ) : data;
             },
 
             isValid : function( options ){

@@ -1,5 +1,6 @@
 define( function( require, exports, module ){
     var Nested = require( 'nestedtypes' ),
+        Backbone = require( 'backbone' ),
         expect = require( 'chai' ).expect;
 
     describe( 'Type specs', function(){
@@ -196,20 +197,6 @@ define( function( require, exports, module ){
                 expect( m.str ).to.be.a( 'string' ).and.equal( "str" );
                 expect( m.bool ).to.be.a( 'boolean' ).and.equal( true );
             });
-
-            it( 'execute 10 000 000 sets to Integer attribute', function(){
-                var A = Nested.Model.extend({
-                    defaults : {
-                        num : 1
-                    }
-                });
-
-                var m = new A();
-                for( var i = 0; i < 10000000; i++ ){
-                    m.num = i;
-                }
-            });
-
         });
 
         describe( 'Date type', function(){

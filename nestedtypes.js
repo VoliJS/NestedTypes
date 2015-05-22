@@ -896,8 +896,11 @@
                 this.attributes = {};
                 if( options.collection ) this.collection = options.collection;
                 if( options.parse ) attrs = this.parse( attrs, options ) || {};
-                attrs        = _.defaults( {}, attrs, this.defaults( options ) );
-                this.set( attrs, options );
+
+                var withDefaults = this.defaults( options );
+                for( var name in attrs ) withDefaults[ name ] = attrs[ name ];
+
+                setAttrs( this, withDefaults, options );
                 this.changed = {};
                 this.initialize.apply( this, arguments );
             },
@@ -1047,33 +1050,35 @@
             _.each( attributes, function( attr, name ){
                 if( attr.value !== undefined ){
                     if( JSON.isValid( attr.value ) ){
-                        json.push( name + ':' + JSON.stringify( attr.value ) ); // and make a deep copy
+                        json.push( 'this.' + name + '=' + JSON.stringify( attr.value ) + ';' );
                     }
                     else{ // otherwise, copy it by reference.
                         refs[ name ] = attr.value;
+                        json.push( 'this.' + name + '=r.' + name + ';' );
                     }
                 }
                 else{
-                    attr.type && ( init[ name ] = attr );
+                    if( attr.type ){
+                        init[ name ] = attr;
+                        json.push( 'this.' + name + '=i.' + name + '.create( o );' );
+                    }
+
                 }
             });
 
-            var literals = new Function( 'return {' + json.join( ',' ) + '}' );
+            var Literals = new Function( 'r', 'i', 'o', json.join( '' ) );
 
             return function( options ){
+                var opts = options, name;
+
                 if( options && ( options.collection || options.parse ) ){
-                    options = _.omit( options, 'collection', 'parse' );
+                    opts = {};
+                    for( name in options ){
+                        if( name !== 'collection' && name !== 'parse' ) opts[ name ] = options[ name ];
+                    }
                 }
 
-                var defaults = literals();
-
-                _.extend( defaults, refs );
-
-                for( var name in init ){
-                    defaults[ name ] = init[ name ].create( options );
-                }
-
-                return defaults;
+                return new Literals( refs, init, opts );
             }
         }
 
@@ -1280,6 +1285,8 @@
             function clone( value ){
                 return value && typeof value === 'object' ? value.id : value;
             }
+
+            //TODO: This is now not the same as model spec.
             return attrSpec = Nested.options({
                 value : null,
 
@@ -1288,21 +1295,24 @@
 
                 get : function( objOrId, name ){
 
-                            if( typeof objOrId !== 'object' ){
-                                var master = getMaster.call( this );
+                    if( typeof objOrId !== 'object' ){
+                        var master = getMaster.call( this );
 
-                                if( master && master.length ){
-                                    objOrId = master.get( objOrId ) || null;
+                        if( master && master.length ){
+                            objOrId = master.get( objOrId ) || null;
                             this.attributes[ name ] = objOrId;
-                            objOrId && attrSpec.events && this.listenTo( objOrId, attrSpec.events );
-                                }
-                                else{
-                                    objOrId = null;
-                                }
-                            }
 
-                            return objOrId;
-                        },
+                            // TODO: it won't work cause the base Attribute class handle events
+                            // And it will brake when value will be changed
+                            objOrId && attrSpec.events && this.listenTo( objOrId, attrSpec.events );
+                        }
+                        else{
+                            objOrId = null;
+                        }
+                    }
+
+                    return objOrId;
+                },
 
                 set : function( modelOrId, name ){
                     var current = this.attributes[ name ];
@@ -1310,11 +1320,12 @@
                         if( current && typeof current === 'object' && current.id === modelOrId ) return;
                     }
                     else if( attrSpec.events && modelOrId ){
-                        this.listenTo( modelOrId, attrSpec.events );
+                        this.listenTo( modelOrId, attrSpec.events ); //TODO same here
                     }
+
                     if( current && typeof current === 'object' ){
                         this.stopListening( current );
-                        }
+                    }
 
                     return modelOrId;
                 }

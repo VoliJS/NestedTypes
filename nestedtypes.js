@@ -554,6 +554,10 @@
                 return value;
             },
 
+            toJSON : function( value, key ){
+                return value && value.toJSON ? value.toJSON() : value;
+            },
+
             // must be overriden for backbone types...
             createPropertySpec : function(){
                 return ( function( self, name, get ){
@@ -726,6 +730,8 @@
                     new Date( typeof value === 'string' ? parseDate( value ) : value )
             },
 
+            toJSON : function( value ){ return value && value.toJSON(); },
+
             isChanged : function( a, b ){ return ( a && +a ) !== ( b && +b ); },
             clone : function( value ){ return new Date( +value ); }
         }).bind( Date );
@@ -736,6 +742,7 @@
     Nested.options.Type.extend({
         create : function(){ return this.type(); },
 
+        toJSON : function( value ){ return value; },
         cast : function( value ){ return value == null ? null : this.type( value ); },
 
         isChanged : function( a, b ){ return a !== b; },
@@ -746,6 +753,7 @@
     // Array Type
     // ---------------
     Nested.options.Type.extend({
+        toJSON : function( value ){ return value; },
         cast : function( value ){
             // Fix incompatible constructor behaviour of Array...
             return value == null || value instanceof Array ? value : [ value ];
@@ -918,36 +926,35 @@
             // override get to invoke native getter...
             get : function( name ){ return this[ name ]; },
 
+            // override clone to pass options to constructor
             clone : function( options ){
                 return new this.constructor( this.attributes, options );
             },
 
             // Create deep copy for all nested objects...
-            deepClone: function(){ return new this.constructor( this.attributes, { deep : true } ); },
+            deepClone : function(){ this.clone({ deep : true }); },
 
             // Support for nested models and objects.
             // Apply toJSON recursively to produce correct JSON.
-            toJSON: function(){
-                var res = {};
+            toJSON : function(){ //todo : refactor in the same way as clone
+                var res = {},
+                    attrSpecs = this.__attributes,
+                    attrs = this.attributes;
 
-                _.each( this.attributes, function( value, key ){
-                    var spec = this.__attributes[ key ],
-                        toJSON = spec && spec.toJSON;
+                for( var key in attrs ){
+                    var value = attrs[ key ],
+                        attrSpec = attrSpecs[ key],
+                        toJSON = attrSpec && attrSpec.toJSON;
 
-                    if( toJSON !== false ){
-                        if( _.isFunction( toJSON ) ){
-                            res[ key ] = toJSON.call( this, value, key );
-                        }
-                        else{
-                            res[ key ] = value && value.toJSON ? value.toJSON() : value;
-                        }
+                    if( toJSON ){
+                        res[ key ] = toJSON.call( this, value, key );
                     }
-                }, this );
+                }
 
                 return res;
             },
 
-            parse : function( data ){
+            parse : function( data ){ //todo : refactor in the same way as clone
                 var attrs = {},
                     parsed = false;
 
@@ -1189,6 +1196,8 @@
     Nested.options.Type.extend({
         create : function( options ){ return new this.type( null, options ); },
         clone : function( value, options ){ return value && value.clone( options ); },
+        toJSON : function( value ){ return value && value.toJSON(); },
+
         isChanged : function( a, b ){ return a !== b; },
 
         isBackboneType : true,

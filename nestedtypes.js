@@ -1048,7 +1048,11 @@
                 statements.push( "this." + name + "=x." + name + ";" );
             }
 
-            return new Function( "x", statements.join('') );
+            var Ctor = new Function( "x", statements.join('') );
+
+            // make it look like vanilla object, so Model.set won't trigger an exception
+            Ctor.prototype = Object.prototype;
+            return Ctor;
         }
 
         function parseDefaults( spec, Base ){
@@ -1106,6 +1110,7 @@
             });
 
             var Defaults = new Function( 'r', 'i', 'o', json.join( '' ) );
+            Defaults.prototype = Object.prototype;
 
             return function( attrs, options ){
                 var opts = options, name;

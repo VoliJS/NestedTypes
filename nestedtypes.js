@@ -182,11 +182,10 @@
                 return spec instanceof Function ? { get : spec } : spec;
             }
 
-            function define( protoProps, staticProps, mixinProps ){
+            function define( protoProps, staticProps ){
                 Object.transform( this.prototype, protoProps,  warnOnError, this );
                 Object.transform( this,           staticProps, warnOnError, this );
 
-                mixinProps && Object.defineProperties( this.prototype, Object.transform( {}, mixinProps, preparePropSpec, this ) );
                 protoProps && Object.defineProperties( this.prototype, Object.transform( {}, protoProps.properties, preparePropSpec, this ) );
 
                 return this;

@@ -12,21 +12,6 @@
 
     // Object extensions: backbone-style OO functions and helpers...
     // -------------------------------------------------------------
-    JSON.isValid = function( value ){
-        var type = typeof value,
-            isJSON = value === null || type === 'number' || type === 'string' || type === 'boolean';
-
-        if( !isJSON && type === 'object' ){
-            var proto = Object.getPrototypeOf( value );
-
-            if( proto === Object.prototype || proto === Array.prototype ){
-                isJSON = Object.every( value, JSON.isValid );
-            }
-        }
-
-        return isJSON;
-    };
-
     ( function( spec ){
         for( var name in spec ){
             Object[ name ] || Object.defineProperty( Object, name, {
@@ -37,38 +22,9 @@
             });
         }
     })({
-        each : function( source, fun, context ){
-            var res;
-
-            for( var name in source ){
-                if( source.hasOwnProperty( name ) ){
-                    res = fun.call( context, source[ name ], name );
-                    if( res !== void 0 ){
-                        return res;
-                    }
-                }
-            }
-
-            return res;
-        },
-
-        every : function( source, fun, context ){
-            for( var name in source ){
-                if( source.hasOwnProperty( name ) ){
-                    if( !fun.call( context, source[ name ], name ) ){
-                        return false;
-                    }
-
-                }
-            }
-
-            return true;
-        },
-
+        // Object.assign polyfill from MDN.
         assign : function( target, firstSource ){
-            if( target == null ){
-                throw new TypeError( 'Cannot convert first argument to object' );
-            }
+            if( target == null ) throw new TypeError( 'Cannot convert first argument to object' );
 
             var to = Object( target );
             for( var i = 1; i < arguments.length; i++ ){
@@ -89,28 +45,18 @@
             return to;
         },
 
-        pluck : function( obj, name ){
-            var dest = obj instanceof Array ? [] : {};
-            return Object.transform( dest, obj, function( value, name ){
-                return value[ name ];
-            });
-        },
-
-        pick : function( obj, arr ){},
-        omit : function( obj, arr ){},
-        defaults : function( dest ){},
-
+        // Object.transform function, similar to _.mapObject
         transform : function( dest, source, fun, context ){
-            for( var name in source ){
+            for( var name in source )
                 if( source.hasOwnProperty( name ) ){
                     var value = fun.call( context, source[ name ], name );
                     typeof value === 'undefined' || ( dest[ name ] = value );
                 }
-            }
 
             return dest;
         },
 
+        // get property descriptor looking through all prototype chain
         getPropertyDescriptor : function( obj, prop ){
             for( var desc; !desc && obj; obj = Object.getPrototypeOf( obj ) ){
                 desc = Object.getOwnPropertyDescriptor( obj, prop );
@@ -119,6 +65,10 @@
             return desc;
         },
 
+        // extend function in the fashion of Backbone, with extended features required by NestedTypes
+        // - supports native properties definitions
+        // - supports forward declarations
+        // - warn in case if base class method is overriden with value. It's popular mistake when working with Backbone.
         extend : (function(){
             var error = {
                 overrideMethodWithValue : function( Ctor, name, value ){
@@ -227,18 +177,19 @@
     // Optimized Backbone Core functions
     // =================================
 
-    /* AttrSpec required to implement two things:
-     transform( value, options, model, name ) -> value
+    /* AttrSpec is required to provide two methods:
+        transform( value, options, model, name ) -> value
+            to transform value before assignment
 
-     isChanged( value1, value2 ) -> bool
-     to detect whenever attribute must be assigned and counted as changed
+        isChanged( value1, value2 ) -> bool
+            to detect whenever attribute must be assigned and counted as changed
 
-     Model is required to implement Attributes constructor
+     Model is required to implement Attributes constructor for attributes cloning.
      */
 
     // Events
     // ------------------------------------------
-    // Workaround for backbone 1.2.0 listenTo bug
+    // Workaround for backbone 1.2.0 listenTo event maps bug
     var bbListenTo = Backbone.Events.listenTo;
     Backbone.Events.listenTo = function( obj, events ){
         if( typeof events === 'object' ){
@@ -253,54 +204,55 @@
         Backbone[ type ].prototype.listenTo = Backbone.Events.listenTo;
     });
 
-    // Optimized trigger function
-    function fire2( events, a, b ){
-        if( events ){
-            for( var i = 0, l = events.length, ev; i < l; i ++ )
-                (ev = events[i]).callback.call(ev.ctx, a, b);
-        }
-    }
-
-    function fire3( events, a, b, c ){
-        if( events ){
-            for( var i = 0, l = events.length, ev; i < l; i ++ )
-                (ev = events[i]).callback.call(ev.ctx, a, b, c);
-        }
-    }
-
-    function fire4( events, a, b, c, d ){
-        if( events ){
-            for( var i = 0, l = events.length, ev; i < l; i ++ )
-                (ev = events[i]).callback.call(ev.ctx, a, b, c, d);
-        }
-    }
-
+    // Hard to believe :) Optimized JIT-friendly event trigger functions to be used from model.set
+    // Two specialized functions for event triggering...
     function trigger2( self, name, a, b ){
         var _events = self._events;
         if( _events ){
-            fire2( _events[ name ], a, b );
-            fire3( _events.all, name, a, b );
+            _fireEvent2( _events[ name ], a, b );
+            _fireEvent3( _events.all, name, a, b );
         }
     }
 
     function trigger3( self, name, a, b, c ){
         var _events = self._events;
         if( _events ){
-            fire3( _events[ name ], a, b, c );
-            fire4( _events.all, name, a, b, c );
+            _fireEvent3( _events[ name ], a, b, c );
+            _fireEvent4( _events.all, name, a, b, c );
         }
     }
 
-    var bbForceUpdateAttr = {
-        isChanged : function(){ return true; },
-        transform : function( x ){ return x; }
-    };
+    // ...and specialized functions with triggering loops
+    function _fireEvent2( events, a, b ){
+        if( events )
+            for( var i = 0, l = events.length, ev; i < l; i ++ )
+                (ev = events[i]).callback.call(ev.ctx, a, b);
+    }
 
-    // Special case:
-    // single attribute change, no options, no nested changes
+    function _fireEvent3( events, a, b, c ){
+        if( events )
+            for( var i = 0, l = events.length, ev; i < l; i ++ )
+                (ev = events[i]).callback.call(ev.ctx, a, b, c);
+    }
+
+    function _fireEvent4( events, a, b, c, d ){
+        if( events )
+            for( var i = 0, l = events.length, ev; i < l; i ++ )
+                (ev = events[i]).callback.call(ev.ctx, a, b, c, d);
+    }
+
+    // Optimized Model.set functions
+    //---------------------------------
+    // Does two main things:
+    // 1) Invoke model-specific constructor for attributes cloning. It improves performance on large model updates.
+    // 2) Invoke attribute-specific comparison function. Improves performance for everything, especially nested stuff.
+
+    // Special case set: used from model's native properties.
+    // Single attribute change, no options, _no_ _nested_ _changes_ detection on deep update.
+    // 1) Code is stripped for this special case
+    // 2) attribute-specific transform function invoked internally
     function bbSetSingleAttr(model, key, value, attrSpec) {
         'use strict';
-        // Extract attributes and options.
         var changing = model._changing,
             current  = model.attributes;
 
@@ -337,12 +289,22 @@
         return model;
     }
 
+    // attrSpec mock for the case of missing attribute spec
     var bbGenericAttr = {
         isChanged : function( a, b ){
             return !( a === b || ( a && b && typeof a == 'object' && typeof b == 'object' && _.isEqual( a, b ) ) );
         }
     };
 
+    // helper attrSpec mock to force attribute update
+    var bbForceUpdateAttr = {
+        isChanged : function(){ return true; },
+        transform : function( x ){ return x; }
+    };
+
+    // General case set: used for multiple and nested model/collection attributes.
+    // Does _not_ invoke attribute transform! It must be done at the the top level,
+    // due to the problems with current nested changes detection algorithm. See 'setAttrs' function below.
     function bbSetAttrs( model, attrs, options ){
         'use strict';
 
@@ -364,7 +326,6 @@
         if (!changing) {
             model._previousAttributes = new model.Attributes( current );
             model.changed = {};
-            model.__nestedChanges = {};
         }
 
         var prev = model._previousAttributes;
@@ -816,24 +777,25 @@
     // Nested Backbone Types
     // =========================
 
-    function setAttrs( self, attrs, options ){
-        var attrSpecs = self.__attributes;
-        self.__beginChange();
+    // Deep set model attributes, catching nested attributes changes
+    function setAttrs( model, attrs, options ){
+        var attrSpecs = model.__attributes;
+        model.__beginChange();
 
         for( var name in attrs ){
             var attrSpec = attrSpecs[ name ],
                 value = attrs[ name ];
 
             if( attrSpec ){
-                attrs[ name ] = attrSpec.transform( value, options, self, name );
+                attrs[ name ] = attrSpec.transform( value, options, model, name );
             }
             else{
-                Nested.error.unknownAttribute( self, name, value );
+                Nested.error.unknownAttribute( model, name, value );
             }
         }
 
-        self.__commitChange( attrs, options );
-        return self;
+        model.__commitChange( attrs, options );
+        return model;
     }
 
     // Nested Model Definition
@@ -1081,6 +1043,27 @@
             return Attributes;
         }
 
+        // Check if value is valid JSON.
+        function isValidJSON( value ){
+            if( value === null ) return true;
+
+            switch( typeof value ){
+            case 'number' :
+            case 'string' :
+            case 'boolean' :
+                return true;
+
+            case 'object':
+                var proto = Object.getPrototypeOf( value );
+
+                if( proto === Object.prototype || proto === Array.prototype ){
+                    return _.every( value, isValidJSON );
+                }
+            }
+
+            return false;
+        }
+
         // Create optimized model.defaults( attrs, options ) function
         function createDefaults( attrSpecs ){
             var statements = [], init = {}, refs = {};
@@ -1089,7 +1072,7 @@
             _.each( attrSpecs, function( attrSpec, name ){
                 if( attrSpec.value !== undefined ){
                     // If value is given, type casting logic will do the job later, converting value to the proper type.
-                    if( JSON.isValid( attrSpec.value ) ){
+                    if( isValidJSON( attrSpec.value ) ){
                         // JSON literals must be deep copied.
                         statements.push( 'this.' + name + '=' + JSON.stringify( attrSpec.value ) + ';' );
                     }

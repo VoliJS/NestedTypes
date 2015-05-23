@@ -240,15 +240,18 @@
     // ------------------------------------------
     // Workaround for backbone 1.2.0 listenTo bug
     var bbListenTo = Backbone.Events.listenTo;
+    Backbone.Events.listenTo = function( obj, events ){
+        if( typeof events === 'object' ){
+            for( var event in events ) bbListenTo.call( this, obj, event, events[ event ] );
+            return this;
+        }
 
-    Backbone.Events.listenTo = Backbone.Model.listenTo = Backbone.View.listenTo = Backbone.Collection.listenTo =
-        function( obj, events ){
-            if( typeof events === 'object' ){
-                for( var event in events ) bbListenTo.call( this, obj, event, events[ event ] );
-                return this;
-            }
-            else return bbListenTo.apply( this, arguments );
-        };
+        return bbListenTo.apply( this, arguments );
+    };
+
+    [ 'Model', 'View', 'Collection' ].forEach( function( type ){
+        Backbone[ type ].prototype.listenTo = Backbone.Events.listenTo;
+    });
 
     // Optimized trigger function
     function fire2( events, a, b ){
@@ -1285,7 +1288,7 @@
                     'after:change'  : Nested.Model.prototype.__commitChange
                 };
 
-                var handleNestedChange = function(){
+                this._events[ triggerWhenChanged ] = function handleNestedChange(){
                     var attr = this.attributes[ name ];
 
                     if( this.__duringSet ){
@@ -1295,15 +1298,7 @@
                         bbSetSingleAttr( this, name, attr, bbForceUpdateAttr );
                     }
                 };
-
-                // TODO: Bug in backbone. Multiple events in map are not supported.
-                // Move workaround at to the base class...
-                triggerWhenChanged.split( ' ' ).forEach( function( event ){
-                    this._events[ event ] = handleNestedChange;
-                }, this );
             }
-
-
         }
     }).bind( Nested.Model, Nested.Collection );
 

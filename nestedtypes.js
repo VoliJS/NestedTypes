@@ -1029,10 +1029,10 @@
 
             define : function( protoProps, staticProps ){
                 var Base = Object.getPrototypeOf( this.prototype ).constructor,
-                    spec = parseDefaults( protoProps, Base ),
+                    spec = createDefinition( protoProps, Base ),
                     This = this;
 
-                Object.extend.Class.define.call( This, spec, staticProps, createNativeProperties( This, spec ) );
+                Object.extend.Class.define.call( This, spec, staticProps, createNativeProperties( spec ) );
 
                 var collectionSpec = { model : This };
                 spec.urlRoot && ( collectionSpec.url = spec.urlRoot );
@@ -1042,79 +1042,85 @@
             }
         });
 
-        function createCloneCtor( attrs ){
+        // Create constructor for efficient attributes clone operation.
+        function createCloneCtor( attrSpecs ){
             var statements = [];
-            for( var name in attrs ){
-                statements.push( "this." + name + "=x." + name + ";" );
-            }
+
+            for( var name in attrSpecs ) statements.push( "this." + name + "=x." + name + ";" );
 
             var Ctor = new Function( "x", statements.join('') );
 
             // make it look like vanilla object, so Model.set won't trigger an exception
             Ctor.prototype = Object.prototype;
+
             return Ctor;
         }
 
-        function parseDefaults( spec, Base ){
-            var defaultAttrs = _.isFunction( spec.defaults ) ? spec.defaults() : spec.defaults || spec.attributes || {},
-                defaults    = _.defaults( defaultAttrs, Base.prototype.__defaults ),
-                idAttrName      = spec.idAttribute || Base.prototype.idAttribute,
-                attributes = {};
+        // Create model definition from protoProps spec.
+        function createDefinition( protoProps, Base ){
+            var selfDefaults = _.isFunction( protoProps.defaults ) ? protoProps.defaults() : protoProps.defaults || protoProps.attributes || {},
+                allDefaults    = _.defaults( selfDefaults, Base.prototype.__defaults ),
+                idAttribute      = protoProps.idAttribute || Base.prototype.idAttribute,
+                attrSpecs = {};
 
-            _.each( defaults, function( attr, name ){
+            _.each( allDefaults, function( attr, name ){
                 var attrSpec = Nested.options.create( attr, name );
 
-                name in defaultAttrs || ( attrSpec.createPropertySpec = false );
+                name in selfDefaults || ( attrSpec.createPropertySpec = false );
 
-                attributes[ name ] = attrSpec;
+                attrSpecs[ name ] = attrSpec;
             });
 
             // Handle id attribute, whenever it was defined or not...
-            var idAttr = attributes[ idAttrName ] ||
-                ( attributes[ idAttrName ] = Nested.options({ value : undefined } ).createAttribute( idAttrName ) );
+            var idAttr = attrSpecs[ idAttribute ] ||
+                ( attrSpecs[ idAttribute ] = Nested.options({ value : undefined } ).createAttribute( idAttribute ) );
 
             'value' in idAttr || ( idAttr.value = undefined ); // id attribute must have no default value
 
-            if( idAttrName === 'id' ){
+            if( idAttribute === 'id' ){
                 idAttr.createPropertySpec = false; // to prevent conflict with backbone's model 'id'
             }
 
-            return _.extend( _.omit( spec, 'collection', 'attributes' ), {
-                __defaults  : defaults, // needed for attributes inheritance
-                __attributes : attributes,
-                defaults : _.isFunction( spec.defaults ) ? spec.defaults : createDefaults( attributes ),
-                Attributes : createCloneCtor( attributes )
+            return _.extend( _.omit( protoProps, 'collection', 'attributes' ), {
+                __defaults  : allDefaults, // needed for attributes inheritance
+                __attributes : attrSpecs,
+                defaults : _.isFunction( protoProps.defaults ) ? protoProps.defaults : createDefaults( attrSpecs ),
+                Attributes : createCloneCtor( attrSpecs )
             });
         }
 
-        function createDefaults( attributes ){
-            var json = [], init = {}, refs = {};
+        // Create optimized model.defaults( attrs, options ) function
+        function createDefaults( attrSpecs ){
+            var statements = [], init = {}, refs = {};
 
-            _.each( attributes, function( attr, name ){
-                if( attr.value !== undefined ){
-                    if( JSON.isValid( attr.value ) ){
-                        json.push( 'this.' + name + '=' + JSON.stringify( attr.value ) + ';' );
+            // compile optimized constructor function to efficient deep copy of JSON literals in defaults
+            _.each( attrSpecs, function( attrSpec, name ){
+                if( attrSpec.value !== undefined ){
+                    if( JSON.isValid( attrSpec.value ) ){
+                        statements.push( 'this.' + name + '=' + JSON.stringify( attrSpec.value ) + ';' );
                     }
                     else{ // otherwise, copy it by reference.
-                        refs[ name ] = attr.value;
-                        json.push( 'this.' + name + '=r.' + name + ';' );
+                        refs[ name ] = attrSpec.value;
+                        statements.push( 'this.' + name + '=r.' + name + ';' );
                     }
                 }
                 else{
-                    if( attr.type ){
-                        init[ name ] = attr;
-                        json.push( 'this.' + name + '=i.' + name + '.create( o );' );
+                    if( attrSpec.type ){
+                        init[ name ] = attrSpec;
+                        statements.push( 'this.' + name + '=i.' + name + '.create( o );' );
                     }
 
                 }
             });
 
-            var Defaults = new Function( 'r', 'i', 'o', json.join( '' ) );
+            var Defaults = new Function( 'r', 'i', 'o', statements.join( '' ) );
             Defaults.prototype = Object.prototype;
 
+            // create model.defaults() function
             return function( attrs, options ){
                 var opts = options, name;
 
+                // 'collection' and 'parse' options must not be passed down to defaults nested models and collections
                 if( options && ( options.collection || options.parse ) ){
                     opts = {};
                     for( name in options ){
@@ -1124,13 +1130,14 @@
 
                 var defaults = new Defaults( refs, init, opts );
 
+                // assign attrs, overriding defaults
                 for( var name in attrs ) defaults[ name ] = attrs[ name ];
 
                 return defaults;
             }
         }
 
-        function createNativeProperties( This, spec ){
+        function createNativeProperties( spec ){
             var properties = {};
 
             if( spec.properties !== false ){

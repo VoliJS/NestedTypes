@@ -951,6 +951,8 @@
             },
 
             isValid : function( options ){
+                // todo: need to do something smart with validation logic
+                // something declarative on attributes level, may be
                 return ModelProto.isValid.call( this, options ) && _.every( this.attributes, function( attr ){
                     if( attr && attr.isValid ){
                         return attr.isValid( options );

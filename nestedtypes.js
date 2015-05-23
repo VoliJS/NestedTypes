@@ -237,9 +237,56 @@
      Model is required to implement Attributes constructor
      */
 
-    // trigger update for selected model attribute
-    function bbTriggerUpdate(model, key){
-        bbSetSingleAttr( model, key, model.attributes[ key ], bbForceUpdateAttr );
+    // Events
+    // ------------------------------------------
+    // Workaround for backbone 1.2.0 listenTo bug
+    var bbListenTo = Backbone.Events.listenTo;
+
+    Backbone.Events.listenTo = Backbone.Model.listenTo = Backbone.View.listenTo = Backbone.Collection.listenTo =
+        function( obj, events ){
+            if( typeof events === 'object' ){
+                for( var event in events ) bbListenTo.call( this, obj, event, events[ event ] );
+                return this;
+            }
+            else return bbListenTo.apply( this, arguments );
+        };
+
+    // Optimized trigger function
+    function fire2( events, a, b ){
+        if( events ){
+            for( var i = 0, l = events.length, ev; i < l; i ++ )
+                (ev = events[i]).callback.call(ev.ctx, a, b);
+        }
+    }
+
+    function fire3( events, a, b, c ){
+        if( events ){
+            for( var i = 0, l = events.length, ev; i < l; i ++ )
+                (ev = events[i]).callback.call(ev.ctx, a, b, c);
+        }
+    }
+
+    function fire4( events, a, b, c, d ){
+        if( events ){
+            for( var i = 0, l = events.length, ev; i < l; i ++ )
+                (ev = events[i]).callback.call(ev.ctx, a, b, c, d);
+        }
+    }
+
+    function trigger2( self, name, a, b ){
+        var _events = self._events;
+        if( _events ){
+            fire2( _events[ name ], a, b );
+            fire3( _events.all, name, a, b );
+        }
+    }
+
+    function trigger3( self, name, a, b, c ){
+        var _events = self._events;
+        if( _events ){
+            fire3( _events[ name ], a, b, c );
+            fire4( _events.all, name, a, b, c );
+        }
     }
 
     var bbForceUpdateAttr = {
@@ -272,7 +319,7 @@
         if( isChanged( current[ key ], val ) ){
             current[ key ] = val;
             model._pending = options;
-            model.trigger( 'change:' + key, model, val, options );
+            trigger3( model, 'change:' + key, model, val, options );
         }
 
         if( changing ) return model;
@@ -280,7 +327,7 @@
         while( model._pending ){
             options = model._pending;
             model._pending = false;
-            model.trigger( 'change', model, options );
+            trigger2( model, 'change', model, options );
         }
 
         model._pending  = false;
@@ -340,7 +387,7 @@
         if( !silent ) {
             if (changes.length) model._pending = options;
             for (var i = 0, l = changes.length; i < l; i++) {
-                model.trigger('change:' + changes[i], model, current[changes[i]], options);
+                trigger3( model, 'change:' + changes[i], model, current[changes[i]], options);
             }
         }
 
@@ -351,7 +398,7 @@
             while (model._pending) {
                 options = model._pending;
                 model._pending = false;
-                model.trigger('change', model, options);
+                trigger2( model, 'change', model, options);
             }
         }
 
@@ -1240,11 +1287,13 @@
                 };
 
                 var handleNestedChange = function(){
+                    var attr = this.attributes[ name ];
+
                     if( this.__duringSet ){
-                        this.__nestedChanges[ name ] = this.attributes[ name ];
+                        this.__nestedChanges[ name ] = attr;
                     }
                     else{
-                        bbTriggerUpdate( this, name );
+                        bbSetSingleAttr( this, name, attr, bbForceUpdateAttr );
                     }
                 };
 

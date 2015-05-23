@@ -455,6 +455,8 @@
         var Options = Object.extend({
             _options : {},
 
+            Attribute : null,
+
             constructor : function( spec ){
                 // special option used to guess types of primitive values and to distinguish value from type
                 if( 'typeOrValue' in spec ){
@@ -505,7 +507,7 @@
             // construct attribute with a given name and proper type.
             createAttribute : function( name ){
                 var options = this._options,
-                    Type = options.type ? options.type.NestedType : Attribute;
+                    Type = options.type ? options.type.NestedType : this.Attribute;
 
                 return new Type( name, options );
             }
@@ -693,6 +695,8 @@
                 };
             })()
         });
+
+        Options.prototype.Attribute = Attribute;
 
         function createOptions( spec ){
             return new Options( spec );
@@ -1329,12 +1333,12 @@
                 return value && typeof value === 'object' ? value.id : value;
             }
 
-            //TODO: This is now not the same as model spec.
-            return attrSpec = Nested.options({
-                value : null,
-
+            var attrSpec = Nested.options.Type.extend({
                 toJSON : clone,
                 clone : clone,
+
+                // Turn off default event maps handling
+                delegateEvents : function( x ){ return x; },
 
                 get : function( objOrId, name ){
 
@@ -1342,11 +1346,11 @@
                         var master = getMaster.call( this );
 
                         if( master && master.length ){
+                            // Resolve reference
                             objOrId = master.get( objOrId ) || null;
                             this.attributes[ name ] = objOrId;
 
-                            // TODO: it won't work cause the base Attribute class handle events
-                            // And it will brake when value will be changed
+                            // subscrive for events
                             objOrId && attrSpec.events && this.listenTo( objOrId, attrSpec.events );
                         }
                         else{
@@ -1359,20 +1363,28 @@
 
                 set : function( modelOrId, name ){
                     var current = this.attributes[ name ];
+
                     if( typeof modelOrId !== 'object' ){
+                        // Prevent assignment of the same id to the resolved object
                         if( current && typeof current === 'object' && current.id === modelOrId ) return;
                     }
                     else if( attrSpec.events && modelOrId ){
-                        this.listenTo( modelOrId, attrSpec.events ); //TODO same here
+                        // when model is assigned, subscribe for events
+                        this.listenTo( modelOrId, attrSpec.events );
                     }
 
-                    if( current && typeof current === 'object' ){
+                    // cancel events subscription for current object
+                    if( current && typeof current === 'object' ){ //todo: think of moving this at the base Attribute
                         this.stopListening( current );
                     }
 
                     return modelOrId;
                 }
             });
+
+            var options = Nested.options({ value : null });
+            options.Attribute = attrSpec;
+            return options;
         };
     })();
 

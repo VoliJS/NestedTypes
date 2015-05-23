@@ -212,15 +212,23 @@ define( function( require, exports, module ){
             it( 'can trigger/listen to backbone events', function(){
                 var C = Nested.Class.extend({
                     initialize : function(){
-                        this.listenTo( this, 'hello', function(){
-                            this.hello = true;
-                        })
+                        this.listenTo( this, {
+                            'hello' : function(){
+                                this.hello = true;
+                            },
+
+                            'a b c' : function(){
+                                this.abc = true;
+                            }
+                        });
                     }
                 });
 
                 var c = new C();
                 c.trigger( 'hello' );
                 c.hello.should.be.true;
+                c.trigger( 'b' );
+                c.abc.should.be.true;
             });
 
             it( 'can have explicitly defined native properties', function(){

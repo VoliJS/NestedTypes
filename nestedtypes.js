@@ -1003,15 +1003,9 @@
                 // todo: need to do something smart with validation logic
                 // something declarative on attributes level, may be
                 return ModelProto.isValid.call( this, options ) && _.every( this.attributes, function( attr ){
-                    if( attr && attr.isValid ){
-                        return attr.isValid( options );
-                    }
-                    else if( attr instanceof Date ){
-                        return !_.isNaN( attr.getTime() );
-                    }
-                    else{
-                        return !_.isNaN( attr );
-                    }
+                    if( attr && attr.isValid ) return attr.isValid( options );
+
+                    return attr instanceof Date ? !_.isNaN( attr.getTime() ) : !_.isNaN( attr );
                 });
             },
 
@@ -1033,7 +1027,7 @@
                     spec = createDefinition( protoProps, Base ),
                     This = this;
 
-                Object.extend.Class.define.call( This, spec, staticProps ); //todo: remove extended props functionality from Object.extend
+                Object.extend.Class.define.call( This, spec, staticProps );
 
                 // define Collection
                 var collectionSpec = { model : This };
@@ -1160,15 +1154,11 @@
 
         function wrapCall( func ){
             return function(){
-                if( !this.__changing++ ){
-                    this.trigger( 'before:change' );
-                }
+                if( !this.__changing++ ) this.trigger( 'before:change' );
 
                 var res = func.apply( this, arguments );
 
-                if( !--this.__changing ){
-                    this.trigger( 'after:change' );
-                }
+                if( !--this.__changing ) this.trigger( 'after:change' );
 
 				return res;
             };
@@ -1206,21 +1196,21 @@
 
             set: wrapCall( function( models, options ){
                 if( models ){
-                    if( typeof models !== 'object' || !(
-                        models instanceof Array || models instanceof Nested.Model || Object.getPrototypeOf( models ) === Object.prototype ) ){
+                    if( typeof models !== 'object' ||
+                        !( models instanceof Array || models instanceof Nested.Model || Object.getPrototypeOf( models ) === Object.prototype ) ){
                         Nested.error.wrongCollectionSetArg( this, models );
                     }
                 }
+
                 return CollectionProto.set.call( this, models, options );
             }),
-            remove: wrapCall( CollectionProto.remove ),
-            add: wrapCall( CollectionProto.add ),
-            reset: wrapCall( CollectionProto.reset ),
-            sort: wrapCall( CollectionProto.sort ),
 
-            getModelIds : function(){
-                return _.pluck( this.models, 'id' );
-            }
+            remove : wrapCall( CollectionProto.remove ),
+            add    : wrapCall( CollectionProto.add ),
+            reset  : wrapCall( CollectionProto.reset ),
+            sort   : wrapCall( CollectionProto.sort ),
+
+            getModelIds : function(){ return _.pluck( this.models, 'id' ); }
         },{
             defaults : function( attrs ){
                 return this.prototype.model.extend({ defaults : attrs }).Collection;

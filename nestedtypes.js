@@ -1044,20 +1044,6 @@
             }
         });
 
-        // Create constructor for efficient attributes clone operation.
-        function createCloneCtor( attrSpecs ){
-            var statements = [];
-
-            for( var name in attrSpecs ) statements.push( "this." + name + "=x." + name + ";" );
-
-            var Ctor = new Function( "x", statements.join('') );
-
-            // make it look like vanilla object, so Model.set won't trigger an exception
-            Ctor.prototype = Object.prototype;
-
-            return Ctor;
-        }
-
         // Create model definition from protoProps spec.
         function createDefinition( protoProps, Base ){
             var defaults = protoProps.defaults || protoProps.attributes || {},
@@ -1084,22 +1070,40 @@
             });
         }
 
+        // Create constructor for efficient attributes clone operation.
+        function createCloneCtor( attrSpecs ){
+            var statements = [];
+
+            for( var name in attrSpecs ) statements.push( "this." + name + "=x." + name + ";" );
+
+            var Attributes = new Function( "x", statements.join('') );
+
+            // attributes hash must look like vanilla object, otherwise Model.set will trigger an exception
+            Attributes.prototype = Object.prototype;
+
+            return Attributes;
+        }
+
         // Create optimized model.defaults( attrs, options ) function
         function createDefaults( attrSpecs ){
             var statements = [], init = {}, refs = {};
 
-            // compile optimized constructor function to efficient deep copy of JSON literals in defaults
+            // Compile optimized constructor function for efficient deep copy of JSON literals in defaults.
             _.each( attrSpecs, function( attrSpec, name ){
                 if( attrSpec.value !== undefined ){
+                    // If value is given, type casting logic will do the job later, converting value to the proper type.
                     if( JSON.isValid( attrSpec.value ) ){
+                        // JSON literals must be deep copied.
                         statements.push( 'this.' + name + '=' + JSON.stringify( attrSpec.value ) + ';' );
                     }
-                    else{ // otherwise, copy it by reference.
+                    else{
+                        // otherwise, copy value by reference.
                         refs[ name ] = attrSpec.value;
                         statements.push( 'this.' + name + '=r.' + name + ';' );
                     }
                 }
                 else{
+                    // if type with no value is given, create an empty object
                     if( attrSpec.type ){
                         init[ name ] = attrSpec;
                         statements.push( 'this.' + name + '=i.' + name + '.create( o );' );
@@ -1111,11 +1115,12 @@
             var Defaults = new Function( 'r', 'i', 'o', statements.join( '' ) );
             Defaults.prototype = Object.prototype;
 
-            // create model.defaults() function
+            // Create model.defaults( attrs, options ) function
+            // 'attrs' will override default values, options will be passed to nested backbone types
             return function( attrs, options ){
                 var opts = options, name;
 
-                // 'collection' and 'parse' options must not be passed down to defaults nested models and collections
+                // 'collection' and 'parse' options must not be passed down to default nested models and collections
                 if( options && ( options.collection || options.parse ) ){
                     opts = {};
                     for( name in options ){
@@ -1132,6 +1137,7 @@
             }
         }
 
+        // Create native properties for model's attributes
         function createAttrsNativeProps( properties, attrSpecs ){
             if( properties === false ) return {};
 

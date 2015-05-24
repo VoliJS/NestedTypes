@@ -177,18 +177,9 @@
     // Optimized Backbone Core functions
     // =================================
 
-    /* AttrSpec is required to provide two methods:
-        transform( value, options, model, name ) -> value
-            to transform value before assignment
-
-        isChanged( value1, value2 ) -> bool
-            to detect whenever attribute must be assigned and counted as changed
-
-     Model is required to implement Attributes constructor for attributes cloning.
-     */
-
     // Events
     // ------------------------------------------
+
     // Workaround for backbone 1.2.0 listenTo event maps bug
     var bbListenTo = Backbone.Events.listenTo;
     Backbone.Events.listenTo = function( obj, events ){
@@ -204,7 +195,7 @@
         Backbone[ type ].prototype.listenTo = Backbone.Events.listenTo;
     });
 
-    // Hard to believe :) Optimized JIT-friendly event trigger functions to be used from model.set
+    // So hard to believe :) You won't. Optimized JIT-friendly event trigger functions to be used from model.set
     // Two specialized functions for event triggering...
     function trigger2( self, name, a, b ){
         var _events = self._events;
@@ -222,7 +213,7 @@
         }
     }
 
-    // ...and specialized functions with triggering loops
+    // ...and specialized functions with triggering loops. Crappy JS JIT loves these small functions and code duplication.
     function _fireEvent2( events, a, b ){
         if( events )
             for( var i = 0, l = events.length, ev; i < l; i ++ )
@@ -243,9 +234,20 @@
 
     // Optimized Model.set functions
     //---------------------------------
-    // Does two main things:
-    // 1) Invoke model-specific constructor for attributes cloning. It improves performance on large model updates.
-    // 2) Invoke attribute-specific comparison function. Improves performance for everything, especially nested stuff.
+    /*
+        Does two main things:
+        1) Invoke model-specific constructor for attributes cloning. It improves performance on large model updates.
+        2) Invoke attribute-specific comparison function. Improves performance for everything, especially nested stuff.
+
+        attrSpec is required to provide two methods:
+            transform( value, options, model, name ) -> value
+                to transform value before assignment
+
+            isChanged( value1, value2 ) -> bool
+                to detect whenever attribute must be assigned and counted as changed
+
+        Model is required to implement Attributes constructor for attributes cloning.
+     */
 
     // Special case set: used from model's native properties.
     // Single attribute change, no options, _no_ _nested_ _changes_ detection on deep update.
@@ -392,11 +394,15 @@
         },
 
         unknownAttribute : function( context, name, value ){
-            context.suppressTypeErrors || console.error( '[Type Error] Attribute has no default value in ' + context.__class + '.set( "' + name + '",', value, '); this =', context );
+            // Better don't throw exceptions from here. Or you'll deal with dozens on them one by one instead of
+            // seeing them all at once in a console. Bad experience, you don't want it, trust me.
+            context.suppressTypeErrors || console.error( '[Type Error] Attribute has no default value in ' +
+                                         context.__class + '.set( "' + name + '",', value, '); this =', context );
         },
 
         wrongCollectionSetArg : function( context, value ){
-            console.error( '[Type Error] Wrong argument type in ' + context.__class + '.set(', value, '); this =', context );
+            //console.error( '[Type Error] Wrong argument type in ' + context.__class + '.set(', value, '); this =', context );
+            throw new TypeError( 'Wrong argument type in ' + context.__class + '.set(', value, ')' );
         }
     });
 
@@ -416,9 +422,9 @@
         var availableOptions = [ 'triggerWhenChanged', 'parse', 'clone', 'toJSON', 'value', 'cast', 'create', 'name', 'value', 'type' ];
 
         var Options = Object.extend({
-            _options : {},
+            _options : {}, // attribute options
 
-            Attribute : null,
+            Attribute : null, // default attribute spec when no type is given, is set to Attribute below
 
             constructor : function( spec ){
                 // special option used to guess types of primitive values and to distinguish value from type
@@ -1300,13 +1306,13 @@
 
     Nested.Model.from = Nested.Model.From = Nested.Model.RefTo = ( function(){
         return function( masterCollection ){
-            var getMaster = parseReference( masterCollection ), attrSpec;
+            var getMaster = parseReference( masterCollection );
 
             function clone( value ){
                 return value && typeof value === 'object' ? value.id : value;
             }
 
-            var attrSpec = Nested.options.Type.extend({
+            var ModelRefAtribute = Nested.options.Type.extend({
                 toJSON : clone,
                 clone : clone,
 
@@ -1324,6 +1330,7 @@
                             this.attributes[ name ] = objOrId;
 
                             // subscrive for events
+                            var attrSpec = this.__attributes[ name ];
                             objOrId && attrSpec.events && this.listenTo( objOrId, attrSpec.events );
                         }
                         else{
@@ -1335,7 +1342,8 @@
                 },
 
                 set : function( modelOrId, name ){
-                    var current = this.attributes[ name ];
+                    var current = this.attributes[ name ],
+                        attrSpec = this.__attributes[ name ];
 
                     if( typeof modelOrId !== 'object' ){
                         // Prevent assignment of the same id to the resolved object
@@ -1356,7 +1364,7 @@
             });
 
             var options = Nested.options({ value : null });
-            options.Attribute = attrSpec;
+            options.Attribute = ModelRefAtribute; //todo: consider moving this to the attrSpec
             return options;
         };
     })();

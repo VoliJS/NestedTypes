@@ -352,7 +352,8 @@
         if( !silent ) {
             if (changes.length) model._pending = options;
             for (var i = 0, l = changes.length; i < l; i++) {
-                trigger3( model, 'change:' + changes[i], model, current[changes[i]], options);
+                attr = changes[ i ];
+                trigger3( model, 'change:' + attr, model, current[ attr ], options);
             }
         }
 
@@ -505,16 +506,19 @@
                     value = this.cast( val, options, model ),
                     prev = model.attributes[ name ];
 
-                if( value === prev ) return prev;
+                if( this.isChanged( value, prev ) ){
+                    value = this.set.call( model, value, name );
+                    if( value !== undefined ) return this.cast( value, options, model );
+                }
 
-                value = this.set.call( model, value, name );
-                return value === undefined ? prev : this.cast( value, options, model );
+                return prev;
             },
 
             hook : function( value, options, model ){
-                var name = this.name;
-                var prev = model.attributes[ name ];
-                return value === prev ? prev : this.set.call( model, value, name );
+                var name = this.name,
+                    prev = model.attributes[ name ];
+
+                return this.isChanged( value, prev ) ? this.set.call( model, value, name ) : prev;
             },
 
             delegateAndMore : function ( val, options, model, attr ){
@@ -542,7 +546,7 @@
             events : null, // { event : handler, ... }
 
             // system events
-            _events : null, // { event : handler, ... }
+            __events : null, // { event : handler, ... }
 
             // create empty object passing backbone options to constructor...
             // must be overriden for backbone types only
@@ -595,19 +599,19 @@
             _transform : null,
             transform : function( value ){ return value; },
 
-            // delegate user and system events
-            delegateEvents : function( value, options, model, attr ){
-                var prev = model.attributes[ attr ];
+            // delegate user and system events on attribute transform
+            delegateEvents : function( value, options, model, name ){// todo: move to set?
+                var prev = model.attributes[ name ];
 
-                if( prev !== value ){
-                    prev && model.stopListening( prev );
+                if( this.isChanged( prev, value ) ){ //should be changed only when attr is really replaced.
+                    prev && prev.trigger && model.stopListening( prev );
 
-                    if( value ){
-                        this.events && model.listenTo( value, this.events );
-                        this._events && model.listenTo( value, this._events );
+                    if( value && value.trigger ){
+                        if( this.events )   model.listenTo( value, this.events );
+                        if( this.__events ) model.listenTo( value, this.__events );
                     }
 
-                    model.trigger( 'replace:' + attr, model, prev, value );
+                    model.trigger( 'replace:' + name, model, prev, value );
                 }
 
                 return value;
@@ -639,7 +643,7 @@
                 // assemble optimized transform function...
                 if( this.cast )   this.transform = this._transform = this.cast;
                 if( this.set )    this.transform = this._transform = this.cast ? transform.hookAndCast : transform.hook;
-                if( this.events || this._events ) this.transform = this._transform ? transform.delegateAndMore : this.delegateEvents ;
+                if( this.events || this.__events ) this.transform = this._transform ? transform.delegateAndMore : this.delegateEvents ;
             }
         },{
             bind : ( function(){
@@ -1226,7 +1230,7 @@
 
         createPropertySpec : function(){
             // if there are nested changes detection enabled, disable optimized setter
-            if( this._events ){
+            if( this.__events ){
                 return ( function( self, name, get ){
                     return {
                         set : function( value ){
@@ -1272,12 +1276,12 @@
 
             if( triggerWhenChanged ){
                 // for collection, add transactional methods to join change events on bubbling
-                this._events = this.isModel ? {} : {
+                this.__events = this.isModel ? {} : {
                     'before:change' : Nested.Model.prototype.__beginChange,
                     'after:change'  : Nested.Model.prototype.__commitChange
                 };
 
-                this._events[ triggerWhenChanged ] = function handleNestedChange(){
+                this.__events[ triggerWhenChanged ] = function handleNestedChange(){
                     var attr = this.attributes[ name ];
 
                     if( this.__duringSet ){
@@ -1312,24 +1316,29 @@
                 return value && typeof value === 'object' ? value.id : value;
             }
 
-            var ModelRefAtribute = Nested.options.Type.extend({
+            var ModelRefAttribute = Nested.options.Type.extend({
                 toJSON : clone,
-                clone : clone,
+                clone  : clone,
 
-                // Turn off default event maps handling
-                delegateEvents : function( x ){ return x; },
+                isChanged : function( a, b ){
+                    // refs are equal when their id is equal.
+                    var aId = a && typeof a == 'object' ? a.id : a,
+                        bId = b && typeof b == 'object' ? b.id : b;
+
+                    return aId !== bId;
+                },
 
                 get : function( objOrId, name ){
-
                     if( typeof objOrId !== 'object' ){
+                        // Resolve reference.
                         var master = getMaster.call( this );
 
                         if( master && master.length ){
-                            // Resolve reference
+                            // Silently update attribute with object form master.
                             objOrId = master.get( objOrId ) || null;
                             this.attributes[ name ] = objOrId;
 
-                            // subscrive for events
+                            // Subscribe for events manually. delegateEvents won't be invoked.
                             var attrSpec = this.__attributes[ name ];
                             objOrId && attrSpec.events && this.listenTo( objOrId, attrSpec.events );
                         }
@@ -1339,32 +1348,11 @@
                     }
 
                     return objOrId;
-                },
-
-                set : function( modelOrId, name ){
-                    var current = this.attributes[ name ],
-                        attrSpec = this.__attributes[ name ];
-
-                    if( typeof modelOrId !== 'object' ){
-                        // Prevent assignment of the same id to the resolved object
-                        if( current && typeof current === 'object' && current.id === modelOrId ) return;
-                    }
-                    else if( attrSpec.events && modelOrId ){
-                        // when model is assigned, subscribe for events
-                        this.listenTo( modelOrId, attrSpec.events );
-                    }
-
-                    // cancel events subscription for current object
-                    if( current && typeof current === 'object' ){ //todo: think of moving this at the base Attribute
-                        this.stopListening( current );
-                    }
-
-                    return modelOrId;
                 }
             });
 
             var options = Nested.options({ value : null });
-            options.Attribute = ModelRefAtribute; //todo: consider moving this to the attrSpec
+            options.Attribute = ModelRefAttribute; //todo: consider moving this to the attrSpec
             return options;
         };
     })();

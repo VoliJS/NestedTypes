@@ -942,18 +942,25 @@
             },
 
             constructor : function(attributes, options){
-                var attrs       = attributes || {};
+                var attrSpecs = this.__attributes,
+                    attrs       = attributes || {};
+
                 options || (options = {});
                 this.cid        = _.uniqueId( 'c' );
                 this.attributes = {};
                 if( options.collection ) this.collection = options.collection;
                 if( options.parse ) attrs = this.parse( attrs, options ) || {};
 
-                var withDefaults = options.deep ?
-                                        cloneAttrs( this.__attributes, attrs, options ) :
+                attrs = options.deep ?
+                                        cloneAttrs( attrSpecs, attrs, options ) : //TODO: can be compiled
                                         this.defaults( attrs, options );
 
-                setAttrs( this, withDefaults, options );
+                // Execute attributes transform function instead of this.set
+                for( var name in attrs ){
+                    attrs[ name ] = attrSpecs[ name ].transform( attrs[ name ], options, this, name );
+                }
+
+                this.attributes = attrs;
                 this.changed = {};
                 this.initialize.apply( this, arguments );
             },

@@ -1371,7 +1371,7 @@
         var CollectionProto = Nested.Collection.prototype;
 
         var refsCollectionSpec = {
-            triggerWhenChanged : "update reset",
+            triggerWhenChanged : "update reset", // don't bubble changes from models
             __class : 'Collection.SubsetOf',
 
             resolvedWith : null,

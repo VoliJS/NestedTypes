@@ -889,18 +889,23 @@
                 }
             },
 
+            // Return model's value for dot-separated 'deep reference'.
+            // Model id and cid are allowed for collection elements.
+            // If path is not exist, 'undefined' is returned.
+            // model.deepGet( 'a.b.c123.x' )
             deepGet : function( name ){
-                var path = name.split( '.' ),
-                    l = path.length,
-                    value = this;
+                var path = name.split( '.' ), value = this;
 
-                for( var i = 0; value && i < l; i++ ){
+                for( var i = 0, l = path.length; value && i < l; i++ ){
                     value = value.get ? value.get( path[ i ] ) : value[ path[ i ] ];
                 }
 
                 return value;
             },
 
+            // Set model's value for dot separated 'deep reference'.
+            // If model doesn't exist at some path, create default models
+            // if options.nullify is given, assign attributes with nulls
             deepSet : function( name, value, options ){
                 var path = name.split( '.' ),
                     l = path.length - 1,
@@ -908,22 +913,27 @@
                     attr = path[ l ];
 
                 for( var i = 0; i < l; i++ ){
-                    var next = model.get ? model.get( path[ i ] ) : model[ path[ i ] ];
+                    var current = path[ i ],
+                        next = model.get ? model.get( current ) : model[ current ];
+
+                    // Create models in path, if they are not exist.
                     if( !next ){
-                        if( model.defaults ){
-                            var newModel = model.__attributes[ path[ i ] ].create();
-                            if( options && options.nullify && newModel.defaults ){
-                                var nulls = newModel.defaults();
-                                _.each( nulls, function( spec, name ){
-                                    nulls[ name ] = null;
-                                });
+                        var attrSpecs = model.__attributes;
+
+                        if( attrSpecs ){
+                            // If current object is model, create default attribute
+                            var newModel = attrSpecs[ current ].create( options );
+
+                            // If created object is model, nullify attributes when requested
+                            if( options && options.nullify && newModel.__attributes ){
+                                var nulls = new newModel.Attributes( {} );
+                                for( var key in nulls ) nulls[ key ] = null;
                                 newModel.set( nulls );
                             }
-                            model.set( path[ i ], newModel );
-                            next = model.get( path[ i ] );
-                        }else{
-                            return;
+
+                            model[ current ] = next = newModel;
                         }
+                        else return; // silently fail in other case
                     }
                     model = next;
                 }

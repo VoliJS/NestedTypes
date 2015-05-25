@@ -391,19 +391,21 @@
     // Extend Object+ type errors with NestedTypes specific error types...
     Nested.error = Object.assign( Object.extend.error, {
         argumentIsNotAnObject : function( context, value ){
-            throw new TypeError( 'Attribute hash is not an object in ' + context.__class + '.set(', value, ')' );
+            if( typeof value === 'string' ) value = '"' + value + '"';
+            console.error( '[Type Error] Attribute hash is not an object in ' + context.__class + '.set(', value, '); this =', context );
+            //throw new TypeError( 'Attribute hash is not an object in ' + context.__class + '.set(', value, ')' );
         },
 
         unknownAttribute : function( context, name, value ){
-            // Better don't throw exceptions from here. Or you'll deal with dozens on them one by one instead of
-            // seeing them all at once in a console. Bad experience, you don't want it, trust me.
-            context.suppressTypeErrors || console.error( '[Type Error] Attribute has no default value in ' +
+            if( typeof value === 'string' ) value = '"' + value + '"';
+            context.suppressTypeErrors || console.warn( '[Type Error] Attribute has no default value in ' +
                                          context.__class + '.set( "' + name + '",', value, '); this =', context );
         },
 
         wrongCollectionSetArg : function( context, value ){
-            //console.error( '[Type Error] Wrong argument type in ' + context.__class + '.set(', value, '); this =', context );
-            throw new TypeError( 'Wrong argument type in ' + context.__class + '.set(', value, ')' );
+            if( typeof value === 'string' ) value = '"' + value + '"';
+            console.error( '[Type Error] Wrong argument type in ' + context.__class + '.set(', value, '); this =', context );
+            //throw new TypeError( 'Wrong argument type in ' + context.__class + '.set(' + value + ')' );
         }
     });
 
@@ -508,17 +510,22 @@
 
                 if( this.isChanged( value, prev ) ){
                     value = this.set.call( model, value, name );
-                    if( value !== undefined ) return this.cast( value, options, model );
+                    return value === undefined ? prev : this.cast( value, options, model );
                 }
 
-                return prev;
+                return value;
             },
 
             hook : function( value, options, model ){
                 var name = this.name,
                     prev = model.attributes[ name ];
 
-                return this.isChanged( value, prev ) ? this.set.call( model, value, name ) : prev;
+                if( this.isChanged( value, prev ) ){
+                    var changed = this.set.call( model, value, name );
+                    return changed === undefined ? prev : changed;
+                }
+
+                return value;
             },
 
             delegateAndMore : function ( val, options, model, attr ){
@@ -840,12 +847,13 @@
                 }
             },
 
-            __attributes: { id : Nested.options({ name: 'id', value : undefined } ).createAttribute( 'id' ) },
+            __attributes: { id : Nested.options({ value : undefined } ).createAttribute( 'id' ) },
             __class : 'Model',
 
             __duringSet: 0,
 
             defaults : function(){ return {}; },
+
             __beginChange : function(){
                 this.__duringSet++ || ( this.__nestedChanges = {} );
             },
@@ -951,13 +959,23 @@
                 if( options.collection ) this.collection = options.collection;
                 if( options.parse ) attrs = this.parse( attrs, options ) || {};
 
-                attrs = options.deep ?
-                                        cloneAttrs( attrSpecs, attrs, options ) : //TODO: can be compiled
-                                        this.defaults( attrs, options );
+                if( typeof attrs !== 'object' || Object.getPrototypeOf( attrs ) !== Object.prototype ){
+                    Nested.error.argumentIsNotAnObject( this, attrs );
+                    attrs = {};
+                }
+                else{
+                    attrs = options.deep ?
+                        cloneAttrs( attrSpecs, attrs, options ) : //TODO: can be compiled
+                        this.defaults( attrs, options );
 
-                // Execute attributes transform function instead of this.set
-                for( var name in attrs ){
-                    attrs[ name ] = attrSpecs[ name ].transform( attrs[ name ], options, this, name );
+                    // Execute attributes transform function instead of this.set
+                    for( var name in attrs ){
+                        var attrSpec = attrSpecs[ name ];
+                        if( attrSpec ){
+                            attrs[ name ] = attrSpec.transform( attrs[ name ], options, this, name );
+                        }
+                        else Nested.error.unknownAttribute( this, name, attrs[ name ] );
+                    }
                 }
 
                 this.attributes = attrs;
@@ -973,7 +991,7 @@
             },
 
             // Create deep copy for all nested objects...
-            deepClone : function(){ this.clone({ deep : true }); },
+            deepClone : function(){ return this.clone({ deep : true }); },
 
             // Support for nested models and objects.
             // Apply toJSON recursively to produce correct JSON.
@@ -1033,24 +1051,28 @@
         // Create model definition from protoProps spec.
         function createDefinition( protoProps, Base ){
             var defaults = protoProps.defaults || protoProps.attributes || {},
-                defaultsAsFunction = typeof defaults == 'function' && defaults;
+                defaultsAsFunction = typeof defaults == 'function' && defaults,
+                baseAttrSpecs = Base.prototype.__attributes;
 
             // Support for legacy backbone defaults as functions.
             if( defaultsAsFunction ) defaults = defaults();
 
             var attrSpecs = Object.transform( {}, defaults, Nested.options.create );
 
-            // Prevent conflict with backbone's model 'id'
-            var idAttribute  = protoProps.idAttribute || Base.prototype.idAttribute;
-
-            if( idAttribute === 'id' ){
-                var idAttrSpec = attrSpecs[ idAttribute ];
-                if( idAttrSpec ) idAttrSpec.createPropertySpec = false;
+            // Create attribute for idAttribute, if it's not declared explicitly
+            var idAttribute  = protoProps.idAttribute;
+            if( !attrSpecs[ idAttribute ] ){
+                attrSpecs[ idAttribute ] = Nested.options({ value : undefined } ).createAttribute( idAttribute );
             }
 
+            // Prevent conflict with backbone model's 'id' property
+            if( attrSpecs[ 'id' ] ) attrSpecs[ 'id' ].createPropertySpec = false;
+
+            var allAttrSpecs = _.defaults( {}, attrSpecs, baseAttrSpecs );
+
             return _.extend( _.omit( protoProps, 'collection', 'attributes' ), {
-                __attributes : _.defaults( attrSpecs, Base.prototype.__attributes ),
-                defaults     : defaultsAsFunction || createDefaults( attrSpecs ),
+                __attributes : allAttrSpecs,
+                defaults     : defaultsAsFunction || createDefaults( allAttrSpecs ),
                 properties   : createAttrsNativeProps( protoProps.properties, attrSpecs ),
                 Attributes   : createCloneCtor( attrSpecs )
             });
@@ -1178,7 +1200,7 @@
         }
 
         Collection = Backbone.Collection.extend({
-            triggerWhenChanged: 'change update reset',
+            triggerWhenChanged: Backbone.VERSION >= '1.2.0' ? 'update change reset' : 'add remove change reset',
             __class : 'Collection',
 
 			model : Nested.Model,
@@ -1378,7 +1400,7 @@
         var CollectionProto = Nested.Collection.prototype;
 
         var refsCollectionSpec = {
-            triggerWhenChanged : "update reset", // don't bubble changes from models
+            triggerWhenChanged : Backbone.VERSION >= '1.2.0' ? 'update reset' : 'add remove reset', // don't bubble changes from models
             __class : 'Collection.SubsetOf',
 
             resolvedWith : null,

@@ -292,17 +292,10 @@
     }
 
     // attrSpec mock for the case of missing attribute spec
-    var bbGenericAttr = new ( function(){
-        this.isChanged = function( a, b ){
-            return !( a === b || ( a && b && typeof a == 'object' && typeof b == 'object' && _.isEqual( a, b ) ) );
-        };
-    } );
+    var bbGenericAttr;
 
     // helper attrSpec mock to force attribute update
-    var bbForceUpdateAttr = new ( function(){
-        this.isChanged = function(){ return true; };
-        this.transform = function( x ){ return x; };
-    } );
+    var bbForceUpdateAttr;
 
     // General case set: used for multiple and nested model/collection attributes.
     // Does _not_ invoke attribute transform! It must be done at the the top level,
@@ -561,7 +554,9 @@
 
             // optimized general purpose isEqual function for typeless attributes
             // must be overriden in subclass
-            isChanged : bbGenericAttr.isChanged,
+            isChanged : function( a, b ){
+                return !( a === b || ( a && b && typeof a == 'object' && typeof b == 'object' && _.isEqual( a, b ) ) );
+            },
 
             // generic clone function for typeless attributes
             // Must be overriden in sublass
@@ -675,6 +670,12 @@
                 };
             })()
         });
+
+        bbGenericAttr = new Attribute();
+
+        bbForceUpdateAttr = new ( Attribute.extend({
+            isChanged : function(){ return true; }
+        }) );
 
         Options.prototype.Attribute = Attribute;
 

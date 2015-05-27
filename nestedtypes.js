@@ -1044,7 +1044,7 @@
 
             // Create attribute for idAttribute, if it's not declared explicitly
             var idAttribute  = protoProps.idAttribute;
-            if( !attrSpecs[ idAttribute ] ){
+            if( idAttribute && !attrSpecs[ idAttribute ] ){
                 attrSpecs[ idAttribute ] = Nested.options({ value : undefined } ).createAttribute( idAttribute );
             }
 
@@ -1052,7 +1052,7 @@
             if( attrSpecs[ 'id' ] ) attrSpecs[ 'id' ].createPropertySpec = false;
 
             var allAttrSpecs = _.defaults( {}, attrSpecs, baseAttrSpecs ),
-                Attributes = createCloneCtor( attrSpecs );
+                Attributes = createCloneCtor( allAttrSpecs );
 
             return _.extend( _.omit( protoProps, 'collection', 'attributes' ), {
                 __attributes : new Attributes( allAttrSpecs ),

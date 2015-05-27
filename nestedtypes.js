@@ -292,17 +292,17 @@
     }
 
     // attrSpec mock for the case of missing attribute spec
-    var bbGenericAttr = {
-        isChanged : function( a, b ){
+    var bbGenericAttr = new ( function(){
+        this.isChanged = function( a, b ){
             return !( a === b || ( a && b && typeof a == 'object' && typeof b == 'object' && _.isEqual( a, b ) ) );
-        }
-    };
+        };
+    } );
 
     // helper attrSpec mock to force attribute update
-    var bbForceUpdateAttr = {
-        isChanged : function(){ return true; },
-        transform : function( x ){ return x; }
-    };
+    var bbForceUpdateAttr = new ( function(){
+        this.isChanged = function(){ return true; };
+        this.transform = function( x ){ return x; };
+    } );
 
     // General case set: used for multiple and nested model/collection attributes.
     // Does _not_ invoke attribute transform! It must be done at the the top level,
@@ -794,23 +794,20 @@
     // Nested Backbone Types
     // =========================
 
-    // Deep set model attributes, catching nested attributes changes
-    function setAttrs( model, attrs, options ){
-        var attrSpecs = model.__attributes;
-        model.__beginChange();
-
+    function applyTransform( model, attrs, attrSpecs, options ){
         for( var name in attrs ){
-            var attrSpec = attrSpecs[ name ],
-                value = attrs[ name ];
-
+            var attrSpec = attrSpecs[ name ], value = attrs[ name ];
             if( attrSpec ){
                 attrs[ name ] = attrSpec.transform( value, options, model, name );
             }
-            else{
-                Nested.error.unknownAttribute( model, name, value );
-            }
+            else Nested.error.unknownAttribute( model, name, value );
         }
+    }
 
+    // Deep set model attributes, catching nested attributes changes
+    function setAttrs( model, attrs, options ){
+        model.__beginChange();
+        applyTransform( model, attrs, model.__attributes, options );
         model.__commitChange( attrs, options );
         return model;
     }
@@ -821,13 +818,11 @@
         var ModelProto = Backbone.Model.prototype;
 
         function cloneAttrs( attrSpecs, attrs, options ){
-            var cloned = {};
-
-            for( var name in attrSpecs ){
-                cloned[ name ] = attrSpecs[ name ].clone( attrs[ name ], options );
+            for( var name in attrs ){
+                attrs[ name ] = attrSpecs[ name ].clone( attrs[ name ], options );
             }
 
-            return cloned;
+            return attrs;
         }
 
         var Model = Backbone.Model.extend({
@@ -862,10 +857,12 @@
                 if( !--this.__duringSet ){
                     attrs || ( attrs =  {} );
 
+                    // Catch nested changes.
                     for( var name in this.__nestedChanges ){
                         name in attrs || ( attrs[ name ] = this.__nestedChanges[ name ] );
 
                         if( attrs[ name ] === this.attributes[ name ] ){
+                            // patch attributes to force bbSetAttrs to trigger change event
                             this.attributes[ name ] = null;
                         }
                     }
@@ -963,20 +960,13 @@
                     Nested.error.argumentIsNotAnObject( this, attrs );
                     attrs = {};
                 }
-                else{
-                    attrs = options.deep ?
-                        cloneAttrs( attrSpecs, attrs, options ) : //TODO: can be compiled
-                        this.defaults( attrs, options );
 
-                    // Execute attributes transform function instead of this.set
-                    for( var name in attrs ){
-                        var attrSpec = attrSpecs[ name ];
-                        if( attrSpec ){
-                            attrs[ name ] = attrSpec.transform( attrs[ name ], options, this, name );
-                        }
-                        else Nested.error.unknownAttribute( this, name, attrs[ name ] );
-                    }
-                }
+                attrs = options.deep ?
+                    cloneAttrs( attrSpecs, new this.Attributes( attrs ), options ) :
+                    this.defaults( attrs, options );
+
+                // Execute attributes transform function instead of this.set
+                applyTransform( this, attrs, attrSpecs, options );
 
                 this.attributes = attrs;
                 this.changed = {};
@@ -1068,13 +1058,14 @@
             // Prevent conflict with backbone model's 'id' property
             if( attrSpecs[ 'id' ] ) attrSpecs[ 'id' ].createPropertySpec = false;
 
-            var allAttrSpecs = _.defaults( {}, attrSpecs, baseAttrSpecs );
+            var allAttrSpecs = _.defaults( {}, attrSpecs, baseAttrSpecs ),
+                Attributes = createCloneCtor( attrSpecs );
 
             return _.extend( _.omit( protoProps, 'collection', 'attributes' ), {
-                __attributes : allAttrSpecs,
+                __attributes : new Attributes( allAttrSpecs ),
                 defaults     : defaultsAsFunction || createDefaults( allAttrSpecs ),
                 properties   : createAttrsNativeProps( protoProps.properties, attrSpecs ),
-                Attributes   : createCloneCtor( attrSpecs )
+                Attributes   : Attributes
             });
         }
 

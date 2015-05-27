@@ -291,11 +291,27 @@
         return model;
     }
 
+    // Deep set model attributes, catching nested attributes changes
+    function setAttrs( model, attrs, options ){
+        model.__beginChange();
+        applyTransform( model, attrs, model.__attributes, options );
+        model.__commitChange( attrs, options );
+        return model;
+    }
+
+    // transform attributes hash without apply
+    function applyTransform( model, attrs, attrSpecs, options ){
+        for( var name in attrs ){
+            var attrSpec = attrSpecs[ name ], value = attrs[ name ];
+            if( attrSpec ){
+                attrs[ name ] = attrSpec.transform( value, options, model, name );
+            }
+            else Nested.error.unknownAttribute( model, name, value );
+        }
+    }
+
     // attrSpec mock for the case of missing attribute spec
     var bbGenericAttr;
-
-    // helper attrSpec mock to force attribute update
-    var bbForceUpdateAttr;
 
     // General case set: used for multiple and nested model/collection attributes.
     // Does _not_ invoke attribute transform! It must be done at the the top level,
@@ -496,9 +512,8 @@
         }
 
         var transform = {
-            hookAndCast : function( val, options, model ){
-                var name = this.name,
-                    value = this.cast( val, options, model ),
+            hookAndCast : function( val, options, model, name ){
+                var value = this.cast( val, options, model, name ),
                     prev = model.attributes[ name ];
 
                 if( this.isChanged( value, prev ) ){
@@ -509,9 +524,8 @@
                 return value;
             },
 
-            hook : function( value, options, model ){
-                var name = this.name,
-                    prev = model.attributes[ name ];
+            hook : function( value, options, model, name ){
+                var prev = model.attributes[ name ];
 
                 if( this.isChanged( value, prev ) ){
                     var changed = this.set.call( model, value, name );
@@ -522,7 +536,7 @@
             },
 
             delegateAndMore : function ( val, options, model, attr ){
-                return this.delegateEvents( this._transform( val, options, model ), options, model, attr );
+                return this.delegateEvents( this._transform( val, options, model, attr ), options, model, attr );
             }
         };
 
@@ -673,10 +687,6 @@
 
         bbGenericAttr = new Attribute();
 
-        bbForceUpdateAttr = new ( Attribute.extend({
-            isChanged : function(){ return true; }
-        }) );
-
         Options.prototype.Attribute = Attribute;
 
         function createOptions( spec ){
@@ -794,24 +804,6 @@
 
     // Nested Backbone Types
     // =========================
-
-    function applyTransform( model, attrs, attrSpecs, options ){
-        for( var name in attrs ){
-            var attrSpec = attrSpecs[ name ], value = attrs[ name ];
-            if( attrSpec ){
-                attrs[ name ] = attrSpec.transform( value, options, model, name );
-            }
-            else Nested.error.unknownAttribute( model, name, value );
-        }
-    }
-
-    // Deep set model attributes, catching nested attributes changes
-    function setAttrs( model, attrs, options ){
-        model.__beginChange();
-        applyTransform( model, attrs, model.__attributes, options );
-        model.__commitChange( attrs, options );
-        return model;
-    }
 
     // Nested Model Definition
     // -----------------------
@@ -1249,6 +1241,12 @@
 
     // Backbone Attribute
     // ----------------
+
+    // helper attrSpec mock to force attribute update
+    var bbForceUpdateAttr = new ( Nested.options.Type.extend({
+        isChanged : function(){ return true; }
+    }));
+
     Nested.options.Type.extend({
         create : function( options ){ return new this.type( null, options ); },
         clone : function( value, options ){ return value && value.clone( options ); },
@@ -1278,9 +1276,9 @@
             else Nested.options.Type.prototype.createPropertySpec.call( this );
         },
 
-        cast : function( value, options, model ){
+        cast : function( value, options, model, name ){
             var incompatibleType = value != null && !( value instanceof this.type ),
-                existingModelOrCollection = model.attributes[ this.name ];
+                existingModelOrCollection = model.attributes[ name ];
 
             if( incompatibleType ){
                 if( existingModelOrCollection ){ // ...delegate update for existing object 'set' method

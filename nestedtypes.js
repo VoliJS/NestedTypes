@@ -842,7 +842,26 @@
 
             __duringSet: 0,
 
-            defaults : function(){ return {}; },
+            Defaults : function(){ this.id = undefined; },
+
+            defaults : function( attrs, options ){
+                var opts = options, name;
+
+                // 'collection' and 'parse' options must not be passed down to default nested models and collections
+                if( options && ( options.collection || options.parse ) ){
+                    opts = {};
+                    for( name in options ){
+                        if( name !== 'collection' && name !== 'parse' ) opts[ name ] = options[ name ];
+                    }
+                }
+
+                var defaults = new this.Defaults( this.__attributes, opts );
+
+                // assign attrs, overriding defaults
+                for( var name in attrs ) defaults[ name ] = attrs[ name ];
+
+                return defaults;
+            },
 
             __beginChange : function(){
                 this.__duringSet++ || ( this.__nestedChanges = {} );
@@ -1056,9 +1075,9 @@
             var allAttrSpecs = _.defaults( {}, attrSpecs, baseAttrSpecs ),
                 Attributes = createCloneCtor( allAttrSpecs );
 
-            return _.extend( _.omit( protoProps, 'collection', 'attributes' ), {
+            return _.extend( _.omit( protoProps, 'collection', 'attributes', 'defaults' ), {
                 __attributes : new Attributes( allAttrSpecs ),
-                defaults     : defaultsAsFunction || createDefaults( allAttrSpecs ),
+                Defaults     : createDefaults( allAttrSpecs ),
                 properties   : createAttrsNativeProps( protoProps.properties, attrSpecs ),
                 Attributes   : Attributes
             });
@@ -1101,14 +1120,13 @@
 
         // Create optimized model.defaults( attrs, options ) function
         function createDefaults( attrSpecs ){
-            var statements = [], init = {}, refs = {};
+            var statements = [];
 
             // Compile optimized constructor function for efficient deep copy of JSON literals in defaults.
             _.each( attrSpecs, function( attrSpec, name ){
                 if( attrSpec.value === undefined && attrSpec.type ){
                     // if type with no value is given, create an empty object
-                    init[ name ] = attrSpec;
-                    statements.push( 'this.' + name + '=i.' + name + '.create( o );' );
+                    statements.push( 'this.' + name + '=a.' + name + '.create( o );' );
                 }
                 else{
                     // If value is given, type casting logic will do the job later, converting value to the proper type.
@@ -1122,36 +1140,15 @@
                     }
                     else{
                         // otherwise, copy value by reference.
-                        refs[ name ] = attrSpec.value;
-                        statements.push( 'this.' + name + '=r.' + name + ';' );
+                        statements.push( 'this.' + name + '=a.' + name + '.value;' );
                     }
 
                 }
             });
 
-            var Defaults = new Function( 'r', 'i', 'o', statements.join( '' ) );
+            var Defaults = new Function( 'a', 'o', statements.join( '' ) );
             Defaults.prototype = Object.prototype;
-
-            // Create model.defaults( attrs, options ) function
-            // 'attrs' will override default values, options will be passed to nested backbone types
-            return function( attrs, options ){
-                var opts = options, name;
-
-                // 'collection' and 'parse' options must not be passed down to default nested models and collections
-                if( options && ( options.collection || options.parse ) ){
-                    opts = {};
-                    for( name in options ){
-                        if( name !== 'collection' && name !== 'parse' ) opts[ name ] = options[ name ];
-                    }
-                }
-
-                var defaults = new Defaults( refs, init, opts );
-
-                // assign attrs, overriding defaults
-                for( var name in attrs ) defaults[ name ] = attrs[ name ];
-
-                return defaults;
-            }
+            return Defaults;
         }
 
         // Create native properties for model's attributes

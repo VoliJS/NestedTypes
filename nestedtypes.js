@@ -392,7 +392,7 @@
     // Override Backbone's objects .extend...
     [ 'Model', 'Collection', 'View', 'Router', 'History' ].forEach( function( name ){
         var BackboneType = Backbone[ name ];
-        Object.extend.attach( BackboneType );
+        if( BackboneType ) Object.extend.attach( BackboneType );
     });
 
     Nested.Class = Object.extend.Class;
@@ -627,7 +627,7 @@
                         if( this.__events ) model.listenTo( value, this.__events );
                     }
 
-                    model.trigger( 'replace:' + name, model, prev, value );
+                    trigger3( model, 'replace:' + name, model, value, prev );
                 }
 
                 return value;
@@ -824,8 +824,10 @@
             properties : {
                 id : {
                     get : function(){
-                        var name = this.idAttribute; // TODO: add get event handling for id attr
-                        return name === 'id' ? this.attributes.id : this[ this.idAttribute ];
+                        var name = this.idAttribute;
+
+                        // TODO: get hook doesn't work for idAttribute === 'id'
+                        return name === 'id' ? this.attributes.id : this[ name ];
                     },
 
                     set : function( value ){
@@ -1103,23 +1105,25 @@
 
             // Compile optimized constructor function for efficient deep copy of JSON literals in defaults.
             _.each( attrSpecs, function( attrSpec, name ){
-                if( attrSpec.value !== undefined ){
+                if( attrSpec.value === undefined && attrSpec.type ){
+                    // if type with no value is given, create an empty object
+                    init[ name ] = attrSpec;
+                    statements.push( 'this.' + name + '=i.' + name + '.create( o );' );
+                }
+                else{
                     // If value is given, type casting logic will do the job later, converting value to the proper type.
                     if( isValidJSON( attrSpec.value ) ){
                         // JSON literals must be deep copied.
                         statements.push( 'this.' + name + '=' + JSON.stringify( attrSpec.value ) + ';' );
                     }
+                    else if( attrSpec.value === undefined ){
+                        // handle undefined value separately. Usual case for model ids.
+                        statements.push( 'this.' + name + '=undefined;' );
+                    }
                     else{
                         // otherwise, copy value by reference.
                         refs[ name ] = attrSpec.value;
                         statements.push( 'this.' + name + '=r.' + name + ';' );
-                    }
-                }
-                else{
-                    // if type with no value is given, create an empty object
-                    if( attrSpec.type ){
-                        init[ name ] = attrSpec;
-                        statements.push( 'this.' + name + '=i.' + name + '.create( o );' );
                     }
 
                 }
@@ -1231,8 +1235,16 @@
 
             getModelIds : function(){ return _.pluck( this.models, 'id' ); }
         },{
+            // Cache for subsetOf collection subclass.
+            __subsetOf : null,
             defaults : function( attrs ){
                 return this.prototype.model.extend({ defaults : attrs }).Collection;
+            },
+            extend : function(){
+                // Need to subsetOf cache when extending the collection
+                var This = Backbone.Collection.extend.apply( this, arguments );
+                This.__subsetOf = null;
+                return This;
             }
         });
 
@@ -1273,7 +1285,7 @@
                     }
                 } )( this, this.name, this.get );
             }
-            else Nested.options.Type.prototype.createPropertySpec.call( this );
+            else return Nested.options.Type.prototype.createPropertySpec.call( this );
         },
 
         cast : function( value, options, model, name ){
@@ -1471,7 +1483,7 @@
         };
 
         return function( masterCollection ){
-            var SubsetOf = this._subsetOf || ( this._subsetOf = this.extend( refsCollectionSpec ) );
+            var SubsetOf = this.__subsetOf || ( this.__subsetOf = this.extend( refsCollectionSpec ) );
             var getMaster = parseReference( masterCollection );
 
             return Nested.options({
@@ -1517,6 +1529,7 @@
                     var self = this;
 
                     _.each( this.attributes, function( element, name ){
+                        if( !element ) return;
                         var fetch = element.fetch;
                         if( fetch ){
                             element.fetch = function(){

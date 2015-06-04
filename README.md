@@ -1,22 +1,5 @@
-0.10.0 Release Notes
-====================
-- attribute get and set hooks
-    - they can be chained now. Thus, they work on Model.from and Collection.subsetOf
-    - they takes attribute name as second argument
-    - fixed bug in set hook (returning undefined didn't prevent attribute modification in some cases)
-- Model
-    - Model.defaults() - added syntax for inline nested model definitions.
-    - .isValid - fixed exception
-    - .set now report error when not a plain object is passed as argument.
-    - .deepClone now pass options through the nested calls
-    - Model constructor now pass options to the nested constructors in defaults (except 'parse' and 'collection')
-- Model.from: fixed bug (assignment of the same id to resolved reference caused unnecessary 'change' event)
-- Collection:
-    - Collection.defaults() - added syntax for inline nested collection definitions.
-    - 'sort' event now doesn't count as nested attribute update, and won't bubble (it caused multiple problems)
-- Collection.subsetOf improvements:
-    - Collections of different types now can be assigned to each other (model arrays will be passed to .set).
-    - Added set manipulation methods: toggle(), addAll(), removeAll(), justOne( model ).
+[![Master Build Status](https://travis-ci.org/Volicon/backbone.nestedTypes.svg?branch=master)](https://travis-ci.org/Volicon/backbone.nestedTypes)
+[![Develop Build Status](https://travis-ci.org/Volicon/backbone.nestedTypes.svg?branch=develop)](https://travis-ci.org/Volicon/backbone.nestedTypes)
 
 backbone.nestedTypes
 ====================

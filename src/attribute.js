@@ -287,3 +287,98 @@ createOptions.create = function( options, name ){
 };
 
 module.exports = createOptions;
+
+// Attribute Type definitions for core JS types
+// ============================================
+// Constructors Attribute
+// ----------------
+Attribute.extend({
+    cast : function( value ){
+        return value == null || value instanceof this.type ? value : new this.type( value );
+    },
+
+    clone : function( value, options ){
+        // delegate to clone function or deep clone through serialization
+        return value.clone ? value.clone( value, options ) : this.cast( JSON.parse( JSON.stringify( value ) ) );
+    }
+}).bind( Function.prototype );
+
+// Date Attribute
+// ----------------------
+( function(){
+    var numericKeys = [ 1, 4, 5, 6, 7, 10, 11 ],
+        msDatePattern = /\/Date\(([0-9]+)\)\//,
+        isoDatePattern = /^(\d{4}|[+\-]\d{6})(?:-(\d{2})(?:-(\d{2}))?)?(?:T(\d{2}):(\d{2})(?::(\d{2})(?:\.(\d{3}))?)?(?:(Z)|([+\-])(\d{2})(?::(\d{2}))?)?)?$/;
+
+    function parseDate( date ){
+        var msDate, timestamp, struct, minutesOffset = 0;
+
+        if( msDate = msDatePattern.exec( date ) ){
+            timestamp = Number( msDate[ 1 ] );
+        }
+        else if(( struct = isoDatePattern.exec( date ))) {
+            // avoid NaN timestamps caused by “undefined” values being passed to Date.UTC
+            for( var i = 0, k; ( k = numericKeys[i] ); ++i ) {
+                struct[ k ] = +struct[ k ] || 0;
+            }
+
+            // allow undefined days and months
+            struct[ 2 ] = (+struct[ 2 ] || 1) - 1;
+            struct[ 3 ] = +struct[ 3 ] || 1;
+
+            if (struct[ 8 ] !== 'Z' && struct[ 9 ] !== undefined) {
+                minutesOffset = struct[ 10 ] * 60 + struct[ 11 ];
+
+                if (struct[ 9 ] === '+') {
+                    minutesOffset = 0 - minutesOffset;
+                }
+            }
+
+            timestamp = Date.UTC(struct[ 1 ], struct[ 2 ], struct[ 3 ], struct[ 4 ], struct[ 5 ] + minutesOffset, struct[ 6 ], struct[ 7 ]);
+        }
+        else {
+            timestamp = Date.parse( date );
+        }
+
+        return timestamp;
+    }
+
+    Attribute.extend({
+        cast : function( value ){
+            return value == null || value instanceof Date ? value :
+                new Date( typeof value === 'string' ? parseDate( value ) : value )
+        },
+
+        toJSON : function( value ){ return value && value.toJSON(); },
+
+        isChanged : function( a, b ){ return ( a && +a ) !== ( b && +b ); },
+        clone : function( value ){ return new Date( +value ); }
+    }).bind( Date );
+})();
+
+// Primitive Types
+// ----------------
+// Global Mock for missing Integer data type...
+// -------------------------------------
+Integer = function( x ){ return x ? Math.round( x ) : 0; };
+
+Attribute.extend({
+    create : function(){ return this.type(); },
+
+    toJSON : function( value ){ return value; },
+    cast : function( value ){ return value == null ? null : this.type( value ); },
+
+    isChanged : function( a, b ){ return a !== b; },
+
+    clone : function( value ){ return value; }
+}).bind( Number, Boolean, String, Integer );
+
+// Array Type
+// ---------------
+Attribute.extend({
+    toJSON : function( value ){ return value; },
+    cast : function( value ){
+        // Fix incompatible constructor behaviour of Array...
+        return value == null || value instanceof Array ? value : [ value ];
+    }
+}).bind( Array );

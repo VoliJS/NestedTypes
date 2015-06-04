@@ -14,6 +14,14 @@
         "underscore": ">=1.5.0",
         "backbone": ">=1.1.2"
     },
+
+    "devDependencies" : {
+        "mocha" : "*",
+        "chai" : "* <3",
+        "sinon" : "*",
+        "sinon-chai" : "*"
+    },
+
     "files": [
         "nestedtypes.js"
     ],

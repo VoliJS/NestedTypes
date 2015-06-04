@@ -1517,7 +1517,7 @@
                 }) );
             });
 
-            var $when = Backbone.$.when;
+            var $ = Backbone.$;
 
             var Cache = Nested.Model.extend({
                 attributes : spec,
@@ -1555,7 +1555,7 @@
                         attr.fetch && xhr.push( attr.fetch() );
                     }, this );
 
-                    return $when && $when.apply( Backbone.$, xhr );
+                    return $ && $.when && $.when.apply( Backbone.$, xhr );
                 },
 
                 clear : function(){

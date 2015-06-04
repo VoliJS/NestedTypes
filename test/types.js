@@ -1,7 +1,10 @@
-define( function( require, exports, module ){
-    var Nested = require( 'nestedtypes' ),
-        Backbone = require( 'backbone' ),
-        expect = require( 'chai' ).expect;
+    var Nested = require( '../nestedtypes' ),
+        chai = require( 'chai' ),
+        expect = chai.expect,
+        sinon = require( 'sinon' ),
+        sinonChai = require( 'sinon-chai' );
+
+    chai.use( sinonChai );
 
     describe( 'Type specs', function(){
         describe( 'Constructor type spec', function(){
@@ -219,26 +222,26 @@ define( function( require, exports, module ){
             it( 'parse ISO dates in all browsers on assignment', function(){
                 // parse Date from string
                 user.created = "2012-12-12T10:00";
-                user.created.should.be.instanceof( Date );
-                user.created.toISOString().should.be.eql( '2012-12-12T10:00:00.000Z' );
+                expect( user.created ).to.be.instanceof( Date );
+                expect( user.created.toISOString() ).to.be.eql( '2012-12-12T10:00:00.000Z' );
             });
 
             it( 'parse integer time stamps on assignment', function(){
                 // parse Date from timestamp
                 user.created = 1234567890123;
-                user.created.should.be.instanceof( Date );
-                user.created.toISOString().should.be.eql( '2009-02-13T23:31:30.123Z' );
+                expect( user.created ).to.be.instanceof( Date );
+                expect( user.created.toISOString() ).to.be.eql( '2009-02-13T23:31:30.123Z' );
             });
 
             it( 'parse MS time stamps on assignment', function(){
                 user.created = "/Date(1234567890123)/";
-                user.created.should.be.instanceof( Date );
-                user.created.toISOString().should.be.eql( '2009-02-13T23:31:30.123Z' );
+                expect( user.created ).to.be.instanceof( Date );
+                expect( user.created.toISOString() ).to.be.eql( '2009-02-13T23:31:30.123Z' );
             });
 
             it( 'is serialized to ISO date', function(){
                 var json = user.toJSON();
-                json.created.should.be.eql( '2009-02-13T23:31:30.123Z' );
+                expect( json.created ).to.be.eql( '2009-02-13T23:31:30.123Z' );
             } );
         });
 
@@ -364,4 +367,3 @@ define( function( require, exports, module ){
         });
 
     });
-});

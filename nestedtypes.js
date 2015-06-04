@@ -8,7 +8,7 @@
 ( function( root, factory ){
     // Mock for missing Integer data type...
     // -------------------------------------
-    root.Integer = function( x ){ return x ? Math.round( x ) : 0; };
+    Integer = function( x ){ return x ? Math.round( x ) : 0; };
 
     // Object extensions: backbone-style OO functions and helpers...
     // -------------------------------------------------------------
@@ -679,7 +679,7 @@
                         Type.options    = options;
                         Type.value      = value;
                         Type.NestedType = this;
-                        Object.defineProperty( Type, 'has', { get : options } );
+                        Object.defineProperty( Type, '_has', { get : options } );
                     }
                 };
             })()
@@ -1517,6 +1517,8 @@
                 }) );
             });
 
+            var $ = Backbone.$;
+
             var Cache = Nested.Model.extend({
                 attributes : spec,
                 resolved : {},
@@ -1553,7 +1555,7 @@
                         attr.fetch && xhr.push( attr.fetch() );
                     }, this );
 
-                    return $.when.apply( $, xhr );
+                    return $ && $.when && $.when.apply( Backbone.$, xhr );
                 },
 
                 clear : function(){

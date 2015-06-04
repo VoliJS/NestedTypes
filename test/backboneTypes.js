@@ -1,8 +1,9 @@
-define( function( require, exports, module ){
-    describe( 'Nested Models and Collections', function(){
-        var Nested = require( '../nestedtypes' ),
-            expect = require( 'chai' ).expect;
+    var Nested = require( '../nestedtypes' ),
+        expect = require( 'chai' ).expect,
+        _ = require( 'underscore' ),
+        sinon = require( 'sinon' );
 
+    describe( 'Nested Models and Collections', function(){
         function shouldFireChangeOnce( model, attr, todo ){
             var change = sinon.spy(),
                 attrs = attr.split( ' ' );
@@ -17,11 +18,11 @@ define( function( require, exports, module ){
 
             todo( model );
 
-            change.should.be.calledOnce;
+            expect( change ).to.be.calledOnce;
             model.off( change );
 
             _.each( changeAttrs, function( spy ){
-                spy.should.be.calledOnce;
+                expect( spy ).to.be.calledOnce;
                 model.off( spy );
             });
         }
@@ -67,7 +68,7 @@ define( function( require, exports, module ){
                         first : {id : 1, a : 2, b : 2}
                     }, { parse : true });
 
-                    spies.model.should.be.calledOnce;
+                    expect( spies.model ).to.be.calledOnce;
                 });
 
                 it( 'invoke "parse" on set', function(){
@@ -76,7 +77,7 @@ define( function( require, exports, module ){
                     var m = new B();
                     m.set( 'first', {id : 1, a : 2, b : 2}, { parse : true });
 
-                    spies.model.should.be.calledOnce;
+                    expect( spies.model ).to.be.calledOnce;
 
                 });
 
@@ -85,7 +86,7 @@ define( function( require, exports, module ){
 
                     var m = new B({ first : null });
                     m.set( 'first', {id : 1, a : 1, b : 2}, { parse : true } );
-                    spies.model.should.be.calledOnce;
+                    expect( spies.model ).to.be.calledOnce;
 
                 });
             });
@@ -99,8 +100,8 @@ define( function( require, exports, module ){
                         c : [{id : 1, a : 2, b : 2}]
                     }, { parse : true });
 
-                    spies.collection.should.be.calledOnce;
-                    spies.model.should.be.calledOnce;
+                    expect( spies.collection ).to.be.calledOnce;
+                    expect( spies.model ).to.be.calledOnce;
                 });
 
                 it( 'invoke "parse" on set', function(){
@@ -109,8 +110,8 @@ define( function( require, exports, module ){
                     var m = new B();
                     m.set( 'c', [{id : 1, a : 1, b : 2}], { parse : true } );
 
-                    spies.collection.should.be.calledOnce;
-                    spies.model.should.be.calledOnce;
+                    expect( spies.collection ).to.be.calledOnce;
+                    expect( spies.model ).to.be.calledOnce;
                 });
 
                 it( 'invoke "parse" on set when value is null', function(){
@@ -119,8 +120,8 @@ define( function( require, exports, module ){
                     var m = new B({ c : null });
                     m.set( 'c', [{id : 1, a : 1, b : 2}], { parse : true } );
 
-                    spies.collection.should.be.calledOnce;
-                    spies.model.should.be.calledOnce;
+                    expect( spies.collection ).to.be.calledOnce;
+                    expect( spies.model ).to.be.calledOnce;
                 });
             })
         });
@@ -134,8 +135,8 @@ define( function( require, exports, module ){
 
                     m.first = {id : 1, a : 1, b : 2};
 
-                    id.should.eql( m.first.cid );
-                    m.first.id.should.eql( 1 );
+                    expect( id ).to.eql( m.first.cid );
+                    expect( m.first.id ).to.eql( 1 );
                 });
 
                 it( 'triggers single "change" and single "change:attr" events if nested model is changed', function(){
@@ -151,7 +152,7 @@ define( function( require, exports, module ){
                 it( 'creates new model', function(){
                     var m = new B({ first : null });
                     m.first = { id : 1, a : 1, b : 2 };
-                    m.first.id.should.eql( 1 );
+                    expect( m.first.id ).to.eql( 1 );
                 });
 
                 it( 'triggers "change", "change:attr", and "replace:attr" events', function(){
@@ -164,7 +165,7 @@ define( function( require, exports, module ){
                         m.first = {id : 1, a : 1, b : 2};
                     });
 
-                    replace.should.be.calledOnce;
+                    expect( replace ).to.be.calledOnce;
                 });
             });
         });
@@ -177,8 +178,8 @@ define( function( require, exports, module ){
 
                     m.c = [{id : 1, a : 1, b : 2}];
 
-                    id.should.eql( m.c._listenId );
-                    m.c.first().id.should.eql( 1 );
+                    expect( id ).to.eql( m.c._listenId );
+                    expect( m.c.first().id ).to.eql( 1 );
                 });
 
 
@@ -194,7 +195,7 @@ define( function( require, exports, module ){
                 it( 'creates new collection', function(){
                     var m = new B({ c : null });
                     m.c = [{id : 1, a : 1, b : 2}];
-                    m.c.first().id.should.eql( 1 );
+                    expect( m.c.first().id ).to.eql( 1 );
                 });
 
                 it( 'triggers "change", "change:attr", and "replace:attr" events', function(){
@@ -207,7 +208,7 @@ define( function( require, exports, module ){
                         m.c = [{id : 1, a : 1, b : 2}];
                     });
 
-                    replace.should.be.calledOnce;
+                    expect( replace ).to.be.calledOnce;
                 });
             });
         });
@@ -250,4 +251,3 @@ define( function( require, exports, module ){
             });
         })
     });
-});

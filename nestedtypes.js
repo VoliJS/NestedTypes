@@ -679,7 +679,13 @@
                         Type.options    = options;
                         Type.value      = value;
                         Type.NestedType = this;
-                        Object.defineProperty( Type, '_has', { get : options } );
+                        Object.defineProperty( Type, 'has', {
+                            get : function(){
+                                // workaround for sinon.js and other libraries overriding 'has'
+                                return this._has || this.options();
+                            },
+                            set : function( value ){ this._has = value; }
+                        });
                     }
                 };
             })()

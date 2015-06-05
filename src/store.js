@@ -1,6 +1,7 @@
 var Backbone   = require( './backbone+' ),
     Model      = require( './model' ),
-    Collection = require( './collection' );
+    Collection = require( './collection' ),
+    _          = require( 'underscore' );
 
 var _store = null;
 

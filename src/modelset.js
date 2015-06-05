@@ -20,21 +20,30 @@
 // 1) Code is stripped for this special case
 // 2) attribute-specific transform function invoked internally
 
-var _ = require( 'underscore' ),
-    Events = require( './backbone+' ).Events,
+var _        = require( 'underscore' ),
+    Events   = require( './backbone+' ).Events,
     trigger2 = Events.trigger2,
     trigger3 = Events.trigger3;
 
-exports.isChanged = function genericIsChanged( a, b ){
-    return !( a === b || ( a && b && typeof a == 'object' && typeof b == 'object' && _.isEqual( a, b ) ) );
+module.exports = {
+    isChanged     : genericIsChanged,
+    setSingleAttr : setSingleAttr,
+    setAttrs      : setAttrs,
+    transform     : applyTransform,
+    begin         : beginChange,
+    commit        : commitChange
 };
 
-exports.setSingleAttr = function( model, key, value, attrSpec ){
+function genericIsChanged( a, b ){
+    return !( a === b || ( a && b && typeof a == 'object' && typeof b == 'object' && _.isEqual( a, b ) ) );
+}
+
+function setSingleAttr( model, key, value, attrSpec ){
     'use strict';
     var changing = model._changing,
         current  = model.attributes;
 
-    model._changing  = true;
+    model._changing = true;
 
     if( !changing ){
         model._previousAttributes = new model.Attributes( current );
@@ -54,7 +63,9 @@ exports.setSingleAttr = function( model, key, value, attrSpec ){
         trigger3( model, 'change:' + key, model, val, options );
     }
 
-    if( changing ) return model;
+    if( changing ){
+        return model;
+    }
 
     while( model._pending ){
         options = model._pending;
@@ -62,7 +73,7 @@ exports.setSingleAttr = function( model, key, value, attrSpec ){
         trigger2( model, 'change', model, options );
     }
 
-    model._pending  = false;
+    model._pending = false;
     model._changing = false;
     return model;
 };
@@ -70,25 +81,27 @@ exports.setSingleAttr = function( model, key, value, attrSpec ){
 // General case set: used for multiple and nested model/collection attributes.
 // Does _not_ invoke attribute transform! It must be done at the the top level,
 // due to the problems with current nested changes detection algorithm. See 'setAttrs' function below.
-exports.setAttrs = function( model, attrs, options ){
+function bbSetAttrs( model, attrs, options ){
     'use strict';
 
     options || (options = {});
 
     // Run validation.
-    if (!model._validate(attrs, options)) return false;
+    if( !model._validate( attrs, options ) ){
+        return false;
+    }
 
     // Extract attributes and options.
-    var unset           = options.unset,
-        silent          = options.silent,
-        changes         = [],
-        changing        = model._changing,
-        current         = model.attributes,
-        attrSpecs       = model.__attributes;
+    var unset     = options.unset,
+        silent    = options.silent,
+        changes   = [],
+        changing  = model._changing,
+        current   = model.attributes,
+        attrSpecs = model.__attributes;
 
-    model._changing  = true;
+    model._changing = true;
 
-    if (!changing) {
+    if( !changing ){
         model._previousAttributes = new model.Attributes( current );
         model.changed = {};
     }
@@ -97,25 +110,30 @@ exports.setAttrs = function( model, attrs, options ){
 
     // For each `set` attribute, update or delete the current value.
     for( var attr in attrs ){
-        var attrSpec = attrSpecs[ attr ],
+        var attrSpec  = attrSpecs[ attr ],
             isChanged = attrSpec ? attrSpec.isChanged : genericIsChanged,
-            val = attrs[ attr ];
+            val       = attrs[ attr ];
 
-        if ( isChanged( current[attr], val ) ) changes.push( attr );
-
-        if ( isChanged( prev[attr], val ) ) {
-            model.changed[attr] = val;
-        } else {
-            delete model.changed[attr];
+        if( isChanged( current[ attr ], val ) ){
+            changes.push( attr );
         }
 
-        unset ? delete current[attr] : current[ attr ] = val;
+        if( isChanged( prev[ attr ], val ) ){
+            model.changed[ attr ] = val;
+        }
+        else{
+            delete model.changed[ attr ];
+        }
+
+        unset ? delete current[ attr ] : current[ attr ] = val;
     }
 
     // Trigger all relevant attribute changes.
-    if( !silent ) {
-        if (changes.length) model._pending = options;
-        for (var i = 0, l = changes.length; i < l; i++) {
+    if( !silent ){
+        if( changes.length ){
+            model._pending = options;
+        }
+        for( var i = 0, l = changes.length; i < l; i++ ){
             attr = changes[ i ];
             trigger3( model, 'change:' + attr, model, current[ attr ], options );
         }
@@ -123,9 +141,11 @@ exports.setAttrs = function( model, attrs, options ){
 
     // You might be wondering why there's a `while` loop here. Changes can
     // be recursively nested within `"change"` events.
-    if (changing) return model;
-    if (!silent) {
-        while (model._pending) {
+    if( changing ){
+        return model;
+    }
+    if( !silent ){
+        while( model._pending ){
             options = model._pending;
             model._pending = false;
             trigger2( model, 'change', model, options );
@@ -137,3 +157,50 @@ exports.setAttrs = function( model, attrs, options ){
 
     return model;
 };
+
+// Optimized Backbone Core functions
+// =================================
+// Deep set model attributes, catching nested attributes changes
+function setAttrs( model, attrs, options ){
+    model.__beginChange();
+    applyTransform( model, attrs, model.__attributes, options );
+    model.__commitChange( attrs, options );
+    return model;
+}
+
+// transform attributes hash
+function applyTransform( model, attrs, attrSpecs, options ){
+    for( var name in attrs ){
+        var attrSpec = attrSpecs[ name ], value = attrs[ name ];
+        if( attrSpec ){
+            attrs[ name ] = attrSpec.transform( value, options, model, name );
+        }
+        else{
+            error.unknownAttribute( model, name, value );
+        }
+    }
+};
+
+function beginChange(){
+    this.__duringSet++ || ( this.__nestedChanges = {} );
+}
+
+function commitChange( attrs, options ){
+    if( !--this.__duringSet ){
+        attrs || ( attrs = {} );
+
+        // Catch nested changes.
+        for( var name in this.__nestedChanges ){
+            name in attrs || ( attrs[ name ] = this.__nestedChanges[ name ] );
+
+            if( attrs[ name ] === this.attributes[ name ] ){
+                // patch attributes to force bbSetAttrs to trigger change event
+                this.attributes[ name ] = null;
+            }
+        }
+
+        this.__nestedChanges = {};
+    }
+
+    attrs && bbSetAttrs( this, attrs, options );
+}

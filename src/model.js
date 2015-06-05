@@ -1,34 +1,13 @@
-var BaseModel       = require( './backbone+' ).Model,
-    modelSet        = require( './modelset' ),
-    attrOptions     = require( './attribute' ),
-    error           = require( './errors' ),
-    bbSetSingleAttr = modelSet.setSingleAttr,
-    bbSetAttrs      = modelSet.setAttrs,
-    _               = require( 'underscore' ),
-    ModelProto      = BaseModel.prototype;
+var BaseModel   = require( './backbone+' ).Model,
+    modelSet    = require( './modelset' ),
+    attrOptions = require( './attribute' ),
+    error       = require( './errors' ),
+    _           = require( 'underscore' ),
+    ModelProto  = BaseModel.prototype;
 
-// Optimized Backbone Core functions
-// =================================
-// Deep set model attributes, catching nested attributes changes
-function setAttrs( model, attrs, options ){
-    model.__beginChange();
-    applyTransform( model, attrs, model.__attributes, options );
-    model.__commitChange( attrs, options );
-    return model;
-}
-
-// transform attributes hash without apply
-function applyTransform( model, attrs, attrSpecs, options ){
-    for( var name in attrs ){
-        var attrSpec = attrSpecs[ name ], value = attrs[ name ];
-        if( attrSpec ){
-            attrs[ name ] = attrSpec.transform( value, options, model, name );
-        }
-        else{
-            error.unknownAttribute( model, name, value );
-        }
-    }
-}
+var bbSetSingleAttr = modelSet.setSingleAttr,
+    setAttrs        = modelSet.setAttrs,
+    applyTransform  = modelSet.transform;
 
 function cloneAttrs( attrSpecs, attrs, options ){
     for( var name in attrs ){
@@ -64,29 +43,8 @@ var Model = BaseModel.extend( {
 
     defaults : function(){ return {}; },
 
-    __beginChange : function(){
-        this.__duringSet++ || ( this.__nestedChanges = {} );
-    },
-
-    __commitChange : function( attrs, options ){
-        if( !--this.__duringSet ){
-            attrs || ( attrs = {} );
-
-            // Catch nested changes.
-            for( var name in this.__nestedChanges ){
-                name in attrs || ( attrs[ name ] = this.__nestedChanges[ name ] );
-
-                if( attrs[ name ] === this.attributes[ name ] ){
-                    // patch attributes to force bbSetAttrs to trigger change event
-                    this.attributes[ name ] = null;
-                }
-            }
-
-            this.__nestedChanges = {};
-        }
-
-        attrs && bbSetAttrs( this, attrs, options );
-    },
+    __beginChange  : modelSet.begin,
+    __commitChange : modelSet.commit,
 
     set : function( a, b, c ){
         switch( typeof a ){

@@ -29,6 +29,7 @@
   "version": "0.10.0",
 
   "scripts": {
-    "test" : "node_modules/.bin/mocha"
+    "test"  : "node_modules/.bin/mocha",
+    "build" : ""
   }
 }

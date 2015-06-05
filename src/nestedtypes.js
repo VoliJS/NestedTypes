@@ -1,22 +1,22 @@
 // Backbone.nestedTypes 0.10.0 (https://github.com/Volicon/backbone.nestedTypes)
 // (c) 2014 Vlad Balin & Volicon, may be freely distributed under the MIT license
 
-var Model       = require( './src/model' ),
-    Collection  = require( './src/collection' ),
-    relations   = require( './src/relations' ),
-    attribute   = require( './src/attribute' );
+var Model       = require( './model' ),
+    Collection  = require( './collection' ),
+    relations   = require( './relations' ),
+    attribute   = require( './attribute' );
 
-require( './src/metatypes' );
+require( './metatypes' );
 
 Collection.subsetOf = relations.subsetOf;
 Model.from          = relations.from;
 Model.Collection    = Collection;
 
-Object.defineProperty( exports, 'store', require( './src/store' ) );
+Object.defineProperty( exports, 'store', require( './store' ) );
 
 Object.assign( exports, {
-    Class : require( './src/object+' ),
-    error : require( './src/errors' ),
+    Class : require( './object+' ),
+    error : require( './errors' ),
     options : attribute,
 
     value : function( value ){

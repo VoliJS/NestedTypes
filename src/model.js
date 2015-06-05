@@ -1,10 +1,11 @@
-var BaseModel = require( 'backbone' ).Model,
-    modelSet = require( './modelset' ),
-    attrOptions = require( './attribute' ),
+var BaseModel       = require( './backbone+' ).Model,
+    modelSet        = require( './modelset' ),
+    attrOptions     = require( './attribute' ),
+    error           = require( './errors' ),
     bbSetSingleAttr = modelSet.setSingleAttr,
-    bbSetAttrs = modelSet.setAttrs,
-    _ = require( 'underscore' ),
-    ModelProto = BaseModel.prototype;
+    bbSetAttrs      = modelSet.setAttrs,
+    _               = require( 'underscore' ),
+    ModelProto      = BaseModel.prototype;
 
 // Optimized Backbone Core functions
 // =================================
@@ -23,7 +24,9 @@ function applyTransform( model, attrs, attrSpecs, options ){
         if( attrSpec ){
             attrs[ name ] = attrSpec.transform( value, options, model, name );
         }
-        else exports.error.unknownAttribute( model, name, value );
+        else{
+            error.unknownAttribute( model, name, value );
+        }
     }
 }
 
@@ -35,8 +38,8 @@ function cloneAttrs( attrSpecs, attrs, options ){
     return attrs;
 }
 
-var Model = BaseModel.extend({
-    triggerWhenChanged: 'change',
+var Model = BaseModel.extend( {
+    triggerWhenChanged : 'change',
 
     properties : {
         id : {
@@ -54,10 +57,10 @@ var Model = BaseModel.extend({
         }
     },
 
-    __attributes: { id : attrOptions({ value : undefined } ).createAttribute( 'id' ) },
-    __class : 'Model',
+    __attributes : { id : attrOptions( { value : undefined } ).createAttribute( 'id' ) },
+    __class      : 'Model',
 
-    __duringSet: 0,
+    __duringSet : 0,
 
     defaults : function(){ return {}; },
 
@@ -67,7 +70,7 @@ var Model = BaseModel.extend({
 
     __commitChange : function( attrs, options ){
         if( !--this.__duringSet ){
-            attrs || ( attrs =  {} );
+            attrs || ( attrs = {} );
 
             // Catch nested changes.
             for( var name in this.__nestedChanges ){
@@ -87,22 +90,24 @@ var Model = BaseModel.extend({
 
     set : function( a, b, c ){
         switch( typeof a ){
-            case 'string' :
-                var attrSpec = this.__attributes[ a ];
+        case 'string' :
+            var attrSpec = this.__attributes[ a ];
 
-                if( attrSpec && !attrSpec.isBackboneType && !c ){
-                    return bbSetSingleAttr( this, a, b, attrSpec );
-                }
+            if( attrSpec && !attrSpec.isBackboneType && !c ){
+                return bbSetSingleAttr( this, a, b, attrSpec );
+            }
 
-                var attrs = {};
-                attrs[ a ] = b;
-                return setAttrs( this, attrs, c );
+            var attrs = {};
+            attrs[ a ] = b;
+            return setAttrs( this, attrs, c );
 
-            case 'object' :
-                if( a && Object.getPrototypeOf( a ) === Object.prototype ) return setAttrs( this, a, b );
+        case 'object' :
+            if( a && Object.getPrototypeOf( a ) === Object.prototype ){
+                return setAttrs( this, a, b );
+            }
 
-            default :
-                exports.error.argumentIsNotAnObject( this, a );
+        default :
+            error.argumentIsNotAnObject( this, a );
         }
     },
 
@@ -124,14 +129,14 @@ var Model = BaseModel.extend({
     // If model doesn't exist at some path, create default models
     // if options.nullify is given, assign attributes with nulls
     deepSet : function( name, value, options ){
-        var path = name.split( '.' ),
-            l = path.length - 1,
+        var path  = name.split( '.' ),
+            l     = path.length - 1,
             model = this,
-            attr = path[ l ];
+            attr  = path[ l ];
 
         for( var i = 0; i < l; i++ ){
             var current = path[ i ],
-                next = model.get ? model.get( current ) : model[ current ];
+                next    = model.get ? model.get( current ) : model[ current ];
 
             // Create models in path, if they are not exist.
             if( !next ){
@@ -144,13 +149,17 @@ var Model = BaseModel.extend({
                     // If created object is model, nullify attributes when requested
                     if( options && options.nullify && newModel.__attributes ){
                         var nulls = new newModel.Attributes( {} );
-                        for( var key in nulls ) nulls[ key ] = null;
+                        for( var key in nulls ){
+                            nulls[ key ] = null;
+                        }
                         newModel.set( nulls );
                     }
 
                     model[ current ] = next = newModel;
                 }
-                else return; // silently fail in other case
+                else{
+                    return;
+                } // silently fail in other case
             }
             model = next;
         }
@@ -158,24 +167,28 @@ var Model = BaseModel.extend({
         return model.set ? model.set( attr, value, options ) : model[ attr ] = value;
     },
 
-    constructor : function(attributes, options){
+    constructor : function( attributes, options ){
         var attrSpecs = this.__attributes,
-            attrs       = attributes || {};
+            attrs     = attributes || {};
 
         options || (options = {});
-        this.cid        = _.uniqueId( 'c' );
+        this.cid = _.uniqueId( 'c' );
         this.attributes = {};
-        if( options.collection ) this.collection = options.collection;
-        if( options.parse ) attrs = this.parse( attrs, options ) || {};
+        if( options.collection ){
+            this.collection = options.collection;
+        }
+        if( options.parse ){
+            attrs = this.parse( attrs, options ) || {};
+        }
 
         if( typeof attrs !== 'object' || Object.getPrototypeOf( attrs ) !== Object.prototype ){
-            exports.error.argumentIsNotAnObject( this, attrs );
+            error.argumentIsNotAnObject( this, attrs );
             attrs = {};
         }
 
         attrs = options.deep ?
-            cloneAttrs( attrSpecs, new this.Attributes( attrs ), options ) :
-            this.defaults( attrs, options );
+                cloneAttrs( attrSpecs, new this.Attributes( attrs ), options ) :
+                this.defaults( attrs, options );
 
         // Execute attributes transform function instead of this.set
         applyTransform( this, attrs, attrSpecs, options );
@@ -185,7 +198,7 @@ var Model = BaseModel.extend({
         this.initialize.apply( this, arguments );
     },
     // override get to invoke native getter...
-    get : function( name ){ return this[ name ]; },
+    get         : function( name ){ return this[ name ]; },
 
     // override clone to pass options to constructor
     clone : function( options ){
@@ -193,19 +206,21 @@ var Model = BaseModel.extend({
     },
 
     // Create deep copy for all nested objects...
-    deepClone : function(){ return this.clone({ deep : true }); },
+    deepClone : function(){ return this.clone( { deep : true } ); },
 
     // Support for nested models and objects.
     // Apply toJSON recursively to produce correct JSON.
     toJSON : function(){
-        var res = {},
+        var res   = {},
             attrs = this.attributes, attrSpecs = this.__attributes;
 
         for( var key in attrs ){
-            var value = attrs[ key ], attrSpec = attrSpecs[ key],
+            var value  = attrs[ key ], attrSpec = attrSpecs[ key ],
                 toJSON = attrSpec && attrSpec.toJSON;
 
-            if( toJSON ) res[ key ] = toJSON.call( this, value, key );
+            if( toJSON ){
+                res[ key ] = toJSON.call( this, value, key );
+            }
         }
 
         return res;
@@ -215,16 +230,18 @@ var Model = BaseModel.extend({
         // todo: need to do something smart with validation logic
         // something declarative on attributes level, may be
         return ModelProto.isValid.call( this, options ) && _.every( this.attributes, function( attr ){
-                if( attr && attr.isValid ) return attr.isValid( options );
+                if( attr && attr.isValid ){
+                    return attr.isValid( options );
+                }
 
                 return attr instanceof Date ? !_.isNaN( attr.getTime() ) : !_.isNaN( attr );
-            });
+            } );
     },
 
-    _: _ // add underscore to be accessible in templates
-},{
+    _ : _ // add underscore to be accessible in templates
+}, {
     // shorthand for inline nested model definitions
-    defaults : function( attrs ){ return this.extend({ defaults : attrs }); },
+    defaults : function( attrs ){ return this.extend( { defaults : attrs } ); },
 
     // extend Model and its Collection
     extend : function( protoProps, staticProps ){
@@ -248,46 +265,52 @@ var Model = BaseModel.extend({
 
         return This;
     }
-});
+} );
 
 // Create model definition from protoProps spec.
 function createDefinition( protoProps, Base ){
-    var defaults = protoProps.defaults || protoProps.attributes || {},
+    var defaults           = protoProps.defaults || protoProps.attributes || {},
         defaultsAsFunction = typeof defaults == 'function' && defaults,
-        baseAttrSpecs = Base.prototype.__attributes;
+        baseAttrSpecs      = Base.prototype.__attributes;
 
     // Support for legacy backbone defaults as functions.
-    if( defaultsAsFunction ) defaults = defaults();
+    if( defaultsAsFunction ){
+        defaults = defaults();
+    }
 
     var attrSpecs = Object.transform( {}, defaults, attrOptions.create );
 
     // Create attribute for idAttribute, if it's not declared explicitly
-    var idAttribute  = protoProps.idAttribute;
+    var idAttribute = protoProps.idAttribute;
     if( idAttribute && !attrSpecs[ idAttribute ] ){
-        attrSpecs[ idAttribute ] = attrOptions({ value : undefined } ).createAttribute( idAttribute );
+        attrSpecs[ idAttribute ] = attrOptions( { value : undefined } ).createAttribute( idAttribute );
     }
 
     // Prevent conflict with backbone model's 'id' property
-    if( attrSpecs[ 'id' ] ) attrSpecs[ 'id' ].createPropertySpec = false;
+    if( attrSpecs[ 'id' ] ){
+        attrSpecs[ 'id' ].createPropertySpec = false;
+    }
 
     var allAttrSpecs = _.defaults( {}, attrSpecs, baseAttrSpecs ),
-        Attributes = createCloneCtor( allAttrSpecs );
+        Attributes   = createCloneCtor( allAttrSpecs );
 
     return _.extend( _.omit( protoProps, 'collection', 'attributes' ), {
         __attributes : new Attributes( allAttrSpecs ),
         defaults     : defaultsAsFunction || createDefaults( allAttrSpecs ),
         properties   : createAttrsNativeProps( protoProps.properties, attrSpecs ),
         Attributes   : Attributes
-    });
+    } );
 }
 
 // Create constructor for efficient attributes clone operation.
 function createCloneCtor( attrSpecs ){
     var statements = [];
 
-    for( var name in attrSpecs ) statements.push( "this." + name + "=x." + name + ";" );
+    for( var name in attrSpecs ){
+        statements.push( "this." + name + "=x." + name + ";" );
+    }
 
-    var Attributes = new Function( "x", statements.join('') );
+    var Attributes = new Function( "x", statements.join( '' ) );
 
     // attributes hash must look like vanilla object, otherwise Model.set will trigger an exception
     Attributes.prototype = Object.prototype;
@@ -297,20 +320,22 @@ function createCloneCtor( attrSpecs ){
 
 // Check if value is valid JSON.
 function isValidJSON( value ){
-    if( value === null ) return true;
+    if( value === null ){
+        return true;
+    }
 
     switch( typeof value ){
-        case 'number' :
-        case 'string' :
-        case 'boolean' :
-            return true;
+    case 'number' :
+    case 'string' :
+    case 'boolean' :
+        return true;
 
-        case 'object':
-            var proto = Object.getPrototypeOf( value );
+    case 'object':
+        var proto = Object.getPrototypeOf( value );
 
-            if( proto === Object.prototype || proto === Array.prototype ){
-                return _.every( value, isValidJSON );
-            }
+        if( proto === Object.prototype || proto === Array.prototype ){
+            return _.every( value, isValidJSON );
+        }
     }
 
     return false;
@@ -344,7 +369,7 @@ function createDefaults( attrSpecs ){
             }
 
         }
-    });
+    } );
 
     var Defaults = new Function( 'r', 'i', 'o', statements.join( '' ) );
     Defaults.prototype = Object.prototype;
@@ -358,14 +383,18 @@ function createDefaults( attrSpecs ){
         if( options && ( options.collection || options.parse ) ){
             opts = {};
             for( name in options ){
-                if( name !== 'collection' && name !== 'parse' ) opts[ name ] = options[ name ];
+                if( name !== 'collection' && name !== 'parse' ){
+                    opts[ name ] = options[ name ];
+                }
             }
         }
 
         var defaults = new Defaults( refs, init, opts );
 
         // assign attrs, overriding defaults
-        for( var name in attrs ) defaults[ name ] = attrs[ name ];
+        for( var name in attrs ){
+            defaults[ name ] = attrs[ name ];
+        }
 
         return defaults;
     }
@@ -373,14 +402,17 @@ function createDefaults( attrSpecs ){
 
 // Create native properties for model's attributes
 function createAttrsNativeProps( properties, attrSpecs ){
-    if( properties === false ) return {};
+    if( properties === false ){
+        return {};
+    }
 
     properties || ( properties = {} );
 
     return Object.transform( properties, attrSpecs, function( attrSpec, name ){
-        if( !properties[ name ] && attrSpec.createPropertySpec )
+        if( !properties[ name ] && attrSpec.createPropertySpec ){
             return attrSpec.createPropertySpec();
-    });
+        }
+    } );
 }
 
 module.exports = Model;

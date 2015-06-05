@@ -21,7 +21,7 @@
 // 2) attribute-specific transform function invoked internally
 
 var _ = require( 'underscore' ),
-    Events = require( './events+' ),
+    Events = require( './backbone+' ).Events,
     trigger2 = Events.trigger2,
     trigger3 = Events.trigger3;
 

@@ -2,19 +2,21 @@
  * (c) Vlad Balin & Volicon, 2015
  * ------------------------------------------------------------- */
 
-( function( spec ){
+(function( spec ){
     for( var name in spec ){
         Object[ name ] || Object.defineProperty( Object, name, {
-            enumerable: false,
-            configurable: true,
-            writable: true,
-            value: spec[ name ]
-        });
+            enumerable   : false,
+            configurable : true,
+            writable     : true,
+            value        : spec[ name ]
+        } );
     }
-})({
+})( {
     // Object.assign polyfill from MDN.
     assign : function( target, firstSource ){
-        if( target == null ) throw new TypeError( 'Cannot convert first argument to object' );
+        if( target == null ){
+            throw new TypeError( 'Cannot convert first argument to object' );
+        }
 
         var to = Object( target );
         for( var i = 1; i < arguments.length; i++ ){
@@ -26,7 +28,7 @@
             var keysArray = Object.keys( Object( nextSource ) );
             for( var nextIndex = 0, len = keysArray.length; nextIndex < len; nextIndex++ ){
                 var nextKey = keysArray[ nextIndex ];
-                var desc    = Object.getOwnPropertyDescriptor( nextSource, nextKey );
+                var desc = Object.getOwnPropertyDescriptor( nextSource, nextKey );
                 if( desc !== void 0 && desc.enumerable ){
                     to[ nextKey ] = nextSource[ nextKey ];
                 }
@@ -37,11 +39,12 @@
 
     // Object.transform function, similar to _.mapObject
     transform : function( dest, source, fun, context ){
-        for( var name in source )
+        for( var name in source ){
             if( source.hasOwnProperty( name ) ){
                 var value = fun.call( context, source[ name ], name );
                 typeof value === 'undefined' || ( dest[ name ] = value );
             }
+        }
 
         return dest;
     },
@@ -62,7 +65,8 @@
     extend : (function(){
         var error = {
             overrideMethodWithValue : function( Ctor, name, value ){
-                console.warn( '[Type Warning] Base class method overriden with value in Object.extend({ ' + name + ' : ' + value + ' }); Object =', Ctor.prototype );
+                console.warn( '[Type Warning] Base class method overriden with value in Object.extend({ ' + name +
+                              ' : ' + value + ' }); Object =', Ctor.prototype );
             }
         };
 
@@ -76,7 +80,7 @@
                 Child;
 
             if( typeof protoProps === 'function' ){
-                Child      = protoProps;
+                Child = protoProps;
                 protoProps = null;
             }
             else if( protoProps && protoProps.hasOwnProperty( 'constructor' ) ){
@@ -88,9 +92,9 @@
 
             Object.assign( Child, Parent );
 
-            Child.prototype             = Object.create( Parent.prototype );
+            Child.prototype = Object.create( Parent.prototype );
             Child.prototype.constructor = Child;
-            Child.__super__             = Parent.prototype;
+            Child.__super__ = Parent.prototype;
 
             protoProps && Child.define( protoProps, staticProps );
 
@@ -123,10 +127,11 @@
         }
 
         function define( protoProps, staticProps ){
-            Object.transform( this.prototype, protoProps,  warnOnError, this );
-            Object.transform( this,           staticProps, warnOnError, this );
+            Object.transform( this.prototype, protoProps, warnOnError, this );
+            Object.transform( this, staticProps, warnOnError, this );
 
-            protoProps && Object.defineProperties( this.prototype, Object.transform( {}, protoProps.properties, preparePropSpec, this ) );
+            protoProps && Object.defineProperties( this.prototype,
+                Object.transform( {}, protoProps.properties, preparePropSpec, this ) );
 
             return this;
         }
@@ -147,4 +152,6 @@
 
         return extend;
     })()
-});
+} );
+
+module.exports = Object.extend.Class;

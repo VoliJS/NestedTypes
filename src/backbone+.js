@@ -1,12 +1,19 @@
-/* Backbone.Events extensions: bug fixes and optimizations
+/* Backbone core extensions: bug fixes and optimizations
+    - Use Object+ for all backbone objects
+    - Fix for Events.listenTo to support message maps
+    - optimized trigger functions
+
  * (c) Vlad Balin & Volicon, 2015
  * ------------------------------------------------------------- */
 
-var Backbone = require( 'backbone' ),
-    Events = Backbone.Events;
+var Class = require( './object+' ),
+    Backbone = require( 'backbone' );
+
+module.exports = Backbone;
 
 // Workaround for backbone 1.2.0 listenTo event maps bug
-var bbListenTo = Events.listenTo;
+var Events = Backbone.Events,
+    bbListenTo = Events.listenTo;
 
 Events.listenTo = function( obj, events ){
     if( typeof events === 'object' ){
@@ -17,9 +24,19 @@ Events.listenTo = function( obj, events ){
     return bbListenTo.apply( this, arguments );
 };
 
-[ 'Model', 'View', 'Collection' ].forEach( function( type ){
-    Backbone[ type ].prototype.listenTo = Events.listenTo;
+// Update Backbone objects to use event patches and Object+
+Object.transform( Backbone, Backbone, function( Type ){
+    if( typeof Type === 'function' ){
+        if( Type.prototype.listenTo ){
+            Type.prototype.listenTo = Events.listenTo;
+        }
+
+        if( Type.extend ) Object.extend.attach( Type );
+    }
 });
+
+// Make Object.extend classes capable of sending and receiving Backbone Events...
+Object.assign( Class.prototype, Events );
 
 // So hard to believe :) You won't. Optimized JIT-friendly event trigger functions to be used from model.set
 // Two specialized functions for event triggering...
@@ -57,5 +74,3 @@ function _fireEvent4( events, a, b, c, d ){
         for( var i = 0, l = events.length, ev; i < l; i ++ )
             (ev = events[i]).callback.call(ev.ctx, a, b, c, d);
 }
-
-module.exports = Events;

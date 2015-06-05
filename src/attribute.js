@@ -5,7 +5,7 @@ require( './object+' );
 var trigger3         = require( './backbone+' ).Events.trigger3,
     modelSet         = require( './modelset' ),
     genericIsChanged = modelSet.isChanged,
-    bbSetSingleAttr  = modelSet.setSingleAttr;
+    setSingleAttr    = modelSet.setSingleAttr;
 
 var primitiveTypes = {
     string  : String,
@@ -185,7 +185,7 @@ var Attribute = Object.extend( {
         return (function( self, name, get ){
             return {
                 // call to optimized set function for single argument. Doesn't work for backbone types.
-                set : function( value ){ bbSetSingleAttr( this, name, value, self ); },
+                set : function( value ){ setSingleAttr( this, name, value, self ); },
 
                 // attach get hook to the getter function, if present
                 get : get ? function(){ return get.call( this, this.attributes[ name ], name ); } :
@@ -261,7 +261,7 @@ var Attribute = Object.extend( {
         }
     }
 }, {
-    bind : (function(){
+    attach : (function(){
         function options( spec ){
             spec || ( spec = {} );
             spec.type || ( spec.type = this );

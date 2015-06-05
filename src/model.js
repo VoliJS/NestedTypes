@@ -5,7 +5,7 @@ var BaseModel   = require( './backbone+' ).Model,
     _           = require( 'underscore' ),
     ModelProto  = BaseModel.prototype;
 
-var bbSetSingleAttr = modelSet.setSingleAttr,
+var setSingleAttr = modelSet.setSingleAttr,
     setAttrs        = modelSet.setAttrs,
     applyTransform  = modelSet.transform;
 
@@ -31,7 +31,7 @@ var Model = BaseModel.extend( {
 
             set : function( value ){
                 var name = this.idAttribute;
-                bbSetSingleAttr( this, name, value, this.__attributes[ name ] );
+                setSingleAttr( this, name, value, this.__attributes[ name ] );
             }
         }
     },
@@ -43,8 +43,8 @@ var Model = BaseModel.extend( {
 
     defaults : function(){ return {}; },
 
-    __beginChange  : modelSet.begin,
-    __commitChange : modelSet.commit,
+    __begin  : modelSet.__begin,
+    __commit : modelSet.__commit,
 
     set : function( a, b, c ){
         switch( typeof a ){
@@ -52,7 +52,7 @@ var Model = BaseModel.extend( {
             var attrSpec = this.__attributes[ a ];
 
             if( attrSpec && !attrSpec.isBackboneType && !c ){
-                return bbSetSingleAttr( this, a, b, attrSpec );
+                return setSingleAttr( this, a, b, attrSpec );
             }
 
             var attrs = {};

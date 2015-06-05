@@ -235,11 +235,4 @@
                 canHaveNativeProperties( Nested.Class );
             });
         });
-
-        describe( 'Run-time errors', function(){
-            it( 'Property "name" conflicts with base class members' );
-            it( 'Attribute hash is not an object' );
-            it( 'Attribute "name" has no default value' );
-            it( '"defaults" must be an object, functions are not supported' );
-        });
     });

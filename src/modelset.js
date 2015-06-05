@@ -30,8 +30,8 @@ module.exports = {
     setSingleAttr : setSingleAttr,
     setAttrs      : setAttrs,
     transform     : applyTransform,
-    begin         : beginChange,
-    commit        : commitChange
+    __begin         : __begin,
+    __commit        : __commit
 };
 
 function genericIsChanged( a, b ){
@@ -162,9 +162,12 @@ function bbSetAttrs( model, attrs, options ){
 // =================================
 // Deep set model attributes, catching nested attributes changes
 function setAttrs( model, attrs, options ){
-    model.__beginChange();
+    model.__begin();
+
     applyTransform( model, attrs, model.__attributes, options );
-    model.__commitChange( attrs, options );
+
+    model.__commit( attrs, options );
+
     return model;
 }
 
@@ -179,28 +182,33 @@ function applyTransform( model, attrs, attrSpecs, options ){
             error.unknownAttribute( model, name, value );
         }
     }
-};
+}
 
-function beginChange(){
+function __begin(){
     this.__duringSet++ || ( this.__nestedChanges = {} );
 }
 
-function commitChange( attrs, options ){
+function __commit( attrs, options ){
     if( !--this.__duringSet ){
+        var nestedChanges = this.__nestedChanges,
+            attributes    = this.attributes;
+
         attrs || ( attrs = {} );
 
         // Catch nested changes.
-        for( var name in this.__nestedChanges ){
-            name in attrs || ( attrs[ name ] = this.__nestedChanges[ name ] );
+        for( var name in nestedChanges ){
+            var value = name in attrs ? attrs[ name ] : attrs[ name ] = nestedChanges[ name ];
 
-            if( attrs[ name ] === this.attributes[ name ] ){
-                // patch attributes to force bbSetAttrs to trigger change event
-                this.attributes[ name ] = null;
+            if( value === attributes[ name ] ){
+                // patch attributes to force change:name event
+                attributes[ name ] = null;
             }
         }
 
         this.__nestedChanges = {};
     }
 
-    attrs && bbSetAttrs( this, attrs, options );
+    if( attrs ){
+        bbSetAttrs( this, attrs, options );
+    }
 }

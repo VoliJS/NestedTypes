@@ -20,7 +20,7 @@ attribute.Type.extend( {
         // delegate to clone function or deep clone through serialization
         return value.clone ? value.clone( value, options ) : this.cast( JSON.parse( JSON.stringify( value ) ) );
     }
-} ).bind( Function.prototype );
+} ).attach( Function.prototype );
 
 // Date Attribute
 // ----------------------
@@ -73,7 +73,7 @@ attribute.Type.extend( {
 
     isChanged : function( a, b ){ return ( a && +a ) !== ( b && +b ); },
     clone     : function( value ){ return new Date( +value ); }
-} ).bind( Date );
+} ).attach( Date );
 
 // Primitive Types
 // ----------------
@@ -90,7 +90,7 @@ attribute.Type.extend( {
     isChanged : function( a, b ){ return a !== b; },
 
     clone : function( value ){ return value; }
-} ).bind( Number, Boolean, String, Integer );
+} ).attach( Number, Boolean, String, Integer );
 
 // Array Type
 // ---------------
@@ -100,7 +100,7 @@ attribute.Type.extend( {
         // Fix incompatible constructor behaviour of Array...
         return value == null || value instanceof Array ? value : [ value ];
     }
-} ).bind( Array );
+} ).attach( Array );
 
 // Backbone Attribute
 // ----------------
@@ -110,8 +110,8 @@ var bbForceUpdateAttr = new ( attribute.Type.extend( {
     isChanged : function(){ return true; }
 } ) );
 
-var setAttrs        = modelSet.setAttrs,
-    bbSetSingleAttr = modelSet.setSingleAttr;
+var setAttrs      = modelSet.setAttrs,
+    setSingleAttr = modelSet.setSingleAttr;
 
 attribute.Type.extend( {
     create : function( options ){ return new this.type( null, options ); },
@@ -174,8 +174,8 @@ attribute.Type.extend( {
         if( triggerWhenChanged ){
             // for collection, add transactional methods to join change events on bubbling
             this.__events = this.isModel ? {} : {
-                'before:change' : Model.prototype.__beginChange,
-                'after:change'  : Model.prototype.__commitChange
+                'before:change' : modelSet.__begin,
+                'after:change'  : modelSet.__commit
             };
 
             this.__events[ triggerWhenChanged ] = function handleNestedChange(){
@@ -185,9 +185,9 @@ attribute.Type.extend( {
                     this.__nestedChanges[ name ] = attr;
                 }
                 else{
-                    bbSetSingleAttr( this, name, attr, bbForceUpdateAttr );
+                    setSingleAttr( this, name, attr, bbForceUpdateAttr );
                 }
             };
         }
     }
-} ).bind( Model, Collection );
+} ).attach( Model, Collection );

@@ -16,6 +16,7 @@
   },
 
   "devDependencies" : {
+      "browserify" : "*",
       "mocha" : "*",
       "chai" : "* <3",
       "sinon" : "*",
@@ -30,6 +31,6 @@
 
   "scripts": {
     "test"  : "node_modules/.bin/mocha",
-    "build" : ""
+    "make" : "browserify -x underscore -x backbone -r ./src/nestedtypes:nestedtypes > ./src/_bundle.js && cat ./src/umd-head.js ./src/_bundle.js ./src/umd-tail.js > ./nestedtypes.js"
   }
 }

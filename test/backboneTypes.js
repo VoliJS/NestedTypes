@@ -37,7 +37,7 @@
         var B = Nested.Model.extend({
             attributes :{
                 first : A,
-                second : A.options({ triggerWhenChanged : false }),
+                second : A.has.triggerWhenChanged( false ),
                 c : A.Collection
             }
         });

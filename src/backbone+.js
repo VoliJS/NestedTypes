@@ -25,14 +25,10 @@ Events.listenTo = function( obj, events ){
 };
 
 // Update Backbone objects to use event patches and Object+
-Object.transform( Backbone, Backbone, function( Type ){
-    if( typeof Type === 'function' ){
-        if( Type.prototype.listenTo ){
-            Type.prototype.listenTo = Events.listenTo;
-        }
-
-        if( Type.extend ) Object.extend.attach( Type );
-    }
+[ 'Model', 'Collection', 'View', 'Router', 'History' ].forEach( function( name ){
+    var Type = Backbone[ name ];
+    Type.prototype.listenTo = Events.listenTo;
+    Object.extend.attach( Type );
 });
 
 // Make Object.extend classes capable of sending and receiving Backbone Events...

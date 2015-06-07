@@ -22,6 +22,7 @@
 
 var _        = require( 'underscore' ),
     Events   = require( './backbone+' ).Events,
+    error    = require( './errors' ),
     trigger2 = Events.trigger2,
     trigger3 = Events.trigger3;
 

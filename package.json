@@ -37,6 +37,7 @@
   "version": "0.10.0",
   "scripts": {
     "test": "node_modules/.bin/mocha",
-    "build": "node_modules/.bin/browserify -x underscore -x backbone -r ./src/nestedtypes:nestedtypes > ./src/_bundle.js && cat ./src/umd-head.js ./src/_bundle.js ./src/umd-tail.js > ./nestedtypes.js && node_modules/.bin/uglifyjs nestedtypes.js --compress --mangle --screw-ie8 > nestedtypes.min.js"
+    "build": "node_modules/.bin/browserify -x underscore -x backbone -r ./src/nestedtypes:nestedtypes > ./src/_bundle.js && cat ./src/umd-head.js ./src/_bundle.js ./src/umd-tail.js > ./nestedtypes.js && cat ./src/umd-head-chaplin.js ./src/_bundle.js ./src/umd-tail.js > ./chaplinjs/nestedtypes.js && node_modules/.bin/uglifyjs nestedtypes.js --compress --mangle --screw-ie8 > nestedtypes.min.js",
+    "build-win": "node_modules\\.bin\\browserify -x underscore -x backbone -r ./src/nestedtypes:nestedtypes > ./src/_bundle.js && type .\\src\\umd-head.js .\\src\\_bundle.js .\\src\\umd-tail.js > .\\nestedtypes.js && type .\\src\\umd-head-chaplin.js .\\src\\_bundle.js .\\src\\umd-tail.js > .\\chaplinjs\\nestedtypes.js && .\\node_modules\\.bin\\uglifyjs nestedtypes.js --compress --mangle --screw-ie8 > nestedtypes.min.js"
   }
 }

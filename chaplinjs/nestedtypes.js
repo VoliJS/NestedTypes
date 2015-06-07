@@ -3,7 +3,11 @@
         module.exports = factory(require('underscore'), require('backbone'));
     }
     else if(typeof define === 'function' && define.amd) {
-        define(['underscore', 'backbone'], factory);
+        define(['underscore', 'backbone', 'chaplin'], function( _, Backbone, Chaplin ){
+            Chaplin.Events || ( Chaplin.Events = Backbone.Events );
+            Chaplin.History || ( Chaplin.History = Backbone.History );
+	        return factory( _, Chaplin );
+	    });
     }
     else {
         root.Nested = factory(root._, root.Backbone);

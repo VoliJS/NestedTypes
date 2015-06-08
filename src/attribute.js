@@ -14,7 +14,7 @@ var primitiveTypes = {
 };
 
 // list of simple accessor methods available in options
-var availableOptions = [ 'triggerWhenChanged', 'parse', 'clone', 'toJSON', 'value', 'cast', 'create', 'name', 'value',
+var availableOptions = [ 'triggerWhenChanged', 'changeEvents', 'parse', 'clone', 'toJSON', 'value', 'cast', 'create', 'name', 'value',
                          'type' ];
 
 var Options = Object.extend( {
@@ -77,6 +77,8 @@ var Options = Object.extend( {
     createAttribute : function( name ){
         var options = this._options,
             Type    = options.type ? options.type.Attribute : this.Attribute;
+
+        if( options.changeEvents ) options.triggerWhenChanged = options.changeEvents;
 
         return new Type( name, options );
     }

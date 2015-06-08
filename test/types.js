@@ -1,4 +1,4 @@
-    var Nested = require( '../nestedtypes' ),
+    var Nested = require( '../src/main' ),
         chai = require( 'chai' ),
         expect = chai.expect,
         sinon = require( 'sinon' ),
@@ -249,11 +249,10 @@
             describe( 'get hook', function(){
                 var A = Nested.Model.extend({
                     defaults : {
-                        a : Number.options({
-                            get : function( value ){
-                                return value * 2;
-                            }
-                        })
+                        a : Number.has
+                                .get( function( value ){
+                                    return value * 2;
+                                })
                     }
                 });
 
@@ -272,16 +271,14 @@
             describe( 'set hook', function(){
                 var A = Nested.Model.extend({
                     defaults : {
-                        a : Number.options({
-                            value : 33,
-                            set : function( value, options ){
-                                expect( value ).to.be.a( 'number' );
+                        a : Number.value( 33 )
+                                .set( function( value, options ){
+                                    expect( value ).to.be.a( 'number' );
 
-                                if( value !== 0 ){
-                                    return value * 2;
-                                }
-                            }
-                        })
+                                    if( value !== 0 ){
+                                        return value * 2;
+                                    }
+                                })
                     }
                 });
 
@@ -322,11 +319,10 @@
                 it( 'override attribute\'s toJSON', function(){
                     var A = Nested.Model.extend({
                         defaults : {
-                            a : Date.options({
-                                toJSON : function( date ){
-                                    return date.getTime();
-                                }
-                            })
+                            a : Date.has
+                                    .toJSON( function( date ){
+                                        return date.getTime();
+                                    })
                         }
                     });
 
@@ -339,7 +335,7 @@
                 it( 'can prevent attribute from serialization', function(){
                     var A = Nested.Model.extend({
                         defaults : {
-                            a : Date.options({ toJSON : false }),
+                            a : Date.has.toJSON( false ),
                             b : true
                         }
                     });

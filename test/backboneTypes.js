@@ -1,4 +1,4 @@
-    var Nested = require( '../nestedtypes' ),
+    var Nested = require( '../src/main' ),
         expect = require( 'chai' ).expect,
         _ = require( 'underscore' ),
         sinon = require( 'sinon' );
@@ -37,7 +37,7 @@
         var B = Nested.Model.extend({
             attributes :{
                 first : A,
-                second : A.options({ triggerWhenChanged : false }),
+                second : A.has.triggerWhenChanged( false ),
                 c : A.Collection
             }
         });

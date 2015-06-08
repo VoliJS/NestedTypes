@@ -1716,8 +1716,8 @@ exports.set = function( spec ){
 
 
 },{"./backbone+":2,"./collection":3,"./model":6,"underscore":"underscore"}],"nestedtypes":[function(require,module,exports){
-// Backbone.nestedTypes 0.10.0 (https://github.com/Volicon/backbone.nestedTypes)
-// (c) 2014 Vlad Balin & Volicon, may be freely distributed under the MIT license
+// NestedTypes namespace
+// =======================
 
 var Model       = require( './model' ),
     Collection  = require( './collection' ),

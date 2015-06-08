@@ -1,3 +1,14 @@
+/**
+ * Backbone.NestedTypes 1.0.0 <https://github.com/Volicon/backbone.nestedTypes>
+ * (c) 2015 Vlad Balin & Volicon
+ * Released under MIT @license
+ */
+
+/**
+ * Date.parse with progressive enhancement for ISO 8601 <https://github.com/csnover/js-iso8601>
+ * © 2011 Colin Snover <http://zetafleet.com>
+ * Released under MIT @license
+ */
 (function(root, factory) {
     if(typeof exports === 'object') {
         module.exports = factory(require('underscore'), require('backbone'));
@@ -1712,8 +1723,8 @@ exports.set = function( spec ){
 
 
 },{"./backbone+":2,"./collection":3,"./model":6,"underscore":"underscore"}],"nestedtypes":[function(require,module,exports){
-// Backbone.nestedTypes 0.10.0 (https://github.com/Volicon/backbone.nestedTypes)
-// (c) 2014 Vlad Balin & Volicon, may be freely distributed under the MIT license
+// NestedTypes namespace
+// =======================
 
 var Model       = require( './model' ),
     Collection  = require( './collection' ),

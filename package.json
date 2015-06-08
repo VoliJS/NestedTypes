@@ -39,11 +39,11 @@
     "test": "node_modules/.bin/mocha",
 
     "minify:win": ".\\node_modules\\.bin\\uglifyjs nestedtypes.js --comments --compress --mangle --screw-ie8 > nestedtypes.min.js & .\\node_modules\\.bin\\uglifyjs .\\chaplinjs\\nestedtypes.js --comments --compress --mangle --screw-ie8 > .\\chaplinjs\\nestedtypes.min.js",
-    "make:win": "node_modules\\.bin\\browserify -x underscore -x backbone -r ./src/main:nestedtypes > ./src/_bundle.js && type .\\src\\copyright.js .\\src\\umd-head.js .\\src\\_bundle.js .\\src\\umd-tail.js > .\\nestedtypes.js && type .\\src\\copyright.js .\\src\\umd-head-chaplin.js .\\src\\_bundle.js .\\src\\umd-tail.js > .\\chaplinjs\\nestedtypes.js && del .\\src\\_bundle.js",
+    "make:win": "node_modules\\.bin\\browserify -x underscore -x backbone -r ./src/main:nestedtypes > ./umd/_bundle.js && type .\\umd\\copyright.js .\\umd\\head.js .\\umd\\_bundle.js .\\umd\\tail.js > .\\nestedtypes.js && type .\\umd\\copyright.js .\\umd\\head-chaplin.js .\\umd\\_bundle.js .\\umd\\tail.js > .\\chaplinjs\\nestedtypes.js && del .\\umd\\_bundle.js",
     "build:win": "npm test && npm run make:win && npm run minify:win",
 
     "minify": "node_modules/.bin/uglifyjs nestedtypes.js --comments --compress --mangle --screw-ie8 > nestedtypes.min.js & node_modules/.bin/uglifyjs ./chaplinjs/nestedtypes.js --comments --compress --mangle --screw-ie8 > ./chaplinjs/nestedtypes.min.js",
-    "make": "node_modules/.bin/browserify -x underscore -x backbone -r ./src/main:nestedtypes > ./src/_bundle.js && cat ./src/copyright.js ./src/umd-head.js ./src/_bundle.js ./src/umd-tail.js > ./nestedtypes.js && ./src/copyright.js cat ./src/umd-head-chaplin.js ./src/_bundle.js ./src/umd-tail.js > ./chaplinjs/nestedtypes.js && rm ./src/_bundle.js",
+    "make": "node_modules/.bin/browserify -x underscore -x backbone -r ./src/main:nestedtypes > ./umd/_bundle.js && cat ./umd/copyright.js ./umd/head.js ./umd/_bundle.js ./umd/tail.js > ./nestedtypes.js && ./umd/copyright.js cat ./umd/head-chaplin.js ./umd/_bundle.js ./umd/tail.js > ./chaplinjs/nestedtypes.js && rm ./umd/_bundle.js",
     "build": "npm test && npm run make && npm run minify"
   }
 }

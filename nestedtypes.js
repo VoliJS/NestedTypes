@@ -850,11 +850,11 @@ var Model = BaseModel.extend( {
         return model.set ? model.set( attr, value, options ) : model[ attr ] = value;
     },
 
-    constructor : function( attributes, options ){
+    constructor : function( attributes, opts ){
         var attrSpecs = this.__attributes,
-            attrs     = attributes || {};
+            attrs     = attributes || {},
+            options   = opts || {};
 
-        options || (options = {});
         this.cid = _.uniqueId( 'c' );
         this.attributes = {};
         if( options.collection ){
@@ -1180,15 +1180,14 @@ function setSingleAttr( model, key, value, attrSpec ){
     model._pending = false;
     model._changing = false;
     return model;
-};
+}
 
 // General case set: used for multiple and nested model/collection attributes.
 // Does _not_ invoke attribute transform! It must be done at the the top level,
 // due to the problems with current nested changes detection algorithm. See 'setAttrs' function below.
-function bbSetAttrs( model, attrs, options ){
+function bbSetAttrs( model, attrs, opts ){
     'use strict';
-
-    options || (options = {});
+    var options = opts || {};
 
     // Run validation.
     if( !model._validate( attrs, options ) ){
@@ -1292,7 +1291,9 @@ function __begin(){
     this.__duringSet++ || ( this.__nestedChanges = {} );
 }
 
-function __commit( attrs, options ){
+function __commit( a_attrs, options ){
+    var attrs = a_attrs;
+
     if( !--this.__duringSet ){
         var nestedChanges = this.__nestedChanges,
             attributes    = this.attributes;

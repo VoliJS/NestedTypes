@@ -1,7 +1,6 @@
 define( function( require, exports, module ){
-    var Nested   = require( 'nestedtypes.min' ),
-        Backbone = require( 'backbone' ),
-        expect   = require( 'chai' ).expect;
+    var Nested   = require( 'nestedtypes' ),
+        Backbone = require( 'backbone' );
 
     describe( 'Flat models', function(){
         describe( 'primitive types', function(){

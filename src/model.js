@@ -125,11 +125,11 @@ var Model = BaseModel.extend( {
         return model.set ? model.set( attr, value, options ) : model[ attr ] = value;
     },
 
-    constructor : function( attributes, options ){
+    constructor : function( attributes, opts ){
         var attrSpecs = this.__attributes,
-            attrs     = attributes || {};
+            attrs     = attributes || {},
+            options   = opts || {};
 
-        options || (options = {});
         this.cid = _.uniqueId( 'c' );
         this.attributes = {};
         if( options.collection ){

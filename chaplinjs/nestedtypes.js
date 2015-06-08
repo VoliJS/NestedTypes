@@ -17,6 +17,7 @@
         define(['underscore', 'backbone', 'chaplin'], function( _, Backbone, Chaplin ){
             Chaplin.Events || ( Chaplin.Events = Backbone.Events );
             Chaplin.History || ( Chaplin.History = Backbone.History );
+            Chaplin.$ || ( Chaplin.$ = Backbone.$ );
 	        return factory( _, Chaplin );
 	    });
     }

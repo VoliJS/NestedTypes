@@ -91,7 +91,7 @@ var Options = Object.extend( {
     // construct attribute with a given name and proper type.
     createAttribute : function( name ){
         var options = this._options,
-            Type    = options.type ? options.type.NestedType : this.Attribute;
+            Type    = options.type ? options.type.Attribute : this.Attribute;
 
         return new Type( name, options );
     }
@@ -296,7 +296,7 @@ var Attribute = Object.extend( {
                 var Type = arguments[ i ];
                 Type.attribute = Type.options = options;
                 Type.value = value;
-                Type.NestedType = this; //TODO: Rename to Attribute
+                Type.Attribute = this;
                 Object.defineProperty( Type, 'has', {
                     get : function(){
                         // workaround for sinon.js and other libraries overriding 'has'

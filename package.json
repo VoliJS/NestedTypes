@@ -22,7 +22,7 @@
     "backbone": ">=1.1.2"
   },
   "devDependencies": {
-    "uglify-js" : "*",
+    "uglify-js": "*",
     "browserify": "*",
     "mocha": "*",
     "chai": "* <3",
@@ -34,10 +34,16 @@
     "nestedtypes.min.js"
   ],
   "license": "MIT",
-  "version": "0.10.0",
+  "version": "1.0.0",
   "scripts": {
     "test": "node_modules/.bin/mocha",
-    "build": "node_modules/.bin/browserify -x underscore -x backbone -r ./src/main:nestedtypes > ./src/_bundle.js && cat ./src/copyright.js ./src/umd-head.js ./src/_bundle.js ./src/umd-tail.js > ./nestedtypes.js && cat ./src/umd-head-chaplin.js ./src/_bundle.js ./src/umd-tail.js > ./chaplinjs/nestedtypes.js && node_modules/.bin/uglifyjs nestedtypes.js --comments --compress --mangle --screw-ie8 > nestedtypes.min.js",
-    "build-win": "node_modules\\.bin\\browserify -x underscore -x backbone -r ./src/main:nestedtypes > ./src/_bundle.js && type .\\src\\copyright.js .\\src\\umd-head.js .\\src\\_bundle.js .\\src\\umd-tail.js > .\\nestedtypes.js && type .\\src\\umd-head-chaplin.js .\\src\\_bundle.js .\\src\\umd-tail.js > .\\chaplinjs\\nestedtypes.js && .\\node_modules\\.bin\\uglifyjs nestedtypes.js --comments --compress --mangle --screw-ie8 > nestedtypes.min.js"
+
+    "minify:win": ".\\node_modules\\.bin\\uglifyjs nestedtypes.js --comments --compress --mangle --screw-ie8 > nestedtypes.min.js & .\\node_modules\\.bin\\uglifyjs .\\chaplinjs\\nestedtypes.js --comments --compress --mangle --screw-ie8 > .\\chaplinjs\\nestedtypes.min.js",
+    "make:win": "node_modules\\.bin\\browserify -x underscore -x backbone -r ./src/main:nestedtypes > ./src/_bundle.js && type .\\src\\copyright.js .\\src\\umd-head.js .\\src\\_bundle.js .\\src\\umd-tail.js > .\\nestedtypes.js && type .\\src\\copyright.js .\\src\\umd-head-chaplin.js .\\src\\_bundle.js .\\src\\umd-tail.js > .\\chaplinjs\\nestedtypes.js && del .\\src\\_bundle.js",
+    "build:win": "npm test && npm run make:win && npm run minify:win",
+
+    "minify": "node_modules/.bin/uglifyjs nestedtypes.js --comments --compress --mangle --screw-ie8 > nestedtypes.min.js & node_modules/.bin/uglifyjs ./chaplinjs/nestedtypes.js --comments --compress --mangle --screw-ie8 > ./chaplinjs/nestedtypes.min.js",
+    "make": "node_modules/.bin/browserify -x underscore -x backbone -r ./src/main:nestedtypes > ./src/_bundle.js && cat ./src/copyright.js ./src/umd-head.js ./src/_bundle.js ./src/umd-tail.js > ./nestedtypes.js && ./src/copyright.js cat ./src/umd-head-chaplin.js ./src/_bundle.js ./src/umd-tail.js > ./chaplinjs/nestedtypes.js && rm ./src/_bundle.js",
+    "build": "npm test && npm run make && npm run minify"
   }
 }

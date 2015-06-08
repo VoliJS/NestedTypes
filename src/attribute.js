@@ -22,6 +22,10 @@ var Options = Object.extend( {
 
     Attribute : null, // default attribute spec when no type is given, is set to Attribute below
 
+    properties : {
+        has : function(){ return this; }
+    },
+
     constructor : function( spec ){
         // special option used to guess types of primitive values and to distinguish value from type
         if( 'typeOrValue' in spec ){
@@ -275,9 +279,9 @@ var Attribute = Object.extend( {
         return function(){
             for( var i = 0; i < arguments.length; i++ ){
                 var Type = arguments[ i ];
-                Type.options = options;
+                Type.attribute = Type.options = options;
                 Type.value = value;
-                Type.NestedType = this;
+                Type.NestedType = this; //TODO: Rename to Attribute
                 Object.defineProperty( Type, 'has', {
                     get : function(){
                         // workaround for sinon.js and other libraries overriding 'has'

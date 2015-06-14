@@ -328,6 +328,7 @@ var Attribute = Object.extend( {
 } );
 
 Options.prototype.Attribute = Attribute;
+Options.prototype.attribute = Options.prototype.options;
 
 function createOptions( spec ){
     return new Options( spec );

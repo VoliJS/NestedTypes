@@ -36,7 +36,9 @@
 
         var B = Nested.Model.extend({
             attributes :{
-                first : A,
+                first : A.has.parse( function( resp ){
+                    return { a : resp.a + 1, b : resp.b + 1 };
+                }),
                 second : A.has.triggerWhenChanged( false ),
                 c : A.Collection
             }
@@ -69,6 +71,8 @@
                     }, { parse : true });
 
                     expect( spies.model ).to.be.calledOnce;
+                    expect( m.first.a ).to.eql( 3 );
+                    expect( m.first.b ).to.eql( 3 );
                 });
 
                 it( 'invoke "parse" on set', function(){
@@ -78,7 +82,6 @@
                     m.set( 'first', {id : 1, a : 2, b : 2}, { parse : true });
 
                     expect( spies.model ).to.be.calledOnce;
-
                 });
 
                 it( 'invoke "parse" on set when value is nul' , function(){
@@ -87,7 +90,6 @@
                     var m = new B({ first : null });
                     m.set( 'first', {id : 1, a : 1, b : 2}, { parse : true } );
                     expect( spies.model ).to.be.calledOnce;
-
                 });
             });
 

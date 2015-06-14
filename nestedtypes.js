@@ -994,7 +994,7 @@ function chainParseHandlers( parse, _parse ){
     if( !parse ) return _parse;
 
     return function( resp ){
-        return this.parse( this._parse( resp ) );
+        return this._parse( this.parse( resp ) );
     };
 }
 

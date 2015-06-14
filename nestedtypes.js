@@ -982,7 +982,7 @@ function createDefinition( protoProps, Base ){
     return _.extend( _.omit( protoProps, 'collection', 'attributes' ), {
         __attributes : new Attributes( allAttrSpecs ),
         _parse       : _parse,
-        parse        : chainParseHandlers( protoProps.parse, _parse ),
+        parse        : chainParseHandlers( protoProps.parse || Base.prototype.parse, _parse ),
         defaults     : defaultsAsFunction || createDefaults( allAttrSpecs ),
         properties   : createAttrsNativeProps( protoProps.properties, attrSpecs ),
         Attributes   : Attributes
@@ -991,7 +991,7 @@ function createDefinition( protoProps, Base ){
 
 function chainParseHandlers( parse, _parse ){
     if( !_parse ) return parse;
-    if( !parse ) return _parse;
+    if( parse === ModelProto.parse ) return _parse;
 
     return function( resp ){
         return this._parse( this.parse( resp ) );

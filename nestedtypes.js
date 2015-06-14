@@ -975,14 +975,41 @@ function createDefinition( protoProps, Base ){
     }
 
     var allAttrSpecs = _.defaults( {}, attrSpecs, baseAttrSpecs ),
-        Attributes   = createCloneCtor( allAttrSpecs );
+        Attributes   = createCloneCtor( allAttrSpecs ),
+        _parse       = createAttrParse( allAttrSpecs );
 
     return _.extend( _.omit( protoProps, 'collection', 'attributes' ), {
         __attributes : new Attributes( allAttrSpecs ),
+        _parse       : _parse,
+        parse        : chainParseHandlers( protoProps.parse, _parse ),
         defaults     : defaultsAsFunction || createDefaults( allAttrSpecs ),
         properties   : createAttrsNativeProps( protoProps.properties, attrSpecs ),
         Attributes   : Attributes
     } );
+}
+
+function chainParseHandlers( parse, _parse ){
+    if( !_parse ) return parse;
+    if( !parse ) return _parse;
+
+    return function( resp ){
+        return this.parse( this._parse( resp ) );
+    };
+}
+
+function createAttrParse( attrSpecs ){
+    var statements = [ 'var a = this.__attributes;' ], s;
+
+    for( var name in attrSpecs ){
+        if( attrSpecs[ name ].parse ){
+            s = 'if("' + name + '" in r) r.' + name + '=a.' + name + '.parse.call(this,r.' + name + ',"' + name + '");';
+            statements.push( s );
+        }
+    }
+
+    statements.push( 'return r;' );
+
+    return statements.length > 2 ? new Function( 'r', statements.join( '' ) ) : null;
 }
 
 // Create constructor for efficient attributes clone operation.

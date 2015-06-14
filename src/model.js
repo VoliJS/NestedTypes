@@ -273,8 +273,7 @@ function chainParseHandlers( parse, _parse ){
 }
 
 function createAttrParse( attrSpecs ){
-    var statements = [ 'var a = this.__attributes;' ],
-        s, attr;
+    var statements = [ 'var a = this.__attributes;' ], s;
 
     for( var name in attrSpecs ){
         if( attrSpecs[ name ].parse ){

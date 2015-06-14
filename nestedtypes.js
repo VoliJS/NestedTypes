@@ -1774,6 +1774,7 @@ Object.assign( exports, {
     Class : require( './object+' ),
     error : require( './errors' ),
     attribute : attribute,
+    options : attribute,
 
     value : function( value ){
         return attribute({ value: value });

@@ -1,6 +1,6 @@
-define( function( require, exports, module ){
-    var Nested = require( '../nestedtypes' ),
-        expect = require( 'chai' ).expect;
+    var Nested = require( '../src/main' ),
+        expect = require( 'chai' ).expect,
+        sinon = require( 'sinon' );
 
     describe( 'Basic functionality', function(){
         function canHaveNativeProperties( Type ){
@@ -19,10 +19,10 @@ define( function( require, exports, module ){
             });
 
             var c = new C();
-            c.readOnly.should.be.false;
+            expect( c.readOnly ).to.be.false;
             c.rw = true;
-            c.rw.should.be.true;
-            c.readOnly.should.be.true;
+            expect( c.rw ).to.be.true;
+            expect( c.readOnly ).to.be.true;
         }
 
         describe( 'Nested.Model', function(){
@@ -42,15 +42,15 @@ define( function( require, exports, module ){
                 });
 
                 var m = new M();
-                m.get( 'a' ).should.eql( 'a' );
+                expect( m.get( 'a' ) ).to.eql( 'a' );
             });
 
             it( 'create native properties for every default attribute', function(){
                 var m = new M();
-                m.a.should.eql( 'a' );
+                expect( m.a ).to.eql( 'a' );
                 m.a = 'b';
-                m.get( 'a' ).should.eql( 'b' );
-                m.a.should.eql( 'b' );
+                expect( m.get( 'a' ) ).to.eql( 'b' );
+                expect( m.a ).to.eql( 'b' );
             });
 
             it( 'can have explicitly defined native properties', function(){
@@ -80,8 +80,8 @@ define( function( require, exports, module ){
                 });
 
                 m = new B();
-                m.a.should.eql( 'a' );
-                m.b.should.eql( 'b' );
+                expect( m.a ).to.eql( 'a' );
+                expect( m.b ).to.eql( 'b' );
             });
 
             it( 'deep copy defaults JSON literals on model creation', function(){
@@ -95,8 +95,26 @@ define( function( require, exports, module ){
                     n = new A();
 
                 m.a.first.push( 2 );
-                m.a.first.should.eql( [ 1, 2 ] );
-                n.a.first.should.eql( [ 1 ] );
+                expect( m.a.first ).to.eql( [ 1, 2 ] );
+                expect( n.a.first ).to.eql( [ 1 ] );
+            });
+
+            it( 'can define a tree', function(){
+                var M = Nested.Model.extend();
+
+                M.define({
+                    defaults : {
+                        nested : M.value( null ),
+                        elements : M.Collection
+                    }
+                })
+
+                var m = new M();
+
+                m.elements.add({});
+
+                expect( m.elements.first().elements.length ).to.be.zero;
+
             });
 
             it( 'can handle function in Model.defaults', function(){
@@ -140,13 +158,13 @@ define( function( require, exports, module ){
 
             it( 'is automatically defined for every model', function(){
                 var c = new M.Collection();
-                c.url.should.eql( M.prototype.urlRoot );
-                c.model.should.eql( M );
+                expect( c.url ).to.eql( M.prototype.urlRoot );
+                expect( c.model ).to.eql( M );
             });
 
             it( 'can be defined in Model.collection', function(){
                 var c = new M.Collection();
-                c.b.should.eql( 'b' );
+                expect( c.b ).to.eql( 'b' );
             });
 
             it( 'inherits from the base Model.collection', function(){
@@ -158,9 +176,9 @@ define( function( require, exports, module ){
                 });
 
                 var c = new B.Collection();
-                c.c.should.eql( 'c' );
-                c.b.should.eql( 'b' );
-                c.url.should.eql( '/myroot' );
+                expect( c.c ).to.eql( 'c' );
+                expect( c.b ).to.eql( 'b' );
+                expect( c.url ).to.eql( '/myroot' );
             });
 
         });
@@ -175,8 +193,8 @@ define( function( require, exports, module ){
 
             it( 'has initialize method', function(){
                 var c = new C();
-                c.a.should.eql( 'a' );
-                c.b.should.eql( 'b' );
+                expect( c.a ).to.eql( 'a' );
+                expect( c.b ).to.eql( 'b' );
             });
 
             it( 'can be extended', function(){
@@ -186,35 +204,35 @@ define( function( require, exports, module ){
 
                 var d = new D();
 
-                d.a.should.eql( 'a' );
-                d.b.should.eql( 'b' );
-                d.d.should.eql( 'd' );
+                expect( d.a ).to.eql( 'a' );
+                expect( d.b ).to.eql( 'b' );
+                expect( d.d ).to.eql( 'd' );
             });
 
             it( 'can trigger/listen to backbone events', function(){
                 var C = Nested.Class.extend({
                     initialize : function(){
-                        this.listenTo( this, 'hello', function(){
-                            this.hello = true;
-                        })
+                        this.listenTo( this, {
+                            'hello' : function(){
+                                this.hello = true;
+                            },
+
+                            'a b c' : function(){
+                                this.abc = true;
+                            }
+                        });
                     }
                 });
 
                 var c = new C();
                 c.trigger( 'hello' );
-                c.hello.should.be.true;
+                expect( c.hello ).to.be.true;
+                c.trigger( 'b' );
+                expect( c.abc ).to.be.true;
             });
 
             it( 'can have explicitly defined native properties', function(){
                 canHaveNativeProperties( Nested.Class );
             });
         });
-
-        describe( 'Run-time errors', function(){
-            it( 'Property "name" conflicts with base class members' );
-            it( 'Attribute hash is not an object' );
-            it( 'Attribute "name" has no default value' );
-            it( '"defaults" must be an object, functions are not supported' );
-        });
     });
-});

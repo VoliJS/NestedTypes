@@ -1,65 +1,84 @@
-NestedTypes feature list
-========================
-Features:
+# Getting Started
+## Overview
+## Installation & Requirements
 
-- Class type
-- Native properties for Model attributes, Collection, and Class.
-- Inline Collection definition syntax for Models.
-- Model.defaults inheritance and deep copying.
-- Type declarations and automatic type casts for Model attributes.
-- Nested models and collections.
-- One-to-many and many-to-many models relations.
-- 'change' event bubbling for nested models and collections.
-- Attribute-level control for parse/toJSON and event bubbling.
-- Run-time type error detection and logging.
+# Object.extend
 
-Basic features
---------------
+# Attribute Types
+## Overview
+## Object types
+## Primitive types
+## Untyped value
+## Date handling
+## Nested Model
+## Nested Collection
+## 
 
-- Model.defaults:
-    - Native properties are created for every entry.
-    - Entries are being inherited by subclass model.
-    - JSON literals will be deep copied for each model instance.
-- Inline collection definitions
-- Class type
-- Explicit native properties definition: Model, Class, Collection.
-- Console errors
+# Attribute Options
 
-Types annotations
---------------------------
-- Basic syntax
-- Primitive types (String, Boolean, Number).
-    - Are infered from default values.
-    - Type cast on assignment.
-- Date type
-    - Serialization to ISO string
-    - Handling of ISO and MS formats
-    - Type cast rules
+# Nested.Model
+## Overview
+## model.id
+In NestedTypes, `model.id` is assignable property, linked to `model.attributes[ model.idAttribute ]`.
 
-- Class type and JS objects
-    - default type cast rules
-    - declarative event listeners
+`model.id = 5` has the same effect as `model.set( model.idAttribute, 5 )` 
 
-- Attribute options
-    - override native property
-    - override parse/toJSON
-    - type and value
+## model.attrName
 
-- Attribute metatypes
-    - overriding cast
-    - overriding property
+NestedTypes creates native property for every attribute.    
 
-Nested Models and Collections
------------------------------
-- special type cast rules
-    - 'set' call propagation
-- event bubbling
-    - change event
-    - change:attribute event
-    - replace:attribute event
-    - 'triggerWhenChanged' option
+`model.attr = val;` has the same effect as `model.set( 'attr', val );`
 
-Models Relations
-----------------
-- Model.From
-- Collection.SubsetOf
+`val = model.attr;` has the same effect as `val = model.get( 'attr' );`
+
+Accessing attributes with native properties is faster than using `get` and `set`.
+
+## model.set()
+
+Set model attributes. Update sequence is fo
+
+1. Values are converted to proper types. For existing nested models and collections `deep update` may be
+invoked.
+2. Set hooks are being executed for changing attributes.
+3. Events are being registered for changing attributes.
+4. Attribute values are being set, firing change events.
+
+In NestedTypes, you can assign model attributes directly, and it's faster than `set`:
+    `model.attr = val;`
+
+## model.get( 'attr' )
+
+Get attribute value by name. Returned value can be modified with `get hook` in attribute definition.
+
+In NestedTypes, you can access model attributes directly, and it's faster than `get`:
+    `val = model.attr;`
+
+## Model.Collection
+## Model.defaults()
+## Model.define()
+## model.defaults()
+## model.deepClone()
+## model.clone()
+ 
+## model.deepGet()
+## model.deepSet()
+## model.toJSON()
+## model.isValid()
+## model.properties
+## model.triggerWhenChanged
+
+
+# Nested.Collection
+## Collection.define()
+## collection.deepClone()
+## collection.clone()
+## collection.set()
+## collection.get()
+## collection.toJSON()
+## collection.isValid()
+## collection.properties
+## collection.triggerWhenChanged
+
+
+
+# Nested.store

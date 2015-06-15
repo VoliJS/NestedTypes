@@ -1,6 +1,10 @@
-define( function( require, exports, module ){
-    var Nested = require( 'nestedtypes' ),
-        expect = require( 'chai' ).expect;
+    var Nested = require( '../src/main' ),
+        chai = require( 'chai' ),
+        expect = chai.expect,
+        sinon = require( 'sinon' ),
+        sinonChai = require( 'sinon-chai' );
+
+    chai.use( sinonChai );
 
     describe( 'Type specs', function(){
         describe( 'Constructor type spec', function(){
@@ -196,20 +200,6 @@ define( function( require, exports, module ){
                 expect( m.str ).to.be.a( 'string' ).and.equal( "str" );
                 expect( m.bool ).to.be.a( 'boolean' ).and.equal( true );
             });
-
-            it( 'execute 1 000 000 sets to Integer attribute', function(){
-                var A = Nested.Model.extend({
-                    defaults : {
-                        num : 1
-                    }
-                });
-
-                var m = new A();
-                for( var i = 0; i < 1000000; i++ ){
-                    m.num = i;
-                }
-            });
-
         });
 
         describe( 'Date type', function(){
@@ -232,26 +222,26 @@ define( function( require, exports, module ){
             it( 'parse ISO dates in all browsers on assignment', function(){
                 // parse Date from string
                 user.created = "2012-12-12T10:00";
-                user.created.should.be.instanceof( Date );
-                user.created.toISOString().should.be.eql( '2012-12-12T10:00:00.000Z' );
+                expect( user.created ).to.be.instanceof( Date );
+                expect( user.created.toISOString() ).to.be.eql( '2012-12-12T10:00:00.000Z' );
             });
 
             it( 'parse integer time stamps on assignment', function(){
                 // parse Date from timestamp
                 user.created = 1234567890123;
-                user.created.should.be.instanceof( Date );
-                user.created.toISOString().should.be.eql( '2009-02-13T23:31:30.123Z' );
+                expect( user.created ).to.be.instanceof( Date );
+                expect( user.created.toISOString() ).to.be.eql( '2009-02-13T23:31:30.123Z' );
             });
 
             it( 'parse MS time stamps on assignment', function(){
                 user.created = "/Date(1234567890123)/";
-                user.created.should.be.instanceof( Date );
-                user.created.toISOString().should.be.eql( '2009-02-13T23:31:30.123Z' );
+                expect( user.created ).to.be.instanceof( Date );
+                expect( user.created.toISOString() ).to.be.eql( '2009-02-13T23:31:30.123Z' );
             });
 
             it( 'is serialized to ISO date', function(){
                 var json = user.toJSON();
-                json.created.should.be.eql( '2009-02-13T23:31:30.123Z' );
+                expect( json.created ).to.be.eql( '2009-02-13T23:31:30.123Z' );
             } );
         });
 
@@ -259,11 +249,10 @@ define( function( require, exports, module ){
             describe( 'get hook', function(){
                 var A = Nested.Model.extend({
                     defaults : {
-                        a : Number.options({
-                            get : function( value ){
-                                return value * 2;
-                            }
-                        })
+                        a : Number.has
+                                .get( function( value ){
+                                    return value * 2;
+                                })
                     }
                 });
 
@@ -282,16 +271,14 @@ define( function( require, exports, module ){
             describe( 'set hook', function(){
                 var A = Nested.Model.extend({
                     defaults : {
-                        a : Number.options({
-                            value : 33,
-                            set : function( value, options ){
-                                expect( value ).to.be.a( 'number' );
+                        a : Number.value( 33 )
+                                .set( function( value, options ){
+                                    expect( value ).to.be.a( 'number' );
 
-                                if( value !== 0 ){
-                                    return value * 2;
-                                }
-                            }
-                        })
+                                    if( value !== 0 ){
+                                        return value * 2;
+                                    }
+                                })
                     }
                 });
 
@@ -332,11 +319,10 @@ define( function( require, exports, module ){
                 it( 'override attribute\'s toJSON', function(){
                     var A = Nested.Model.extend({
                         defaults : {
-                            a : Date.options({
-                                toJSON : function( date ){
-                                    return date.getTime();
-                                }
-                            })
+                            a : Date.has
+                                    .toJSON( function( date ){
+                                        return date.getTime();
+                                    })
                         }
                     });
 
@@ -349,7 +335,7 @@ define( function( require, exports, module ){
                 it( 'can prevent attribute from serialization', function(){
                     var A = Nested.Model.extend({
                         defaults : {
-                            a : Date.options({ toJSON : false }),
+                            a : Date.has.toJSON( false ),
                             b : true
                         }
                     });
@@ -359,22 +345,6 @@ define( function( require, exports, module ){
 
                     expect( json.a ).to.not.exist;
                     expect( json.b ).to.be.true;
-                });
-            });
-
-            describe( 'parse hook', function(){
-                it( 'can override attribute\'s parse', function(){
-                    var A = Nested.Model.extend({
-                        defaults : {
-                            a : Nested.options({
-                                parse : function( x ){ return "Hello " + x; }
-                            })
-                        }
-                    });
-
-                    var m = new A();
-                    m.set( m.parse({ a : 'Vlad' }) );
-                    expect( m.a ).to.equal( 'Hello Vlad' );
                 });
             });
 
@@ -393,4 +363,3 @@ define( function( require, exports, module ){
         });
 
     });
-});

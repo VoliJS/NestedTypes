@@ -39,7 +39,7 @@
                 mocha.setup( 'bdd' );
 
                 var search = window.location.search;
-                require( [ 'tests/basic', 'tests/types', 'tests/backboneTypes', 'tests/relations' ], function(){
+                require( [ 'test/basic', 'test/types', 'test/backboneTypes', 'test/relations' ], function(){
                     mocha.run();
                 } );
             }

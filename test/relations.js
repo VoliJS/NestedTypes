@@ -1,6 +1,5 @@
-define( function( require, exports, module ){
-    "use strict";
-    var Nested = require( '../nestedtypes' ),
+    var Nested = require( '../src/main' ),
+        sinon = require( 'sinon' ),
         expect = require( 'chai' ).expect;
 
     describe( 'One-to-many and many-to-many relations', function(){
@@ -216,4 +215,3 @@ define( function( require, exports, module ){
             expect( Nested.store.resolved.roles ).to.be.not.ok;
         });
     });
-});

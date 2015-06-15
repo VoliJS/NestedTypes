@@ -1,22 +1,49 @@
 {
-    "name": "backbone.nested-types",
-    "main": "nestedtypes.js",
-    "description": "backbone.js extension adding type annotations to model attributes, easiest possible way of dealing with nested models and collections, and native properties for attributes. Providing you with a more or less complete, simple, and powerful object system for JavaScript.",
-    "homepage": "https://github.com/Volicon/backbone.nestedTypes",
-    "keywords": [ "backbone", "relation", "nested", "model", "types", "properties" ],
-    "repository": {
-        "type": "git",
-        "url": "https://github.com/Volicon/backbone.nestedTypes.git"
-    },
-    "author": "Vlad Balin <https://github.com/gaperton>",
-    "contributors": "",
-    "dependencies": {
-        "underscore": ">=1.5.0",
-        "backbone": ">=1.1.2"
-    },
-    "files": [
-        "nestedtypes.js"
-    ],
-    "license": "MIT",
-    "version": "0.10.0"
+  "name": "backbone.nested-types",
+  "main": "nestedtypes.js",
+  "description": "backbone.js extension adding type annotations to model attributes, easiest possible way of dealing with nested models and collections, and native properties for attributes. Providing you with a more or less complete, simple, and powerful object system for JavaScript.",
+  "homepage": "https://github.com/Volicon/backbone.nestedTypes",
+  "keywords": [
+    "backbone",
+    "relation",
+    "nested",
+    "model",
+    "types",
+    "properties"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Volicon/backbone.nestedTypes.git"
+  },
+  "author": "Vlad Balin <https://github.com/gaperton>",
+  "contributors": "",
+  "dependencies": {
+    "underscore": ">=1.5.0",
+    "backbone": ">=1.1.2"
+  },
+  "devDependencies": {
+    "uglify-js": "*",
+    "browserify": "*",
+    "mocha": "*",
+    "chai": "* <3",
+    "sinon": "*",
+    "sinon-chai": "*"
+  },
+  "files": [
+    "nestedtypes.js",
+    "nestedtypes.min.js"
+  ],
+  "license": "MIT",
+  "version": "1.0.0",
+  "scripts": {
+    "test": "node_modules/.bin/mocha",
+
+    "minify:win": ".\\node_modules\\.bin\\uglifyjs nestedtypes.js --comments --compress --mangle --screw-ie8 > nestedtypes.min.js & .\\node_modules\\.bin\\uglifyjs .\\chaplinjs\\nestedtypes.js --comments --compress --mangle --screw-ie8 > .\\chaplinjs\\nestedtypes.min.js",
+    "make:win": "node_modules\\.bin\\browserify -x underscore -x backbone -r ./src/main:nestedtypes > ./umd/_bundle.js && type .\\umd\\copyright.js .\\umd\\head.js .\\umd\\_bundle.js .\\umd\\tail.js > .\\nestedtypes.js && type .\\umd\\copyright.js .\\umd\\head-chaplin.js .\\umd\\_bundle.js .\\umd\\tail.js > .\\chaplinjs\\nestedtypes.js && del .\\umd\\_bundle.js",
+    "build:win": "npm test && npm run make:win && npm run minify:win",
+
+    "minify": "node_modules/.bin/uglifyjs nestedtypes.js --comments --compress --mangle --screw-ie8 > nestedtypes.min.js & node_modules/.bin/uglifyjs ./chaplinjs/nestedtypes.js --comments --compress --mangle --screw-ie8 > ./chaplinjs/nestedtypes.min.js",
+    "make": "node_modules/.bin/browserify -x underscore -x backbone -r ./src/main:nestedtypes > ./umd/_bundle.js && cat ./umd/copyright.js ./umd/head.js ./umd/_bundle.js ./umd/tail.js > ./nestedtypes.js && ./umd/copyright.js cat ./umd/head-chaplin.js ./umd/_bundle.js ./umd/tail.js > ./chaplinjs/nestedtypes.js && rm ./umd/_bundle.js",
+    "build": "npm test && npm run make && npm run minify"
+  }
 }

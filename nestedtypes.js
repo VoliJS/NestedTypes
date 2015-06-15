@@ -911,7 +911,7 @@ var Model = BaseModel.extend( {
     },
 
     parse  : function( resp ){ return this._parse( resp ); },
-    _parse : function( resp ){ return resp; },
+    _parse : _.identity,
 
     isValid : function( options ){
         // todo: need to do something smart with validation logic

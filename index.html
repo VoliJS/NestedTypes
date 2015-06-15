@@ -1,0 +1,1286 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta content="IE=edge,chrome=1" http-equiv="X-UA-Compatible">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <title>Backbone.NestedTypes Reference Manual</title>
+
+    <link href="stylesheets/screen.css" rel="stylesheet" type="text/css" media="screen" />
+    <link href="stylesheets/print.css" rel="stylesheet" type="text/css" media="print" />
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
+      <script src="javascripts/all.js" type="text/javascript"></script>
+
+  </head>
+
+  <body class="index">
+    <a href="#" id="nav-button">
+      <span>
+        NAV
+        <img src="images/navbar.png" />
+      </span>
+    </a>
+    <div class="tocify-wrapper">
+      <img src="images/nestedtypes.jpg" />
+        <div class="search">
+          <input type="text" class="search" id="input-search" placeholder="Search">
+        </div>
+        <ul class="search-results"></ul>
+      <div id="toc">
+      </div>
+        <ul class="toc-footer">
+            <li><a href='http://github.com/volicon/backbone.nestedtypes'>Github Repo</a></li>
+        </ul>
+    </div>
+    <div class="page-wrapper">
+      <div class="dark-box"></div>
+      <div class="content">
+        
+          <h1 id="getting-started">Getting Started</h1>
+
+<h2 id="what-it-is">What it is</h2>
+<pre class="highlight javascript"><code><span class="kd">var</span> <span class="nx">User</span> <span class="o">=</span> <span class="nx">Nested</span><span class="p">.</span><span class="nx">Model</span><span class="p">.</span><span class="nx">extend</span><span class="p">({</span>
+    <span class="na">urlRoot</span> <span class="p">:</span> <span class="s1">'/api/users'</span><span class="p">,</span>
+
+    <span class="na">defaults</span> <span class="p">:</span> <span class="p">{</span>
+        <span class="c1">// Primitive types</span>
+        <span class="na">login</span>    <span class="p">:</span> <span class="s2">""</span><span class="p">,</span> <span class="c1">// String</span>
+        <span class="na">email</span>    <span class="p">:</span> <span class="nb">String</span><span class="p">.</span><span class="nx">value</span><span class="p">(</span> <span class="kc">null</span> <span class="p">),</span> <span class="c1">// null, but String</span>
+        <span class="na">loginCount</span> <span class="p">:</span> <span class="nb">Number</span><span class="p">.</span><span class="nx">has</span><span class="p">.</span><span class="nx">toJSON</span><span class="p">(</span> <span class="kc">false</span> <span class="p">)</span> <span class="c1">// 0, not serialized</span>
+        <span class="na">active</span>   <span class="p">:</span> <span class="nb">Boolean</span><span class="p">.</span><span class="nx">value</span><span class="p">(</span> <span class="kc">true</span> <span class="p">),</span> <span class="c1">// true</span>
+
+        <span class="na">created</span>  <span class="p">:</span> <span class="nb">Date</span><span class="p">,</span> <span class="c1">// new Date()</span>
+
+        <span class="na">settings</span> <span class="p">:</span> <span class="nx">Settings</span><span class="p">,</span> <span class="c1">// new Settings()</span>
+
+        <span class="c1">// collection of models, received as an array of model ids</span>
+        <span class="na">roles</span>    <span class="p">:</span> <span class="nx">Role</span><span class="p">.</span><span class="nx">Collection</span><span class="p">.</span><span class="nx">subsetOf</span><span class="p">(</span> <span class="nx">rolesCollection</span> <span class="p">),</span>
+        <span class="c1">// reference to model, received as model id.</span>
+        <span class="na">office</span>   <span class="p">:</span> <span class="nx">Office</span><span class="p">.</span><span class="nx">from</span><span class="p">(</span> <span class="nx">officeCollection</span> <span class="p">)</span>
+    <span class="p">}</span>
+<span class="p">});</span>
+
+<span class="kd">var</span> <span class="nx">collection</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">User</span><span class="p">.</span><span class="nx">Collection</span><span class="p">();</span>
+<span class="nx">collection</span><span class="p">.</span><span class="nx">fetch</span><span class="p">().</span><span class="nx">done</span><span class="p">(</span> <span class="kd">function</span><span class="p">(){</span>
+    <span class="kd">var</span> <span class="nx">user</span> <span class="o">=</span> <span class="nx">collection</span><span class="p">.</span><span class="nx">first</span><span class="p">();</span>
+    <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span> <span class="nx">user</span><span class="p">.</span><span class="nx">name</span> <span class="p">);</span> <span class="c1">// native properties</span>
+    <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span> <span class="nx">user</span><span class="p">.</span><span class="nx">office</span><span class="p">.</span><span class="nx">name</span> <span class="p">);</span>
+    <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span> <span class="nx">user</span><span class="p">.</span><span class="nx">roles</span><span class="p">.</span><span class="nx">first</span><span class="p">().</span><span class="nx">name</span> <span class="p">);</span>
+<span class="p">});</span>
+</code></pre>
+
+<blockquote>
+<p>Types are being checked in run-time on assignment, but instead of throwing exceptions it tries to cast values to defined types.</p>
+</blockquote>
+<pre class="highlight javascript"><code>    <span class="nx">user</span><span class="p">.</span><span class="nx">login</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
+    <span class="nx">console</span><span class="p">.</span><span class="nx">assert</span><span class="p">(</span> <span class="nx">user</span><span class="p">.</span><span class="nx">login</span> <span class="o">===</span> <span class="s2">"1"</span> <span class="p">);</span>
+
+    <span class="nx">user</span><span class="p">.</span><span class="nx">active</span> <span class="o">=</span> <span class="kc">undefined</span><span class="p">;</span>
+    <span class="nx">console</span><span class="p">.</span><span class="nx">assert</span><span class="p">(</span> <span class="nx">user</span><span class="p">.</span><span class="nx">active</span> <span class="o">===</span> <span class="kc">false</span> <span class="p">);</span>
+
+    <span class="nx">user</span><span class="p">.</span><span class="nx">loginCount</span> <span class="o">=</span> <span class="s2">"hjkhjkhfjkhjkfd"</span><span class="p">;</span>
+    <span class="nx">console</span><span class="p">.</span><span class="nx">assert</span><span class="p">(</span> <span class="nx">_</span><span class="p">.</span><span class="nx">isNan</span><span class="p">(</span> <span class="nx">user</span><span class="p">.</span><span class="nx">loginCount</span> <span class="p">)</span> <span class="p">);</span>
+
+    <span class="nx">user</span><span class="p">.</span><span class="nx">settings</span> <span class="o">=</span> <span class="p">{</span> <span class="na">timeZone</span> <span class="p">:</span> <span class="mi">180</span> <span class="p">};</span> <span class="c1">// same as user.settings.set({ timeZone : 180 })</span>
+    <span class="nx">console</span><span class="p">.</span><span class="nx">assert</span><span class="p">(</span> <span class="nx">user</span><span class="p">.</span><span class="nx">settings</span> <span class="k">instanceof</span> <span class="nx">Settings</span> <span class="p">);</span>
+</code></pre>
+
+<p><a href="https://travis-ci.org/Volicon/backbone.nestedTypes"><img alt="Master Build Status" src="https://travis-ci.org/Volicon/backbone.nestedTypes.svg?branch=master" /></a>
+<a href="https://travis-ci.org/Volicon/backbone.nestedTypes"><img alt="Develop Build Status" src="https://travis-ci.org/Volicon/backbone.nestedTypes.svg?branch=develop" /></a></p>
+
+<p>NestedTypes is state-of-the-art backbonejs-compatible model framework.</p>
+
+<h3 id="complex-attribute-types">Complex attribute types</h3>
+
+<ul>
+<li>Cross-browser handling of Date.</li>
+<li>Nested models and collections.</li>
+<li>One-to-many and many-to-many model relationships.</li>
+</ul>
+
+<p>It&rsquo;s achieved using attribute type annotations, which feels in much like statically typed programming language. Yet, this annotations are vanilla JavaScript, no transpiler step is required.</p>
+
+<h3 id="safety">Safety</h3>
+
+<p>NestedTypes check types on every model update and perform dynamic type casts to ensure that attributes will always hold values of proper type.</p>
+
+<p>As result, NestedTypes models are extremely reliable. It&rsquo;s impossible to break client-server protocol with inaccurate attribute assignment. If something will go really wrong, it will warn you with a messages in the console.</p>
+
+<h3 id="performance">Performance</h3>
+
+<p>NestedTypes uses attribute type information for sophisticated optimizations targeting modern JS JIT engines.</p>
+
+<p>Compared to backbonejs, model updates are about 30 times faster in Chrome/nodejs, and 4 times faster in other browsers.</p>
+
+<h3 id="easy-to-use-and-learn">Easy to use and learn</h3>
+
+<p>NestedTypes was originally designed with an idea to make backbonejs more friendly for newbiews.</p>
+
+<p>What we do, is taking intuitive newbie approach to backbonejs, and turn it from the mistake to legal way of doing things.</p>
+
+<h2 id="installation-&amp;-requirements">Installation &amp; Requirements</h2>
+
+<blockquote>
+<p>CommonJS (node.js, browserify):</p>
+</blockquote>
+<pre class="highlight javascript"><code><span class="kd">var</span> <span class="nx">Nested</span> <span class="o">=</span> <span class="nx">require</span><span class="p">(</span> <span class="s1">'nestedtypes'</span> <span class="p">);</span>
+</code></pre>
+
+<blockquote>
+<p>CommonJS/AMD (RequireJS).
+&lsquo;backbone&rsquo; and &#39;underscore&rsquo; modules must be defined in config paths.</p>
+</blockquote>
+<pre class="highlight javascript"><code><span class="nx">require</span><span class="p">([</span> <span class="s1">'nestedtypes'</span> <span class="p">],</span> <span class="kd">function</span><span class="p">(</span> <span class="nx">Nested</span> <span class="p">){</span> <span class="p">...</span> <span class="p">});</span>
+</code></pre>
+
+<blockquote>
+<p>Browser&rsquo;s script tag</p>
+</blockquote>
+<pre class="highlight html"><code><span class="nt">&lt;script </span><span class="na">src=</span><span class="s">"underscore.js"</span> <span class="na">type=</span><span class="s">"text/javascript"</span><span class="nt">&gt;&lt;/script&gt;</span>
+<span class="nt">&lt;script </span><span class="na">src=</span><span class="s">"backbone.js"</span> <span class="na">type=</span><span class="s">"text/javascript"</span><span class="nt">&gt;&lt;/script&gt;</span>
+<span class="nt">&lt;script </span><span class="na">src=</span><span class="s">"nestedtypes.js"</span> <span class="na">type=</span><span class="s">"text/javascript"</span><span class="nt">&gt;&lt;/script&gt;</span>
+<span class="nt">&lt;script&gt;</span> <span class="kd">var</span> <span class="nx">Model</span> <span class="o">=</span> <span class="nx">Nested</span><span class="p">.</span><span class="nx">Model</span><span class="p">;</span> <span class="p">...</span> <span class="nt">&lt;/script&gt;</span>
+</code></pre>
+
+<h3 id="supported-js-environments">Supported JS environments</h3>
+
+<p>NestedTypes requires modern JS environment with support for native properties.
+It&rsquo;s tested in <code class="prettyprint">IE 9+</code>, <code class="prettyprint">Chrome</code>, <code class="prettyprint">Safari</code>, <code class="prettyprint">Firefox</code>, which currently gives you about 95%
+of all browsers being used for accessing the web.</p>
+
+<p><code class="prettyprint">node.js</code> and <code class="prettyprint">io.js</code> are also supported.</p>
+
+<h3 id="packaging-and-dependencies">Packaging and dependencies</h3>
+
+<p>NestedTypes itself is packaged as UMD (Universal Module Definition) module, and should load dependencies properly in any environment.</p>
+
+<p>NestedTypes require <code class="prettyprint">underscore</code> and <code class="prettyprint">backbone</code> libraries. They either must be included globally with <code class="prettyprint">&lt;script&gt;</code>tag or, if <code class="prettyprint">CommonJS</code>/<code class="prettyprint">AMD</code> loaders are used, be accessible by their standard module names.  </p>
+
+<h3 id="bower">bower</h3>
+
+<p><code class="prettyprint">bower install backbone.nested-types</code></p>
+
+<h3 id="npm">npm</h3>
+
+<p><code class="prettyprint">npm install backbone.nested-types</code></p>
+
+<h3 id="manual">Manual</h3>
+
+<p>Copy <code class="prettyprint">nestedtypes.js</code> file to desired location.</p>
+
+          <h1 id="object.extend">Object.extend</h1>
+
+<h2 id="overview">Overview</h2>
+
+<p>NestedTypes core functionality relies on improved <code class="prettyprint">Object.extend</code> function, which is also available as separate module
+without any side dependencies. It compatible with Backbone&rsquo;s <code class="prettyprint">extend</code>, while providing some
+additional capabilities important for NestedTypes and its applications, such as:</p>
+
+<ul>
+<li>Native properties</li>
+<li>Forward declarations</li>
+</ul>
+
+<p>You can attach it to your Constructor function like this:</p>
+
+<p><code class="prettyprint">Object.extend.attach( MyConstructor1, MyConstructor2, ... );</code></p>
+
+<p><code class="prettyprint">Object.extend</code> can also be used directly to create classes.</p>
+
+<aside class="notice">
+NestedTypes attaches <b>Object.extend</b> to all Backbone&rsquo;s classes, thus you may use features described in this chapter with any of your View, Model, Collection, and other Backbone types.
+</aside>
+
+<p>When used as a part of NestedTypes,
+all <code class="prettyprint">Object.extend</code> classes also implements <code class="prettyprint">Backbone.Events</code>, thus your custom objects are capable of sending and receiving backbone events.</p>
+
+<p>You can add your own methods to all classes like this:</p>
+
+<p><code class="prettyprint">Object.extend.Class.prototype.myMethod = function(){...}</code></p>
+
+<h2 id="defining-classes">Defining classes</h2>
+<pre class="highlight javascript"><code><span class="kd">var</span> <span class="nx">MyClass</span> <span class="o">=</span> <span class="nb">Object</span><span class="p">.</span><span class="nx">extend</span><span class="p">({</span>
+    <span class="na">a</span> <span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
+    <span class="na">inc</span> <span class="p">:</span> <span class="kd">function</span><span class="p">(){</span> <span class="k">return</span> <span class="k">this</span><span class="p">.</span><span class="nx">a</span><span class="o">++</span><span class="p">;</span> <span class="p">},</span>
+
+    <span class="na">initialize</span> <span class="p">:</span> <span class="kd">function</span><span class="p">(</span> <span class="nx">x</span> <span class="p">){</span>
+        <span class="k">this</span><span class="p">.</span><span class="nx">a</span> <span class="o">=</span> <span class="nx">x</span><span class="p">;</span>
+    <span class="p">}</span>
+<span class="p">},{</span>
+    <span class="na">factory</span> <span class="p">:</span> <span class="kd">function</span><span class="p">(</span> <span class="nx">x</span> <span class="p">){</span>
+        <span class="k">return</span> <span class="k">new</span> <span class="nx">MyClass</span><span class="p">(</span> <span class="nx">x</span> <span class="p">);</span>
+    <span class="p">}</span>
+<span class="p">});</span>
+</code></pre>
+
+<p>When executed directly,
+<code class="prettyprint">Object.extend( protoProps, staticProps )</code> creates constructor function and extends
+its prototype with <code class="prettyprint">protoProps</code> properties, also attaching <code class="prettyprint">staticProps</code> to the constructor
+itself. Constructor will call optional <code class="prettyprint">initialize</code> method.</p>
+
+<h2 id="inheritance">Inheritance</h2>
+<pre class="highlight javascript"><code><span class="kd">var</span> <span class="nx">Subclass</span> <span class="o">=</span> <span class="nx">MyClass</span><span class="p">.</span><span class="nx">extend</span><span class="p">({</span>
+    <span class="na">b</span> <span class="p">:</span> <span class="mi">2</span><span class="p">,</span>
+    <span class="na">initialize</span> <span class="p">:</span> <span class="kd">function</span><span class="p">(</span> <span class="nx">a</span><span class="p">,</span> <span class="nx">b</span> <span class="p">){</span>
+        <span class="nx">Subclass</span><span class="p">.</span><span class="nx">__super__</span><span class="p">.</span><span class="nx">initialize</span><span class="p">.</span><span class="nx">apply</span><span class="p">(</span> <span class="k">this</span><span class="p">,</span> <span class="nx">arguments</span> <span class="p">);</span>
+        <span class="k">this</span><span class="p">.</span><span class="nx">b</span> <span class="o">=</span> <span class="nx">b</span><span class="p">;</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+
+<p>Every constructor created with <code class="prettyprint">Object.extend</code> may be further extended with <code class="prettyprint">extend</code> method.
+Correct prototype chain will be built and attached to subclass constructor. Every subclass
+constructor has <code class="prettyprint">__super__</code> property pointing to the prototype of the base class.</p>
+
+<h2 id="overriding-constructor">Overriding constructor</h2>
+<pre class="highlight javascript"><code><span class="kd">var</span> <span class="nx">Subclass</span> <span class="o">=</span> <span class="nx">MyClass</span><span class="p">.</span><span class="nx">extend</span><span class="p">({</span>
+    <span class="na">b</span> <span class="p">:</span> <span class="mi">2</span><span class="p">,</span>
+    <span class="na">constructor</span> <span class="p">:</span> <span class="kd">function</span><span class="p">(</span> <span class="nx">a</span><span class="p">,</span> <span class="nx">b</span> <span class="p">){</span>
+        <span class="nx">MyClass</span><span class="p">.</span><span class="nx">apply</span><span class="p">(</span> <span class="k">this</span><span class="p">,</span> <span class="nx">arguments</span> <span class="p">);</span>
+        <span class="k">this</span><span class="p">.</span><span class="nx">b</span> <span class="o">=</span> <span class="nx">b</span><span class="p">;</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+
+<p>You may override constructor instead of dealing with <code class="prettyprint">initialize</code> function.</p>
+
+<h2 id="native-properties">Native Properties</h2>
+<pre class="highlight javascript"><code><span class="kd">var</span> <span class="nx">Class</span> <span class="o">=</span> <span class="nb">Object</span><span class="p">.</span><span class="nx">extend</span><span class="p">({</span>
+    <span class="na">properties</span><span class="p">:</span> <span class="p">{</span>
+        <span class="na">readOnly</span> <span class="p">:</span> <span class="kd">function</span><span class="p">(){</span> <span class="k">return</span> <span class="s1">'hello!'</span><span class="p">;</span> <span class="p">},</span>
+        <span class="na">readWrite</span> <span class="p">:</span> <span class="p">{</span>
+            <span class="na">get</span> <span class="p">:</span> <span class="kd">function</span><span class="p">(){</span> <span class="k">return</span> <span class="k">this</span><span class="p">.</span><span class="nx">_value2</span><span class="p">;</span> <span class="p">},</span>
+            <span class="na">set</span> <span class="p">:</span> <span class="kd">function</span><span class="p">(</span> <span class="nx">value</span> <span class="p">){</span>
+                <span class="k">this</span><span class="p">.</span><span class="nx">_value2</span> <span class="o">=</span> <span class="nx">value</span><span class="p">;</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+<span class="p">});</span>
+</code></pre>
+
+<p>Native properties can be defined with <code class="prettyprint">properties</code> spec.
+For read-only properties, it&rsquo;s enough to supply get function as spec.
+Otherwise, properties specs format is the same as accepted by standard <code class="prettyprint">Object.defineProperties</code>
+function.</p>
+
+<p>You can access native properties as if it would be regular object member variable.</p>
+
+<p><code class="prettyprint">var x = c.readOnly</code></p>
+
+<p><code class="prettyprint">c.readWrite = 1;</code></p>
+
+<aside class="notice">
+Native properties are automatically created for model&rsquo;s attributes
+</aside>
+
+<h2 id="forward-declarations">Forward declarations</h2>
+<pre class="highlight javascript"><code><span class="kd">var</span> <span class="nx">A</span> <span class="o">=</span> <span class="nb">Object</span><span class="p">.</span><span class="nx">extend</span><span class="p">(),</span>
+    <span class="nx">B</span> <span class="o">=</span> <span class="nb">Object</span><span class="p">.</span><span class="nx">extend</span><span class="p">(</span> <span class="kd">function</span><span class="p">(){</span> <span class="k">this</span><span class="p">.</span><span class="nx">b</span> <span class="o">=</span> <span class="s1">'b'</span><span class="p">;</span> <span class="p">}</span> <span class="p">);</span>
+
+<span class="nx">A</span><span class="p">.</span><span class="nx">define</span><span class="p">({</span>
+    <span class="na">bType</span> <span class="p">:</span> <span class="nx">B</span>
+<span class="p">});</span>
+
+<span class="nx">B</span><span class="p">.</span><span class="nx">define</span><span class="p">({</span>
+    <span class="na">aType</span> <span class="p">:</span> <span class="nx">A</span>
+<span class="p">});</span>
+</code></pre>
+
+<p>Classes can be created with an <code class="prettyprint">Object.extend()</code>, and defined later using
+<code class="prettyprint">MyClass.define( protoProps, staticProps )</code> function. It can be helpful
+to resolve circular dependencies.</p>
+
+<p><code class="prettyprint">define</code> cannot be used to override constructor. It can be achieved by passing
+constructor function to <code class="prettyprint">extend</code>, as it is done for <code class="prettyprint">B</code> in the example.</p>
+
+<aside class="notice">
+Forward declarations are crucial for recursive type-accurate model definitions.
+</aside>
+
+<h2 id="console-warnings">Console Warnings</h2>
+<pre class="highlight javascript"><code><span class="kd">var</span> <span class="nx">A</span> <span class="o">=</span> <span class="nb">Object</span><span class="p">.</span><span class="nx">extend</span><span class="p">({</span>
+    <span class="na">a</span> <span class="p">:</span>  <span class="kd">function</span><span class="p">(){}</span>
+<span class="p">});</span>
+
+<span class="kd">var</span> <span class="nx">B</span> <span class="o">=</span> <span class="nx">A</span><span class="p">.</span><span class="nx">extend</span><span class="p">({</span>
+    <span class="na">a</span> <span class="p">:</span> <span class="mi">0</span> <span class="c1">// Warning about type error</span>
+<span class="p">});</span>
+</code></pre>
+
+<p>If you try to override base class function with non-function value, <code class="prettyprint">Object.extend</code>
+will notify you about that with a warning to the console. Cause usually it&rsquo;s a mistake.</p>
+
+<p>In this case, you&rsquo;ll see in the console following message:</p>
+
+<p><code class="prettyprint">[Type Warning] Base class method overriden with value in Object.extend({ a : 0 }); Object = &gt;...</code></p>
+<pre class="highlight javascript"><code><span class="kd">function</span> <span class="nx">warning</span><span class="p">(</span> <span class="nx">Ctor</span><span class="p">,</span> <span class="nx">name</span><span class="p">,</span> <span class="nx">value</span> <span class="p">){</span>
+    <span class="k">throw</span> <span class="k">new</span> <span class="nx">TypeError</span><span class="p">(</span> <span class="s1">'Whoops...'</span> <span class="p">);</span>
+<span class="p">}</span>
+
+<span class="nb">Object</span><span class="p">.</span><span class="nx">extend</span><span class="p">.</span><span class="nx">error</span><span class="p">.</span><span class="nx">overrideMethodWithValue</span> <span class="o">=</span> <span class="nx">warning</span><span class="p">;</span>
+</code></pre>
+
+<p>You may override default warning handling assigning our own function to <code class="prettyprint">Object.extend.error.overrideMethodWithValue</code>.</p>
+
+<aside class="warning">
+When used as part of NestedTypes, this and other warning handlers
+are located in <b>Nested.error</b> variable.
+</aside>
+
+          <h1 id="nested.model">Nested.Model</h1>
+
+<h2 id="overview">Overview</h2>
+
+<p>In NestedTypes model definition&rsquo;s <code class="prettyprint">defaults</code> section is the <em>specification</em> of model&rsquo;s attributes.
+<code class="prettyprint">attributes</code> keyword may be used instead of <code class="prettyprint">defaults</code>.</p>
+
+<p>In <code class="prettyprint">defaults</code> or <code class="prettyprint">attributes</code>, you may specify attribute default value, its type, and different options of
+attribute behavior. Refer to corresponding sections of the manual for details.</p>
+
+<aside class="warning">
+Every model attribute <b>must</b> be mentioned in <b>Model.defaults</b>
+</aside>
+
+<p>In NestedTypes, attribute declaration is mandatory. When you try to set an attribute which doesn&rsquo;t have default value, you&rsquo;ll got an error in the console.</p>
+
+<aside class="warning">
+<b>Model.defaults must</b> be an object. Functions are forbidden.
+</aside>
+
+<h2 id="model.defaults(-[-attrs-],-[-options-]-)">model.defaults( [ attrs ], [ options ] )</h2>
+<pre class="highlight javascript"><code>    <span class="kd">var</span> <span class="nx">UserInfo</span> <span class="o">=</span> <span class="nx">Nested</span><span class="p">.</span><span class="nx">Model</span><span class="p">.</span><span class="nx">extend</span><span class="p">({</span>
+        <span class="na">defaults</span> <span class="p">:</span> <span class="p">{</span>
+            <span class="na">name</span> <span class="p">:</span> <span class="s1">'test'</span>
+        <span class="p">}</span>
+    <span class="p">});</span>
+
+    <span class="kd">var</span> <span class="nx">DetailedUserInfo</span> <span class="o">=</span> <span class="nx">UserInfo</span><span class="p">.</span><span class="nx">extend</span><span class="p">({</span>
+        <span class="na">attributes</span> <span class="p">:</span> <span class="p">{</span> <span class="c1">// &lt;- alternative syntax for 'defaults'</span>
+            <span class="na">login</span> <span class="p">:</span> <span class="s1">''</span><span class="p">,</span>
+            <span class="na">roles</span> <span class="p">:</span> <span class="p">[</span> <span class="s1">'user'</span> <span class="p">]</span>
+        <span class="p">}</span>
+    <span class="p">});</span>
+
+    <span class="kd">var</span> <span class="nx">user</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">DetailedUserInfo</span><span class="p">();</span>
+</code></pre>
+
+<blockquote>
+<p>In Backbone, &lsquo;name&rsquo; attr is not inherited and would be undefined.
+In NestedTypes it&rsquo;s inherited, and you can access it directly.</p>
+</blockquote>
+<pre class="highlight javascript"><code>    <span class="nx">console</span><span class="p">.</span><span class="nx">assert</span><span class="p">(</span> <span class="nx">user</span><span class="p">.</span><span class="nx">name</span> <span class="o">===</span> <span class="s1">'test'</span> <span class="p">);</span>
+    <span class="nx">user</span><span class="p">.</span><span class="nx">name</span> <span class="o">=</span> <span class="s1">'admin'</span><span class="p">;</span>
+</code></pre>
+
+<blockquote>
+<p>In Backbone all models will share the same instance of [ &#39;user&rsquo; ] array. Bug.
+In NestedTypes, user.roles is deep copied on creation. Good practice.</p>
+</blockquote>
+<pre class="highlight javascript"><code>    <span class="nx">user</span><span class="p">.</span><span class="nx">roles</span><span class="p">.</span><span class="nx">push</span><span class="p">(</span> <span class="s1">'admin'</span> <span class="p">);</span>
+</code></pre>
+
+<p>NestedTypes automatically creates <code class="prettyprint">defaults</code> function for every model
+from model attribute&rsquo;s spec. Base model attributes will be inherited.</p>
+
+<p>Following statement can be used to return every model to its original state:</p>
+
+<p><code class="prettyprint">model.set( model.defaults() )</code></p>
+
+<p><code class="prettyprint">defaults</code> function accepts optional <code class="prettyprint">attrs</code> argument with attribute values hash
+and fills missing attributes with default values.</p>
+
+<h3 id="default-values-deep-cloning">default values deep cloning</h3>
+
+<p>When new model is being created, NestedTypes will deep clone
+all items (including objects and arrays) from <code class="prettyprint">defaults</code> object.</p>
+
+<aside class="notice">
+You don&rsquo;t need to wrap <b>defaults</b> object in function any more.
+</aside>
+
+<h3 id="correct-defaults-inheritance">Correct defaults inheritance</h3>
+
+<p>When extending some existing model definition, NestedTypes will property
+merge base model&rsquo;s <code class="prettyprint">defaults</code>.</p>
+
+<aside class="notice">
+You don&rsquo;t need to do manual tricks for <b>defaults</b> inheritance.
+</aside>
+
+<h2 id="model.attrname">model.attrName</h2>
+
+<p>NestedTypes creates native property for every attribute.</p>
+
+<p><code class="prettyprint">model.attr = val;</code> has the same effect as <code class="prettyprint">model.set( &#39;attr&#39;, val );</code></p>
+
+<p><code class="prettyprint">val = model.attr;</code> has the same effect as <code class="prettyprint">val = model.get( &#39;attr&#39; );</code></p>
+
+<aside class="notice">
+Accessing individual attributes with native properties is significantly
+faster than using <b>get</b> and <b>set</b>.
+</aside>
+
+<p>You still might need to use <code class="prettyprint">model.set</code> in cases when you want to set multiple attributes
+at once, or to pass some options.</p>
+
+<h2 id="model.id">model.id</h2>
+
+<p>In NestedTypes, <code class="prettyprint">model.id</code> is assignable property, linked to <code class="prettyprint">model.attributes[ model.idAttribute ]</code>.</p>
+
+<p><code class="prettyprint">model.id = 5</code> has the same effect as <code class="prettyprint">model.set( model.idAttribute, 5 )</code></p>
+
+<h2 id="model.properties">model.properties</h2>
+<pre class="highlight javascript"><code><span class="kd">var</span> <span class="nx">M</span> <span class="o">=</span> <span class="nx">Nested</span><span class="p">.</span><span class="nx">Model</span><span class="p">.</span><span class="nx">extend</span><span class="p">({</span>
+    <span class="na">defaults</span> <span class="p">:</span> <span class="p">{</span>
+        <span class="na">a</span> <span class="p">:</span> <span class="mi">1</span>
+    <span class="p">},</span>
+
+    <span class="na">properties</span> <span class="p">:</span> <span class="p">{</span>
+        <span class="na">b</span> <span class="p">:</span> <span class="kd">function</span><span class="p">(){</span> <span class="k">return</span> <span class="k">this</span><span class="p">.</span><span class="nx">a</span> <span class="o">+</span> <span class="mi">1</span><span class="p">;</span> <span class="p">}</span>
+    <span class="p">}</span>
+<span class="p">});</span>
+
+<span class="kd">var</span> <span class="nx">m</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">M</span><span class="p">();</span>
+<span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span> <span class="nx">m</span><span class="p">.</span><span class="nx">b</span> <span class="p">);</span> <span class="c1">// 2</span>
+</code></pre>
+
+<p>Custom native properties specification. Most typical use case is calculated properties.</p>
+
+<p><code class="prettyprint">model.properties</code> is the part of <code class="prettyprint">Object.extend</code> functionality. Refer to <code class="prettyprint">Object.extend</code> manual section for details.</p>
+
+<h2 id="model.set()">model.set()</h2>
+
+<p>Set model attributes. In NestedTypes, this operation is <em>type safe</em>. It&rsquo;s guaranteed that
+model attribute will always hold null or value of specified type.</p>
+
+<ol>
+<li>Values are converted to proper types. For existing nested models and collections <code class="prettyprint">deep update</code> may be
+invoked. Refer to <code class="prettyprint">Attribute Types</code> manual section for details.</li>
+<li>Set hooks are being executed for changing attributes. Refer to <code class="prettyprint">Attribute Options</code> section for details.</li>
+<li>Events are being registered for changing attributes. <code class="prettyprint">replace:attr</code> events are fired,</li>
+<li>Attribute values are being set, firing regular change events.</li>
+</ol>
+
+<p>On attempt to set an attribute which is not defined, warning message will be printed to console.</p>
+
+<p>In NestedTypes, you can assign individual model attributes directly, and it&rsquo;s faster than using <code class="prettyprint">set</code>:
+    <code class="prettyprint">model.attr = val;</code></p>
+
+<h2 id="model.get(-&#39;attr&#39;-)">model.get( &#39;attr&rsquo; )</h2>
+
+<p>Get attribute value by name. Returned value can be modified with <code class="prettyprint">get hook</code> in attribute definition.</p>
+
+<p>In NestedTypes, you can access model attributes directly, and it&rsquo;s faster than <code class="prettyprint">get</code>:
+    <code class="prettyprint">val = model.attr;</code></p>
+
+<h2 id="deep-clone">Deep clone</h2>
+
+<p><code class="prettyprint">model.deepClone()</code> or <code class="prettyprint">model.clone({ deep : true })</code></p>
+
+<p>Deeply clone model with all nested models, collections, and other complex types.</p>
+
+<h2 id="deep-get-and-set">Deep get and set</h2>
+
+<p><code class="prettyprint">x = model.deepGet( &#39;attr1.attr2.modelId.attr3.objId&#39; )</code></p>
+
+<p>Get attribute by dot-separated path.
+Model attribute name, model.id or model.cid (for collection attribute), index (for array), or object property name ( for plain objects) may be used as an elements of the path.</p>
+
+<p>If some model in the middle of path doesn&rsquo;t exists, it will return <code class="prettyprint">undefined</code>.  </p>
+
+<p><code class="prettyprint">x = model.deepSet( &#39;attr1.attr2.modelId.attr3.objId&#39;, x )</code></p>
+
+<p>Set model value by dot-separated path. If model attribute in the middle of path equals to null, empty model will be created.</p>
+
+<h2 id="model.collection">Model.Collection</h2>
+<pre class="highlight javascript"><code><span class="kd">var</span> <span class="nx">UserInfo</span> <span class="o">=</span> <span class="nx">Nested</span><span class="p">.</span><span class="nx">Model</span><span class="p">.</span><span class="nx">extend</span><span class="p">({</span>
+    <span class="na">urlBase</span> <span class="p">:</span> <span class="s1">'/api/user/'</span><span class="p">,</span>
+
+    <span class="na">defaults</span> <span class="p">:</span> <span class="p">{</span>
+        <span class="na">login</span> <span class="p">:</span> <span class="s1">''</span><span class="p">,</span>
+        <span class="na">roles</span> <span class="p">:</span> <span class="p">[</span> <span class="s1">'user'</span> <span class="p">]</span>
+    <span class="p">},</span>
+
+    <span class="na">collection</span> <span class="p">:</span> <span class="p">{</span>
+        <span class="na">initialize</span> <span class="p">:</span> <span class="kd">function</span><span class="p">(){</span>
+            <span class="k">this</span><span class="p">.</span><span class="nx">fetch</span><span class="p">();</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+<span class="p">});</span>
+
+<span class="kd">var</span> <span class="nx">collection</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">UserInfo</span><span class="p">.</span><span class="nx">Collection</span><span class="p">();</span>
+</code></pre>
+
+<p>Every model definition has its own correct <code class="prettyprint">Collection</code> type extending base <code class="prettyprint">Model.Collection</code>, which can be
+accessed instantly without declaration. <code class="prettyprint">Collection.model</code> and <code class="prettyprint">Collection.url</code> properties are taken from model.</p>
+
+<p><code class="prettyprint">var collection = new AnyModel.Collection();</code></p>
+
+<p>You could customize collection definition providing the spec in <code class="prettyprint">Model.collection</code>, which then will be passed to <code class="prettyprint">BaseModel.Collection.extend</code>.</p>
+
+<h2 id="model.define()">Model.define()</h2>
+<pre class="highlight javascript"><code><span class="kd">var</span> <span class="nx">Tree</span> <span class="o">=</span> <span class="nx">Nested</span><span class="p">.</span><span class="nx">Mode</span><span class="p">.</span><span class="nx">extend</span><span class="p">();</span>
+
+<span class="nx">Tree</span><span class="p">.</span><span class="nx">define</span><span class="p">({</span>
+    <span class="na">defaults</span> <span class="p">:</span> <span class="p">{</span>
+        <span class="na">branches</span> <span class="p">:</span> <span class="nx">Tree</span><span class="p">.</span><span class="nx">Collection</span>
+    <span class="p">}</span>
+<span class="p">});</span>
+</code></pre>
+
+<p>Forward declarations makes possible type-accurate recursive and mutually recursive model definitions.</p>
+
+<p><code class="prettyprint">Model.define</code> is the part of <code class="prettyprint">Object.extend</code> functionality. Refer to <code class="prettyprint">Object.extend</code> manual section for details.</p>
+
+<h2 id="serialization">Serialization</h2>
+
+<h3 id="model.tojson">model.toJSON</h3>
+<pre class="highlight javascript"><code><span class="kd">var</span> <span class="nx">M</span> <span class="o">=</span> <span class="nx">Nested</span><span class="p">.</span><span class="nx">Model</span><span class="p">.</span><span class="nx">extend</span><span class="p">({</span>
+    <span class="na">defaults</span> <span class="p">:</span> <span class="p">{</span>
+        <span class="c1">// Attribute-level toJSON.</span>
+        <span class="na">a</span> <span class="p">:</span> <span class="nb">String</span><span class="p">.</span><span class="nx">has</span><span class="p">.</span><span class="nx">toJSON</span><span class="p">(</span> <span class="kc">false</span> <span class="p">),</span>
+        <span class="na">b</span> <span class="p">:</span> <span class="mi">5</span>
+    <span class="p">},</span>
+
+    <span class="c1">// Model-level toJSON.</span>
+    <span class="na">toJSON</span> <span class="p">:</span> <span class="kd">function</span><span class="p">(){</span>
+        <span class="c1">// Call NestedTypes serialization algorithm.</span>
+        <span class="kd">var</span> <span class="nx">json</span> <span class="o">=</span> <span class="nx">Nested</span><span class="p">.</span><span class="nx">Model</span><span class="p">.</span><span class="nx">prototype</span><span class="p">.</span><span class="nx">toJSON</span><span class="p">.</span><span class="nx">apply</span><span class="p">(</span> <span class="k">this</span><span class="p">,</span> <span class="nx">arguments</span> <span class="p">);</span>
+
+        <span class="c1">// Do some json transformations...</span>
+
+        <span class="k">return</span> <span class="nx">json</span><span class="p">;</span>
+    <span class="p">}</span>
+<span class="p">});</span>
+</code></pre>
+
+<p>All nested attributes will be serialized automatically.</p>
+
+<aside class="notice">
+Normally, you don&rsquo;t need to override this method.
+</aside>
+
+<p>You can control serialization of any attribute with <code class="prettyprint">toJSON</code> attribute option. Most typical use case is to exclude attribute from those which are being sent to the server.</p>
+
+<h3 id="model.parse">model.parse</h3>
+<pre class="highlight javascript"><code><span class="kd">var</span> <span class="nx">M</span> <span class="o">=</span> <span class="nx">Nested</span><span class="p">.</span><span class="nx">Model</span><span class="p">.</span><span class="nx">extend</span><span class="p">({</span>
+    <span class="na">defaults</span> <span class="p">:</span> <span class="p">{</span>
+        <span class="c1">// Attribute-level parse transform.</span>
+        <span class="na">a</span> <span class="p">:</span> <span class="nx">AbstractModel</span><span class="p">.</span><span class="nx">has</span><span class="p">.</span><span class="nx">parse</span><span class="p">(</span> <span class="nx">AbstractModel</span><span class="p">.</span><span class="nx">factory</span> <span class="p">)</span>
+    <span class="p">},</span>
+
+    <span class="c1">// Model-level parse transform.</span>
+    <span class="na">parse</span> <span class="p">:</span> <span class="kd">function</span><span class="p">(</span> <span class="nx">resp</span> <span class="p">){</span>
+        <span class="c1">// Do some resp transformations...</span>
+
+        <span class="c1">// (!) Call attribute-level parse transform (!)</span>
+        <span class="k">return</span> <span class="k">this</span><span class="p">.</span><span class="nx">_parse</span><span class="p">(</span> <span class="nx">resp</span> <span class="p">);</span>
+    <span class="p">}</span>
+<span class="p">});</span>
+</code></pre>
+
+<p>All nested attributes will be parsed automatically.</p>
+
+<aside class="notice">
+Normally, you don&rsquo;t need to override this method.
+</aside>
+
+<p>You can customize parsing of any attribute with <code class="prettyprint">parse</code> attribute option. Most typical use case is to create proper model subclass for abstract model attribute.</p>
+
+<p>You may need to override model-level <code class="prettyprint">parse</code> function in order to change attribute names or top-level format.</p>
+
+<aside class="warning">
+If you override <b>model.parse</b>, you have to call <b>this._parse</b>
+(or Nested.Model.prototype.parse) to make attribute&rsquo;s <b>parse option</b> work.
+</aside>
+
+          <h1 id="attribute-types">Attribute Types</h1>
+
+<h2 id="generic-constructor-types">Generic Constructor types</h2>
+<pre class="highlight javascript"><code><span class="kd">var</span> <span class="nx">A</span> <span class="o">=</span> <span class="nx">Nested</span><span class="p">.</span><span class="nx">Model</span><span class="p">.</span><span class="nx">extend</span><span class="p">({</span>
+    <span class="na">defaults</span> <span class="p">:</span> <span class="p">{</span>
+        <span class="na">obj1</span> <span class="p">:</span> <span class="nx">Ctor</span><span class="p">,</span> <span class="c1">// = new Ctor()</span>
+        <span class="na">obj2</span> <span class="p">:</span> <span class="nx">Ctor</span><span class="p">.</span><span class="nx">value</span><span class="p">(</span> <span class="kc">null</span> <span class="p">),</span> <span class="c1">// = null</span>
+        <span class="na">obj3</span> <span class="p">:</span> <span class="nx">Ctor</span><span class="p">.</span><span class="nx">value</span><span class="p">(</span> <span class="nx">something</span> <span class="p">),</span> <span class="c1">// = new Ctor( something )</span>
+    <span class="p">}</span>
+<span class="p">});</span>
+
+<span class="kd">var</span> <span class="nx">a</span> <span class="o">=</span> <span class="nx">A</span><span class="p">();</span>
+
+<span class="nx">a</span><span class="p">.</span><span class="nx">obj2</span> <span class="o">=</span> <span class="s2">"dsds"</span><span class="p">;</span> <span class="c1">// a.obj2 = new Ctor( "dsds" );</span>
+
+<span class="nx">console</span><span class="p">.</span><span class="nx">assert</span><span class="p">(</span> <span class="nx">a</span><span class="p">.</span><span class="nx">obj2</span> <span class="k">instanceof</span> <span class="nx">Ctor</span> <span class="p">);</span>
+</code></pre>
+
+<h3 id="type-spec-format">Type spec format</h3>
+
+<p>Type specs may be used instead of init values in <code class="prettyprint">Model.defaults</code>. They looks like this:</p>
+
+<p><code class="prettyprint">name : Constructor</code> or <code class="prettyprint">name : Constructor.value( x )</code></p>
+
+<p>where <code class="prettyprint">Constructor</code> is JS constructor function, and <code class="prettyprint">x</code> is <code class="prettyprint">null</code> or value passed
+as constructor&rsquo;s argument.</p>
+
+<p>When value is not given, typed attribute is initialized invoking <code class="prettyprint">new Constructor()</code>.</p>
+
+<h3 id="type-casting-rules">Type casting rules</h3>
+
+<p>When typed attribute is assigned with the value&hellip;</p>
+
+<ul>
+<li>&hellip;which is <code class="prettyprint">null</code>, attribute value will be set to <code class="prettyprint">null</code>.</li>
+<li>&hellip;which is an instance of <code class="prettyprint">Constructor</code>, attribute&rsquo;s value will be replaced with a given one.</li>
+<li>in other case, NestedTypes will try to convert value to the <code class="prettyprint">Constructor</code> type, typically invoking <code class="prettyprint">new Constructor( value )</code>. Procedure might be more complex for some selected types,
+such as nested models and collections.</li>
+</ul>
+
+<aside class="notice">
+It&rsquo;s guaranteed that attribute will always hold either `null` or instance of `Constructor` type.
+</aside>
+
+<h3 id="serialization">Serialization</h3>
+
+<p>Constructor types are being serialized with <code class="prettyprint">JSON.stringify()</code> method. You may override <code class="prettyprint">toJSON</code> <em>for your type</em>
+to customize serialization. I.e.</p>
+
+<p><code class="prettyprint">this.name.toJSON()</code></p>
+
+<p>will be invoked to produce JSON, if this method exists.</p>
+
+<p>When receiving data from server, standard type cast logic is used to convert JSON response to Constructor object.
+I.e.</p>
+
+<p><code class="prettyprint">this.name = new Constructor( jsonResponse )</code></p>
+
+<p>will be invoked.</p>
+
+<aside class="notice">
+Normally, you don&rsquo;t need to override model.toJSON() and model.parse().
+You&rsquo;re encouraged to properly implement constructor and toJSON of your custom type.
+</aside>
+
+<h2 id="date-type">Date type</h2>
+<pre class="highlight javascript"><code><span class="kd">var</span> <span class="nx">A</span> <span class="o">=</span> <span class="nx">Nested</span><span class="p">.</span><span class="nx">Model</span><span class="p">.</span><span class="nx">extend</span><span class="p">({</span>
+    <span class="na">defaults</span> <span class="p">:</span> <span class="p">{</span>
+        <span class="na">created</span> <span class="p">:</span> <span class="nb">Date</span><span class="p">,</span> <span class="c1">// = new Date()</span>
+        <span class="na">updated</span> <span class="p">:</span> <span class="nb">Date</span><span class="p">.</span><span class="nx">value</span><span class="p">(</span> <span class="kc">null</span> <span class="p">),</span> <span class="c1">// = null</span>
+        <span class="na">a</span> <span class="p">:</span> <span class="nb">Date</span><span class="p">.</span><span class="nx">value</span><span class="p">(</span> <span class="mi">327943789</span> <span class="p">),</span> <span class="c1">//  = new Date( 327943789 )</span>
+        <span class="na">b</span> <span class="p">:</span> <span class="nb">Date</span><span class="p">.</span><span class="nx">value</span><span class="p">(</span> <span class="s2">"2012-12-12 12:12"</span> <span class="p">)</span> <span class="c1">//  = new Date( "2012-12-12 12:12" )</span>
+    <span class="p">}</span>
+<span class="p">});</span>
+
+<span class="kd">var</span> <span class="nx">a</span> <span class="o">=</span> <span class="nx">A</span><span class="p">();</span>
+
+<span class="nx">a</span><span class="p">.</span><span class="nx">updated</span> <span class="o">=</span> <span class="s1">'2012-12-12 12:12'</span><span class="p">;</span>
+<span class="nx">console</span><span class="p">.</span><span class="nx">assert</span><span class="p">(</span> <span class="nx">a</span><span class="p">.</span><span class="nx">updated</span> <span class="k">instanceof</span> <span class="nb">Date</span> <span class="p">);</span>
+
+<span class="nx">a</span><span class="p">.</span><span class="nx">updated</span> <span class="o">=</span> <span class="s1">'/Date(32323232323)/'</span><span class="p">;</span>
+<span class="nx">console</span><span class="p">.</span><span class="nx">assert</span><span class="p">(</span> <span class="nx">a</span><span class="p">.</span><span class="nx">updated</span> <span class="k">instanceof</span> <span class="nb">Date</span> <span class="p">);</span>
+</code></pre>
+
+<h3 id="type-spec-format">Type spec format</h3>
+
+<p>To create attribute of <code class="prettyprint">Date</code> type, pass <code class="prettyprint">Date</code> constructor instead of default value.</p>
+
+<p><code class="prettyprint">time : Date</code> or <code class="prettyprint">time : Date.value( x )</code></p>
+
+<p>When default value is given, it will be converted to Date using type casting rules.</p>
+
+<h3 id="type-casting-rules">Type casting rules</h3>
+
+<ul>
+<li><code class="prettyprint">Number</code> is treated as milliseconds from 1970 timestamps, as returned by Date.getTime().</li>
+<li><code class="prettyprint">String</code> is treated as one of the following date-time formats (will be detected automatically):
+
+<ul>
+<li>UTC ISO time string.</li>
+<li>Local date-time string.</li>
+<li>Microsoft <code class="prettyprint">/Date(msecs)/</code> time string.</li>
+</ul></li>
+<li><code class="prettyprint">null</code> sets attribute to <code class="prettyprint">null</code> bypassing type conversion logic.</li>
+<li>Other values will be converted to <code class="prettyprint">Invalid Date</code>.</li>
+</ul>
+
+<aside class="notice">
+<b>NestedTypes</b> is capable of parsing ISO date format properly in all browsers, including Safary.
+</aside>
+
+<h3 id="serialization">Serialization</h3>
+
+<p><code class="prettyprint">Date</code> attributes are serialized to UTC ISO date string by default. You may customize date serialization format
+providing attribute&rsquo;s <code class="prettyprint">toJSON</code> option. Following option will serialize <code class="prettyprint">time</code> to milliseconds.</p>
+
+<p><code class="prettyprint">time : Date.has.toJSON( function( date ){ return date.getTime(); })</code></p>
+
+<p>You can prevent attribute from being serialized, using:</p>
+
+<p><code class="prettyprint">time : Date.has.toJSON( false )</code></p>
+
+<p><code class="prettyprint">Date</code> attributes are being parsed from JSON using type casting rules.</p>
+
+<aside class="notice">
+You don&rsquo;t need to override <b>Model.parse</b> or <b>Model.toJSON</b> to handle Date attributes.
+</aside>
+
+<h2 id="primitive-types">Primitive types</h2>
+<pre class="highlight javascript"><code><span class="kd">var</span> <span class="nx">A</span> <span class="o">=</span> <span class="nx">Nested</span><span class="p">.</span><span class="nx">Model</span><span class="p">.</span><span class="nx">extend</span><span class="p">({</span>
+    <span class="na">defaults</span> <span class="p">:</span> <span class="p">{</span>
+        <span class="c1">// Original backbone behaviour - no type, value is 3232</span>
+        <span class="na">untyped</span> <span class="p">:</span> <span class="nx">Nested</span><span class="p">.</span><span class="nx">value</span><span class="p">(</span> <span class="mi">3232</span> <span class="p">)</span>
+
+        <span class="c1">// defaults with primitive types are always 'typed'</span>
+        <span class="na">number</span>  <span class="p">:</span> <span class="mi">5</span><span class="p">,</span>           <span class="c1">// same as Number.value( 5 )</span>
+        <span class="na">integer</span> <span class="p">:</span> <span class="nx">Integer</span><span class="p">.</span><span class="nx">value</span><span class="p">(</span> <span class="mi">6</span> <span class="p">),</span>
+        <span class="na">string</span>  <span class="p">:</span> <span class="s1">'something'</span><span class="p">,</span> <span class="c1">// same as String.value( 'something' )</span>
+        <span class="na">string1</span> <span class="p">:</span> <span class="s1">''</span><span class="p">,</span>          <span class="c1">// same as String</span>
+        <span class="na">boolean</span> <span class="p">:</span> <span class="kc">true</span><span class="p">,</span>        <span class="c1">// same as Boolean.value( true )</span>
+
+        <span class="na">initWithNull</span>  <span class="p">:</span> <span class="nb">String</span><span class="p">.</span><span class="nx">value</span><span class="p">(</span> <span class="kc">null</span> <span class="p">),</span> <span class="c1">// Type is String, default value is null</span>
+    <span class="p">}</span>
+<span class="p">});</span>
+
+<span class="kd">var</span> <span class="nx">a</span> <span class="o">=</span> <span class="nx">A</span><span class="p">();</span>
+
+<span class="nx">a</span><span class="p">.</span><span class="kr">boolean</span> <span class="o">=</span> <span class="s2">"hello"</span><span class="p">;</span>
+<span class="nx">console</span><span class="p">.</span><span class="nx">assert</span><span class="p">(</span> <span class="nx">a</span><span class="p">.</span><span class="kr">boolean</span> <span class="o">===</span> <span class="kc">true</span> <span class="p">);</span>
+
+<span class="nx">a</span><span class="p">.</span><span class="nx">number</span> <span class="o">=</span> <span class="s2">"5"</span><span class="p">;</span>
+<span class="nx">console</span><span class="p">.</span><span class="nx">assert</span><span class="p">(</span> <span class="nx">a</span><span class="p">.</span><span class="nx">number</span> <span class="o">===</span> <span class="mi">5</span> <span class="p">);</span>
+
+<span class="nx">a</span><span class="p">.</span><span class="nx">number</span> <span class="o">=</span> <span class="s2">"hjhjfd"</span><span class="p">;</span>
+<span class="nx">console</span><span class="p">.</span><span class="nx">assert</span><span class="p">(</span> <span class="nx">_</span><span class="p">.</span><span class="nb">isNaN</span><span class="p">(</span> <span class="nx">a</span><span class="p">.</span><span class="nx">number</span> <span class="p">)</span> <span class="p">);</span>
+
+<span class="nx">a</span><span class="p">.</span><span class="nx">integer</span> <span class="o">=</span> <span class="mf">1.5423</span><span class="p">;</span>
+<span class="nx">console</span><span class="p">.</span><span class="nx">assert</span><span class="p">(</span> <span class="nx">a</span><span class="p">.</span><span class="nx">integer</span> <span class="o">===</span> <span class="mi">2</span> <span class="p">);</span>
+
+<span class="nx">a</span><span class="p">.</span><span class="nx">string</span> <span class="o">=</span> <span class="mi">5</span><span class="p">;</span>
+<span class="nx">console</span><span class="p">.</span><span class="nx">assert</span><span class="p">(</span> <span class="nx">a</span><span class="p">.</span><span class="nx">string</span> <span class="o">===</span> <span class="s2">"5"</span> <span class="p">);</span>
+
+<span class="nx">a</span><span class="p">.</span><span class="kr">boolean</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+<span class="nx">console</span><span class="p">.</span><span class="nx">assert</span><span class="p">(</span> <span class="nx">a</span><span class="p">.</span><span class="kr">boolean</span> <span class="o">===</span> <span class="kc">false</span> <span class="p">);</span>
+</code></pre>
+
+<h3 id="type-spec-format">Type spec format</h3>
+
+<p>Primitive types (Boolean, Number, String) are special in a sense that <em>they are inferred from their values</em>. In most cases special type annotation syntax is not really required. For example:
+* <code class="prettyprint">n : 5</code> is the same as <code class="prettyprint">n : Number.value( 5 )</code>
+* <code class="prettyprint">b : true</code> is the same as <code class="prettyprint">b : Boolean.value( true )</code>
+* <code class="prettyprint">s : &#39;hi&#39;</code> is the same as <code class="prettyprint">s : String.value( &#39;hi&#39; )</code>
+* <code class="prettyprint">x : null</code> is <em>not</em> the same. No type will be being inferred from <code class="prettyprint">null</code> value.</p>
+
+<aside class="warning">
+Even without type annotations, it&rsquo;s guaranteed that attributes will <b>retain the type of default primitive values</b>. This is serious difference from backbonejs behavior, which makes models safer.
+
+You can disable type inference using <b>Nested.value( x )</b> or just specifying <b>null</b> default value.
+</aside>
+
+<h3 id="integer-type">Integer type</h3>
+
+<p>NestedTypes adds global <code class="prettyprint">Integer</code> type, to be used in type annotations. <code class="prettyprint">Integer</code> type is not being inferred from default values, and needs to be specified explicitly.</p>
+
+<h3 id="type-casting-rules">Type casting rules</h3>
+
+<ul>
+<li><code class="prettyprint">null</code> will set attribute to <code class="prettyprint">null</code> for all primitive types.</li>
+<li><code class="prettyprint">Number</code> attribute:
+
+<ul>
+<li>Number( x ) will be invoked to parse numbers.</li>
+<li>Attribute will be set to <code class="prettyprint">NaN</code> if conversion will fail.</li>
+</ul></li>
+<li><code class="prettyprint">Integer</code> attribute:
+
+<ul>
+<li>Same as <code class="prettyprint">Number</code>, but values also converted to integer using <code class="prettyprint">Math.round</code>.</li>
+</ul></li>
+<li><code class="prettyprint">String</code> attribute:
+
+<ul>
+<li>Primitive types will be converted to their string representation.</li>
+<li>For objects, <code class="prettyprint">x.toString()</code> method will be invoked.</li>
+<li>Conversion to string never fails.</li>
+</ul></li>
+<li><code class="prettyprint">Boolean</code> attribute:
+
+<ul>
+<li>Will be always converted to <code class="prettyprint">true</code> or <code class="prettyprint">false</code> using standard JS type cast logic.</li>
+</ul></li>
+</ul>
+
+<h3 id="serialization">Serialization</h3>
+
+<p>Primitives are serialized to JSON directly. You can disable serialization of particular attribute with an option:</p>
+
+<p><code class="prettyprint">x : Integer.value( 5 ).toJSON( false )</code></p>
+
+<h2 id="untyped-attributes">Untyped attributes</h2>
+
+<h3 id="type-spec-format">Type spec format</h3>
+
+<p>To define untyped attribute, use either of these options:</p>
+
+<ul>
+<li><code class="prettyprint">u : null</code>, <code class="prettyprint">u : []</code>, or <code class="prettyprint">u : {}</code>.</li>
+<li>Any <code class="prettyprint">u : x</code> where typeof x === &lsquo;object&rsquo;.</li>
+<li><code class="prettyprint">u : Nested.value( x )</code> for value of any type, including primitives.</li>
+</ul>
+
+<aside class="notice">
+Objects literals will be <b>deep copied</b> on model creation, you don&rsquo;t need to do anything special for it.
+</aside>
+
+<h3 id="type-casting-rules">Type casting rules</h3>
+
+<p>None</p>
+
+<h3 id="serialization">Serialization</h3>
+
+<p>When serialized, <code class="prettyprint">value.toJSON</code> function will be invoked if it exists for particular value.</p>
+
+<p>JSON responses are assigned to untyped attributes as is.</p>
+
+<h2 id="models-and-collections">Models and Collections</h2>
+<pre class="highlight javascript"><code><span class="kd">var</span> <span class="nx">User</span> <span class="o">=</span> <span class="nx">Nested</span><span class="p">.</span><span class="nx">Model</span><span class="p">.</span><span class="nx">extend</span><span class="p">({</span>
+    <span class="na">defaults</span> <span class="p">:</span> <span class="p">{</span>
+        <span class="na">name</span>        <span class="p">:</span> <span class="nb">String</span><span class="p">,</span>
+        <span class="na">created</span>     <span class="p">:</span> <span class="nb">Date</span><span class="p">,</span>
+        <span class="na">group</span>       <span class="p">:</span> <span class="nx">Group</span><span class="p">,</span>
+        <span class="na">permissions</span> <span class="p">:</span> <span class="nx">Permission</span><span class="p">.</span><span class="nx">Collection</span>
+    <span class="p">}</span>
+<span class="p">});</span>
+
+<span class="kd">var</span> <span class="nx">a</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">User</span><span class="p">(),</span>
+    <span class="nx">b</span> <span class="o">=</span> <span class="nx">a</span><span class="p">.</span><span class="nx">deepClone</span><span class="p">();</span>
+</code></pre>
+
+<h3 id="type-spec-format">Type spec format</h3>
+
+<p>To define nested model or collection, annotate attribute with Model or Collection type:</p>
+
+<p><code class="prettyprint">a : MyModel</code> or <code class="prettyprint">b : MyModel.Collection</code> or <code class="prettyprint">c : SomeCollection</code></p>
+
+<aside class="notice">
+In NestedTypes Every <b>Model</b> type has corresponding <b>Collection</b> type, which can be
+referenced as <b>Model.Collection</b>.
+</aside>
+
+<h3 id="inline-nested-models-and-collections-definitions">Inline nested Models and Collections definitions</h3>
+
+<blockquote>
+<p>Inline nested definitions</p>
+</blockquote>
+<pre class="highlight javascript"><code><span class="kd">var</span> <span class="nx">M</span> <span class="o">=</span> <span class="nx">Nested</span><span class="p">.</span><span class="nx">Model</span><span class="p">.</span><span class="nx">extend</span><span class="p">({</span>
+    <span class="na">defaults</span> <span class="p">:{</span>
+        <span class="c1">// define model extending base Nested.Model</span>
+        <span class="na">nestedModel</span> <span class="p">:</span> <span class="nx">Nested</span><span class="p">.</span><span class="nx">defaults</span><span class="p">({</span>
+            <span class="na">a</span> <span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
+            <span class="c1">//define model extending specified model</span>
+            <span class="na">b</span> <span class="p">:</span> <span class="nx">MyModel</span><span class="p">.</span><span class="nx">defaults</span><span class="p">({</span>
+                <span class="c1">// define collection of nested models</span>
+                <span class="na">items</span> <span class="p">:</span> <span class="nx">Nested</span><span class="p">.</span><span class="nx">Collection</span><span class="p">.</span><span class="nx">defaults</span><span class="p">({</span>
+                    <span class="na">a</span> <span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
+                    <span class="na">b</span> <span class="p">:</span> <span class="mi">2</span>
+                <span class="p">})</span>
+
+            <span class="p">})</span>
+        <span class="p">})</span>
+    <span class="p">}</span>
+<span class="p">})</span>
+
+</code></pre>
+
+<p>Simple models and collections can be defined with special shortened syntax.</p>
+
+<p>It&rsquo;s useful in case of deeply nested JS objects, when you previously preferred plain objects and arrays in place of models and collections. Now you could easily convert them to nested types, enjoying nested changes detection and &#39;deep update&rsquo; features.</p>
+
+<h3 id="type-casting">Type casting</h3>
+
+<blockquote>
+<p>Deep update example:</p>
+</blockquote>
+<pre class="highlight javascript"><code><span class="kd">var</span> <span class="nx">user</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">User</span><span class="p">();</span>
+
+<span class="c1">// Following assignment...</span>
+<span class="nx">user</span><span class="p">.</span><span class="nx">group</span> <span class="o">=</span> <span class="p">{</span> <span class="na">name</span><span class="p">:</span> <span class="s2">"Admin"</span> <span class="p">};</span>
+<span class="c1">// ...is the same as this:</span>
+<span class="nx">user</span><span class="p">.</span><span class="nx">group</span><span class="p">.</span><span class="nx">set</span><span class="p">({</span> <span class="na">name</span><span class="p">:</span> <span class="s2">"Admin"</span> <span class="p">});</span>
+
+<span class="c1">// Following assignment...</span>
+<span class="nx">user</span><span class="p">.</span><span class="nx">permissions</span> <span class="o">=</span> <span class="p">[{</span> <span class="na">id</span><span class="p">:</span> <span class="mi">5</span><span class="p">,</span> <span class="na">type</span><span class="p">:</span> <span class="s1">'full'</span> <span class="p">}];</span>
+<span class="c1">// ...is the same as this:</span>
+<span class="nx">user</span><span class="p">.</span><span class="nx">permissions</span><span class="p">.</span><span class="nx">set</span><span class="p">(</span> <span class="p">[{</span> <span class="na">id</span><span class="p">:</span> <span class="mi">5</span><span class="p">,</span> <span class="na">type</span><span class="p">:</span> <span class="s1">'full'</span> <span class="p">}]</span> <span class="p">);</span>
+
+<span class="c1">// Following assignment...</span>
+<span class="nx">user</span><span class="p">.</span><span class="nx">group</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="na">nestedModel</span> <span class="p">:</span> <span class="p">{</span>
+        <span class="na">deeplyNestedModel</span> <span class="p">:</span> <span class="p">{</span> <span class="na">attr</span> <span class="p">:</span> <span class="s1">'value'</span> <span class="p">},</span>
+        <span class="na">attr</span> <span class="p">:</span> <span class="mi">5</span>
+    <span class="p">}</span>
+<span class="p">};</span>
+<span class="c1">// ...is the same as this, but fire single 'change' event</span>
+<span class="nx">user</span><span class="p">.</span><span class="nx">group</span><span class="p">.</span><span class="nx">nestedModel</span><span class="p">.</span><span class="nx">deeplyNestedModel</span><span class="p">.</span><span class="nx">attr</span> <span class="o">=</span> <span class="s1">'value'</span><span class="p">;</span>
+<span class="nx">user</span><span class="p">.</span><span class="nx">group</span><span class="p">.</span><span class="nx">nestedModel</span><span class="p">.</span><span class="nx">attr</span> <span class="o">=</span> <span class="s1">'value'</span><span class="p">;</span>
+</code></pre>
+
+<p>When <code class="prettyprint">Model</code> or <code class="prettyprint">Collection</code> attribute is assigned with the value&hellip;</p>
+
+<ul>
+<li>&hellip;which is <code class="prettyprint">null</code>, attribute value will be set to <code class="prettyprint">null</code>.</li>
+<li>&hellip;which is an instance of specified <code class="prettyprint">Model</code>/<code class="prettyprint">Collection</code>, attribute&rsquo;s value will be replaced with a given one.</li>
+<li>otherwise, if value has incompatible type, and current attribute value&hellip;
+
+<ul>
+<li>&hellip;is <code class="prettyprint">null</code>, new model or collection will be created taking value as constructor argument.</li>
+<li>&hellip;is existing model or collection, update will be delegated to its <code class="prettyprint">set</code> method performing <code class="prettyprint">deep update</code>.</li>
+</ul></li>
+</ul>
+
+<h3 id="serialization">Serialization</h3>
+
+<p>Nested models and collections are serialized as nested JSON. When JSON response is received, they are being constructed or updated according to type case rules.</p>
+
+<h3 id="change-events-bubbling">Change events bubbling</h3>
+
+<blockquote>
+<p>Event bubbling:</p>
+</blockquote>
+<pre class="highlight javascript"><code><span class="kd">var</span> <span class="nx">M</span> <span class="o">=</span> <span class="nx">Nested</span><span class="p">.</span><span class="nx">Model</span><span class="p">.</span><span class="nx">extend</span><span class="p">({</span>
+    <span class="na">defaults</span><span class="p">:</span> <span class="p">{</span>
+        <span class="na">bubbleChanges</span> <span class="p">:</span> <span class="nx">ModelOrCollection</span><span class="p">,</span>
+
+        <span class="na">dontBubble</span> <span class="p">:</span> <span class="nx">ModelOrCollection</span><span class="p">.</span><span class="nx">has</span><span class="p">.</span><span class="nx">triggerWhanChanged</span><span class="p">(</span> <span class="kc">false</span> <span class="p">)</span>
+        <span class="p">}),</span>
+
+        <span class="na">bubbleCustomEvents</span> <span class="p">:</span> <span class="nx">ModelOrCollection</span><span class="p">.</span><span class="nx">has</span>
+            <span class="p">.</span><span class="nx">triggerWhanChanged</span><span class="p">(</span> <span class="s1">'event1 event2 whatever'</span> <span class="p">)</span>
+    <span class="p">}</span>
+<span class="p">});</span>
+</code></pre>
+
+<p>Change events will be bubbled from nested models and collections.</p>
+
+<ul>
+<li><code class="prettyprint">change</code> and <code class="prettyprint">change:attribute</code> events for any changes in nested models and collections. Multiple <code class="prettyprint">change</code> events from submodels during bulk updates are carefully joined together, which make it suitable to subscribe View.render to the top model&rsquo;s <code class="prettyprint">change</code>.</li>
+<li><code class="prettyprint">replace:attribute</code> event when model or collection is replaced with new object. You might need it to subscribe for events from submodels.</li>
+<li>It&rsquo;s possible to control event bubbling for every attribute. You can completely disable it, or override the list of events which would be counted as change:</li>
+</ul>
+
+<h2 id="model-id-references">Model id references</h2>
+<pre class="highlight javascript"><code><span class="kd">var</span> <span class="nx">User</span> <span class="o">=</span> <span class="nx">Nested</span><span class="p">.</span><span class="nx">Model</span><span class="p">.</span><span class="nx">extend</span><span class="p">({</span>
+    <span class="na">defaults</span> <span class="p">:</span> <span class="p">{</span>
+        <span class="na">name</span> <span class="p">:</span> <span class="nb">String</span><span class="p">,</span>
+        <span class="na">roles</span> <span class="p">:</span> <span class="nx">Role</span><span class="p">.</span><span class="nx">Collection</span><span class="p">.</span><span class="nx">subsetOf</span><span class="p">(</span> <span class="nx">roles</span> <span class="p">)</span> <span class="c1">// &lt;- serialized as array of model ids</span>
+        <span class="na">location</span> <span class="p">:</span> <span class="nx">Location</span><span class="p">.</span><span class="nx">from</span><span class="p">(</span> <span class="nx">locations</span> <span class="p">)</span> <span class="c1">// &lt;- serialized as model id</span>
+    <span class="p">}</span>
+<span class="p">});</span>
+
+<span class="kd">var</span> <span class="nx">user</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">User</span><span class="p">({</span> <span class="na">id</span><span class="p">:</span> <span class="mi">0</span> <span class="p">});</span>
+<span class="nx">user</span><span class="p">.</span><span class="nx">fetch</span><span class="p">();</span>
+</code></pre>
+
+<blockquote>
+<p>Server response: &ldquo;{ id: 0, name : &#39;john&rsquo;, roles : [ 1, 2, 3 ], location : 6 }&rdquo;</p>
+</blockquote>
+<pre class="highlight javascript"><code><span class="c1">//ref attributes behaves like normal collections and models.</span>
+<span class="nx">assert</span><span class="p">(</span> <span class="nx">user</span><span class="p">.</span><span class="nx">roles</span> <span class="k">instanceof</span> <span class="nx">Collection</span> <span class="p">);</span>
+<span class="nx">assert</span><span class="p">(</span> <span class="nx">user</span><span class="p">.</span><span class="nx">roles</span><span class="p">.</span><span class="nx">first</span><span class="p">()</span> <span class="k">instanceof</span> <span class="nx">Role</span> <span class="p">);</span>
+<span class="nx">assert</span><span class="p">(</span> <span class="nx">user</span><span class="p">.</span><span class="nx">location</span><span class="p">.</span><span class="nx">name</span> <span class="o">===</span> <span class="s2">"Boston"</span> <span class="p">);</span>
+</code></pre>
+
+<p>Sometimes it is suitable to serialize model references as an id or an array of ids.</p>
+
+<p>NestedTypes provides special attribute data types to transparently handle this situation, as if you
+would work with normal nested models and collections.</p>
+
+<h3 id="model.from">Model.from</h3>
+
+<p><code class="prettyprint">Model.from</code> represent reference to the model from existing collection, which is serialized as model id.</p>
+
+<p><code class="prettyprint">ref : Model.from( masterCollection )</code></p>
+
+<p>Attribute may be assigned with model id or model itself. On `get, attribute behaves as Model type. Model id will be resolved to model on first attribute read attempt.</p>
+
+<p>If master collection is empty and thus reference cannot be resolved, it will defer id resolution and <code class="prettyprint">get</code> will return <code class="prettyprint">null</code>. If master collection is not empty, id will be resolved to model from this collection, or <code class="prettyprint">null</code> if corresponding model doesn&rsquo;t exists.</p>
+
+<p>Attribute counts as changed only when different model or id is assigned.</p>
+
+<h3 id="collection.subsetof">Collection.subsetOf</h3>
+
+<p><code class="prettyprint">Collection.subsetOf</code> is a collection of models taken from other &#39;master&rsquo; collection. On first access, it will resolve model ids to real models using master collection for lookups.</p>
+
+<p>If master collection is empty and thus references cannot be resolved, it will defer id resolution and just return empty collection. If master collection is not empty, it will filter out ids of non-existent models.</p>
+
+<p><code class="prettyprint">Collection.subsetOf</code> supports some additional methods:</p>
+
+<ul>
+<li>addAll() - add all models from master collection.</li>
+<li>removeAll() - same as reset().</li>
+<li>toggle( modelOrId ) - toggle specific model in set.</li>
+<li>justOne( modelOrId ) - reset subset to contain just specified model.</li>
+</ul>
+
+<p><code class="prettyprint">change</code> events won&rsquo;t be bubbled from models in Collection.subsetOf. Other collection&rsquo;s events will.</p>
+
+<h3 id="master-collection">Master Collection</h3>
+
+<p>Master collection reference may be:</p>
+
+<ul>
+<li>direct reference to collection object</li>
+<li><code class="prettyprint">string</code>, designating reference to the current model&rsquo;s member relative to &#39;this&rsquo;.</li>
+<li><code class="prettyprint">function</code>, which returns reference to collection and executed in the context of the model.</li>
+</ul>
+
+          <h1 id="attribute-options">Attribute options</h1>
+
+<h2 id="type.has">Type.has</h2>
+<pre class="highlight javascript"><code><span class="kd">var</span> <span class="nx">M</span> <span class="o">=</span> <span class="nx">Nested</span><span class="p">.</span><span class="nx">Model</span><span class="p">.</span><span class="nx">extend</span><span class="p">({</span>
+    <span class="na">defaults</span> <span class="p">:</span> <span class="p">{</span>
+        <span class="na">attr</span> <span class="p">:</span> <span class="nb">Date</span><span class="p">.</span><span class="nx">has</span>
+                <span class="p">.</span><span class="nx">value</span><span class="p">(</span> <span class="kc">null</span> <span class="p">)</span>
+                <span class="p">.</span><span class="nx">toJSON</span><span class="p">(</span> <span class="kc">false</span> <span class="p">)</span>
+    <span class="p">}</span>
+<span class="p">});</span>
+</code></pre>
+
+<p>Attribute options spec gives you to customize different aspects of attribute behavior, such as:</p>
+
+<ul>
+<li>attribute serialization control</li>
+<li>nested changes detection</li>
+<li>attribute&rsquo;s get and set</li>
+</ul>
+
+<p><code class="prettyprint">.value</code> is an example of attribute option. In order to get access to other options you need to use keyword <code class="prettyprint">.has</code>. Options specs are chainable, you can specify any sequence of options separated by dot.</p>
+
+<h2 id=".value(-value-)">.value( value )</h2>
+<pre class="highlight javascript"><code><span class="kd">var</span> <span class="nx">M</span> <span class="o">=</span> <span class="nx">Nested</span><span class="p">.</span><span class="nx">Model</span><span class="p">.</span><span class="nx">extend</span><span class="p">({</span>
+    <span class="na">defaults</span> <span class="p">:</span> <span class="p">{</span>
+        <span class="na">a</span> <span class="p">:</span> <span class="nx">Type</span><span class="p">.</span><span class="nx">has</span><span class="p">.</span><span class="nx">value</span><span class="p">(</span> <span class="nx">value</span> <span class="p">),</span>
+        <span class="na">b</span> <span class="p">:</span> <span class="nx">Type</span><span class="p">.</span><span class="nx">value</span><span class="p">(</span> <span class="nx">value</span> <span class="p">)</span>
+    <span class="p">}</span>
+<span class="p">});</span>
+</code></pre>
+
+<p>Attribute&rsquo;s default value. On model construction, <code class="prettyprint">value</code> will be casted to <code class="prettyprint">Type</code> applying usual type casting rules.</p>
+
+<aside class="notice">
+`.value` option may be used without leading `.has`.
+</aside>
+
+<h2 id=".tojson(-function(-value,-name-)-|-false-)">.toJSON( function( value, name ) | false )</h2>
+<pre class="highlight javascript"><code><span class="kd">var</span> <span class="nx">M</span> <span class="o">=</span> <span class="nx">Nested</span><span class="p">.</span><span class="nx">Model</span><span class="p">.</span><span class="nx">extend</span><span class="p">({</span>
+    <span class="na">defaults</span> <span class="p">:</span> <span class="p">{</span>
+        <span class="na">a</span> <span class="p">:</span> <span class="nx">Type</span><span class="p">.</span><span class="nx">has</span><span class="p">.</span><span class="nx">toJSON</span><span class="p">(</span> <span class="kd">function</span><span class="p">(</span> <span class="nx">value</span><span class="p">,</span> <span class="nx">name</span> <span class="p">){</span>
+            <span class="k">return</span> <span class="nx">value</span><span class="p">.</span><span class="nx">text</span><span class="p">;</span>
+        <span class="p">}),</span>
+
+        <span class="na">b</span> <span class="p">:</span> <span class="nx">Type</span><span class="p">.</span><span class="nx">has</span><span class="p">.</span><span class="nx">toJSON</span><span class="p">(</span> <span class="kc">false</span> <span class="p">)</span>
+    <span class="p">}</span>
+<span class="p">});</span>
+</code></pre>
+
+<p>When attribute will be serialized as a part of model, given function will be used <em>instead</em> of attribute&rsquo;s toJSON.</p>
+
+<p>Function accepts attribute&rsquo;s <code class="prettyprint">name</code> and its current <code class="prettyprint">value</code>, and will be executed in the context of the model, holding an attribute.</p>
+
+<p>Passing <code class="prettyprint">false</code> option will prevent attribute&rsquo;s serialization.</p>
+
+<h2 id=".parse(-function(-value,-name-)-)">.parse( function( value, name ) )</h2>
+<pre class="highlight javascript"><code><span class="kd">var</span> <span class="nx">M</span> <span class="o">=</span> <span class="nx">Nested</span><span class="p">.</span><span class="nx">Model</span><span class="p">.</span><span class="nx">extend</span><span class="p">({</span>
+    <span class="na">defaults</span> <span class="p">:</span> <span class="p">{</span>
+        <span class="na">a</span> <span class="p">:</span> <span class="nx">Type</span><span class="p">.</span><span class="nx">has</span><span class="p">.</span><span class="nx">parse</span><span class="p">(</span> <span class="kd">function</span><span class="p">(</span> <span class="nx">value</span> <span class="p">){</span>
+            <span class="k">return</span> <span class="nx">Type</span><span class="p">.</span><span class="nx">factory</span><span class="p">(</span> <span class="nx">value</span> <span class="p">);</span>
+        <span class="p">})</span>
+    <span class="p">}</span>
+<span class="p">});</span>
+</code></pre>
+
+<p>Attribute-specific <code class="prettyprint">parse</code> logic, will be executed after model&rsquo;s <code class="prettyprint">parse</code> method.</p>
+
+<p>Function accepts attribute&rsquo;s <code class="prettyprint">name</code> and response <code class="prettyprint">value</code>, and will be executed in the context of the model, holding an attribute.</p>
+
+<p>This option is useful to parse abstract model attributes, or handle non-standard format of specific attributes.</p>
+
+<h2 id=".get(-function(-value,-name-)-)">.get( function( value, name ) )</h2>
+<pre class="highlight javascript"><code><span class="kd">var</span> <span class="nx">M</span> <span class="o">=</span> <span class="nx">Nested</span><span class="p">.</span><span class="nx">Model</span><span class="p">.</span><span class="nx">extend</span><span class="p">({</span>
+    <span class="na">defaults</span> <span class="p">:</span> <span class="p">{</span>
+        <span class="na">a</span> <span class="p">:</span> <span class="nx">Type</span><span class="p">.</span><span class="nx">has</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span> <span class="kd">function</span><span class="p">(</span> <span class="nx">value</span><span class="p">,</span> <span class="nx">name</span> <span class="p">){</span>
+            <span class="k">return</span> <span class="nx">value</span><span class="p">;</span>
+        <span class="p">})</span>
+    <span class="p">}</span>
+<span class="p">});</span>
+</code></pre>
+
+<p>Called during <code class="prettyprint">model.get( &#39;a&#39; )</code> or <code class="prettyprint">model.a</code> in the context of the model, allowing you to modify value which  will be returned without altering attribute itself.</p>
+
+<p>Get hook function accepts attribute&rsquo;s <code class="prettyprint">name</code> and its current <code class="prettyprint">value</code>, and returns modified value.</p>
+
+<p>Multiple get hooks are chainable, and will be applied in specified order.</p>
+
+<h2 id=".set(-function(-value,-name-)-)">.set( function( value, name ) )</h2>
+<pre class="highlight javascript"><code><span class="kd">var</span> <span class="nx">M</span> <span class="o">=</span> <span class="nx">Nested</span><span class="p">.</span><span class="nx">Model</span><span class="p">.</span><span class="nx">extend</span><span class="p">({</span>
+    <span class="na">defaults</span> <span class="p">:</span> <span class="p">{</span>
+        <span class="na">a</span> <span class="p">:</span> <span class="nx">Type</span><span class="p">.</span><span class="nx">has</span><span class="p">.</span><span class="nx">set</span><span class="p">(</span> <span class="kd">function</span><span class="p">(</span> <span class="nx">value</span><span class="p">,</span> <span class="nx">name</span> <span class="p">){</span>
+            <span class="k">return</span> <span class="nx">value</span><span class="p">;</span>
+        <span class="p">})</span>
+    <span class="p">}</span>
+<span class="p">});</span>
+</code></pre>
+
+<p>Called during attribute&rsquo;s update in the context of the model <em>after</em> type cast but <em>before</em> an actual set, allowing you to modify set value.</p>
+
+<aside class="notice">
+Set hook is only called when attribute value is changed. For nested models and collections case, it will be called <b>only in case</b> when instance will be replaced, not in case of <b>deep update</b>.
+</aside>
+
+<p>Set hook function accepts attribute&rsquo;s <code class="prettyprint">name</code> and <code class="prettyprint">value</code> to be set, and returns modified value, or <code class="prettyprint">undefined</code> to cancel attribute update.</p>
+
+<p>Multiple set hooks are chainable, and will be applied in specified order.</p>
+
+<p>Returned value will be casted to attribute&rsquo;s type applying standard convertion rules. So, it&rsquo;s guaranteed that attribute&rsquo;s value will always hold the correct type.</p>
+
+<h2 id=".events(-eventsmap-)">.events( eventsMap )</h2>
+<pre class="highlight javascript"><code><span class="kd">var</span> <span class="nx">M</span> <span class="o">=</span> <span class="nx">Nested</span><span class="p">.</span><span class="nx">Model</span><span class="p">.</span><span class="nx">extend</span><span class="p">({</span>
+    <span class="na">defaults</span> <span class="p">:</span> <span class="p">{</span>
+        <span class="na">a</span> <span class="p">:</span> <span class="nx">Type</span><span class="p">.</span><span class="nx">has</span><span class="p">.</span><span class="nx">events</span><span class="p">({</span>
+            <span class="s1">'isReady isNotReady'</span> <span class="p">:</span> <span class="kd">function</span><span class="p">(){</span>
+                <span class="k">this</span><span class="p">.</span><span class="nx">trigger</span><span class="p">(</span> <span class="s1">'imwatchingyou'</span> <span class="p">);</span>
+            <span class="p">}</span>
+        <span class="p">}),</span>
+    <span class="p">}</span>
+<span class="p">});</span>
+</code></pre>
+
+<p>Automatically manage events subscription for nested attribute, capable of sending events. Event handlers will be called in the context of of the parent model.</p>
+
+<h2 id=".triggerwhenchanged(-string-|-false-)">.triggerWhenChanged( String | false )</h2>
+<pre class="highlight javascript"><code><span class="kd">var</span> <span class="nx">M</span> <span class="o">=</span> <span class="nx">Nested</span><span class="p">.</span><span class="nx">Model</span><span class="p">.</span><span class="nx">extend</span><span class="p">({</span>
+    <span class="na">defaults</span> <span class="p">:</span> <span class="p">{</span>
+        <span class="na">a</span> <span class="p">:</span> <span class="nx">ModelA</span><span class="p">.</span><span class="nx">has</span><span class="p">.</span><span class="nx">triggerWhenChanged</span><span class="p">(</span> <span class="s1">'change myEvent'</span> <span class="p">),</span>
+        <span class="na">b</span> <span class="p">:</span> <span class="nx">ModelB</span><span class="p">.</span><span class="nx">has</span><span class="p">.</span><span class="nx">triggerWhenChanged</span><span class="p">(</span> <span class="kc">false</span> <span class="p">),</span>
+    <span class="p">}</span>
+<span class="p">});</span>
+</code></pre>
+
+<aside class="notice">
+Makes sense only for Model and Collection attributes.
+</aside>
+
+<p>Override default list of events used for nested changes detection of selected attribute.</p>
+
+<p>Pass <code class="prettyprint">false</code> option to disable nested changes detection for this attribute.</p>
+
+<h2 id="nested.attribute([-optionshash-])">Nested.attribute([ optionsHash ])</h2>
+<pre class="highlight javascript"><code><span class="kd">var</span> <span class="nx">M</span> <span class="o">=</span> <span class="nx">Nested</span><span class="p">.</span><span class="nx">Model</span><span class="p">.</span><span class="nx">extend</span><span class="p">({</span>
+    <span class="na">defaults</span> <span class="p">:</span> <span class="p">{</span>
+        <span class="na">a</span> <span class="p">:</span> <span class="nx">Nested</span><span class="p">.</span><span class="nx">attribute</span><span class="p">({</span>
+            <span class="na">value</span> <span class="p">:</span> <span class="kc">null</span><span class="p">,</span>
+            <span class="na">toJSON</span> <span class="p">:</span> <span class="kc">false</span>
+        <span class="p">}),</span>
+
+        <span class="na">b</span> <span class="p">:</span> <span class="nx">Nested</span><span class="p">.</span><span class="nx">attribute</span><span class="p">()</span>
+                <span class="p">.</span><span class="nx">value</span><span class="p">(</span> <span class="kc">null</span> <span class="p">)</span>
+                <span class="p">.</span><span class="nx">toJSON</span><span class="p">(</span> <span class="kc">false</span> <span class="p">)</span>
+    <span class="p">}</span>
+<span class="p">});</span>
+</code></pre>
+
+<p><code class="prettyprint">Nested.attribute</code> function returns attribute spec as it appears after <code class="prettyprint">.has</code>, optionally accepting set of options as a hash.</p>
+
+<aside class="notice">
+It provides a way to pass options to typeless attributes.
+</aside>
+
+          <h1 id="nested.store">Nested.store</h1>
+
+<p>There&rsquo;s a global store for the collections, which might be useful in case of bi-directional relationships. It&rsquo;s available as a member of Model (this.store), and globally as Nested.store.</p>
+
+<h2 id="initialization">Initialization</h2>
+<pre class="highlight javascript"><code><span class="nx">Nested</span><span class="p">.</span><span class="nx">store</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="na">roles</span> <span class="p">:</span> <span class="nx">Role</span><span class="p">.</span><span class="nx">Collection</span><span class="p">,</span>
+    <span class="na">locations</span> <span class="p">:</span> <span class="nx">Locations</span><span class="p">.</span><span class="nx">Collection</span>
+<span class="p">};</span>
+
+<span class="kd">var</span> <span class="nx">User</span> <span class="o">=</span> <span class="nx">Nested</span><span class="p">.</span><span class="nx">Model</span><span class="p">.</span><span class="nx">extend</span><span class="p">({</span>
+    <span class="na">defaults</span> <span class="p">:</span> <span class="p">{</span>
+        <span class="na">name</span> <span class="p">:</span> <span class="nb">String</span><span class="p">,</span>
+        <span class="na">roles</span> <span class="p">:</span> <span class="nx">Collection</span><span class="p">.</span><span class="nx">subsetOf</span><span class="p">(</span> <span class="s1">'store.roles'</span> <span class="p">);</span> <span class="c1">// this.store.roles</span>
+        <span class="nl">location</span> <span class="p">:</span> <span class="nx">Location</span><span class="p">.</span><span class="nx">from</span><span class="p">(</span> <span class="s1">'store.locations'</span> <span class="p">});</span> <span class="c1">// this.store.locations</span>
+    <span class="p">}</span>
+<span class="p">});</span>
+</code></pre>
+
+<p>Store needs to be initialized with a hash of collections and models type specs. It can be initialized several times.</p>
+
+<p>Format of the spec object is the same as in <code class="prettyprint">Model.defaults</code>.</p>
+
+<h2 id="lazy-loading">Lazy loading</h2>
+
+<p>On first access to every member of the store, it will fetch data from the server automatically. You need to take care of update events.</p>
+
+<h2 id="nested.store.fetch(-&#39;attr1&#39;,-...)">Nested.store.fetch( &lsquo;attr1&rsquo;, &hellip;)</h2>
+
+<p>Update all store members, which are currently loaded:</p>
+
+<p><code class="prettyprint">Nested.store.fetch()</code></p>
+
+<p>Fetches store elements with given names:</p>
+
+<p><code class="prettyprint">Nested.store.fetch( &#39;name1&#39;, &#39;name2&#39;, ... )</code></p>
+
+<p>Returns aggregate promise for xhr objects.</p>
+
+<h2 id="nested.clear(-&#39;attr1&#39;,-...-)">Nested.clear( &#39;attr1&rsquo;, &hellip; )</h2>
+
+<p>Clear all store collection elements:</p>
+
+<p><code class="prettyprint">Nested.store.clear()</code></p>
+
+<p>Clear selected store collections:</p>
+
+<p><code class="prettyprint">Nested.store.clear( &#39;name1&#39;, &#39;name2&#39;, ... )</code></p>
+
+<p>Returns store to allow chained calls.</p>
+
+          <h1 id="nested.errors">Nested.errors</h1>
+
+<p>NestedTypes detect four error types in the runtime, which will be logged to console using console.error.</p>
+
+<h2 id="method-overriden-with-value">Method overriden with value</h2>
+
+<p>When you override function with non-function value in the subclass, it usually means an error.</p>
+
+<p>This message also warn you on the situation when you made model attribute or property name the same as
+some base class method.</p>
+
+<p><code class="prettyprint">[Type Warning] Base class method overriden with value in Object.extend({ url : [object Object] }); Object = ...</code></p>
+
+<h2 id="wrong-model.set-argument">Wrong model.set argument</h2>
+
+<p>First argument of Model.set must be either string, or literal object representing attribute hash.</p>
+
+<p>Other situation means serious error. Something goes really wrong.</p>
+
+<p><code class="prettyprint">[Type Error] Attribute hash is not an object in Model.set( &quot;http://0.0.0.0/&quot; ); this = ...</code></p>
+
+<h2 id="wrong-collection.set-argument">Wrong collection.set argument</h2>
+
+<p>First argument of Collection.set must be either an Array, literal object, or compatible Model.</p>
+
+<p>Other situation means serious error. Something goes really wrong.</p>
+
+<p><code class="prettyprint">[Type Error] Wrong argument type in Collection.set( &quot;dsds&quot; ); this = ...</code></p>
+
+<h2 id="attribute-has-ho-default-value">Attribute has ho default value</h2>
+
+<p>Attempt to set an attribute which is not declared in model <code class="prettyprint">defaults</code>.</p>
+
+<p><code class="prettyprint">[Type Error] Attribute has no default value in Model.set( &quot;a&quot;, 0 ); this =...</code></p>
+
+      </div>
+      <div class="dark-box">
+      </div>
+    </div>
+  </body>
+</html>

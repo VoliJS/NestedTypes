@@ -910,6 +910,9 @@ var Model = BaseModel.extend( {
         return res;
     },
 
+    parse  : function( resp ){ return this._parse( resp ); },
+    _parse : function( resp ){ return resp; },
+
     isValid : function( options ){
         // todo: need to do something smart with validation logic
         // something declarative on attributes level, may be
@@ -976,41 +979,37 @@ function createDefinition( protoProps, Base ){
     }
 
     var allAttrSpecs = _.defaults( {}, attrSpecs, baseAttrSpecs ),
-        Attributes   = createCloneCtor( allAttrSpecs ),
-        _parse       = createAttrParse( allAttrSpecs );
+        Attributes   = createCloneCtor( allAttrSpecs );
 
     return _.extend( _.omit( protoProps, 'collection', 'attributes' ), {
         __attributes : new Attributes( allAttrSpecs ),
-        _parse       : _parse,
-        parse        : chainParseHandlers( protoProps.parse || Base.prototype.parse, _parse ),
+        _parse       : create_parse( allAttrSpecs, attrSpecs ) || Base.prototype._parse,
         defaults     : defaultsAsFunction || createDefaults( allAttrSpecs ),
         properties   : createAttrsNativeProps( protoProps.properties, attrSpecs ),
         Attributes   : Attributes
     } );
 }
 
-function chainParseHandlers( parse, _parse ){
-    if( !_parse ) return parse;
-    if( parse === ModelProto.parse ) return _parse;
+// Create attributes 'parse' option function only if local 'parse' options present.
+// Otherwise return null.
+function create_parse( allAttrSpecs, attrSpecs ){
+    var statements = [ 'var a = this.__attributes;' ],
+        create = false;
 
-    return function( resp ){
-        return this._parse( this.parse( resp ) );
-    };
-}
+    for( var name in allAttrSpecs ){
+        // Is there any 'parse' option in local model definition?
+        if( attrSpecs[ name ] && attrSpecs[ name ].parse ) create = true;
 
-function createAttrParse( attrSpecs ){
-    var statements = [ 'var a = this.__attributes;' ], s;
-
-    for( var name in attrSpecs ){
-        if( attrSpecs[ name ].parse ){
-            s = 'if("' + name + '" in r) r.' + name + '=a.' + name + '.parse.call(this,r.' + name + ',"' + name + '");';
+        // Add statement for each attribute with 'parse' option.
+        if( allAttrSpecs[ name ].parse ){
+            var s = 'if("' + name + '" in r) r.' + name + '=a.' + name + '.parse.call(this,r.' + name + ',"' + name + '");';
             statements.push( s );
         }
     }
 
     statements.push( 'return r;' );
 
-    return statements.length > 2 ? new Function( 'r', statements.join( '' ) ) : null;
+    return create ? new Function( 'r', statements.join( '' ) ) : null;
 }
 
 // Create constructor for efficient attributes clone operation.

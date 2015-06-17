@@ -310,13 +310,15 @@ var Attribute = Object.extend( {
                 Type.attribute = Type.options = options;
                 Type.value = value;
                 Type.Attribute = this;
-                Object.defineProperty( Type, 'has', {
-                    get : function(){
-                        // workaround for sinon.js and other libraries overriding 'has'
-                        return this._has || this.options();
-                    },
-                    set : function( value ){ this._has = value; }
-                } );
+                if (typeof(Type.has) === 'undefined') {
+                    Object.defineProperty( Type, 'has', {
+                        get : function(){
+                            // workaround for sinon.js and other libraries overriding 'has'
+                            return this._has || this.options();
+                        },
+                        set : function( value ){ this._has = value; }
+                    } );
+                }
             }
         };
     })()

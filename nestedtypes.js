@@ -603,7 +603,7 @@ attribute.Type.extend( {
     toJSON : function( value ){ return value && value.toJSON(); },
 
     isChanged : function( a, b ){ return ( a && +a ) !== ( b && +b ); },
-    clone     : function( value ){ return new Date( +value ); }
+    clone     : function( value ){ return value && new Date( +value ); }
 } ).attach( Date );
 
 // Primitive Types

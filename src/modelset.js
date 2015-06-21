@@ -42,17 +42,18 @@ function genericIsChanged( a, b ){
 // Force attribute update. Must not be called when
 function forceAttrUpdate( model, key ){
     'use strict';
-    var current  = model.attributes,
-        changing = model._changing;
+    var changing = model._changing,
+        current  = model.attributes;
 
     model._changing = true;
 
     if( !changing ){
-    model._previousAttributes = new model.Attributes( current );
+        model._previousAttributes = new model.Attributes( current );
+        model.changed = {};
+    }
 
-    var changed = {},
-        val = current[ key ];
-    changed[ key ] = val;
+    var val = current[ key ];
+    model.changed[ key ] = val;
     model.changed = changed;
 
     var options   = {};

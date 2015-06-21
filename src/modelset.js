@@ -39,6 +39,40 @@ function genericIsChanged( a, b ){
     return !( a === b || ( a && b && typeof a == 'object' && typeof b == 'object' && _.isEqual( a, b ) ) );
 }
 
+// Force attribute update. Must not be called when
+function forceAttrUpdate( model, key ){
+    'use strict';
+    var current  = model.attributes,
+        changing = model._changing;
+
+    model._changing = true;
+
+    if( !changing ){
+    model._previousAttributes = new model.Attributes( current );
+
+    var changed = {},
+        val = current[ key ];
+    changed[ key ] = val;
+    model.changed = changed;
+
+    var options   = {};
+    model._pending = options;
+    trigger3( model, 'change:' + key, model, val, options );
+
+    if( changing ){
+        return model;
+    }
+
+    while( model._pending ){
+        options = model._pending;
+        model._pending = false;
+        trigger2( model, 'change', model, options );
+    }
+
+    model._pending = false;
+    model._changing = false;
+}
+
 function setSingleAttr( model, key, value, attrSpec ){
     'use strict';
     var changing = model._changing,

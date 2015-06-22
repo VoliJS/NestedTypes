@@ -80,35 +80,37 @@ function setSingleAttr( model, key, value, attrSpec ){
     return model;
 }
 
-function transaction( fun, opts ){
-    var changing = this._changing,
-        options  = opts || {},
-        silent   = options.silent;
+
+// call a_fun with a_args inside of set transaction.
+// model.set inside of a_fun will trigger change:attr
+// but only single 'change' will be triggered at the end of transaction
+// transactions can be nested
+function transaction( a_fun, a_args ){
+    var notChanging = !this._changing,
+        args     = a_args || [],
+        options  = {};
 
     this._changing = true;
 
-    if( !changing ){
+    if( notChanging ){
         this._previousAttributes = new this.Attributes( this.attributes );
         this.changed             = {};
     }
 
-    fun.call( this, options );
+    var res = a_fun.apply( this, args );
 
-    if( changing ){
-        return this;
-    }
-
-    if( !silent ){
+    if( notChanging ){
         while( this._pending ){
-            options        = this._pending;
+            options       = this._pending;
             this._pending = false;
             trigger2( this, 'change', this, options );
         }
+
+        this._pending  = false;
+        this._changing = false;
     }
 
-    this._pending  = false;
-    this._changing = false;
-    return this;
+    return res;
 }
 
 // General case set: used for multiple and nested model/collection attributes.

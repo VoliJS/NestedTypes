@@ -30,9 +30,10 @@ module.exports = {
     isChanged     : genericIsChanged,
     setSingleAttr : setSingleAttr,
     setAttrs      : setAttrs,
+    transaction   : transaction,
     transform     : applyTransform,
-    __begin         : __begin,
-    __commit        : __commit
+    __begin       : __begin,
+    __commit      : __commit
 };
 
 function genericIsChanged( a, b ){
@@ -48,7 +49,7 @@ function setSingleAttr( model, key, value, attrSpec ){
 
     if( !changing ){
         model._previousAttributes = new model.Attributes( current );
-        model.changed = {};
+        model.changed             = {};
     }
 
     var prev      = model._previousAttributes,
@@ -69,14 +70,45 @@ function setSingleAttr( model, key, value, attrSpec ){
     }
 
     while( model._pending ){
-        options = model._pending;
+        options        = model._pending;
         model._pending = false;
         trigger2( model, 'change', model, options );
     }
 
-    model._pending = false;
+    model._pending  = false;
     model._changing = false;
     return model;
+}
+
+function transaction( fun, opts ){
+    var changing = this._changing,
+        options  = opts || {},
+        silent   = options.silent;
+
+    this._changing = true;
+
+    if( !changing ){
+        this._previousAttributes = new this.Attributes( this.attributes );
+        this.changed             = {};
+    }
+
+    fun.call( this, options );
+
+    if( changing ){
+        return this;
+    }
+
+    if( !silent ){
+        while( this._pending ){
+            options        = this._pending;
+            this._pending = false;
+            trigger2( this, 'change', this, options );
+        }
+    }
+
+    this._pending  = false;
+    this._changing = false;
+    return this;
 }
 
 // General case set: used for multiple and nested model/collection attributes.
@@ -103,7 +135,7 @@ function bbSetAttrs( model, attrs, opts ){
 
     if( !changing ){
         model._previousAttributes = new model.Attributes( current );
-        model.changed = {};
+        model.changed             = {};
     }
 
     var prev = model._previousAttributes;
@@ -146,17 +178,17 @@ function bbSetAttrs( model, attrs, opts ){
     }
     if( !silent ){
         while( model._pending ){
-            options = model._pending;
+            options        = model._pending;
             model._pending = false;
             trigger2( model, 'change', model, options );
         }
     }
 
-    model._pending = false;
+    model._pending  = false;
     model._changing = false;
 
     return model;
-};
+}
 
 // Optimized Backbone Core functions
 // =================================

@@ -29,5 +29,11 @@ Object.assign( exports, {
 
     defaults   : function( x ){
         return Model.defaults( x );
+    },
+
+    transaction : function( fun ){
+        return function(){
+            return this.transaction( fun, this, arguments );
+        }
     }
 });

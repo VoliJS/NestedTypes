@@ -46,6 +46,8 @@ var Model = BaseModel.extend( {
     __begin  : modelSet.__begin,
     __commit : modelSet.__commit,
 
+    transaction : modelSet.transaction,
+
     set : function( a, b, c ){
         switch( typeof a ){
         case 'string' :

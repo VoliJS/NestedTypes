@@ -224,6 +224,28 @@
                 });
             });
 
+            it( 'send single "change" event in a transaction', function(){
+                var m = new B();
+
+                shouldFireChangeOnce( m, 'first', function(){
+                    m.first.transaction( function(){
+                        this.a = 7;
+                        this.b = 7;
+                    });
+                });
+            });
+
+            it( 'send single "change" event in a nested transaction', function(){
+                var m = new B();
+
+                shouldFireChangeOnce( m, 'first', function(){
+                    m.transaction( function(){
+                        m.first.a = 7;
+                        m.first.b = 7;
+                    });
+                });
+            });
+
             it( 'generate "change" event on any nested collection modification', function(){
                 var m = new B();
 

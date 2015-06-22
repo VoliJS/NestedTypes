@@ -772,6 +772,8 @@ var Model = BaseModel.extend( {
     __begin  : modelSet.__begin,
     __commit : modelSet.__commit,
 
+    transaction : modelSet.transaction,
+
     set : function( a, b, c ){
         switch( typeof a ){
         case 'string' :
@@ -1160,9 +1162,10 @@ module.exports = {
     isChanged     : genericIsChanged,
     setSingleAttr : setSingleAttr,
     setAttrs      : setAttrs,
+    transaction   : transaction,
     transform     : applyTransform,
-    __begin         : __begin,
-    __commit        : __commit
+    __begin       : __begin,
+    __commit      : __commit
 };
 
 function genericIsChanged( a, b ){
@@ -1178,7 +1181,7 @@ function setSingleAttr( model, key, value, attrSpec ){
 
     if( !changing ){
         model._previousAttributes = new model.Attributes( current );
-        model.changed = {};
+        model.changed             = {};
     }
 
     var prev      = model._previousAttributes,
@@ -1199,14 +1202,49 @@ function setSingleAttr( model, key, value, attrSpec ){
     }
 
     while( model._pending ){
-        options = model._pending;
+        options        = model._pending;
         model._pending = false;
         trigger2( model, 'change', model, options );
     }
 
-    model._pending = false;
+    model._pending  = false;
     model._changing = false;
     return model;
+}
+
+
+// call a_fun with a_args inside of set transaction.
+// model.set inside of a_fun will trigger change:attr
+// but only single 'change' will be triggered at the end of transaction
+// transactions can be nested
+function transaction( a_fun, args ){
+    var notChanging = !this._changing,
+        options  = {};
+
+    this._changing = true;
+
+
+    if( notChanging ){
+        this._previousAttributes = new this.Attributes( this.attributes );
+        this.changed             = {};
+    }
+
+    this.__begin();
+    var res = a_fun.apply( this, args );
+    this.__commit();
+
+    if( notChanging ){
+        while( this._pending ){
+            options       = this._pending;
+            this._pending = false;
+            trigger2( this, 'change', this, options );
+        }
+
+        this._pending  = false;
+        this._changing = false;
+    }
+
+    return res;
 }
 
 // General case set: used for multiple and nested model/collection attributes.
@@ -1233,7 +1271,7 @@ function bbSetAttrs( model, attrs, opts ){
 
     if( !changing ){
         model._previousAttributes = new model.Attributes( current );
-        model.changed = {};
+        model.changed             = {};
     }
 
     var prev = model._previousAttributes;
@@ -1276,17 +1314,17 @@ function bbSetAttrs( model, attrs, opts ){
     }
     if( !silent ){
         while( model._pending ){
-            options = model._pending;
+            options        = model._pending;
             model._pending = false;
             trigger2( model, 'change', model, options );
         }
     }
 
-    model._pending = false;
+    model._pending  = false;
     model._changing = false;
 
     return model;
-};
+}
 
 // Optimized Backbone Core functions
 // =================================
@@ -1784,6 +1822,12 @@ Object.assign( exports, {
 
     defaults   : function( x ){
         return Model.defaults( x );
+    },
+
+    transaction : function( fun ){
+        return function(){
+            return this.transaction( fun, arguments );
+        }
     }
 });
 },{"./attribute":1,"./collection":3,"./errors":4,"./metatypes":5,"./model":6,"./object+":8,"./relations":9,"./store":10}]},{},[]);

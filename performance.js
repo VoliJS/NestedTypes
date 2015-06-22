@@ -11,6 +11,34 @@ define( function( require, exports, module ){
                     defaults : {
                         a1 : 1, a2 : 2, a3 : 3, a4: 4, a5 : 5, a6: 6, a7: 7, a8: 8, a9: 9, a10 : 10,
                         b1 : 1, b2 : 2, b3 : 3, b4: 4, b5 : 5, b6: 6, b7: 7, b8: 8, b9: 9, b10 : 10
+                    },
+
+                    updateSet : function(){
+                        this.set({
+                            a1 : this.a1 + 1,
+                            a2 : this.a2 + 1,
+                            a3 : this.a3 + 1,
+                            a4 : this.a4 + 1,
+                            a5 : this.a5 + 1
+                        });
+                    },
+
+                    updateTransaction : Nested.transaction(function(){
+                        this.a1 = this.a1 + 1;
+                        this.a2 = this.a2 + 1;
+                        this.a3 = this.a3 + 1;
+                        this.a4 = this.a4 + 1;
+                        this.a5 = this.a5 + 1;
+                    }),
+
+                    updateAdHocTransaction : function(){
+                        this.transaction( function(){
+                            this.a1 = this.a1 + 1;
+                            this.a2 = this.a2 + 1;
+                            this.a3 = this.a3 + 1;
+                            this.a4 = this.a4 + 1;
+                            this.a5 = this.a5 + 1;
+                        });
                     }
                 });
 
@@ -18,6 +46,16 @@ define( function( require, exports, module ){
                     defaults : {
                         a1 : 1, a2 : 2, a3 : 3, a4: 4, a5 : 5, a6: 6, a7: 7, a8: 8, a9: 9, a10 : 10,
                         b1 : 1, b2 : 2, b3 : 3, b4: 4, b5 : 5, b6: 6, b7: 7, b8: 8, b9: 9, b10 : 10
+                    },
+
+                    updateSet : function(){
+                        this.set({
+                            a1 : this.a1 + 1,
+                            a2 : this.a2 + 1,
+                            a3 : this.a3 + 1,
+                            a4 : this.a4 + 1,
+                            a5 : this.a5 + 1
+                        });
                     }
                 });
 
@@ -179,6 +217,42 @@ define( function( require, exports, module ){
                     for( var i = 0; i < 1000000; i++ ){
                         l.a1 = l.a1 + 1;
                         s.a1 = l.a1 + 1;
+                    }
+                });
+            });
+
+            describe( '1M 5-attr transactional updates', function(){
+                makeDefinitions();
+
+                it( 'Backbone', function(){
+                    var l = new BLarge();
+
+                    for( var i = 0; i < 1000000; i++ ){
+                        l.updateSet();
+                    }
+                });
+
+                it( 'Nested', function(){
+                    var l = new NLarge();
+
+                    for( var i = 0; i < 1000000; i++ ){
+                        l.updateSet();
+                    }
+                });
+
+                it( 'Nested transaction', function(){
+                    var l = new NLarge();
+
+                    for( var i = 0; i < 1000000; i++ ){
+                        l.updateTransaction();
+                    }
+                });
+
+                it( 'Nested AdHoc transaction', function(){
+                    var l = new NLarge();
+
+                    for( var i = 0; i < 1000000; i++ ){
+                        l.updateAdHocTransaction();
                     }
                 });
             });

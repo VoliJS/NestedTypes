@@ -85,19 +85,21 @@ function setSingleAttr( model, key, value, attrSpec ){
 // model.set inside of a_fun will trigger change:attr
 // but only single 'change' will be triggered at the end of transaction
 // transactions can be nested
-function transaction( a_fun, a_args ){
+function transaction( a_fun, args ){
     var notChanging = !this._changing,
-        args     = a_args || [],
         options  = {};
 
     this._changing = true;
+
 
     if( notChanging ){
         this._previousAttributes = new this.Attributes( this.attributes );
         this.changed             = {};
     }
 
+    this.__begin();
     var res = a_fun.apply( this, args );
+    this.__commit();
 
     if( notChanging ){
         while( this._pending ){

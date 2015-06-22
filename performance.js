@@ -50,11 +50,11 @@ define( function( require, exports, module ){
 
                     updateSet : function(){
                         this.set({
-                            a1 : this.a1 + 1,
-                            a2 : this.a2 + 1,
-                            a3 : this.a3 + 1,
-                            a4 : this.a4 + 1,
-                            a5 : this.a5 + 1
+                            a1 : this.get( 'a1' ) + 1,
+                            a2 : this.get( 'a2' ) + 1,
+                            a3 : this.get( 'a3' ) + 1,
+                            a4 : this.get( 'a4' ) + 1,
+                            a5 : this.get( 'a5' ) + 1
                         });
                     }
                 });

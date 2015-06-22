@@ -33,7 +33,7 @@ Object.assign( exports, {
 
     transaction : function( fun ){
         return function(){
-            return this.transaction( fun, arguments );
+            return this.transaction( fun, this, arguments );
         }
     }
 });

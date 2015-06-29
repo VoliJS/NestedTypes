@@ -8,6 +8,10 @@
 
     <script type="application/javascript" src="nestedtypes.js"></script>
 
+    <script type="application/javascript" src="react/react.js"></script>
+    <script type="application/javascript" src="react/JSXTransformer.js"></script>
+    <script type="text/jsx" src="react/sample.jsx"></script>
+
     <script type="application/javascript">
         $( function(){
             var MyClass = Nested.Class.extend({
@@ -25,11 +29,21 @@
 
             var data = new MyModel();
 
-            $( 'body' ).html( data.time + '<br/>' + data.text + ' ' + data.andClass.b );
+            $( '#root' ).html( data.time + '<br/>' + data.text + ' ' + data.andClass.b );
         });
     </script>
 </head>
 <body>
+    <div id="root"></div>
+    <div id="react-root"></div>
 
+    <script type="text/jsx">
+        var model = new SampleModel();
+
+        React.render(
+                <Sample model={ model }/>,
+                document.getElementById( 'react-root' )
+        );
+    </script>
 </body>
 </html>

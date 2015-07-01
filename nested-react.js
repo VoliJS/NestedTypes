@@ -46,33 +46,37 @@
 
     Object.assign( Listener, Backbone.Events );
 
+    function getModelAttributes( spec ){
+        var attributes = null;
+
+        for( var i = spec.mixins.length - 1; i >= 0; i-- ){
+            var mixin = spec.mixins[ i ];
+            if( mixin.attributes ){
+                attributes || ( attributes = {} );
+                Object.assign( attributes, mixin.attributes );
+            }
+        }
+
+        if( spec.attributes ){
+            if( attributes ){
+                Object.assign( attributes, spec.attributes );
+            }
+            else{
+                attributes = spec.model;
+            }
+        }
+
+        return attributes;
+    }
+
     React.createStatefulClass = function( spec ){
         spec.mixins || ( spec.mixins = [] );
 
-        if( !spec.Model ){
-            var model = null;
+        var attributes = getModelAttributes( spec );
 
-            for( var i = spec.mixins.length - 1; i >= 0; i-- ){
-                var mixin = spec.mixins[ i ];
-                if( mixin.model ){
-                    model || ( model = {} );
-                    Object.assign( model, mixin.model );
-                }
-            }
-
-            if( spec.model ){
-                if( model ){
-                    Object.assign( model, spec.model );
-                }
-                else{
-                    model = spec.model;
-                }
-
-                delete spec.model;
-            }
-
-            var BaseModel = spec.extendModel || Nested.Model;
-            spec.Model = model ? BaseModel.defaults( spec.model ) : null;
+        if( attributes ){
+            var BaseModel = spec.Model || Nested.Model;
+            spec.Model = BaseModel.defaults( spec.model );
         }
 
         spec.mixins.push( Listener );

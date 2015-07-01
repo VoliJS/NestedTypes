@@ -46,7 +46,7 @@
 
     Object.assign( Listener, Backbone.Events );
 
-    function createClass( spec ){
+    React.createStatefulClass = function( spec ){
         spec.mixins || ( spec.mixins = [] );
 
         if( !spec.Model ){
@@ -71,14 +71,14 @@
                 delete spec.model;
             }
 
-            spec.Model = model ? Nested.Model.defaults( spec.model ) : null;
+            var BaseModel = spec.extendModel || Nested.Model;
+            spec.Model = model ? BaseModel.defaults( spec.model ) : null;
         }
 
         spec.mixins.push( Listener );
 
-        return React.createClass.call( this, spec );
-    }
+        return React.createClass( spec );
+    };
 
-    React.createStatefulClass = createClass;
     return React;
 }));

@@ -1,29 +1,3 @@
-var nt = {};
-
-Nested.Listener = {
-    componentWillMount : function(){
-        var props = this.props,
-            update = this.updateOn;
-
-        for( var events in update ){
-            this.listenTo( props[ update[ events ] ], events, function(){
-                this.forceUpdate();
-            });
-        }
-    },
-
-    componentWillUnmount : function(){
-        var props = this.props,
-            update = this.updateOn;
-
-        for( var events in update ){
-            this.stopListening( props[ update[ events ] ] );
-        }
-    }
-};
-
-Object.assign( Nested.Listener, Backbone.Events );
-
 var Input = React.createClass( {
     render : function(){
         var props = {},
@@ -65,9 +39,11 @@ var SampleModel = Nested.Model.extend({
     }
 });
 
-var Sample = React.createClass( {
-    mixins : [ Nested.Listener ],
-    updateOn : { 'change' : 'model' },
+var Sample = React.Nested.createClass({
+
+    updateOnProps : {
+        model : 'change'
+    },
 
     render : function(){
         var model = this.props.model;
@@ -75,11 +51,8 @@ var Sample = React.createClass( {
         return (
             <div>
                 <label> Name: <Input type='text' model={ model } attr='name'/></label>
-
                 <label> Password: <Input type='text' model={ model } attr='password'/></label>
-
                 <label> Is Admin: <Input type='checkbox' model={ model.settings } attr='isAdmin'/></label>
-
                 <label> Is Active:<Input type='checkbox' model={ model } attr='settings.isActive'/></label>
             </div>
         );

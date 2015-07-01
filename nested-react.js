@@ -46,38 +46,39 @@
 
     Object.assign( Listener, Backbone.Events );
 
-    var View = {};
-
-    View.createClass = function( spec ){
+    function createClass( spec ){
         spec.mixins || ( spec.mixins = [] );
 
-        var model = null;
+        if( !spec.Model ){
+            var model = null;
 
-        for( var i = spec.mixins.length - 1; i >= 0; i-- ){
-            var mixin = spec.mixins[ i ];
-            if( mixin.model ){
-                model || ( model = {} );
-                Object.assign( model, mixin.model );
+            for( var i = spec.mixins.length - 1; i >= 0; i-- ){
+                var mixin = spec.mixins[ i ];
+                if( mixin.model ){
+                    model || ( model = {} );
+                    Object.assign( model, mixin.model );
+                }
             }
+
+            if( spec.model ){
+                if( model ){
+                    Object.assign( model, spec.model );
+                }
+                else{
+                    model = spec.model;
+                }
+
+                delete spec.model;
+            }
+
+            spec.Model = model ? Nested.Model.defaults( spec.model ) : null;
         }
 
-        if( spec.model ){
-            if( model ){
-                Object.assign( model, spec.model );
-            }
-            else{
-                model = spec.model;
-            }
-
-            delete spec.model;
-        }
-
-        spec.Model = model ? Nested.Model.defaults( spec.model ) : null;
         spec.mixins.push( Listener );
 
         return React.createClass.call( this, spec );
-    };
+    }
 
-    React.Nested = View;
+    React.createStatefulClass = createClass;
     return React;
 }));

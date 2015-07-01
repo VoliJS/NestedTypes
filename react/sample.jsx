@@ -39,7 +39,7 @@ var SampleModel = Nested.Model.extend({
     }
 });
 
-var Sample = React.Nested.createClass({
+var Sample = React.createStatefulClass({
 
     updateOnProps : {
         model : 'change'

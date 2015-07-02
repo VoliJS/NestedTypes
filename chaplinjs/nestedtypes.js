@@ -1799,10 +1799,11 @@ exports.set = function( spec ){
 // NestedTypes namespace
 // =======================
 
-var Model       = require( './model' ),
-    Collection  = require( './collection' ),
-    relations   = require( './relations' ),
-    attribute   = require( './attribute' );
+var Model      = require( './model' ),
+    Collection = require( './collection' ),
+    relations  = require( './relations' ),
+    Backbone   = require( './backbone+' ),
+    attribute  = require( './attribute' );
 
 require( './metatypes' );
 
@@ -1813,19 +1814,25 @@ Model.Collection    = Collection;
 Object.defineProperty( exports, 'store', require( './store' ) );
 
 Object.assign( exports, {
-    Class : require( './object+' ),
-    error : require( './errors' ),
+    Class     : require( './object+' ),
+    error     : require( './errors' ),
     attribute : attribute,
-    options : attribute,
+    options   : attribute,
 
     value : function( value ){
-        return attribute({ value: value });
+        return attribute( { value : value } );
     },
 
     Collection : Collection,
     Model      : Model,
 
-    defaults   : function( x ){
+    // proxy backbone classes...
+    View    : Backbone.View,
+    Events  : Backbone.Events,
+    Router  : Backbone.Router,
+    History : Backbone.History,
+
+    defaults : function( x ){
         return Model.defaults( x );
     },
 
@@ -1834,7 +1841,7 @@ Object.assign( exports, {
             return this.transaction( fun, this, arguments );
         }
     }
-});
-},{"./attribute":1,"./collection":3,"./errors":4,"./metatypes":5,"./model":6,"./object+":8,"./relations":9,"./store":10}]},{},[]);
+} );
+},{"./attribute":1,"./backbone+":2,"./collection":3,"./errors":4,"./metatypes":5,"./model":6,"./object+":8,"./relations":9,"./store":10}]},{},[]);
     return require('nestedtypes');
 }))

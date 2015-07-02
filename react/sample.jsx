@@ -39,10 +39,14 @@ var SampleModel = Nested.Model.extend({
     }
 });
 
-var Sample = React.createStatefulClass({
+var Sample = React.createClass({
 
     updateOnProps : {
         model : 'change'
+    },
+
+    attributes : {
+        a : 1
     },
 
     render : function(){

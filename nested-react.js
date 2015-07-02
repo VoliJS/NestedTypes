@@ -15,7 +15,7 @@
     }
 
     var UpdateOnProps = {
-        componentWillMount : function(){
+        componentDidMount : function(){
             var props    = this.props,
                 updateOn = this.updateOnProps;
 
@@ -37,6 +37,9 @@
     var UpdateOnModel = {
         componentWillMount : function(){
             this.model = new this.Model();
+        },
+
+        componentDidMount : function(){
             this.listenTo( this.model, 'change', forceUpdate );
         },
 
@@ -81,11 +84,11 @@
         }
 
         if( spec.Model ){
-            spec.mixins.push( UpdateOnModel );
+            spec.mixins.unshift( UpdateOnModel );
         }
 
         if( spec.updateOnProps ){
-            spec.mixins.push( UpdateOnProps );
+            spec.mixins.unshift( UpdateOnProps );
         }
 
         if( spec.Model || spec.updateOnProps ){

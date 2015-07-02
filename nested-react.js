@@ -35,12 +35,15 @@
     };
 
     var UpdateOnModel = {
+        updateOnModel : 'change',
+
         componentWillMount : function(){
             this.model = new this.Model();
         },
 
         componentDidMount : function(){
-            this.listenTo( this.model, 'change', forceUpdate );
+            var events = this.updateOnModel;
+            events && this.listenTo( this.model, events, forceUpdate );
         },
 
         componentWillUnmount : function(){

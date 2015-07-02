@@ -100,9 +100,18 @@
             spec.mixins.push( Nested.Events );
         }
 
-        return createClass.call( React, spec );
+        var component = createClass.call( React, spec );
+        component.createView = createView;
+        return component;
     };
 
+    var slice = Array.prototype.slice;
+
+    function createView(){
+        var args = slice.call( arguments );
+        args.unshift( this );
+        return new ReactView( args );
+    }
 
     /**
      * React Backbone View Wrapper. Same as React.createElement

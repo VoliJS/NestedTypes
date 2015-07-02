@@ -1,14 +1,14 @@
 (function( root, factory ){
     if( typeof exports === 'object' ){
-        module.exports = factory( require( 'nestedtypes' ), require( 'react' ), require( 'backbone' ) );
+        module.exports = factory( require( 'nestedtypes' ), require( 'react' ) );
     }
     else if( typeof define === 'function' && define.amd ){
-        define( [ 'nestedtypes', 'react', 'backbone' ], factory );
+        define( [ 'nestedtypes', 'react' ], factory );
     }
     else{
-        root.React = factory( root.Nested, root.React, root.Backbone );
+        root.React = factory( root.Nested, root.React );
     }
-}( this, function( Nested, React, Backbone ){
+}( this, function( Nested, React ){
     // Wrapper for forceUpdate to be used in backbone events handlers
     function forceUpdate(){
         this.forceUpdate();
@@ -97,11 +97,51 @@
         }
 
         if( spec.Model || spec.updateOnProps ){
-            spec.mixins.push( Backbone.Events );
+            spec.mixins.push( Nested.Events );
         }
 
         return createClass.call( React, spec );
     };
+
+
+    /**
+     * React Backbone View Wrapper. Same as React.createElement
+     * but returns Backbone.View
+     *
+     * Usage:
+     *  var View = React.createView( MyReactClass, {
+     *      prop1 : value1,
+     *      prop2 : value2,
+     *      ...
+     *  });
+     */
+    React.createView = function(){
+        return new ReactView( arguments );
+    };
+
+    var ReactView = Nested.View.extend({
+        initialize : function( args ){
+            // memorise arguments to pass to React
+            this._args = args;
+        },
+
+        // cached react element...
+        element : null,
+
+        setElement : function(){
+            // new element instance needs to be created on next render...
+            this.element = null;
+            return Nested.View.prototype.setElement( this, arguments );
+        },
+
+        // cached instance of react component...
+        component : null,
+
+        render : function(){
+            this.element || ( this.element = React.createElement.apply( React, this._args ) );
+            this.component = React.render( this.element, this.el );
+        }
+    });
 
     return React;
 } ));

@@ -20,7 +20,8 @@
                 updateOn = this.updateOnProps;
 
             for( var prop in updateOn ){
-                this.listenTo( props[ prop ], updateOn[ prop ], forceUpdate );
+                var emitter = props[ prop ];
+                emitter && this.listenTo( emitter, updateOn[ prop ], forceUpdate );
             }
         },
 
@@ -29,7 +30,8 @@
                 updateOn = this.updateOnProps;
 
             for( var prop in updateOn ){
-                this.stopListening( props[ prop ] );
+                var emitter = props[ prop ];
+                emitter && this.stopListening( emitter );
             }
         }
     };

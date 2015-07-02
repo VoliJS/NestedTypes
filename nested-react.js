@@ -131,7 +131,7 @@
         setElement : function(){
             // new element instance needs to be created on next render...
             this.element = null;
-            return Nested.View.prototype.setElement( this, arguments );
+            return Nested.View.prototype.setElement.apply( this, arguments );
         },
 
         // cached instance of react component...

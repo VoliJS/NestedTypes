@@ -139,7 +139,16 @@
 
         setElement : function(){
             // new element instance needs to be created on next render...
-            this.element = null;
+            if( this.element ){
+                this.element = null;
+
+                if( this.component && this.component.trigger ){
+                    this.stopListening( this.component );
+                }
+
+                this.component = null;
+            }
+
             return Nested.View.prototype.setElement.apply( this, arguments );
         },
 
@@ -147,8 +156,52 @@
         component : null,
 
         render : function(){
-            this.element || ( this.element = React.createElement.apply( React, this._args ) );
+            if( !this.element ){
+                this.element = React.createElement.apply( React, this._args );
+            }
+
+            var firstCall = !this.component;
             this.component = React.render( this.element, this.el );
+
+            if( firstCall ){
+                this.component.trigger && this.listenTo( this.component, 'all', function(){
+                    this.trigger.apply( this, arguments );
+                });
+            }
+        }
+    });
+
+    React.subview = React.createClass({
+        displayName : 'BackboneView',
+
+        propTypes : {
+            View : React.PropTypes.func.isRequired,
+            options : React.PropTypes.object
+        },
+
+        render : function(){
+            return React.DOM.div({
+                ref : 'subview',
+                className : this.props.className
+            });
+        },
+
+        componentDidMount : function(){
+            var el = this.refs.subview.getDOMNode(),
+                p = this.props;
+
+            var view = this.view = p.options ? new p.View( p.options ) : new p.View();
+            view.setElement( el );
+            view.render();
+        },
+
+        componentDidUpdate : function(){
+            this.view.render();
+        },
+
+        componentWillUnmount : function(){
+            var view = this.view;
+            if( view.dispose ) view.dispose();
         }
     });
 

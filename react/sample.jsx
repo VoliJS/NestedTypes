@@ -46,7 +46,7 @@ var Sample = React.createClass({
     },
 
     attributes : {
-        a : 1
+        mail : 1
     },
 
     render : function(){
@@ -55,6 +55,7 @@ var Sample = React.createClass({
         return (
             <div>
                 <label> Name: <Input type='text' model={ model } attr='name'/></label>
+                <label> mail: <Input type='text' model={ this.state } attr='mail'/></label>
                 <label> Password: <Input type='text' model={ model } attr='password'/></label>
                 <label> Is Admin: <Input type='checkbox' model={ model.settings } attr='isAdmin'/></label>
                 <label> Is Active:<Input type='checkbox' model={ model } attr='settings.isActive'/></label>

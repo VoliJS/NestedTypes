@@ -31,10 +31,12 @@
   },
   "files": [
     "nestedtypes.js",
-    "nestedtypes.min.js"
+    "nestedtypes.min.js",
+    "react-nested.js",
+    "react-nested.min.js"
   ],
   "license": "MIT",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "scripts": {
     "test": "node_modules/.bin/mocha",
 

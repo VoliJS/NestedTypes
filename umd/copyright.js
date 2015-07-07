@@ -1,5 +1,5 @@
 /**
- * Backbone.NestedTypes 1.0.0 <https://github.com/Volicon/backbone.nestedTypes>
+ * Backbone.NestedTypes 1.1.0 <https://github.com/Volicon/backbone.nestedTypes>
  * (c) 2015 Vlad Balin & Volicon
  * Released under MIT @license
  */

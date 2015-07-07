@@ -41,7 +41,7 @@ var SampleModel = Nested.Model.extend({
 
 var Sample = React.createClass({
 
-    updateOnProps : {
+    listenToProps : {
         model : 'change'
     },
 

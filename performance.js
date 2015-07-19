@@ -38,7 +38,7 @@ define( function( require, exports, module ){
                             this.a3 = this.a3 + 1;
                             this.a4 = this.a4 + 1;
                             this.a5 = this.a5 + 1;
-                        });
+                        }, options );
                     }
                 });
 

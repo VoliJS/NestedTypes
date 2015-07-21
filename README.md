@@ -12,7 +12,15 @@ Browse complete documentation here: http://volicon.github.io/backbone.nestedType
 
 ## What it is
 
-NestedTypes is state-of-the-art backbonejs-compatible model framework.
+If you use `ReactJS` or `backbonejs` and ever wanted to use rich models with all the features, like in Ember.DS, look no further. 
+
+NestedTypes is full-featured model framework, built on the top of backbonejs. It does the same thing to the models and collections as Chaplin or Marionette does to views. Design philosophy behing it is simple - the less code you write for the task, the more productive you are.
+
+One more important thing to mention. NestedTypes models are fast. Look at the performance comparison with Backbone models in Chrome:
+
+![Backbone vs NestedTypes](https://raw.githubusercontent.com/Volicon/backbone.nestedTypes/master/docs/performance.jpg)
+
+No kidding, you can execute this test by yourself opening `test.perf.html`.
 
 ### Complex attribute types
 
@@ -26,7 +34,7 @@ It's achieved using attribute type annotations, which feels in much like statica
 
 NestedTypes check types on every model update and perform dynamic type casts to ensure that attributes will always hold values of proper type.
 
-As result, NestedTypes models are extremely reliable. It's impossible to break client-server protocol with inaccurate attribute assignment. If something will go really wrong, it will warn you with a messages in the console.
+As result, NestedTypes models are extremely reliable. It's impossible to break client-server protocol with inaccurate attribute assignment. If something will go really wrong, it will fix an error and warn you with a messages in the console.
 
 ### Performance
 NestedTypes uses attribute type information for sophisticated optimizations targeting modern JS JIT engines.

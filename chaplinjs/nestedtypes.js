@@ -1,5 +1,5 @@
 /**
- * Backbone.NestedTypes 1.0.0 <https://github.com/Volicon/backbone.nestedTypes>
+ * Backbone.NestedTypes 1.1.0 <https://github.com/Volicon/backbone.nestedTypes>
  * (c) 2015 Vlad Balin & Volicon
  * Released under MIT @license
  */
@@ -535,7 +535,7 @@ Object.assign( Object.extend.error, {
 module.exports = Object.extend.error;
 },{"./object+":8}],5:[function(require,module,exports){
 // Date.parse with progressive enhancement for ISO 8601 <https://github.com/csnover/js-iso8601>
-// © 2011 Colin Snover <http://zetafleet.com>
+// (c) 2011 Colin Snover <http://zetafleet.com>
 // Released under MIT license.
 
 // Attribute Type definitions for core JS types
@@ -571,7 +571,7 @@ function parseDate( date ){
         timestamp = Number( msDate[ 1 ] );
     }
     else if( ( struct = isoDatePattern.exec( date )) ){
-        // avoid NaN timestamps caused by �undefined� values being passed to Date.UTC
+        // avoid NaN timestamps caused by undefined values being passed to Date.UTC
         for( var i = 0, k; ( k = numericKeys[ i ] ); ++i ){
             struct[ k ] = +struct[ k ] || 0;
         }
@@ -1662,13 +1662,25 @@ var refsCollectionSpec = {
     addAll    : function(){
         this.reset( this.resolvedWith.models );
     },
+
     removeAll : function(){
         this.reset();
     },
+
+    toggleAll : function(){
+        if( this.length ){
+            this.removeAll();
+        }
+        else{
+            this.addAll();
+        }
+    },
+
     justOne   : function( arg ){
         var model = arg instanceof Backbone.Model ? arg : this.resolvedWith.get( arg );
         this.set( [ model ] );
     },
+
     set       : function( models, upperOptions ){
         var options = { merge : false };
 

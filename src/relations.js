@@ -114,13 +114,25 @@ var refsCollectionSpec = {
     addAll    : function(){
         this.reset( this.resolvedWith.models );
     },
+
     removeAll : function(){
         this.reset();
     },
+
+    toggleAll : function(){
+        if( this.length ){
+            this.removeAll();
+        }
+        else{
+            this.addAll();
+        }
+    },
+
     justOne   : function( arg ){
         var model = arg instanceof Backbone.Model ? arg : this.resolvedWith.get( arg );
         this.set( [ model ] );
     },
+
     set       : function( models, upperOptions ){
         var options = { merge : false };
 

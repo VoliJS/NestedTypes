@@ -1,5 +1,5 @@
 // Date.parse with progressive enhancement for ISO 8601 <https://github.com/csnover/js-iso8601>
-// © 2011 Colin Snover <http://zetafleet.com>
+// (c) 2011 Colin Snover <http://zetafleet.com>
 // Released under MIT license.
 
 // Attribute Type definitions for core JS types
@@ -35,7 +35,7 @@ function parseDate( date ){
         timestamp = Number( msDate[ 1 ] );
     }
     else if( ( struct = isoDatePattern.exec( date )) ){
-        // avoid NaN timestamps caused by �undefined� values being passed to Date.UTC
+        // avoid NaN timestamps caused by undefined values being passed to Date.UTC
         for( var i = 0, k; ( k = numericKeys[ i ] ); ++i ){
             struct[ k ] = +struct[ k ] || 0;
         }

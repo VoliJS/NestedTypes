@@ -710,7 +710,7 @@ attribute.Type.extend( {
         var name               = this.name,
             triggerWhenChanged = this.triggerWhenChanged || spec.type.prototype.triggerWhenChanged;
 
-        this.isModel = this.type.prototype instanceof Model;
+        this.isModel = this.type === Model || this.type.prototype instanceof Model;
 
         if( triggerWhenChanged ){
             // for collection, add transactional methods to join change events on bubbling
@@ -1681,6 +1681,8 @@ var refsCollectionSpec = {
             this.addAll();
         }
     },
+
+    getModelIds : function(){ return this.refs || _.pluck( this.models, 'id' ); },
 
     justOne   : function( arg ){
         var model = arg instanceof Backbone.Model ? arg : this.resolvedWith.get( arg );

@@ -129,6 +129,8 @@ var refsCollectionSpec = {
         }
     },
 
+    getModelIds : function(){ return this.refs || _.pluck( this.models, 'id' ); },
+
     justOne   : function( arg ){
         var model = arg instanceof Backbone.Model ? arg : this.resolvedWith.get( arg );
         this.set( [ model ] );

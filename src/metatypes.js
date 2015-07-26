@@ -169,7 +169,7 @@ attribute.Type.extend( {
         var name               = this.name,
             triggerWhenChanged = this.triggerWhenChanged || spec.type.prototype.triggerWhenChanged;
 
-        this.isModel = this.type.prototype instanceof Model;
+        this.isModel = this.type === Model || this.type.prototype instanceof Model;
 
         if( triggerWhenChanged ){
             // for collection, add transactional methods to join change events on bubbling

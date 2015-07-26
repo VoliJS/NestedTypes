@@ -100,14 +100,15 @@ var refsCollectionSpec = {
         return models;
     },
 
-    toggle : function( modelOrId ){
-        var model = this.resolvedWith.get( modelOrId );
+    toggle : function( modelOrId, inSet ){
+        var model = this.resolvedWith.get( modelOrId ),
+            toggle = inSet === void 0;
 
         if( this.get( model ) ){
-            this.remove( model );
+            if( toggle || !inSet ) this.remove( model );
         }
         else{
-            this.add( model );
+            if( toggle || inSet ) this.add( model );
         }
     },
 

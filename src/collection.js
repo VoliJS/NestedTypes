@@ -69,7 +69,12 @@ module.exports = Backbone.Collection.extend( {
     reset  : wrapCall( CollectionProto.reset ),
     sort   : wrapCall( CollectionProto.sort ),
 
-    getModelIds : function(){ return _.pluck( this.models, 'id' ); }
+    getModelIds : function(){ return _.pluck( this.models, 'id' ); },
+
+    createSubset : function( models, options ){
+        var SubsetOf = this.constructor.subsetOf( this ).createAttribute().type;
+        return new SubsetOf( models, options );
+    }
 }, {
     // Cache for subsetOf collection subclass.
     __subsetOf : null,

@@ -484,7 +484,12 @@ module.exports = Backbone.Collection.extend( {
     reset  : wrapCall( CollectionProto.reset ),
     sort   : wrapCall( CollectionProto.sort ),
 
-    getModelIds : function(){ return _.pluck( this.models, 'id' ); }
+    getModelIds : function(){ return _.pluck( this.models, 'id' ); },
+
+    createSubset : function( models, options ){
+        var SubsetOf = this.constructor.subsetOf( this ).createAttribute().type;
+        return new SubsetOf( models, options );
+    }
 }, {
     // Cache for subsetOf collection subclass.
     __subsetOf : null,
@@ -1605,14 +1610,15 @@ var refsCollectionSpec = {
         return models;
     },
 
-    toggle : function( modelOrId ){
-        var model = this.resolvedWith.get( modelOrId );
+    toggle : function( modelOrId, inSet ){
+        var model = this.resolvedWith.get( modelOrId ),
+            toggle = inSet === void 0;
 
         if( this.get( model ) ){
-            this.remove( model );
+            if( toggle || !inSet ) this.remove( model );
         }
         else{
-            this.add( model );
+            if( toggle || inSet ) this.add( model );
         }
     },
 

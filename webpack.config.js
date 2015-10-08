@@ -7,6 +7,8 @@ module.exports = {
        libraryTarget : 'umd'
      },
 
+     devtool : 'source-map',
+
      externals : [
        {
          'backbone' : {

@@ -40,6 +40,8 @@ module.exports = Backbone.Collection.extend( {
         return typeof obj === 'object' ? this._byId[ obj.id ] || this._byId[ obj.cid ] : this._byId[ obj ];
     },
 
+    _owner : null,
+
     deepClone : function(){ return this.clone( { deep : true } ); },
 
     clone : function( options ){

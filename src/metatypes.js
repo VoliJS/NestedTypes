@@ -162,6 +162,9 @@ attribute.Type.extend( {
             }
         }
 
+        // set an owner, if it's not set yet.
+        if( value && !value._owner ) value._owner = model;
+
         return value;
     },
 

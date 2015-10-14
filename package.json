@@ -18,34 +18,31 @@
   "author": "Vlad Balin <https://github.com/gaperton>",
   "contributors": "",
   "dependencies": {
-    "underscore": ">=1.5.0",
-    "backbone": ">=1.1.2"
+    "backbone": ">=1.1.2",
+    "underscore": ">=1.5.0"
   },
   "devDependencies": {
-    "uglify-js": "*",
-    "browserify": "*",
-    "mocha": "*",
+    "jquery": "*",
     "chai": "* <3",
+    "mocha": "*",
     "sinon": "*",
-    "sinon-chai": "*"
+    "sinon-chai": "*",
+    "uglify-js": "*",
+    "webpack": "^1.12.2"
   },
   "files": [
     "nestedtypes.js",
-    "nestedtypes.min.js",
-    "react-nested.js",
-    "react-nested.min.js"
+    "nestedtypes.min.js"
   ],
   "license": "MIT",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "scripts": {
     "test": "node_modules/.bin/mocha",
-
     "minify:win": ".\\node_modules\\.bin\\uglifyjs nestedtypes.js --comments --compress --mangle --screw-ie8 > nestedtypes.min.js & .\\node_modules\\.bin\\uglifyjs .\\chaplinjs\\nestedtypes.js --comments --compress --mangle --screw-ie8 > .\\chaplinjs\\nestedtypes.min.js",
     "make:win": "node_modules\\.bin\\browserify -x underscore -x backbone -r ./src/main:nestedtypes > ./umd/_bundle.js && type .\\umd\\copyright.js .\\umd\\head.js .\\umd\\_bundle.js .\\umd\\tail.js > .\\nestedtypes.js && type .\\umd\\copyright.js .\\umd\\head-chaplin.js .\\umd\\_bundle.js .\\umd\\tail.js > .\\chaplinjs\\nestedtypes.js && del .\\umd\\_bundle.js",
-    "build:win": "npm test && npm run make:win && npm run minify:win",
-
+    "build:win": "",
     "minify": "node_modules/.bin/uglifyjs nestedtypes.js --comments --compress --mangle --screw-ie8 > nestedtypes.min.js & node_modules/.bin/uglifyjs ./chaplinjs/nestedtypes.js --comments --compress --mangle --screw-ie8 > ./chaplinjs/nestedtypes.min.js",
     "make": "node_modules/.bin/browserify -x underscore -x backbone -r ./src/main:nestedtypes > ./umd/_bundle.js && cat ./umd/copyright.js ./umd/head.js ./umd/_bundle.js ./umd/tail.js > ./nestedtypes.js && ./umd/copyright.js cat ./umd/head-chaplin.js ./umd/_bundle.js ./umd/tail.js > ./chaplinjs/nestedtypes.js && rm ./umd/_bundle.js",
-    "build": "npm test && npm run make && npm run minify"
+    "build": "./node_modules/.bin/webpack"
   }
 }

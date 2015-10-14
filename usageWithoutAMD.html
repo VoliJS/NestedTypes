@@ -2,18 +2,11 @@
 <html>
 <head>
     <title></title>
-    <script type="application/javascript" src="lib/jquery.js"></script>
-    <script type="application/javascript" src="lib/underscore.js"></script>
-    <script type="application/javascript" src="lib/backbone.js"></script>
+    <script type="application/javascript" src="node_modules/jquery/dist/jquery.js"></script>
+    <script type="application/javascript" src="node_modules/underscore/underscore.js"></script>
+    <script type="application/javascript" src="node_modules/backbone/backbone.js"></script>
 
     <script type="application/javascript" src="nestedtypes.js"></script>
-
-    <script type="application/javascript" src="react/react.js"></script>
-    <script type="application/javascript" src="react/JSXTransformer.js"></script>
-
-    <script type="application/javascript" src="react-nested.js"></script>
-
-    <script type="text/jsx" src="react/sample.jsx"></script>
 
     <script type="application/javascript">
         $( function(){
@@ -38,15 +31,5 @@
 </head>
 <body>
     <div id="root"></div>
-    <div id="react-root"></div>
-
-    <script type="text/jsx">
-        var model = new SampleModel();
-
-        React.render(
-                <Sample model={ model }/>,
-                document.getElementById( 'react-root' )
-        );
-    </script>
 </body>
 </html>

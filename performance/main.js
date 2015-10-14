@@ -1,8 +1,10 @@
 define( function( require, exports, module ){
-    var Nested   = require( 'nestedtypes' ),
+    var Nested   = require( '../nestedtypes' ),
         Backbone = require( 'backbone' );
 
     describe( 'Flat models', function(){
+        this.timeout( 100000 );
+
         describe( 'primitive types', function(){
             var NLarge, BLarge, NSmall, BSmall;
 
@@ -38,7 +40,7 @@ define( function( require, exports, module ){
                             this.a3 = this.a3 + 1;
                             this.a4 = this.a4 + 1;
                             this.a5 = this.a5 + 1;
-                        }, options );
+                        }, {} );
                     }
                 });
 

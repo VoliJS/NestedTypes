@@ -1,4 +1,4 @@
-    var Nested = require( '../src/main' ),
+    var Nested = require( '../nestedtypes' ),
         sinon = require( 'sinon' ),
         expect = require( 'chai' ).expect;
 

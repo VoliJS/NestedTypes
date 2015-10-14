@@ -1,5 +1,5 @@
 define( function( require, exports, module ){
-    var Nested   = require( 'nestedtypes' ),
+    var Nested   = require( '../nestedtypes' ),
         Backbone = require( 'backbone' );
 
     describe( 'Flat models', function(){

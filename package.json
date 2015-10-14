@@ -19,12 +19,10 @@
   "contributors": "",
   "dependencies": {
     "backbone": ">=1.1.2",
-    "requirejs": "^2.1.20",
     "underscore": ">=1.5.0"
   },
   "devDependencies": {
     "jquery": "*",
-    "browserify": "*",
     "chai": "* <3",
     "mocha": "*",
     "sinon": "*",
@@ -34,9 +32,7 @@
   },
   "files": [
     "nestedtypes.js",
-    "nestedtypes.min.js",
-    "react-nested.js",
-    "react-nested.min.js"
+    "nestedtypes.min.js"
   ],
   "license": "MIT",
   "version": "1.1.1",

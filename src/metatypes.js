@@ -169,7 +169,11 @@ attribute.Type.extend( {
             }
         }
 
-        // set an owner, if it's not set yet.
+        // handle nested objects ownership
+        if( existingModelOrCollection !== value && existingModelOrCollection && existingModelOrCollection._owner === model ){
+            existingModelOrCollection._owner = null;
+        }
+
         if( value && !value._owner ) value._owner = model;
 
         return value;

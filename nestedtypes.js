@@ -142,17 +142,18 @@ return /******/ (function(modules) { // webpackBootstrap
 	            }
 	        },
 	
-	        collection : {
-	            get : function(){ return this._collection; },
-	            set : function( collection ){
-	              this._collection = collection;
-	              this._owner || ( this._owner = collection );
+	        _owner : {
+	            get : function(){
+	                return ( this.collection && this.collection._owner ) || this.__owner;
+	            },
+	
+	            set : function( owner ){
+	                this.__owner = owner;
 	            }
 	        }
 	    },
 	
-	    _collection : null,
-	    _owner : null,
+	    __owner : null,
 	
 	    __attributes : { id : attrOptions( { value : undefined } ).createAttribute( 'id' ) },
 	    __class      : 'Model',
@@ -252,7 +253,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	        this.__duringSet = 0;
 	        this.attributes = {};
-	        this._owner = this._collection = options.collection || null;
+	        this.collection = options.collection || null;
+	        this.__owner = null;
 	        this.cid = _.uniqueId( 'c' );
 	
 	        if( options.parse ){
@@ -1845,7 +1847,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	            }
 	        }
 	
-	        // set an owner, if it's not set yet.
+	        // handle nested objects ownership
+	        if( existingModelOrCollection !== value && existingModelOrCollection && existingModelOrCollection._owner === model ){
+	            existingModelOrCollection._owner = null;
+	        }
+	
 	        if( value && !value._owner ) value._owner = model;
 	
 	        return value;

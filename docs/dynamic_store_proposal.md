@@ -3,6 +3,12 @@
 This proposal relies on object's ownership backreferences, and dynamically
 resolve references to store traversing onwership graph to the top.
 
+Basically, in this proposal stores implemented using few orthogonal features.
+- models ownerhip with traversable back references
+- chained vocabulary lookups in model.get
+- store locator in models and collections
+- store model - container of distinctive REST endpoints.
+
 (?) Root model without owner might be treated as store (?)
 
 If no store located, global store is used.

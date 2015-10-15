@@ -144,6 +144,7 @@ var Model = BaseModel.extend( {
             options   = opts || {};
 
         this.__duringSet = 0;
+        this.attributes = {};
         this._owner = this._collection = options.collection || null;
         this.cid = _.uniqueId( 'c' );
 

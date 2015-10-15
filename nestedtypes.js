@@ -140,8 +140,19 @@ return /******/ (function(modules) { // webpackBootstrap
 	                var name = this.idAttribute;
 	                setSingleAttr( this, name, value, this.__attributes[ name ] );
 	            }
+	        },
+	
+	        collection : {
+	            get : function(){ return this._collection; },
+	            set : function( collection ){
+	              this._collection = collection;
+	              this._owner || ( this._owner = collection );
+	            }
 	        }
 	    },
+	
+	    _collection : null,
+	    _owner : null,
 	
 	    __attributes : { id : attrOptions( { value : undefined } ).createAttribute( 'id' ) },
 	    __class      : 'Model',
@@ -239,11 +250,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	            attrs     = attributes || {},
 	            options   = opts || {};
 	
-	        this.cid = _.uniqueId( 'c' );
+	        this.__duringSet = 0;
 	        this.attributes = {};
-	        if( options.collection ){
-	            this.collection = options.collection;
-	        }
+	        this._owner = this._collection = options.collection || null;
+	        this.cid = _.uniqueId( 'c' );
+	
 	        if( options.parse ){
 	            attrs = this.parse( attrs, options ) || {};
 	        }
@@ -1047,10 +1058,16 @@ return /******/ (function(modules) { // webpackBootstrap
 	        //throw new TypeError( 'Wrong argument type in ' + context.__class + '.set(' + value + ')' );
 	        console.error( '[Type Error] Wrong argument type in ' +
 	                       context.__class + '.set(', format( value ), '); this =', context );
+	    },
+	
+	    serializeSharedObject : function( context, name, value ){
+	      console.error( '[Ownership Error] Shared model/collection is being serialized to JSON, in ' +
+	                     context.__class + '.' + name + '==', value, '; this =', context );
 	    }
 	});
 	
 	module.exports = Object.extend.error;
+
 
 /***/ },
 /* 8 */
@@ -1418,6 +1435,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	        return typeof obj === 'object' ? this._byId[ obj.id ] || this._byId[ obj.cid ] : this._byId[ obj ];
 	    },
 	
+	    _owner : null,
+	
 	    deepClone : function(){ return this.clone( { deep : true } ); },
 	
 	    clone : function( options ){
@@ -1664,6 +1683,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	var attribute  = __webpack_require__( 8 ),
 	    modelSet   = __webpack_require__( 5 ),
 	    Model      = __webpack_require__( 1 ),
+	    errors     = __webpack_require__( 7 ),
 	    Collection = __webpack_require__( 9 );
 	
 	// Constructors Attribute
@@ -1773,7 +1793,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	attribute.Type.extend( {
 	    create : function( options ){ return new this.type( null, options ); },
 	    clone  : function( value, options ){ return value && value.clone( options ); },
-	    toJSON : function( value ){ return value && value.toJSON(); },
+	    toJSON : function( value, name ){
+	      if( value && value._owner !== this ){
+	        errors.serializeSharedObject( this, name, value );
+	      }
+	
+	      return value && value.toJSON();
+	    },
 	
 	    isChanged : function( a, b ){ return a !== b; },
 	
@@ -1818,6 +1844,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	                value = new this.type( value, options );
 	            }
 	        }
+	
+	        // set an owner, if it's not set yet.
+	        if( value && !value._owner ) value._owner = model;
 	
 	        return value;
 	    },

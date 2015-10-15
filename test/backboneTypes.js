@@ -1,4 +1,4 @@
-    var Nested = require( '../src/main' ),
+    var Nested = require( '../nestedtypes' ),
         expect = require( 'chai' ).expect,
         _ = require( 'underscore' ),
         sinon = require( 'sinon' );
@@ -221,6 +221,28 @@
 
                 shouldFireChangeOnce( m, 'first', function(){
                     m.first.a = 2;
+                });
+            });
+
+            it( 'send single "change" event in a transaction', function(){
+                var m = new B();
+
+                shouldFireChangeOnce( m, 'first', function(){
+                    m.first.transaction( function(){
+                        this.a = 7;
+                        this.b = 7;
+                    });
+                });
+            });
+
+            it( 'send single "change" event in a nested transaction', function(){
+                var m = new B();
+
+                shouldFireChangeOnce( m, 'first', function(){
+                    m.transaction( function(){
+                        m.first.a = 7;
+                        m.first.b = 7;
+                    });
                 });
             });
 

@@ -6,19 +6,19 @@ develop: [![Develop Build Status](https://travis-ci.org/Volicon/backbone.nestedT
 Version 1.0.0 is here. Highlights:
 
 - New .has type specs syntax
-- Huge performance improvement over vanilla backbonejs. Model updates are 4x faster in most browsers (20x faster in Chrome and nodejs). 
+- Huge performance improvement over vanilla backbonejs. Model updates are 4x faster in most browsers (20x faster in Chrome and nodejs).
 
 Browse complete documentation here: http://volicon.github.io/backbone.nestedTypes/
 
 ## What it is
 
-If you use `ReactJS` or `backbonejs` and ever wanted to use rich models with all the features, like in Ember.DS, look no further. 
+If you use `ReactJS` or `backbonejs` and ever wanted to use rich models with all the features, like in Ember.DS, look no further.
 
 NestedTypes is full-featured model framework, built on the top of backbonejs. It does the same thing to the models and collections as Chaplin or Marionette does to views. Design philosophy behing it is simple - the less code you write for the task, the more productive you are.
 
 One more important thing to mention. NestedTypes models are fast. Look at the performance comparison with Backbone models in Chrome:
 
-![Backbone vs NestedTypes](https://raw.githubusercontent.com/Volicon/backbone.nestedTypes/master/docs/performance.jpg)
+![Backbone vs NestedTypes](docs/performance.jpg)
 
 No kidding, you can execute this test by yourself opening `test.perf.html`.
 
@@ -137,4 +137,3 @@ NestedTypes require `underscore` and `backbone` libraries. They either must be i
 
 ### Manual
 Copy `nestedtypes.js` file to desired location.
-

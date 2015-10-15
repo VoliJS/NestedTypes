@@ -33,8 +33,19 @@ var Model = BaseModel.extend( {
                 var name = this.idAttribute;
                 setSingleAttr( this, name, value, this.__attributes[ name ] );
             }
+        },
+
+        collection : {
+            get : function(){ return this._collection; },
+            set : function( collection ){
+              this._collection = collection;
+              this._owner || ( this._owner = collection );
+            }
         }
     },
+
+    _collection : null,
+    _owner : null,
 
     __attributes : { id : attrOptions( { value : undefined } ).createAttribute( 'id' ) },
     __class      : 'Model',
@@ -45,6 +56,8 @@ var Model = BaseModel.extend( {
 
     __begin  : modelSet.__begin,
     __commit : modelSet.__commit,
+
+    transaction : modelSet.transaction,
 
     set : function( a, b, c ){
         switch( typeof a ){
@@ -130,11 +143,10 @@ var Model = BaseModel.extend( {
             attrs     = attributes || {},
             options   = opts || {};
 
+        this.__duringSet = 0;
+        this._owner = this._collection = options.collection || null;
         this.cid = _.uniqueId( 'c' );
-        this.attributes = {};
-        if( options.collection ){
-            this.collection = options.collection;
-        }
+
         if( options.parse ){
             attrs = this.parse( attrs, options ) || {};
         }

@@ -100,27 +100,42 @@ var refsCollectionSpec = {
         return models;
     },
 
-    toggle : function( modelOrId ){
-        var model = this.resolvedWith.get( modelOrId );
+    toggle : function( modelOrId, inSet ){
+        var model = this.resolvedWith.get( modelOrId ),
+            toggle = inSet === void 0;
 
         if( this.get( model ) ){
-            this.remove( model );
+            if( toggle || !inSet ) this.remove( model );
         }
         else{
-            this.add( model );
+            if( toggle || inSet ) this.add( model );
         }
     },
 
     addAll    : function(){
         this.reset( this.resolvedWith.models );
     },
+
     removeAll : function(){
         this.reset();
     },
+
+    toggleAll : function(){
+        if( this.length ){
+            this.removeAll();
+        }
+        else{
+            this.addAll();
+        }
+    },
+
+    getModelIds : function(){ return this.refs || _.pluck( this.models, 'id' ); },
+
     justOne   : function( arg ){
         var model = arg instanceof Backbone.Model ? arg : this.resolvedWith.get( arg );
         this.set( [ model ] );
     },
+
     set       : function( models, upperOptions ){
         var options = { merge : false };
 

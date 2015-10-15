@@ -22,6 +22,11 @@ Object.assign( Object.extend.error, {
         //throw new TypeError( 'Wrong argument type in ' + context.__class + '.set(' + value + ')' );
         console.error( '[Type Error] Wrong argument type in ' +
                        context.__class + '.set(', format( value ), '); this =', context );
+    },
+
+    serializeSharedObject : function( context, name, value ){
+      console.error( '[Ownership Error] Shared model/collection is being serialized to JSON, in ' +
+                     context.__class + '.' + name + '==', value, '; this =', context );
     }
 });
 

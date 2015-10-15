@@ -40,6 +40,8 @@ module.exports = Backbone.Collection.extend( {
         return typeof obj === 'object' ? this._byId[ obj.id ] || this._byId[ obj.cid ] : this._byId[ obj ];
     },
 
+    _owner : null,
+
     deepClone : function(){ return this.clone( { deep : true } ); },
 
     clone : function( options ){
@@ -69,7 +71,12 @@ module.exports = Backbone.Collection.extend( {
     reset  : wrapCall( CollectionProto.reset ),
     sort   : wrapCall( CollectionProto.sort ),
 
-    getModelIds : function(){ return _.pluck( this.models, 'id' ); }
+    getModelIds : function(){ return _.pluck( this.models, 'id' ); },
+
+    createSubset : function( models, options ){
+        var SubsetOf = this.constructor.subsetOf( this ).createAttribute().type;
+        return new SubsetOf( models, options );
+    }
 }, {
     // Cache for subsetOf collection subclass.
     __subsetOf : null,

@@ -43,9 +43,15 @@ Ideally, if the same models and collections might be used in different stores.
 Ideally, stores defines I/O protocol, while models provide serialization mechanics.
 
 In this ideal world, there are multiple types of stores will exists:
-- Store, consisting of independent REST api points.
+- Store, consisting of independent REST api points. That's what store we have now do.
 - Read-only store, loading its content in one REST operation, and pull itself for updates.
-- Store, loading and updating itself in real time through WS.
+  In fact, it's regular model.
+- Store, loading and updating itself in real time through WS. That's interesting.
+   For that, models and collections must delegate sync to store.
+
+And in this sense, every model and espessialy collection now is store. What we
+can do for the start - delegate I/O to the collection. Pair model/collection
+defines simplest store.
 
 (?) What about defining that stores using JSX (?)
 var my = (

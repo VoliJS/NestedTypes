@@ -7,6 +7,7 @@
 var attribute  = require( './attribute' ),
     modelSet   = require( './modelset' ),
     Model      = require( './model' ),
+    errors     = require( './errors' ),
     Collection = require( './collection' );
 
 // Constructors Attribute
@@ -116,7 +117,13 @@ var setAttrs      = modelSet.setAttrs,
 attribute.Type.extend( {
     create : function( options ){ return new this.type( null, options ); },
     clone  : function( value, options ){ return value && value.clone( options ); },
-    toJSON : function( value ){ return value && value.toJSON(); },
+    toJSON : function( value, name ){
+      if( value && value._owner !== this ){
+        errors.serializeSharedObject( this, name, value );
+      }
+
+      return value && value.toJSON();
+    },
 
     isChanged : function( a, b ){ return a !== b; },
 
@@ -161,6 +168,9 @@ attribute.Type.extend( {
                 value = new this.type( value, options );
             }
         }
+
+        // set an owner, if it's not set yet.
+        if( value && !value._owner ) value._owner = model;
 
         return value;
     },

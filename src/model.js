@@ -35,18 +35,18 @@ var Model = BaseModel.extend( {
             }
         },
 
-        _owner : {
+        store : {
             get : function(){
-                return ( this.collection && this.collection._owner ) || this.__owner;
+                return ( this.collection && this.collection.store ) || this._store;
             },
 
-            set : function( owner ){
-                this.__owner = owner;
+            set : function( store ){
+                this._store = store;
             }
         }
     },
 
-    __owner : null,
+    _store : null,
 
     __attributes : { id : attrOptions( { value : undefined } ).createAttribute( 'id' ) },
     __class      : 'Model',
@@ -147,7 +147,6 @@ var Model = BaseModel.extend( {
         this.__duringSet = 0;
         this.attributes = {};
         this.collection = options.collection || null;
-        this.__owner = null;
         this.cid = _.uniqueId( 'c' );
 
         if( options.parse ){

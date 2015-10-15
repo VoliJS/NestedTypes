@@ -69,7 +69,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	Model.from          = relations.from;
 	Model.Collection    = Collection;
 	
-	Object.defineProperty( exports, 'store', __webpack_require__( 12 ) );
+	var Store = __webpack_require__( 12 );
+	Object.defineProperty( exports, 'store', Store.globalProp );
 	
 	Object.assign( exports, {
 	    Class     : __webpack_require__( 3 ),
@@ -83,6 +84,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	    Collection : Collection,
 	    Model      : Model,
+	    Store      : Store.Model,
 	
 	    // proxy backbone classes...
 	    View    : Backbone.View,
@@ -100,6 +102,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        }
 	    }
 	} );
+
 
 /***/ },
 /* 1 */
@@ -142,18 +145,18 @@ return /******/ (function(modules) { // webpackBootstrap
 	            }
 	        },
 	
-	        _owner : {
+	        store : {
 	            get : function(){
-	                return ( this.collection && this.collection._owner ) || this.__owner;
+	                return ( this.collection && this.collection.store ) || this._store;
 	            },
 	
-	            set : function( owner ){
-	                this.__owner = owner;
+	            set : function( store ){
+	                this._store = store;
 	            }
 	        }
 	    },
 	
-	    __owner : null,
+	    _store : null,
 	
 	    __attributes : { id : attrOptions( { value : undefined } ).createAttribute( 'id' ) },
 	    __class      : 'Model',
@@ -254,7 +257,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	        this.__duringSet = 0;
 	        this.attributes = {};
 	        this.collection = options.collection || null;
-	        this.__owner = null;
 	        this.cid = _.uniqueId( 'c' );
 	
 	        if( options.parse ){
@@ -1437,7 +1439,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        return typeof obj === 'object' ? this._byId[ obj.id ] || this._byId[ obj.cid ] : this._byId[ obj ];
 	    },
 	
-	    _owner : null,
+	    store : null,
 	
 	    deepClone : function(){ return this.clone( { deep : true } ); },
 	
@@ -1890,89 +1892,122 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ function(module, exports, __webpack_require__) {
 
 	var Backbone   = __webpack_require__( 2 ),
+	    $          = Backbone.$;
 	    Model      = __webpack_require__( 1 ),
 	    Collection = __webpack_require__( 9 ),
 	    _          = __webpack_require__( 6 );
 	
 	var _store = null;
 	
-	// Exports native property spec for model store
-	exports.get = function(){ return _store; };
+	var Store = exports.Model = Model.extend( {
+	    _resolved  : {},
 	
-	exports.set = function( spec ){
-	    _.each( spec, function( Type, name ){
-	        Type.options && ( spec[name] = Type.options( {
-	            get : function( value ){
-	                if( !this.resolved[name] ){
-	                    value.fetch && value.fetch();
-	                    this.resolved[name] = true;
+	    initialize   : function(){
+	        this._resolved = {};
+	        var self = this;
+	
+	        _.each( this.attributes, function( element, name ){
+	            if( !element ) return;
+	
+	            element.store = this;
+	
+	            var fetch = element.fetch;
+	
+	            if( fetch ){
+	                element.fetch = function(){
+	                    self._resolved[ name ] = true;
+	                    return fetch.apply( this, arguments );
 	                }
-	
-	                return value;
-	            },
-	
-	            set : function( value ){
-	                value.length || ( this.resolved[name] = false );
-	                return value;
 	            }
-	        } ) );
-	    } );
 	
-	    var $ = Backbone.$;
+	            if( element instanceof Collection && element.length ){
+	                this._resolved[name] = true;
+	            }
+	        }, this );
+	    },
 	
-	    var Cache = Model.extend( {
-	        attributes : spec,
-	        resolved   : {},
+	    // fetch specified items, or all items if called without arguments.
+	    // returns jquery promise
+	    fetch : function(){
+	        var xhr         = [],
+	            objsToFetch = arguments.length ? arguments : _.keys( this.attributes );
 	
-	        initialize   : function(){
-	            this.resolved = {};
-	            this.installHooks();
-	        },
-	        installHooks : function(){
-	            var self = this;
+	        _.each( objsToFetch, function( name ){
+	            var attr = this.attributes[name];
+	            attr && attr.fetch && xhr.push( attr.fetch() );
+	        }, this );
 	
-	            _.each( this.attributes, function( element, name ){
-	                if( !element ){
-	                    return;
-	                }
-	                var fetch = element.fetch;
-	                if( fetch ){
-	                    element.fetch = function(){
-	                        self.resolved[name] = true;
-	                        return fetch.apply( this, arguments );
+	        return $ && $.when && $.when.apply( Backbone.$, xhr );
+	    },
+	
+	    clear : function(){
+	        var objsToClear = arguments.length ? arguments : _.keys( this.attributes );
+	
+	        _.each( objsToClear, function( name ){
+	            var element = this.attributes[ name ];
+	
+	            if( element instanceof Collection ){
+	                element.reset();
+	            }
+	            else if( element instanceof Store ){
+	                element.clear();
+	            }
+	            else if( element instanceof Model ){
+	                element.set( element.defaults() )
+	            }
+	
+	            this._resolved[ name ] = false;
+	        }, this );
+	
+	        return this;
+	    }
+	}, {
+	    extend : function( props, staticProps ){
+	        var spec = props.defaults || props.attributes;
+	
+	        // add automatic fetching on first element's access
+	        _.each( spec, function( Type, name ){
+	            Type.options && ( spec[name] = Type.options( {
+	                get : function( value ){
+	                    if( !this._resolved[name] ){
+	                        value.fetch && value.fetch();
+	                        this._resolved[name] = true;
 	                    }
+	
+	                    return value;
+	                },
+	
+	                set : function( value ){
+	                    value.length || ( this._resolved[name] = false );
+	                    return value;
 	                }
+	            } ) );
+	        } );
 	
-	                if( element instanceof Collection && element.length ){
-	                    this.resolved[name] = true;
-	                }
-	            }, this );
-	        },
+	        var This = Model.extend.call( this, props, staticProps ),
+	            instance = null;
 	
-	        fetch : function(){
-	            var xhr         = [],
-	                objsToFetch = arguments.length ? arguments : _.keys( this.resolved );
+	        Object.defineProperty( This, 'self', {
+	            enumerable : false,
+	            get : function(){
+	                return instance || ( instance = new This() );
+	            }
+	        });
 	
-	            _.each( objsToFetch, function( name ){
-	                var attr = this.attributes[name];
-	                attr.fetch && xhr.push( attr.fetch() );
-	            }, this );
+	        return This;
+	    }
+	});
 	
-	            return $ && $.when && $.when.apply( Backbone.$, xhr );
-	        },
+	// Exports native property spec for model store
+	exports.globalProp = {
+	    get : function(){ return _store; },
 	
-	        clear : function(){
-	            var attrs = this.defaults();
-	            arguments.length && ( attrs = _.pick( attrs, _.toArray( arguments ) ) );
-	            this.set( attrs );
-	            this.installHooks();
-	            return this;
-	        }
-	    } );
-	
-	    Model.prototype.store = _store = new Cache();
-	};
-	
+	    set : function( spec ){
+	        var Cache = Store.defaults( spec );
+	        if( _store ) _store.stopListening();
+	        Model.prototype.store = _store = Cache.self;
+	    }
+	}
 
 
 /***/ }

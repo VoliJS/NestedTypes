@@ -186,32 +186,32 @@
             };
         });
 
-        it( 'doesn\'t fetch anything if relations was not accessed', function(){
+        it( 'fetch everything when called without arguments', function(){
             Nested.store.fetch();
-            expect( Nested.store.resolved.users ).to.not.exist;
-            expect( Nested.store.resolved.roles ).to.not.exist;
+            expect( Nested.store._resolved.users ).to.be.true;
+            expect( Nested.store._resolved.roles ).to.be.true;
         });
 
         it( 'can be prefetched', function(){
             Nested.store.users.fetch();
-            expect( Nested.store.resolved.users ).to.be.true;
+            expect( Nested.store._resolved.users ).to.be.true;
             expect( Nested.store.users.length ).to.equal( 2 );
         });
 
         it( 'fetched of the first attributes access', function(){
             var role = Nested.store.users.first().roles.first();
             expect( role.name ).to.equal( 'Administrators' );
-            expect( Nested.store.resolved.roles ).to.be.true;
+            expect( Nested.store._resolved.roles ).to.be.true;
         });
 
         it( 'individual elements can be cleaned up ', function(){
             Nested.store.clear( 'users' );
-            expect( Nested.store.resolved.users ).to.be.not.ok;
+            expect( Nested.store._resolved.users ).to.be.not.ok;
         });
 
         it( 'all cache can be cleaned up ', function(){
             Nested.store.clear();
-            expect( Nested.store.resolved.users ).to.be.not.ok;
-            expect( Nested.store.resolved.roles ).to.be.not.ok;
+            expect( Nested.store._resolved.users ).to.be.not.ok;
+            expect( Nested.store._resolved.roles ).to.be.not.ok;
         });
     });

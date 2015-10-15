@@ -13,7 +13,8 @@ Collection.subsetOf = relations.subsetOf;
 Model.from          = relations.from;
 Model.Collection    = Collection;
 
-Object.defineProperty( exports, 'store', require( './store' ) );
+var Store = require( './store' );
+Object.defineProperty( exports, 'store', Store.globalProp );
 
 Object.assign( exports, {
     Class     : require( './object+' ),
@@ -27,6 +28,7 @@ Object.assign( exports, {
 
     Collection : Collection,
     Model      : Model,
+    Store      : Store.Model,
 
     // proxy backbone classes...
     View    : Backbone.View,

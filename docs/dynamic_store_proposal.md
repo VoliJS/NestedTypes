@@ -1,0 +1,69 @@
+# Dynamic Store
+
+This proposal relies on object's ownership backreferences, and dynamically
+resolve references to store traversing onwership graph to the top.
+
+(?) Root model without owner might be treated as store (?)
+
+If no store located, global store is used.
+
+When store object is found, it cached in collections.
+
+When resource is resolved in store, search must traverse store hierarchy.
+
+```javascript
+    var Admin = Store.extend({
+        defaults : {
+          roles : Role.Collection,
+          users : User.Collection,
+          channelSets : ChannelSet.Collection      
+        },
+
+        properties : {
+          _parentStore : function(){ return this.__defaultStore; }
+        }
+    });
+```
+
+In this case, store lookup algorithm is totally dynamic.
+When ref starts with 'store.', it resolve it traversing ownership to the first
+available store, and using `deepGet` in order to resolve the rest of the reference.
+
+resolved store reference is cached in collections.
+
+'store.my.path' -> function();
+```javascript
+function resolveStore(){
+  if( this._parentStore ) return this;
+
+  // if we're owned by the model, ask it for the store.
+  var owner = this.__owner;
+  if( owner ) return owner.resolveStore();
+
+  // if we're owned by collection, ask it for the store.
+  var collection = this.collection;
+  if( collection ){
+      return collection._store || ( collection._store = collection._owner ? collection._owner.resolveStore() : this._defaultStore );
+  }
+
+  // otherwise, use global store.
+  return this._defaultStore;
+}
+
+// updated compile function...
+function compile( str ){
+  var path = str.split( '.' );
+  if( path[ 0 ] === 'store' ){
+    path[ 0 ] = 'resolveStore()';
+    path[ 1 ] = 'get("' + path[ 1 ] + '")';
+  }
+
+  return new Function( 'self', 'return self.' + path.join( '.' ) + ';' );
+}
+
+// store's get function...
+function get( attr ){
+  var res = this[ attr ];
+  return res === void 0 && this._parentStore ? this._parentStore.get( attr ) : res;
+}
+```

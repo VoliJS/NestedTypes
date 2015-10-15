@@ -12,18 +12,13 @@ Main store in the system - is 'session' object. It:
 - may know some additional data
 - performs real-time updates.
 
-Stores, used mainly for lookups and information display:
-
-Encoder-related information. Must be updated in real time.
-encoders, probes, probeGroups, channelSets
-
-users, roles, channelSets
-
 (!) There might be special reference resolution algorithm, knowing about stores.
     If item is not present in store, it will perform look-up in the parent store. (!)
 
 (!) Store hierarchy might be either explicit (store inside of the store),
     or implicit (store requires another store definition). (!)
+    (!) Implicit is better, cause it guaranteed that solely reused code
+    will be correct. It forces singleton stores, though  (!)
 
 (!) We might override 'get' for the store, and use 'get' in reference resolution.
     It will allow us ti build 'vocabulary chain' (!)
@@ -49,7 +44,19 @@ In this ideal world, there are multiple types of stores will exists:
 - Store, loading and updating itself in real time through WS. That's interesting.
    For that, models and collections must delegate sync to store.
 
-And in this sense, every model and espessialy collection now is store. What we
+   To generalize it, store is the model/collection which handles I/O. And there
+   is special kind of model (store), handling other stores.
+
+   There must be some general way of distinguishing stores from regular models.
+   Store-capable model/collection must be able to participate as member too.
+
+   For example:
+      // create collection store, where both model and collection is capable of saving themselves.
+      var collection = new Model.Collection.Store();
+      collection.fetch();
+
+
+And in this sense, every model and especially collection now is store. What we
 can do for the start - delegate I/O to the collection. Pair model/collection
 defines simplest store.
 
@@ -85,8 +92,79 @@ It might be very good idea (!) In fact, very-very good.
 
 Declarative spec of data dependency, in render, always better.
 
-(?) What about defining model attributes with JSX (?)
-    @attributes({
-        user : <User value={ null }/>
-        roles : <Role.Collection from='store.roles'/>
-    })
+## Examples
+
+Two kinds of stores. 'Live' r/o, and REST r/w.
+
+'session' store, used as read-only 'live' store, the master one.
+it includes 'users' store, containing schema for users and roles.
+
+separate store for editing encoders, as REST R/W store.
+
+var Admin = Store.extend({
+    defaults : {
+      roles : Role.Collection,
+      users : User.Collection,
+      channelSets : ChannelSet.Collection      
+    },
+
+    master : api
+});
+
+In this case, store lookup algorithm is totally dynamic.
+When ref starts with 'store.', it resolve it traversing ownership to the first
+available store, and using `deepGet` in order to resolve the rest of the reference.
+
+resolved store reference is cached in collections.
+
+'store.my.path' -> function();
+```javascript
+function resolveStore(){
+  // if we're owned by collection, ask it for the store.
+  if( this.collection ) return this.collection.resolveStore();
+
+  // if we're owned by the model, ask it for the store.
+  if( this._owner ) return  this._owner.resolveStore();
+
+  // otherwise, use global store.
+  return this._defaultStore;
+}
+
+// in collection
+function resolveStore(){
+  return this._store || ( this._store = this._owner ? this._owner.resolveStore() : this._defaultStore );
+}
+
+// in store
+function resolveStore(){
+  return this;
+}
+
+// updated compile function...
+function compile( str ){
+  var path = str.split( '.' );
+  if( path[ 0 ] === 'store' ){
+    path[ 0 ] = 'resolveStore()';
+    path[ 1 ] = 'get("' + path[ 1 ] + '")';
+  }
+
+  return new Function( 'self', 'return self.' + path.join( '.' ) + ';' );
+}
+
+// store's get function...
+function get( attr ){
+  if( this.__attributes[ attr ] ) return this[ attr ];
+
+  if( this._owner ) return this._owner.get( attr );
+}
+
+```
+
+This algori
+
+Stores, used mainly for lookups and information display:
+
+Encoder-related information. Must be updated in real time.
+encoders, probes, probeGroups, channelSets
+
+users, roles, channelSets

@@ -27,6 +27,17 @@ module.exports = Backbone.Collection.extend( {
 
     model : Model,
 
+    _owner : null,
+    _store : null,
+
+    getStore : function(){
+        return this._store || ( this._store = this._owner ? this._owner.getStore() : this._defaultStore );
+    },
+
+    sync : function(){
+      return this.getStore().sync.apply( this, arguments );
+    },
+
     isValid : function( options ){
         return this.every( function( model ){
             return model.isValid( options );
@@ -39,8 +50,6 @@ module.exports = Backbone.Collection.extend( {
         }
         return typeof obj === 'object' ? this._byId[ obj.id ] || this._byId[ obj.cid ] : this._byId[ obj ];
     },
-
-    store : null,
 
     deepClone : function(){ return this.clone( { deep : true } ); },
 

@@ -170,11 +170,10 @@ attribute.Type.extend( {
         }
 
         // handle nested objects ownership
-        if( existingModelOrCollection !== value && existingModelOrCollection && existingModelOrCollection._owner === model ){
-            existingModelOrCollection._owner = null;
+        if( existingModelOrCollection !== value ){
+          if( existingModelOrCollection && existingModelOrCollection._owner === model ) existingModelOrCollection._owner = null;
+          if( value && !value.collection && !value._owner ) value._owner = model;
         }
-
-        if( value && !value._owner ) value._owner = model;
 
         return value;
     },

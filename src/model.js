@@ -33,20 +33,19 @@ var Model = BaseModel.extend( {
                 var name = this.idAttribute;
                 setSingleAttr( this, name, value, this.__attributes[ name ] );
             }
-        },
-
-        store : {
-            get : function(){
-                return ( this.collection && this.collection.store ) || this._store;
-            },
-
-            set : function( store ){
-                this._store = store;
-            }
         }
     },
 
-    _store : null,
+    getStore : function(){
+        var owner = this._owner || this.collection;
+        return owner ? owner.getStore() : this._defaultStore;
+    },
+
+    sync : function(){
+      return this.getStore().sync.apply( this, arguments );
+    },
+
+    _owner : null,
 
     __attributes : { id : attrOptions( { value : undefined } ).createAttribute( 'id' ) },
     __class      : 'Model',
@@ -146,7 +145,7 @@ var Model = BaseModel.extend( {
 
         this.__duringSet = 0;
         this.attributes = {};
-        this.collection = options.collection || null;
+        if( options.collection ) this.collection = options.collection;
         this.cid = _.uniqueId( 'c' );
 
         if( options.parse ){

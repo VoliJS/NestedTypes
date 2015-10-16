@@ -13,7 +13,13 @@ function parseReference( collectionRef ){
     case 'object'   :
         return function(){ return collectionRef; };
     case 'string'   :
-        return new Function( 'return this.' + collectionRef );
+        var path = str.split( '.' );
+        if( path[ 0 ] === 'store' ){
+          path[ 0 ] = 'getStore()';
+          path[ 1 ] = 'lookup("' + path[ 1 ] + '")';
+        }
+
+        return new Function( 'return this.' + path.join( '.' ) );
     }
 }
 

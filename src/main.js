@@ -29,6 +29,7 @@ Object.assign( exports, {
     Collection : Collection,
     Model      : Model,
     Store      : Store.Model,
+    LazyStore  : Store.Lazy,
 
     // proxy backbone classes...
     View    : Backbone.View,

@@ -13,18 +13,14 @@ Basically, in this proposal stores implemented using few orthogonal features.
 + store locator in models and collections
     + getStore() method returns closest store performing ownership traversal.
     + for references started from `store.*` locator and `get` are used.
-- REST store model - container of distinctive REST endpoints.
-    - autoload items on first access
-    - may clear and fetch items
++ Lazy REST store model - container of distinctive REST endpoints.
+    + autoload items on first access
+    + may clear and fetch items
 + base class for model, which is used as store.
 + delegate to store's sync
 
-(?) Root model without owner might be treated as store (?)
-
 If no store located, global store is used.
-
 When store object is found, it cached in collections.
-
 When resource is resolved in store, search must traverse store hierarchy.
 
 ```javascript
@@ -53,37 +49,40 @@ available store, and using `deepGet` in order to resolve the rest of the referen
 
 resolved store reference is cached in collections.
 
-'store.my.path' -> function();
+## Use cases
+Now every page may define its own store, and fetch it with a single command.
 ```javascript
-function resolveStore(){
-  // if we're owned by the model, ask it for the store.
-  var owner = this.__owner;
-  if( owner ) return owner.resolveStore();
 
-  // if we're owned by collection, ask it for the store.
-  var collection = this.collection;
-  if( collection ){
-      return collection._store || ( collection._store = collection._owner ? collection._owner.resolveStore() : this._defaultStore );
-  }
+var Store = LazyStore.defaults({
+  users : User.Collection,
+  roles : Roles.Collection
+});
 
-  // otherwise, use global store.
-  return this._defaultStore;
-}
+var store = new Store();
+store.fetch();
+```
 
-// updated compile function...
-function compile( str ){
-  var path = str.split( '.' );
-  if( path[ 0 ] === 'store' ){
-    path[ 0 ] = 'resolveStore()';
-    path[ 1 ] = 'get("' + path[ 1 ] + '")';
-  }
+missing references will fall back to the global store. This store can override
+values from the global store.
 
-  return new Function( 'self', 'return self.' + path.join( '.' ) + ';' );
-}
+For the case of React, everything will be loaded automatically.
+```javascript
 
-// store's get function...
-function get( attr ){
-  var res = this[ attr ];
-  return res === void 0 && this._parentStore ? this._parentStore.get( attr ) : res;
-}
+React.createClass({
+    Model : LazyStore,
+
+    attributes : {
+      users : User.Collection,
+      roles : Roles.Collection      
+    },
+
+    render : function(){
+      // just use elements in render.
+      // it will trigger fetch on first access, with subsequent automatic update
+
+      // fetch users, and update UI when they ready
+      this.model.users;
+    }
+});
+
 ```

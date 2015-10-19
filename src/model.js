@@ -42,7 +42,7 @@ var Model = BaseModel.extend( {
     },
 
     sync : function(){
-      return this.getStore().sync.apply( this, arguments );
+        return this.getStore().sync.apply( this, arguments );
     },
 
     _owner : null,

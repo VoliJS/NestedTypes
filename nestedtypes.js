@@ -153,7 +153,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    },
 	
 	    sync : function(){
-	      return this.getStore().sync.apply( this, arguments );
+	        return this.getStore().sync.apply( this, arguments );
 	    },
 	
 	    _owner : null,

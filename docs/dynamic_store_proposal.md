@@ -1,3 +1,8 @@
+# proxy collections proposal
+
+proxy collection looks like master collections, but when anything is modified
+changes get saved locally.
+
 # Dynamic Store
 
 This proposal relies on object's ownership backreferences, and dynamically
@@ -8,27 +13,27 @@ Basically, in this proposal stores implemented using few orthogonal features.
     - `_owner` property for Model and Collection.
     - Backbone objects first assigned to model attributes hold back reference
     to the owner. It's removed when objects are removed.
-+ chained vocabulary lookups in model.get
-    + there's chained lookup inside of model's get if special property is provided.
-+ store locator in models and collections
++ Model's attribute proxies (to create chained store's lookups)
++ Store locator in models and collections
     + getStore() method returns closest store performing ownership traversal.
-    + for references started from `store.*` locator and `get` are used.
+    + for references started from `store.*` locator is used.
 + Lazy REST store model - container of distinctive REST endpoints.
     + autoload items on first access
     + may clear and fetch items
 + base class for model, which is used as store.
-+ delegate to store's sync
++ Delegate to store's sync
 
 If no store located, global store is used.
 When store object is found, it cached in collections.
-When resource is resolved in store, search must traverse store hierarchy.
+When resource is not resolved in local store, lookup in global default store.
 
 ```javascript
     var Admin = RestStore.extend({
         defaults : {
           roles : Role.Collection,
           users : User.Collection,
-          channelSets : ChannelSet.Collection      
+          channelSets : ChannelSet.Collection,
+          fallback : Api.has.proxy( 'encoders probes probeGroups' ).value( api )
         }
     });
 
@@ -55,10 +60,11 @@ Now every page may define its own store, and fetch it with a single command.
 
 var Store = LazyStore.defaults({
   users : User.Collection,
-  roles : Roles.Collection
+  roles : Roles.Collection,
+  api   : Server.Api.has.mixin()
 });
 
-var store = new Store();
+var store = new Store({ api : api });
 store.fetch();
 ```
 
@@ -86,3 +92,31 @@ React.createClass({
 });
 
 ```
+
+## Observer Design
+
+api: - must be the global store.
+might have a combination with LazyStore.
+
+(1) cache is default store with the fallback to api
+Nested.store = LazyStore.defaults({
+
+    }).create( api );
+
+(2) api is defaults store, cache - is member store
+Api = Store.extend({
+
+    this.cache = Cache.create( this );
+})
+
+(3) api is default store, cache - is member store with proxy.
+
+
+
+cache: - do we need it at all?
+    With cache, there is cleanup/manual prefetch pattern.
+    Can be substituted with local LazyStore in all places.
+    And - we don't need lazy loading.
+
+    this.model = new ViewModel()
+    this.model.fetch().done()

@@ -10,10 +10,6 @@ Basically, in this proposal stores implemented using few orthogonal features.
     to the owner. It's removed when objects are removed.
 + Model's attribute proxies (to create chained store's lookups)
 (?) Consider automatic fallback to global store in reference resolution if 1st level property not found.
-    var store = this.getStore(), first = store.first;
-    first || store === this._defaultStore || ( first = this._defaultStore.first );
-    return first.rest;
-
     (!) this fallback can still reside in overriden store.get, which can be used in lookup. (!)
     get : function( name ){
         var local = this[ name ];

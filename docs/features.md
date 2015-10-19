@@ -1,3 +1,5 @@
+# Changes
+
 - model attribute's ownerhip with traversable back references
     - Model and Collection first assigned to model attributes hold back `_owner` reference
     - _owner is cleared when object is removed from an attribute.
@@ -13,8 +15,10 @@
 - LazyStore container of distinctive REST endpoints.
     + autoload items on first access
     + may clear and fetch all or individual items
+- Nested.store now accepts object instance, not the spec.
 
-API Classification
-ST STABLE
-RC RELEASE CANDIDATE
-EX EXPERIMENTAL
+# Rationale
+
+- Create multiple stores in a system.
+- Put stores in hierarchy.
+- Allow dynamic stores creation.

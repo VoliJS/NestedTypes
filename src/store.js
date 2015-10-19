@@ -7,21 +7,12 @@ var Backbone   = require( './backbone+' ),
 var _store = null;
 
 var Store = exports.Model = Model.extend({
+  // end store lookup sequence on this class
   getStore : function(){ return this; },
 
-  // assign upperStore option...
-  constructor : function( attrs, options ){
-    this.upperStore = options && options.upperStore;
-    Model.apply( this, arguments );
-  },
-
-  upperStore : null, // when null, delegate to global store
-
-  // works as `get`, delegates to upperStore if undefined
-  lookup : function( name ){
-    var value = this[ name ];
-    return value !== void 0 || this === _store ? value : ( this.upperStore || _store ).lookup( name );
-  }
+  sync : Backbone.sync,
+  // delegate item lookup to global store if undefined
+  get : function( name ){ return this[ name ] || _store[ name ]; }
 });
 
 var RestStore = exports.Lazy = Model.extend( {
@@ -128,7 +119,12 @@ exports.globalProp = {
     get : function(){ return _store; },
 
     set : function( store ){
-        if( _store ) _store.stopListening();
+        if( _store ){
+          _store.stopListening();
+          delete _store.get;
+        }
+
         Collection.prototype._defaultStore = Model.prototype._defaultStore = _store = store;
+        _store.get = Model.prototype.get;
     }
 }

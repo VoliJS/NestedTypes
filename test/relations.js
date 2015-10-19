@@ -180,10 +180,12 @@
         });
 
         it( 'can be initialized with a list of attributes', function(){
-            Nested.store = {
+            var Store = Nested.LazyStore.defaults({
                 users : User.Collection,
                 roles : Role.Collection
-            };
+            });
+
+            Nested.store = new Store();
         });
 
         it( 'fetch everything when called without arguments', function(){

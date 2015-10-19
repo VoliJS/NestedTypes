@@ -85,6 +85,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    Collection : Collection,
 	    Model      : Model,
 	    Store      : Store.Model,
+	    LazyStore  : Store.Lazy,
 	
 	    // proxy backbone classes...
 	    View    : Backbone.View,
@@ -143,20 +144,19 @@ return /******/ (function(modules) { // webpackBootstrap
 	                var name = this.idAttribute;
 	                setSingleAttr( this, name, value, this.__attributes[ name ] );
 	            }
-	        },
-	
-	        store : {
-	            get : function(){
-	                return ( this.collection && this.collection.store ) || this._store;
-	            },
-	
-	            set : function( store ){
-	                this._store = store;
-	            }
 	        }
 	    },
 	
-	    _store : null,
+	    getStore : function(){
+	        var owner = this._owner || this.collection;
+	        return owner ? owner.getStore() : this._defaultStore;
+	    },
+	
+	    sync : function(){
+	      return this.getStore().sync.apply( this, arguments );
+	    },
+	
+	    _owner : null,
 	
 	    __attributes : { id : attrOptions( { value : undefined } ).createAttribute( 'id' ) },
 	    __class      : 'Model',
@@ -256,7 +256,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	        this.__duringSet = 0;
 	        this.attributes = {};
-	        this.collection = options.collection || null;
+	        if( options.collection ) this.collection = options.collection;
 	        this.cid = _.uniqueId( 'c' );
 	
 	        if( options.parse ){
@@ -1426,6 +1426,17 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	    model : Model,
 	
+	    _owner : null,
+	    _store : null,
+	
+	    getStore : function(){
+	        return this._store || ( this._store = this._owner ? this._owner.getStore() : this._defaultStore );
+	    },
+	
+	    sync : function(){
+	      return this.getStore().sync.apply( this, arguments );
+	    },
+	
 	    isValid : function( options ){
 	        return this.every( function( model ){
 	            return model.isValid( options );
@@ -1438,8 +1449,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	        }
 	        return typeof obj === 'object' ? this._byId[ obj.id ] || this._byId[ obj.cid ] : this._byId[ obj ];
 	    },
-	
-	    store : null,
 	
 	    deepClone : function(){ return this.clone( { deep : true } ); },
 	
@@ -1510,7 +1519,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	    case 'object'   :
 	        return function(){ return collectionRef; };
 	    case 'string'   :
-	        return new Function( 'return this.' + collectionRef );
+	        var path = collectionRef.split( '.' );
+	        if( path[ 0 ] === 'store' ){
+	          path[ 0 ] = 'getStore()';
+	          path[ 1 ] = 'get("' + path[ 1 ] + '")';
+	        }
+	
+	        return new Function( 'return this.' + path.join( '.' ) );
 	    }
 	}
 	
@@ -1850,11 +1865,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	        }
 	
 	        // handle nested objects ownership
-	        if( existingModelOrCollection !== value && existingModelOrCollection && existingModelOrCollection._owner === model ){
-	            existingModelOrCollection._owner = null;
+	        if( existingModelOrCollection !== value ){
+	          if( existingModelOrCollection && existingModelOrCollection._owner === model ) existingModelOrCollection._owner = null;
+	          if( value && !value.collection && !value._owner ) value._owner = model;
 	        }
-	
-	        if( value && !value._owner ) value._owner = model;
 	
 	        return value;
 	    },
@@ -1899,7 +1913,16 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	var _store = null;
 	
-	var Store = exports.Model = Model.extend( {
+	var Store = exports.Model = Model.extend({
+	  // end store lookup sequence on this class
+	  getStore : function(){ return this; },
+	
+	  sync : Backbone.sync,
+	  // delegate item lookup to global store if undefined
+	  get : function( name ){ return this[ name ] || _store[ name ]; }
+	});
+	
+	var RestStore = exports.Lazy = Model.extend( {
 	    _resolved  : {},
 	
 	    initialize   : function(){
@@ -2002,10 +2025,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	exports.globalProp = {
 	    get : function(){ return _store; },
 	
-	    set : function( spec ){
-	        var Cache = Store.defaults( spec );
-	        if( _store ) _store.stopListening();
-	        Model.prototype.store = _store = Cache.self;
+	    set : function( store ){
+	        if( _store ){
+	          _store.stopListening();
+	          delete _store.get;
+	        }
+	
+	        Collection.prototype._defaultStore = Model.prototype._defaultStore = _store = store;
+	        _store.get = Model.prototype.get;
 	    }
 	}
 

@@ -11,8 +11,8 @@ var Store = exports.Model = Model.extend({
   getStore : function(){ return this; },
 
   sync : Backbone.sync,
-  // delegate item lookup to global store if undefined
-  get : function( name ){ return this[ name ] || _store[ name ]; }
+  // delegate item lookup to owner, and to the global store if undefined
+  get : function( name ){ return this[ name ] || ( this._owner && this._owner.get( name ) ) || _store[ name ]; }
 });
 
 var RestStore = exports.Lazy = Model.extend( {

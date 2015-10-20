@@ -342,6 +342,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            This = this;
 	
 	        Object.extend.Class.define.call( This, spec, staticProps );
+	        attachMixins( This );
 	
 	        // define Collection
 	        var collectionSpec = { model : This };
@@ -351,6 +352,15 @@ return /******/ (function(modules) { // webpackBootstrap
 	        return This;
 	    }
 	} );
+	
+	function attachMixins( Type ){
+	    var self = Type.prototype,
+	        attrSpecs = self.__attributes;
+	
+	    for( name in attrSpecs ){
+	        attrSpecs[ name ].attachMixins( self );
+	    }
+	}
 	
 	// Create model definition from protoProps spec.
 	function createDefinition( protoProps, Base ){
@@ -1094,7 +1104,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	// list of simple accessor methods available in options
 	var availableOptions = [ 'triggerWhenChanged', 'changeEvents', 'parse', 'clone', 'toJSON', 'value', 'cast', 'create', 'name', 'value',
-	                         'type' ];
+	                         'type', 'proxy' ];
 	
 	var Options = Object.extend( {
 	    _options : {}, // attribute options
@@ -1159,6 +1169,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	        if( options.changeEvents ) options.triggerWhenChanged = options.changeEvents;
 	
+	        if( options.proxy && typeof options.proxy === 'string' && !options.triggerWhenChanged ){
+	            options.triggerWhenChanged = options.proxy
+	                .split( ' ' )
+	                .map( function( attr ){
+	                    return 'change:' + attr;
+	                }).join( ' ' );
+	        }
+	
 	        return new Type( name, options );
 	    }
 	} );
@@ -1213,6 +1231,24 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	// Base class for Attribute metatype
 	// ---------------------------------
+	function proxyProperty( first, second ){
+	    return {
+	        get : function(){
+	            return this[ first ][ second ];
+	        },
+	
+	        set : function( value ){
+	            this[ first ][ second ] = value;
+	        }
+	    }
+	}
+	
+	function proxyFunction( first, second ){
+	    return function(){
+	        var self = this[ first ];
+	        return self[ second ].apply( self, arguments );
+	    }
+	}
 	
 	var Attribute = Object.extend( {
 	    name  : null,
@@ -1277,6 +1313,34 @@ return /******/ (function(modules) { // webpackBootstrap
 	                      function(){ return this.attributes[ name ]; }
 	            }
 	        })( this, this.name, this.get );
+	    },
+	
+	    attachMixins : function( spec ){
+	        var type = this.type,
+	            proto = type && type.prototype;
+	
+	        if( type && this.proxy ){
+	            var keys = typeof this.proxy === 'string' ? this.proxy.split( ' ' ) : _.allKeys( proto );
+	
+	            // for each enumerable property...
+	            for( var i = 0; i < keys.length; i++ ){
+	                var name = keys[ i ];
+	
+	                // ...which is not defined in target class
+	                if( name in spec ) continue;
+	
+	                var prop = Object.getPropertyDescriptor( proto, name );
+	
+	                // create proxy function, if it the function...
+	                if( typeof prop.value === 'function' ){
+	                    spec[ name ] = proxyFunction( this.name, name );
+	                }
+	                // ...or create native property, if it's the property.
+	                else if( prop.get ){
+	                    Object.defineProperty( spec, name, proxyProperty( this.name, name ) );
+	                }
+	            }
+	        }
 	    },
 	
 	    // automatically generated optimized transform function
@@ -1392,6 +1456,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	};
 	
 	module.exports = createOptions;
+
 
 /***/ },
 /* 9 */

@@ -231,6 +231,7 @@ var Model = BaseModel.extend( {
             This = this;
 
         Object.extend.Class.define.call( This, spec, staticProps );
+        attachMixins( This );
 
         // define Collection
         var collectionSpec = { model : This };
@@ -240,6 +241,15 @@ var Model = BaseModel.extend( {
         return This;
     }
 } );
+
+function attachMixins( Type ){
+    var self = Type.prototype,
+        attrSpecs = self.__attributes;
+
+    for( name in attrSpecs ){
+        attrSpecs[ name ].attachMixins( self );
+    }
+}
 
 // Create model definition from protoProps spec.
 function createDefinition( protoProps, Base ){

@@ -19,6 +19,21 @@
 
 # Rationale
 
-- Create multiple stores in a system.
-- Put stores in hierarchy.
-- Allow dynamic stores creation.
+
+nestedtypes
+
+Nested.store - is global system store.
+
+api.js - holds Store's subclass used for login.
+
+it contains 'cache' - the proxied LazyStore store.
+Thus, for items inside cache they will reference it first, then fallback to
+the global store. In this way we will have the combination of session and
+lazily loaded stuff.
+
+There's no need to include 'server/api'. Application starts with an init of
+default store.
+
+All other I/O is done with ad-hoc stores.
+For the roles page, there's ad-hoc LazyStore with roles, users, and channelSets.
+For encoders page, there's ad-hoc LazyStore with encoders stuff.

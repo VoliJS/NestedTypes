@@ -1,5 +1,7 @@
 # Changes
 
+## New Stores
+
 [x] model attribute's ownerhip with traversable back references
     [x] Model and Collection first assigned to model attributes hold back `_owner` reference
     [x] `_owner` is cleared when object is removed from an attribute.
@@ -16,6 +18,10 @@
     [x] autoload items on first access
     [x] may clear and fetch all or individual items
 [x] Nested.store now accepts object instance, not the spec.
+
+## ES6 classes
+
+
 
 # Rationale
 

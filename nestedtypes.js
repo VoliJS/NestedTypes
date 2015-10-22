@@ -61,6 +61,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    Collection = __webpack_require__( 9 ),
 	    relations  = __webpack_require__( 10 ),
 	    Backbone   = __webpack_require__( 2 ),
+	    _          = __webpack_require__( 6 ),
 	    attribute  = __webpack_require__( 8 );
 	
 	__webpack_require__( 11 );
@@ -72,8 +73,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	var Store = __webpack_require__( 12 );
 	Object.defineProperty( exports, 'store', Store.globalProp );
 	
-	Object.assign( exports, {
-	    $         : Backbone.$,
+	_.extend( exports, Backbone, {
 	    Class     : __webpack_require__( 3 ),
 	    error     : __webpack_require__( 7 ),
 	    attribute : attribute,
@@ -88,12 +88,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	    Store      : Store.Model,
 	    LazyStore  : Store.Lazy,
 	
-	    // proxy backbone classes...
-	    View    : Backbone.View,
-	    Events  : Backbone.Events,
-	    Router  : Backbone.Router,
-	    History : Backbone.History,
-	
 	    defaults : function( x ){
 	        return Model.defaults( x );
 	    },
@@ -103,7 +97,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            return this.transaction( fun, this, arguments );
 	        }
 	    }
-	} );
+	});
 
 
 /***/ },

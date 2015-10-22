@@ -5,6 +5,7 @@ var Model      = require( './model' ),
     Collection = require( './collection' ),
     relations  = require( './relations' ),
     Backbone   = require( './backbone+' ),
+    _          = require( 'underscore' ),
     attribute  = require( './attribute' );
 
 require( './metatypes' );
@@ -16,8 +17,7 @@ Model.Collection    = Collection;
 var Store = require( './store' );
 Object.defineProperty( exports, 'store', Store.globalProp );
 
-Object.assign( exports, {
-    $         : Backbone.$,
+_.extend( exports, Backbone, {
     Class     : require( './object+' ),
     error     : require( './errors' ),
     attribute : attribute,
@@ -32,12 +32,6 @@ Object.assign( exports, {
     Store      : Store.Model,
     LazyStore  : Store.Lazy,
 
-    // proxy backbone classes...
-    View    : Backbone.View,
-    Events  : Backbone.Events,
-    Router  : Backbone.Router,
-    History : Backbone.History,
-
     defaults : function( x ){
         return Model.defaults( x );
     },
@@ -47,4 +41,4 @@ Object.assign( exports, {
             return this.transaction( fun, this, arguments );
         }
     }
-} );
+});

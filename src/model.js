@@ -1,4 +1,5 @@
-var BaseModel   = require( './backbone+' ).Model,
+var Backbone    = require( './backbone+' ),
+    BaseModel   = Backbone.Model,
     modelSet    = require( './modelset' ),
     attrOptions = require( './attribute' ),
     error       = require( './errors' ),
@@ -42,7 +43,8 @@ var Model = BaseModel.extend( {
     },
 
     sync : function(){
-        return this.getStore().sync.apply( this, arguments );
+        var store = this.getStore() || Backbone;
+        return store.sync.apply( this, arguments );
     },
 
     _owner : null,

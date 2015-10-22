@@ -17,6 +17,7 @@ var Store = require( './store' );
 Object.defineProperty( exports, 'store', Store.globalProp );
 
 Object.assign( exports, {
+    $         : Backbone.$,
     Class     : require( './object+' ),
     error     : require( './errors' ),
     attribute : attribute,

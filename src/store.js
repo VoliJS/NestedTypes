@@ -15,7 +15,7 @@ var Store = exports.Model = Model.extend({
   get : function( name ){ return this[ name ] || ( this._owner && this._owner.get( name ) ) || _store[ name ]; }
 });
 
-var RestStore = exports.Lazy = Model.extend( {
+var RestStore = exports.Lazy = Store.extend( {
     _resolved  : {},
 
     initialize   : function(){
@@ -100,17 +100,7 @@ var RestStore = exports.Lazy = Model.extend( {
             } ) );
         } );
 
-        var This = Model.extend.call( this, props, staticProps ),
-            instance = null;
-
-        Object.defineProperty( This, 'self', {
-            enumerable : false,
-            get : function(){
-                return instance || ( instance = new This() );
-            }
-        });
-
-        return This;
+        return Model.extend.call( this, props, staticProps )
     }
 });
 

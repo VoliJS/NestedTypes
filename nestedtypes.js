@@ -73,6 +73,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	Object.defineProperty( exports, 'store', Store.globalProp );
 	
 	Object.assign( exports, {
+	    $         : Backbone.$,
 	    Class     : __webpack_require__( 3 ),
 	    error     : __webpack_require__( 7 ),
 	    attribute : attribute,
@@ -109,7 +110,8 @@ return /******/ (function(modules) { // webpackBootstrap
 /* 1 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var BaseModel   = __webpack_require__( 2 ).Model,
+	var Backbone    = __webpack_require__( 2 ),
+	    BaseModel   = Backbone.Model,
 	    modelSet    = __webpack_require__( 5 ),
 	    attrOptions = __webpack_require__( 8 ),
 	    error       = __webpack_require__( 7 ),
@@ -153,7 +155,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	    },
 	
 	    sync : function(){
-	        return this.getStore().sync.apply( this, arguments );
+	        var store = this.getStore() || Backbone;
+	        return store.sync.apply( this, arguments );
 	    },
 	
 	    _owner : null,
@@ -1987,7 +1990,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	  get : function( name ){ return this[ name ] || ( this._owner && this._owner.get( name ) ) || _store[ name ]; }
 	});
 	
-	var RestStore = exports.Lazy = Model.extend( {
+	var RestStore = exports.Lazy = Store.extend( {
 	    _resolved  : {},
 	
 	    initialize   : function(){
@@ -2072,17 +2075,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            } ) );
 	        } );
 	
-	        var This = Model.extend.call( this, props, staticProps ),
-	            instance = null;
-	
-	        Object.defineProperty( This, 'self', {
-	            enumerable : false,
-	            get : function(){
-	                return instance || ( instance = new This() );
-	            }
-	        });
-	
-	        return This;
+	        return Model.extend.call( this, props, staticProps )
 	    }
 	});
 	

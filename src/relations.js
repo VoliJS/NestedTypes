@@ -13,7 +13,13 @@ function parseReference( collectionRef ){
     case 'object'   :
         return function(){ return collectionRef; };
     case 'string'   :
-        return new Function( 'return this.' + collectionRef );
+        var path = collectionRef.split( '.' );
+        if( path[ 0 ] === 'store' ){
+          path[ 0 ] = 'getStore()';
+          path[ 1 ] = 'get("' + path[ 1 ] + '")';
+        }
+
+        return new Function( 'return this.' + path.join( '.' ) );
     }
 }
 
@@ -67,7 +73,7 @@ exports.from = function( masterCollection ){
 var CollectionProto = Collection.prototype;
 
 var refsCollectionSpec = {
-    triggerWhenChanged : bbVersion >= '1.2.0' ? 'update reset' : 'add remove reset', // don't bubble changes from models
+    _listenToChanges : bbVersion >= '1.2.0' ? 'update reset' : 'add remove reset', // don't bubble changes from models
     __class            : 'Collection.SubsetOf',
 
     resolvedWith : null,
@@ -100,27 +106,42 @@ var refsCollectionSpec = {
         return models;
     },
 
-    toggle : function( modelOrId ){
-        var model = this.resolvedWith.get( modelOrId );
+    toggle : function( modelOrId, inSet ){
+        var model = this.resolvedWith.get( modelOrId ),
+            toggle = inSet === void 0;
 
         if( this.get( model ) ){
-            this.remove( model );
+            if( toggle || !inSet ) this.remove( model );
         }
         else{
-            this.add( model );
+            if( toggle || inSet ) this.add( model );
         }
     },
 
     addAll    : function(){
         this.reset( this.resolvedWith.models );
     },
+
     removeAll : function(){
         this.reset();
     },
+
+    toggleAll : function(){
+        if( this.length ){
+            this.removeAll();
+        }
+        else{
+            this.addAll();
+        }
+    },
+
+    getModelIds : function(){ return this.refs || _.pluck( this.models, 'id' ); },
+
     justOne   : function( arg ){
         var model = arg instanceof Backbone.Model ? arg : this.resolvedWith.get( arg );
         this.set( [ model ] );
     },
+
     set       : function( models, upperOptions ){
         var options = { merge : false };
 

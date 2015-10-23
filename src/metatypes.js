@@ -1,5 +1,5 @@
 // Date.parse with progressive enhancement for ISO 8601 <https://github.com/csnover/js-iso8601>
-// © 2011 Colin Snover <http://zetafleet.com>
+// (c) 2011 Colin Snover <http://zetafleet.com>
 // Released under MIT license.
 
 // Attribute Type definitions for core JS types
@@ -7,6 +7,7 @@
 var attribute  = require( './attribute' ),
     modelSet   = require( './modelset' ),
     Model      = require( './model' ),
+    errors     = require( './errors' ),
     Collection = require( './collection' );
 
 // Constructors Attribute
@@ -35,7 +36,7 @@ function parseDate( date ){
         timestamp = Number( msDate[ 1 ] );
     }
     else if( ( struct = isoDatePattern.exec( date )) ){
-        // avoid NaN timestamps caused by �undefined� values being passed to Date.UTC
+        // avoid NaN timestamps caused by undefined values being passed to Date.UTC
         for( var i = 0, k; ( k = numericKeys[ i ] ); ++i ){
             struct[ k ] = +struct[ k ] || 0;
         }
@@ -72,7 +73,7 @@ attribute.Type.extend( {
     toJSON : function( value ){ return value && value.toJSON(); },
 
     isChanged : function( a, b ){ return ( a && +a ) !== ( b && +b ); },
-    clone     : function( value ){ return new Date( +value ); }
+    clone     : function( value ){ return value && new Date( +value ); }
 } ).attach( Date );
 
 // Primitive Types
@@ -116,7 +117,13 @@ var setAttrs      = modelSet.setAttrs,
 attribute.Type.extend( {
     create : function( options ){ return new this.type( null, options ); },
     clone  : function( value, options ){ return value && value.clone( options ); },
-    toJSON : function( value ){ return value && value.toJSON(); },
+    toJSON : function( value, name ){
+      if( value && value._owner !== this ){
+        errors.serializeSharedObject( this, name, value );
+      }
+
+      return value && value.toJSON();
+    },
 
     isChanged : function( a, b ){ return a !== b; },
 
@@ -162,6 +169,12 @@ attribute.Type.extend( {
             }
         }
 
+        // handle nested objects ownership
+        if( existingModelOrCollection !== value ){
+          if( existingModelOrCollection && existingModelOrCollection._owner === model ) existingModelOrCollection._owner = null;
+          if( value && !value.collection && !value._owner ) value._owner = model;
+        }
+
         return value;
     },
 
@@ -169,15 +182,10 @@ attribute.Type.extend( {
         var name               = this.name,
             triggerWhenChanged = this.triggerWhenChanged || spec.type.prototype.triggerWhenChanged;
 
-        this.isModel = this.type.prototype instanceof Model;
+        this.isModel = this.type === Model || this.type.prototype instanceof Model;
 
         if( triggerWhenChanged ){
-            // for collection, add transactional methods to join change events on bubbling
-            this.__events = this.isModel ? {} : {
-                'before:change' : modelSet.__begin,
-                'after:change'  : modelSet.__commit
-            };
-
+            this.__events = {};
             this.__events[ triggerWhenChanged ] = function handleNestedChange(){
                 var attr = this.attributes[ name ];
 

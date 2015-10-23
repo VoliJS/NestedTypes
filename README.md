@@ -3,28 +3,44 @@
 master: [![Master Build Status](https://travis-ci.org/Volicon/backbone.nestedTypes.svg?branch=master)](https://travis-ci.org/Volicon/backbone.nestedTypes)
 develop: [![Develop Build Status](https://travis-ci.org/Volicon/backbone.nestedTypes.svg?branch=develop)](https://travis-ci.org/Volicon/backbone.nestedTypes)
 
-Version 1.0.0 is here. Highlights:
+Version 1.1.2 highlights:
 
-- New .has type specs syntax
-- Huge performance improvement over vanilla backbonejs. Model updates are 4x faster in most browsers (20x faster in Chrome and nodejs). 
+- npm package name is changed to just 'nestedtypes'. Thus, `npm install nestedtypes`.
+- It export all the stuff which is required to use it as drop-in backbonejs replacement in your project.
+- Models has reference to the parent model through `this._owner`
+- When the same model is shared between tho other models, attempt to serialize the model which is not an owner will result in [Serialization Error] warning. In most of the cases, this warning is the sign of weird errors, because after loading data this shared models won't be shared any more.
+- Collections has new `changes` event, which can be used directly on collection instead of 'add remove change reset'. It's efficient, and fired only once during compound changes.
+- There are Collection.transaction( func ) method which can be used ad-hoc to group sequence of changes coming from inside of func to the single transaction, thus, firing just one 'changes' event. Helpful for reducing an amount of renders.
+- Every method declared on Collection can be turned to be transactional when its definition is wrapped in Nested.transaction.
+- There are completely new mechancs of Stores, which will be documented later, and will allow us to refactor collections with mutual references which has to be requested together (such as users-roles-channelSets). It will be documented later.
+
+Major change you need to do now:
+```javascript
+// Instead of...
+Nested.store = {
+    // attribute spec
+}
+
+// ..you need write:
+Nested.store = new Nested.LazyStore.defaults({
+    // attribute spec
+});
+```
+Why? Because now Stores are first-class objects in the system, they can be created with `new`,  
+they supports hierarchical lookups, they may have different transports, and more. The more about it later.
 
 Browse complete documentation here: http://volicon.github.io/backbone.nestedTypes/
 
 ## What it is
 
-If you use `ReactJS` or `backbonejs` and ever wanted to use rich models with all the features, like in Ember.DS, look no further. 
+It's modern data framework, mostly backward compatible with backbone.js and can be used as drop-in backbonejs replacement.
 
-NestedTypes is full-featured model framework, built on the top of backbonejs. It does the same thing to the models and collections as Chaplin or Marionette does to views. Design philosophy behing it is simple - the less code you write for the task, the more productive you are.
-
-One more important thing to mention. NestedTypes models are fast. Look at the performance comparison with Backbone models in Chrome:
-
-![Backbone vs NestedTypes](https://raw.githubusercontent.com/Volicon/backbone.nestedTypes/master/docs/performance.jpg)
-
-No kidding, you can execute this test by yourself opening `test.perf.html`.
+Compared to `backbonejs`, it's has order of magnitude faster model updates, and support all the features which could be found
+in state of the art model frameworks through lightweight and declarative attribute type annotations.
 
 ### Complex attribute types
 
-* Cross-browser handling of Date.
+* Cross-browser handling of Date attribute type.
 * Nested models and collections.
 * One-to-many and many-to-many model relationships.
 
@@ -39,12 +55,11 @@ As result, NestedTypes models are extremely reliable. It's impossible to break c
 ### Performance
 NestedTypes uses attribute type information for sophisticated optimizations targeting modern JS JIT engines.
 
-Compared to backbonejs, model updates are about 20 times faster in Chrome/nodejs, and 4 times faster in other browsers.
+Compared to backbonejs, model updates are up to 40 times faster in Chrome/nodejs, and at least 4 times faster in other browsers.
+![Backbone vs NestedTypes](docs/performance.jpg)
 
-### Easy to use and learn
-NestedTypes was originally designed with an idea to make backbonejs more friendly for newbiews.
-
-What we do, is taking intuitive newbie approach to backbonejs, and turn it from the mistake to legal way of doing things.
+### How it looks like
+It looks and feels in much like statically typed language.
 
 ```javascript
 var User = Nested.Model.extend({
@@ -62,9 +77,9 @@ var User = Nested.Model.extend({
         settings : Settings, // new Settings()
 
         // collection of models, received as an array of model ids
-        roles    : Role.Collection.subsetOf( rolesCollection ),
+        roles    : Role.Collection.subsetOf( 'store.roles' ),
         // reference to model, received as model id.
-        office   : Office.from( officeCollection )
+        office   : Office.from( 'store.offices' )
     }
 });
 
@@ -129,12 +144,11 @@ NestedTypes require `underscore` and `backbone` libraries. They either must be i
 
 ### bower
 
-`bower install backbone.nested-types`
+`bower install nestedtypes`
 
 ### npm
 
-`npm install backbone.nested-types`
+`npm install nestedtypes`
 
 ### Manual
 Copy `nestedtypes.js` file to desired location.
-

@@ -2,9 +2,9 @@
 <html>
 <head>
     <title></title>
-    <script type="application/javascript" src="lib/jquery.js"></script>
-    <script type="application/javascript" src="lib/underscore.js"></script>
-    <script type="application/javascript" src="lib/backbone.js"></script>
+    <script type="application/javascript" src="node_modules/jquery/dist/jquery.js"></script>
+    <script type="application/javascript" src="node_modules/underscore/underscore.js"></script>
+    <script type="application/javascript" src="node_modules/backbone/backbone.js"></script>
 
     <script type="application/javascript" src="nestedtypes.js"></script>
 
@@ -25,11 +25,11 @@
 
             var data = new MyModel();
 
-            $( 'body' ).html( data.time + '<br/>' + data.text + ' ' + data.andClass.b );
+            $( '#root' ).html( data.time + '<br/>' + data.text + ' ' + data.andClass.b );
         });
     </script>
 </head>
 <body>
-
+    <div id="root"></div>
 </body>
 </html>

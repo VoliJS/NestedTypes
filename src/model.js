@@ -1,4 +1,5 @@
-var BaseModel   = require( './backbone+' ).Model,
+var Backbone    = require( './backbone+' ),
+    BaseModel   = Backbone.Model,
     modelSet    = require( './modelset' ),
     attrOptions = require( './attribute' ),
     error       = require( './errors' ),
@@ -36,6 +37,18 @@ var Model = BaseModel.extend( {
         }
     },
 
+    getStore : function(){
+        var owner = this._owner || this.collection;
+        return owner ? owner.getStore() : this._defaultStore;
+    },
+
+    sync : function(){
+        var store = this.getStore() || Backbone;
+        return store.sync.apply( this, arguments );
+    },
+
+    _owner : null,
+
     __attributes : { id : attrOptions( { value : undefined } ).createAttribute( 'id' ) },
     __class      : 'Model',
 
@@ -45,6 +58,8 @@ var Model = BaseModel.extend( {
 
     __begin  : modelSet.__begin,
     __commit : modelSet.__commit,
+
+    transaction : modelSet.transaction,
 
     set : function( a, b, c ){
         switch( typeof a ){
@@ -130,11 +145,11 @@ var Model = BaseModel.extend( {
             attrs     = attributes || {},
             options   = opts || {};
 
-        this.cid = _.uniqueId( 'c' );
+        this.__duringSet = 0;
         this.attributes = {};
-        if( options.collection ){
-            this.collection = options.collection;
-        }
+        if( options.collection ) this.collection = options.collection;
+        this.cid = _.uniqueId( 'c' );
+
         if( options.parse ){
             attrs = this.parse( attrs, options ) || {};
         }
@@ -218,6 +233,7 @@ var Model = BaseModel.extend( {
             This = this;
 
         Object.extend.Class.define.call( This, spec, staticProps );
+        attachMixins( This );
 
         // define Collection
         var collectionSpec = { model : This };
@@ -227,6 +243,15 @@ var Model = BaseModel.extend( {
         return This;
     }
 } );
+
+function attachMixins( Type ){
+    var self = Type.prototype,
+        attrSpecs = self.__attributes;
+
+    for( name in attrSpecs ){
+        attrSpecs[ name ].attachMixins( self );
+    }
+}
 
 // Create model definition from protoProps spec.
 function createDefinition( protoProps, Base ){

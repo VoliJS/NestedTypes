@@ -11,14 +11,24 @@ function transaction( func ){
 
         var res = func.apply( this, arguments );
 
-        --this.__changing || ( this._changed && this.trigger( 'changes', this ) );
+        --this.__changing || ( this._changed && this.trigger( this.triggerWhenChanged, this ) );
 
         return res;
     };
 }
 
+function handleChange(){
+    if( this.__changing ){
+        this._changed = true;
+    }
+    else{
+        this.trigger( this.triggerWhenChanged, this );
+    }
+}
+
 module.exports = Backbone.Collection.extend( {
     triggerWhenChanged : 'changes',
+    _listenToChanges : Backbone.VERSION >= '1.2.0' ? 'update change reset' : 'add remove change reset',
     __class            : 'Collection',
 
     model : Model,
@@ -29,22 +39,13 @@ module.exports = Backbone.Collection.extend( {
     __changing : 0,
     _changed : false,
 
-    _handleChange : function(){
-        if( this.__changing ){
-            this._changed = true;
-        }
-        else{
-            this.trigger( 'changes', this );
-        }
-    },
-
     constructor : function(){
         this.__changing = 0;
         this._changed = false;
 
         Backbone.Collection.apply( this, arguments );
 
-        this.listenTo( this, 'change add remove reset', this._handleChange );
+        this.listenTo( this, this._listenToChanges, handleChange );
     },
 
     getStore : function(){

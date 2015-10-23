@@ -1472,14 +1472,24 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	        var res = func.apply( this, arguments );
 	
-	        --this.__changing || ( this._changed && this.trigger( 'changes', this ) );
+	        --this.__changing || ( this._changed && this.trigger( this.triggerWhenChanged, this ) );
 	
 	        return res;
 	    };
 	}
 	
+	function handleChange(){
+	    if( this.__changing ){
+	        this._changed = true;
+	    }
+	    else{
+	        this.trigger( this.triggerWhenChanged, this );
+	    }
+	}
+	
 	module.exports = Backbone.Collection.extend( {
 	    triggerWhenChanged : 'changes',
+	    _listenToChanges : Backbone.VERSION >= '1.2.0' ? 'update change reset' : 'add remove change reset',
 	    __class            : 'Collection',
 	
 	    model : Model,
@@ -1490,22 +1500,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	    __changing : 0,
 	    _changed : false,
 	
-	    _handleChange : function(){
-	        if( this.__changing ){
-	            this._changed = true;
-	        }
-	        else{
-	            this.trigger( 'changes', this );
-	        }
-	    },
-	
 	    constructor : function(){
 	        this.__changing = 0;
 	        this._changed = false;
 	
 	        Backbone.Collection.apply( this, arguments );
 	
-	        this.listenTo( this, 'change add remove reset', this._handleChange );
+	        this.listenTo( this, this._listenToChanges, handleChange );
 	    },
 	
 	    getStore : function(){
@@ -1660,7 +1661,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	var CollectionProto = Collection.prototype;
 	
 	var refsCollectionSpec = {
-	    triggerWhenChanged : bbVersion >= '1.2.0' ? 'update reset' : 'add remove reset', // don't bubble changes from models
+	    listenToChanges : bbVersion >= '1.2.0' ? 'update reset' : 'add remove reset', // don't bubble changes from models
 	    __class            : 'Collection.SubsetOf',
 	
 	    resolvedWith : null,
@@ -1961,12 +1962,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        this.isModel = this.type === Model || this.type.prototype instanceof Model;
 	
 	        if( triggerWhenChanged ){
-	            // for collection, add transactional methods to join change events on bubbling
-	            this.__events = this.isModel ? {} : {
-	                'before:change' : modelSet.__begin,
-	                'after:change'  : modelSet.__commit
-	            };
-	
+	            this.__events = {};
 	            this.__events[ triggerWhenChanged ] = function handleNestedChange(){
 	                var attr = this.attributes[ name ];
 	

@@ -1466,30 +1466,47 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	var CollectionProto = Backbone.Collection.prototype;
 	
-	function wrapCall( func ){
+	function transaction( func ){
 	    return function(){
-	        if( !this.__changing++ ){
-	            this.trigger( 'before:change' );
-	        }
+	        this.__changing++ || ( this._changed = false );
 	
 	        var res = func.apply( this, arguments );
 	
-	        if( !--this.__changing ){
-	            this.trigger( 'after:change' );
-	        }
+	        --this.__changing || ( this._changed && this.trigger( 'changes', this ) );
 	
 	        return res;
 	    };
 	}
 	
 	module.exports = Backbone.Collection.extend( {
-	    triggerWhenChanged : Backbone.VERSION >= '1.2.0' ? 'update change reset' : 'add remove change reset',
+	    triggerWhenChanged : 'changes',
 	    __class            : 'Collection',
 	
 	    model : Model,
 	
 	    _owner : null,
 	    _store : null,
+	
+	    __changing : 0,
+	    _changed : false,
+	
+	    _handleChange : function(){
+	        if( this.__changing ){
+	            this._changed = true;
+	        }
+	        else{
+	            this.trigger( 'changes', this );
+	        }
+	    },
+	
+	    constructor : function(){
+	        this.__changing = 0;
+	        this._changed = false;
+	
+	        Backbone.Collection.apply( this, arguments );
+	
+	        this.listenTo( this, 'change add remove reset', this._handleChange );
+	    },
 	
 	    getStore : function(){
 	        return this._store || ( this._store = this._owner ? this._owner.getStore() : this._defaultStore );
@@ -1523,9 +1540,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        return new this.constructor( models );
 	    },
 	
-	    __changing : 0,
-	
-	    set : wrapCall( function( models, options ){
+	    set : transaction( function( models, options ){
 	        if( models ){
 	            if( typeof models !== 'object' || !( models instanceof Array || models instanceof Model ||
 	                Object.getPrototypeOf( models ) === Object.prototype ) ){
@@ -1536,10 +1551,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	        return CollectionProto.set.call( this, models, options );
 	    } ),
 	
-	    remove : wrapCall( CollectionProto.remove ),
-	    add    : wrapCall( CollectionProto.add ),
-	    reset  : wrapCall( CollectionProto.reset ),
-	    sort   : wrapCall( CollectionProto.sort ),
+	    transaction : function( func, self ){
+	        return transaction( func ).call( self || this );
+	    },
+	
+	    remove : transaction( CollectionProto.remove ),
+	    add    : transaction( CollectionProto.add ),
+	    reset  : transaction( CollectionProto.reset ),
+	    sort   : transaction( CollectionProto.sort ),
 	
 	    getModelIds : function(){ return _.pluck( this.models, 'id' ); },
 	

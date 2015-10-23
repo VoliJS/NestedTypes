@@ -91,8 +91,8 @@ module.exports = Backbone.Collection.extend( {
         return CollectionProto.set.call( this, models, options );
     } ),
 
-    transaction : function( func, self ){
-        return transaction( func ).call( self || this );
+    transaction : function( func, self, args ){
+        return transaction( func ).apply( self || this, args );
     },
 
     remove : transaction( CollectionProto.remove ),

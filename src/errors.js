@@ -25,7 +25,7 @@ Object.assign( Object.extend.error, {
     },
 
     serializeSharedObject : function( context, name, value ){
-      console.error( '[Ownership Error] Shared model/collection is being serialized to JSON, in ' +
+      console.warn( '[Ownership Error] Shared model/collection is being serialized to JSON, in ' +
                      context.__class + '.' + name + '==', value, '; this =', context );
     }
 });

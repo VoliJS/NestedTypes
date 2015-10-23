@@ -3,7 +3,7 @@
 master: [![Master Build Status](https://travis-ci.org/Volicon/backbone.nestedTypes.svg?branch=master)](https://travis-ci.org/Volicon/backbone.nestedTypes)
 develop: [![Develop Build Status](https://travis-ci.org/Volicon/backbone.nestedTypes.svg?branch=develop)](https://travis-ci.org/Volicon/backbone.nestedTypes)
 
-Version 1.1.1 highlights:
+Version 1.1.2 highlights:
 
 - npm package name is changed to just 'nestedtypes'. Thus, `npm install nestedtypes`.
 - It export all the stuff which is required to use it as drop-in backbonejs replacement in your project.

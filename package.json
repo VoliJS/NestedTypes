@@ -1,7 +1,7 @@
 {
   "name": "nestedtypes",
   "main": "nestedtypes.js",
-  "description": "backbone.js extension adding type annotations to model attributes, easiest possible way of dealing with nested models and collections, and native properties for attributes. Providing you with a more or less complete, simple, and powerful object system for JavaScript.",
+  "description": "Next generation data framework, which can be used as drop-in backbonejs replacement.",
   "homepage": "https://github.com/Volicon/backbone.nestedTypes",
   "keywords": [
     "backbone",
@@ -35,7 +35,7 @@
     "nestedtypes.js"
   ],
   "license": "MIT",
-  "version": "1.1.1",
+  "version": "1.1.2",
   "scripts": {
     "test": "node_modules/.bin/mocha",
     "build": "./node_modules/.bin/webpack",

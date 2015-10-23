@@ -8,7 +8,7 @@ Version 1.1.2 highlights:
 - npm package name is changed to just 'nestedtypes'. Thus, `npm install nestedtypes`.
 - It export all the stuff which is required to use it as drop-in backbonejs replacement in your project.
 - Models has reference to the parent model through `this._owner`
-- When the same model is shared between tho other models, attempt to serialize the model which is not an owner will result in [Serialization Error] warning. In most of the cases, this warning is the sign of weird errors, because after loading data this shared models won't be shared any more.
+- When the same model is shared between two other models, attempt to serialize the model which is not an owner will result in [Serialization Error] warning. In most of the cases, this warning is the sign of weird errors, because after loading data this shared models won't be shared any more.
 - Collections has new `changes` event, which can be used directly on collection instead of 'add remove change reset'. It's efficient, and fired only once during compound changes.
 - There are Collection.transaction( func ) method which can be used ad-hoc to group sequence of changes coming from inside of func to the single transaction, thus, firing just one 'changes' event. Helpful for reducing an amount of renders.
 - Every method declared on Collection can be turned to be transactional when its definition is wrapped in Nested.transaction.

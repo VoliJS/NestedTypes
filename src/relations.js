@@ -73,7 +73,7 @@ exports.from = function( masterCollection ){
 var CollectionProto = Collection.prototype;
 
 var refsCollectionSpec = {
-    listenToChanges : bbVersion >= '1.2.0' ? 'update reset' : 'add remove reset', // don't bubble changes from models
+    _listenToChanges : bbVersion >= '1.2.0' ? 'update reset' : 'add remove reset', // don't bubble changes from models
     __class            : 'Collection.SubsetOf',
 
     resolvedWith : null,

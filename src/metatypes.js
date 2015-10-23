@@ -185,12 +185,7 @@ attribute.Type.extend( {
         this.isModel = this.type === Model || this.type.prototype instanceof Model;
 
         if( triggerWhenChanged ){
-            // for collection, add transactional methods to join change events on bubbling
-            this.__events = this.isModel ? {} : {
-                'before:change' : modelSet.__begin,
-                'after:change'  : modelSet.__commit
-            };
-
+            this.__events = {};
             this.__events[ triggerWhenChanged ] = function handleNestedChange(){
                 var attr = this.attributes[ name ];
 

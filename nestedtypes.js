@@ -1632,7 +1632,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    isChanged : function( a, b ){ return a !== b; },
 	    set : function( value, name  ){
 	        if( !value ) return null;
-	        
+	
 	        error.hardRefNotAssignable( this, name, value );
 	    }
 	});
@@ -1653,7 +1653,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                    // Silently update attribute with object from master.
 	                    // Subscribe for all events...
 	                    var attrSpec = this.__attributes[ name ];
-	                    this.attributes[ name ] = attrSpec.delegateEvents( value, {}, this, name );
+	                    return this.attributes[ name ] = attrSpec.delegateEvents( value, {}, this, name );
 	                }
 	            }
 	

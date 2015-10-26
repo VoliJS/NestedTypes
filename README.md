@@ -5,6 +5,8 @@ It's modern data framework, mostly backward compatible with backbone.js and can 
 Compared to `backbonejs`, it's has order of magnitude faster model updates, and support all the features which could be found
 in state of the art model frameworks through lightweight and declarative attribute type annotations.
 
+Browse complete documentation here: http://volicon.github.io/backbone.nestedTypes/
+
 ## Release 1.1.x highlights
 
 master: [![Master Build Status](https://travis-ci.org/Volicon/backbone.nestedTypes.svg?branch=master)](https://travis-ci.org/Volicon/backbone.nestedTypes)
@@ -33,8 +35,6 @@ Nested.store = new Nested.LazyStore.defaults({
 ```
 Why? Because now Stores are first-class objects in the system, they can be created with `new`,  
 they supports hierarchical lookups, they may have different transports, and more. The more about it later.
-
-Browse complete documentation here: http://volicon.github.io/backbone.nestedTypes/
 
 ## Features
 ### Complex attribute types

@@ -68,6 +68,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	Collection.subsetOf = relations.subsetOf;
 	Model.from          = relations.from;
+	Model.take = Collection.take = relations.take;
+	
 	Model.Collection    = Collection;
 	
 	var Store = __webpack_require__( 12 );
@@ -1065,6 +1067,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	                        context.__class + '.set( "' + name + '",', format( value ), '); this =', context );
 	    },
 	
+	    hardRefNotAssignable : function( context, name, value ){
+	        if( context.suppressTypeErrors ) return;
+	
+	        console.warn( '[Type Error] Hard reference cannot be assigned in ' +
+	                        context.__class + '.set( "' + name + '",', format( value ), '); this =', context );
+	    },
+	
 	    wrongCollectionSetArg : function( context, value ){
 	        //throw new TypeError( 'Wrong argument type in ' + context.__class + '.set(' + value + ')' );
 	        console.error( '[Type Error] Wrong argument type in ' +
@@ -1597,6 +1606,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	var bbVersion  = __webpack_require__( 4 ).VERSION,
 	    attribute  = __webpack_require__( 8 ),
+	    error      = __webpack_require__( 7 ),
 	    Collection = __webpack_require__( 9 ),
 	    _          = __webpack_require__( 6 );
 	
@@ -1615,6 +1625,44 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	        return new Function( 'return this.' + path.join( '.' ) );
 	    }
+	}
+	
+	var TakeAttribute = attribute.Type.extend( {
+	    clone  : function( value ){ return value; },
+	    isChanged : function( a, b ){ return a !== b; },
+	    set : function( value, name  ){
+	        if( !value ) return null;
+	
+	        error.hardRefNotAssignable( this, name, value );
+	    }
+	});
+	
+	exports.take = function( reference ){
+	    var getMaster = parseReference( reference );
+	
+	    var options = attribute({
+	        value : null,
+	        toJSON : false,
+	        type : this,
+	        get : function( ref, name ){
+	            if( !ref ){
+	                // Resolve reference.
+	                var value = getMaster.call( this );
+	
+	                if( value ){
+	                    // Silently update attribute with object from master.
+	                    // Subscribe for all events...
+	                    var attrSpec = this.__attributes[ name ];
+	                    return this.attributes[ name ] = attrSpec.delegateEvents( value, {}, this, name );
+	                }
+	            }
+	
+	            return ref;
+	        }
+	    });
+	
+	    options.Attribute = TakeAttribute;
+	    return options;
 	}
 	
 	exports.from = function( masterCollection ){

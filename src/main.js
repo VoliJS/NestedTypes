@@ -12,6 +12,8 @@ require( './metatypes' );
 
 Collection.subsetOf = relations.subsetOf;
 Model.from          = relations.from;
+Model.take = Collection.take = relations.take;
+
 Model.Collection    = Collection;
 
 var Store = require( './store' );

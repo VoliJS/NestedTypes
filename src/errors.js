@@ -18,6 +18,13 @@ Object.assign( Object.extend.error, {
                         context.__class + '.set( "' + name + '",', format( value ), '); this =', context );
     },
 
+    hardRefNotAssignable : function( context, name, value ){
+        if( context.suppressTypeErrors ) return;
+
+        console.warn( '[Type Error] Hard reference cannot be assigned in ' +
+                        context.__class + '.set( "' + name + '",', format( value ), '); this =', context );
+    },
+
     wrongCollectionSetArg : function( context, value ){
         //throw new TypeError( 'Wrong argument type in ' + context.__class + '.set(' + value + ')' );
         console.error( '[Type Error] Wrong argument type in ' +

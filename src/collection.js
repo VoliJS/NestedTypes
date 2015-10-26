@@ -39,12 +39,18 @@ module.exports = Backbone.Collection.extend( {
     __changing : 0,
     _changed : false,
 
-    constructor : function(){
+    // ATTENTION: Overriden backbone logic with bug fixes
+    constructor : function( models, options ){
+        options || (options = {});
+        if (options.model) this.model = options.model;
+        if (options.comparator !== void 0) this.comparator = options.comparator;
+        this._reset();
+
         this.__changing = 0;
         this._changed = false;
-
+        if (models) this.reset( models, options );
         this.listenTo( this, this._listenToChanges, handleChange );
-        Backbone.Collection.apply( this, arguments );
+        this.initialize.apply(this, arguments);
     },
 
     getStore : function(){
@@ -61,6 +67,7 @@ module.exports = Backbone.Collection.extend( {
         } );
     },
 
+	// ATTENTION: Overriden backbone logic with bug fixes
     get : function( obj ){
         if( obj == null ){
             return void 0;

@@ -32,10 +32,11 @@
     "webpack": "^1.12.2"
   },
   "files": [
-    "nestedtypes.js"
+    "nestedtypes.js",
+    "LICENSE"
   ],
   "license": "MIT",
-  "version": "1.1.2",
+  "version": "1.1.3",
   "scripts": {
     "test": "node_modules/.bin/mocha",
     "build": "./node_modules/.bin/webpack",

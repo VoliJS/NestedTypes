@@ -202,9 +202,7 @@ function setAttrs( model, attrs, options ){
 
     applyTransform( model, attrs, model.__attributes, options );
 
-    model.__commit( attrs, options );
-
-    return model;
+    return model.__commit( attrs, options );
 }
 
 // transform attributes hash
@@ -247,6 +245,8 @@ function __commit( a_attrs, options ){
     }
 
     if( attrs ){
-        bbSetAttrs( this, attrs, options );
+        return bbSetAttrs( this, attrs, options );
     }
+
+    return this;
 }

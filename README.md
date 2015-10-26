@@ -1,4 +1,11 @@
-# Release 1.1.x highlights
+# What it is
+
+It's modern data framework, mostly backward compatible with backbone.js and can be used as drop-in backbonejs replacement.
+
+Compared to `backbonejs`, it's has order of magnitude faster model updates, and support all the features which could be found
+in state of the art model frameworks through lightweight and declarative attribute type annotations.
+
+## Release 1.1.x highlights
 
 master: [![Master Build Status](https://travis-ci.org/Volicon/backbone.nestedTypes.svg?branch=master)](https://travis-ci.org/Volicon/backbone.nestedTypes)
 develop: [![Develop Build Status](https://travis-ci.org/Volicon/backbone.nestedTypes.svg?branch=develop)](https://travis-ci.org/Volicon/backbone.nestedTypes)
@@ -29,13 +36,7 @@ they supports hierarchical lookups, they may have different transports, and more
 
 Browse complete documentation here: http://volicon.github.io/backbone.nestedTypes/
 
-## What it is
-
-It's modern data framework, mostly backward compatible with backbone.js and can be used as drop-in backbonejs replacement.
-
-Compared to `backbonejs`, it's has order of magnitude faster model updates, and support all the features which could be found
-in state of the art model frameworks through lightweight and declarative attribute type annotations.
-
+## Features
 ### Complex attribute types
 
 * Cross-browser handling of Date attribute type.

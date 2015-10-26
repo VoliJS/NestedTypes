@@ -1504,9 +1504,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	        this.__changing = 0;
 	        this._changed = false;
 	
-	        Backbone.Collection.apply( this, arguments );
-	
 	        this.listenTo( this, this._listenToChanges, handleChange );
+	        Backbone.Collection.apply( this, arguments );
 	    },
 	
 	    getStore : function(){

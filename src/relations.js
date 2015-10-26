@@ -3,6 +3,7 @@
 
 var bbVersion  = require( 'backbone' ).VERSION,
     attribute  = require( './attribute' ),
+    error      = require( './errors' ),
     Collection = require( './collection' ),
     _          = require( 'underscore' );
 
@@ -21,6 +22,44 @@ function parseReference( collectionRef ){
 
         return new Function( 'return this.' + path.join( '.' ) );
     }
+}
+
+var TakeAttribute = attribute.Type.extend( {
+    clone  : function( value ){ return value; },
+    isChanged : function( a, b ){ return a !== b; },
+    set : function( value, name  ){
+        if( !value ) return null;
+
+        error.hardRefNotAssignable( this, name, value );
+    }
+});
+
+exports.take = function( reference ){
+    var getMaster = parseReference( reference );
+
+    var options = attribute({
+        value : null,
+        toJSON : false,
+        type : this,
+        get : function( ref, name ){
+            if( !ref ){
+                // Resolve reference.
+                var value = getMaster.call( this );
+
+                if( value ){
+                    // Silently update attribute with object from master.
+                    // Subscribe for all events...
+                    var attrSpec = this.__attributes[ name ];
+                    return this.attributes[ name ] = attrSpec.delegateEvents( value, {}, this, name );
+                }
+            }
+
+            return ref;
+        }
+    });
+
+    options.Attribute = TakeAttribute;
+    return options;
 }
 
 exports.from = function( masterCollection ){

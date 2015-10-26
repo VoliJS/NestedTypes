@@ -3,6 +3,7 @@
 
 var bbVersion  = require( 'backbone' ).VERSION,
     attribute  = require( './attribute' ),
+    error      = require( './errors' ),
     Collection = require( './collection' ),
     _          = require( 'underscore' );
 
@@ -25,7 +26,12 @@ function parseReference( collectionRef ){
 
 var TakeAttribute = attribute.Type.extend( {
     clone  : function( value ){ return value; },
-    isChanged : function( a, b ){ return a !== b; }
+    isChanged : function( a, b ){ return a !== b; },
+    set : function( value, name  ){
+        if( !value ) return null;
+        
+        error.hardRefNotAssignable( this, name, value );
+    }
 });
 
 exports.take = function( reference ){

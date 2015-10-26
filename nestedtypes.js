@@ -1067,6 +1067,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	                        context.__class + '.set( "' + name + '",', format( value ), '); this =', context );
 	    },
 	
+	    hardRefNotAssignable : function( context, name, value ){
+	        if( context.suppressTypeErrors ) return;
+	
+	        console.warn( '[Type Error] Hard reference cannot be assigned in ' +
+	                        context.__class + '.set( "' + name + '",', format( value ), '); this =', context );
+	    },
+	
 	    wrongCollectionSetArg : function( context, value ){
 	        //throw new TypeError( 'Wrong argument type in ' + context.__class + '.set(' + value + ')' );
 	        console.error( '[Type Error] Wrong argument type in ' +
@@ -1599,6 +1606,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	var bbVersion  = __webpack_require__( 4 ).VERSION,
 	    attribute  = __webpack_require__( 8 ),
+	    error      = __webpack_require__( 7 ),
 	    Collection = __webpack_require__( 9 ),
 	    _          = __webpack_require__( 6 );
 	
@@ -1621,7 +1629,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	var TakeAttribute = attribute.Type.extend( {
 	    clone  : function( value ){ return value; },
-	    isChanged : function( a, b ){ return a !== b; }
+	    isChanged : function( a, b ){ return a !== b; },
+	    set : function( value, name  ){
+	        if( !value ) return null;
+	        
+	        error.hardRefNotAssignable( this, name, value );
+	    }
 	});
 	
 	exports.take = function( reference ){

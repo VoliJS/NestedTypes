@@ -31,6 +31,10 @@ var TakeAttribute = attribute.Type.extend( {
         if( !value ) return null;
 
         error.hardRefNotAssignable( this, name, value );
+    },
+
+    _update : function( val, options, model, attr ){
+        return this.delegateEvents( this.cast( val, options, model, attr ), options, model, attr );
     }
 });
 
@@ -50,7 +54,7 @@ exports.take = function( reference ){
                     // Silently update attribute with object from master.
                     // Subscribe for all events...
                     var attrSpec = this.__attributes[ name ];
-                    return this.attributes[ name ] = attrSpec.delegateEvents( value, {}, this, name );
+                    return this.attributes[ name ] = attrSpec._update( value, {}, this, name );
                 }
             }
 

@@ -1110,7 +1110,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	// list of simple accessor methods available in options
 	var availableOptions = [ 'triggerWhenChanged', 'changeEvents', 'parse', 'clone', 'toJSON', 'value', 'cast', 'create', 'name', 'value',
-	                         'type', 'proxy' ];
+	                         'type' ];
 	
 	var Options = Object.extend( {
 	    _options : {}, // attribute options
@@ -1137,6 +1137,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	        this._options = {};
 	        this.options( spec );
+	    },
+	
+	    proxy : function( attrs ){
+	        this._options.proxy = attrs || true;
+	        return this;
 	    },
 	
 	    // get hooks stored as an array
@@ -1326,7 +1331,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            proto = type && type.prototype;
 	
 	        if( type && this.proxy ){
-	            var keys = typeof this.proxy === 'string' ? this.proxy.split( ' ' ) : _.allKeys( proto );
+	            var keys = typeof this.proxy === 'string' ? this.proxy.split( ' ' ) : _.allKeys( proto ).concat( _.keys( proto.properties ) );
 	
 	            // for each enumerable property...
 	            for( var i = 0; i < keys.length; i++ ){

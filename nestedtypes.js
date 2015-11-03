@@ -3167,28 +3167,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	        return this._byId[ obj ];
 	    },
 	
-	    // Internal method called by both remove and set.
-	    _removeModels: function(models, options) {
-	        var removed = [];
-	        for (var i = 0; i < models.length; i++) {
-	            var model = this.get(models[i]);
-	            if (!model) continue;
-	
-	            var index = this.indexOf(model);
-	            this.models.splice(index, 1);
-	            this.length--;
-	
-	            removed.push(model);
-	            this._removeReference(model, options);
-	
-	            if (!options.silent) {
-	                options.index = index;
-	                this.trigger('remove', model, this, options);
-	            }
-	        }
-	        return removed.length ? removed : false;
-	    },
-	
 	    deepClone : function(){ return this.clone( { deep : true } ); },
 	
 	    clone : function( options ){

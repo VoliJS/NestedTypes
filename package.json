@@ -18,10 +18,10 @@
   "author": "Vlad Balin <https://github.com/gaperton>",
   "contributors": "",
   "dependencies": {
-    "backbone": "<1.2.0",
     "underscore": ">=1.5.0"
   },
   "devDependencies": {
+    "backbone": "<1.2.0",
     "chai": "* <3",
     "jquery": "*",
     "mocha": "*",

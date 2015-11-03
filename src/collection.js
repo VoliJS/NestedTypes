@@ -69,10 +69,13 @@ module.exports = Backbone.Collection.extend( {
 
 	// ATTENTION: Overriden backbone logic with bug fixes
     get : function( obj ){
-        if( obj == null ){
-            return void 0;
+        if( obj == null ){ return void 0; }
+
+        if( typeof obj === 'object' ){
+            return this._byId[ obj[ this.model.prototype.idAttribute ] ] || this._byId[ obj.cid ];
         }
-        return typeof obj === 'object' ? this._byId[ obj.id ] || this._byId[ obj.cid ] : this._byId[ obj ];
+
+        return this._byId[ obj ];
     },
 
     deepClone : function(){ return this.clone( { deep : true } ); },

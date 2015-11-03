@@ -18,7 +18,6 @@
   "author": "Vlad Balin <https://github.com/gaperton>",
   "contributors": "",
   "dependencies": {
-    "backbone": ">=1.1.2",
     "underscore": ">=1.5.0"
   },
   "devDependencies": {
@@ -36,7 +35,7 @@
     "LICENSE"
   ],
   "license": "MIT",
-  "version": "1.1.4",
+  "version": "1.1.5",
   "scripts": {
     "test": "node_modules/.bin/mocha",
     "build": "./node_modules/.bin/webpack",

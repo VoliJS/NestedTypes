@@ -15,6 +15,37 @@
             { id: 3, name : 3 }
         ]);
 
+        describe( 'Attributes merging', function(){
+            var A = Nested.Model.extend({
+                defaults : {
+                    a : 1,
+                    b : 2
+                },
+
+                f : function(){ return this.a + this.b; },
+
+                properties : {
+                    c : function(){ return this.a + this.b; }
+                }
+            });
+
+            it( 'merges properties, which does not present in model', function(){
+                var B = Nested.Model.extend({
+                    defaults : {
+                        a : 6,
+                        _x : A.has.proxy()
+                    }
+                });
+
+                var b = new B();
+
+                expect( b.a ).to.eql( 6 );
+                expect( b.b ).to.eql( 2 );
+                expect( b.f() ).to.eql( 3 );
+                expect( b.c ).to.eql( 3 );
+            });
+        });
+
         describe( 'Model.from reference', function(){
             var A = Nested.Model.extend({
                 attributes : {

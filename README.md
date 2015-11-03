@@ -1,24 +1,21 @@
-# What it is
-
-It's modern data framework, mostly backward compatible with backbone.js and can be used as drop-in backbonejs replacement.
-
-Compared to `backbonejs`, it's has order of magnitude faster model updates, and support all the features which could be found
-in state of the art model frameworks through lightweight and declarative attribute type annotations.
-
-Browse complete documentation here: http://volicon.github.io/backbone.nestedTypes/
-
-## Release 1.1.x highlights
+# Getting Started
 
 master: [![Master Build Status](https://travis-ci.org/Volicon/backbone.nestedTypes.svg?branch=master)](https://travis-ci.org/Volicon/backbone.nestedTypes)
 develop: [![Develop Build Status](https://travis-ci.org/Volicon/backbone.nestedTypes.svg?branch=develop)](https://travis-ci.org/Volicon/backbone.nestedTypes)
 
+Version 1.1.5 highlights:
+
+- Fixed incompatibilities with backbone 1.2.x by removing backbone dependency, effective now and forever. Currently, stable backbone 1.1.2 is linked in.
 - npm package name is changed to just 'nestedtypes'. Thus, `npm install nestedtypes`.
-- It export all the stuff which is required to use it as drop-in backbonejs replacement in your project.
+- Can be used as drop-in backbonejs replacement in your project.
 - Models has reference to the parent model through `this._owner`
-- When the same model is shared between two other models, attempt to serialize the model which is not an owner will result in [Serialization Error] warning. In most of the cases, this warning is the sign of weird errors, because after loading data this shared models won't be shared any more.
+- When the same model is shared between tho other models, attempt to serialize the model which is not an owner will result in [Serialization Error] warning. In most of the cases, this warning is the sign of weird errors, because after loading data this shared models won't be shared any more.
 - Collections has new `changes` event, which can be used directly on collection instead of 'add remove change reset'. It's efficient, and fired only once during compound changes.
 - There are Collection.transaction( func ) method which can be used ad-hoc to group sequence of changes coming from inside of func to the single transaction, thus, firing just one 'changes' event. Helpful for reducing an amount of renders.
 - Every method declared on Collection can be turned to be transactional when its definition is wrapped in Nested.transaction.
+- Experimental features:
+    - lazily evaluated hard references `Model.take( ref )` and `Collection.take( ref )`. ref is the reference like in
+    - attribute proxies for mixing in attributes, `a : MyModel.proxy()`. `a` members will be directly accessible in owner model.
 - There are completely new mechancs of Stores, which will be documented later, and will allow us to refactor collections with mutual references which has to be requested together (such as users-roles-channelSets). It will be documented later.
 
 Major change you need to do now:
@@ -36,7 +33,15 @@ Nested.store = new Nested.LazyStore.defaults({
 Why? Because now Stores are first-class objects in the system, they can be created with `new`,  
 they supports hierarchical lookups, they may have different transports, and more. The more about it later.
 
-## Features
+Browse complete documentation here: http://volicon.github.io/backbone.nestedTypes/
+
+## What it is
+
+It's modern data framework, mostly backward compatible with backbone.js and can be used as drop-in backbonejs replacement.
+
+Compared to `backbonejs`, it's has order of magnitude faster model updates, and support all the features which could be found
+in state of the art model frameworks through lightweight and declarative attribute type annotations.
+
 ### Complex attribute types
 
 * Cross-browser handling of Date attribute type.

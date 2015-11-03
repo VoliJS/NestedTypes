@@ -7,7 +7,7 @@
  * ------------------------------------------------------------- */
 
 var Class = require( './object+' ),
-    Backbone = require( 'backbone' );
+    Backbone = require( './backbone' );
 
 module.exports = Backbone;
 

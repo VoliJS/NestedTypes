@@ -1,7 +1,7 @@
 // Nested Relations
 //=================
 
-var bbVersion  = require( 'backbone' ).VERSION,
+var bbVersion  = require( './backbone+' ).VERSION,
     attribute  = require( './attribute' ),
     error      = require( './errors' ),
     Collection = require( './collection' ),

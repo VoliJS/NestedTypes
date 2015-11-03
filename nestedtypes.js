@@ -3226,7 +3226,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	// Nested Relations
 	//=================
 	
-	var bbVersion  = __webpack_require__( 4 ).VERSION,
+	var bbVersion  = __webpack_require__( 2 ).VERSION,
 	    attribute  = __webpack_require__( 9 ),
 	    error      = __webpack_require__( 8 ),
 	    Collection = __webpack_require__( 10 ),

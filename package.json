@@ -21,7 +21,6 @@
     "underscore": ">=1.5.0"
   },
   "devDependencies": {
-    "backbone": "<1.2.0",
     "chai": "* <3",
     "jquery": "*",
     "mocha": "*",

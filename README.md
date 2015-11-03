@@ -5,8 +5,8 @@ develop: [![Develop Build Status](https://travis-ci.org/Volicon/backbone.nestedT
 
 Version 1.1.5 highlights:
 
+- Fixed incompatibilities with backbone 1.2.x by removing backbone dependency, effective now and forever. Currently, stable backbone 1.1.2 is linked in.
 - npm package name is changed to just 'nestedtypes'. Thus, `npm install nestedtypes`.
-- Removed backbone dependency. Currently, stable backbone 1.1.2 is linked in.
 - Can be used as drop-in backbonejs replacement in your project.
 - Models has reference to the parent model through `this._owner`
 - When the same model is shared between tho other models, attempt to serialize the model which is not an owner will result in [Serialization Error] warning. In most of the cases, this warning is the sign of weird errors, because after loading data this shared models won't be shared any more.

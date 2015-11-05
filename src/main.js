@@ -55,5 +55,6 @@ function linkToProp( name ){
 // allow sync and jQuery override
 Object.defineProperties( exports, {
     'sync' : linkToProp( 'sync' ),
-    '$'    : linkToProp( '$' )
+    '$'    : linkToProp( '$' ),
+    'ajax' : linkToProp( 'ajax' )
 });

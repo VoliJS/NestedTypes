@@ -111,7 +111,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	// allow sync and jQuery override
 	Object.defineProperties( exports, {
 	    'sync' : linkToProp( 'sync' ),
-	    '$'    : linkToProp( '$' )
+	    '$'    : linkToProp( '$' ),
+	    'ajax' : linkToProp( 'ajax' )
 	});
 
 /***/ },

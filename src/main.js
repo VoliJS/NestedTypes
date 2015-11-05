@@ -44,3 +44,16 @@ _.extend( exports, Backbone, {
         }
     }
 });
+
+function linkToProp( name ){
+    return {
+        get : function(){ return Backbone[ name ]; },
+        set : function( value ){ Backbone[ name ] = value; }
+    }
+}
+
+// allow sync and jQuery override
+Object.defineProperties( exports, {
+    'sync' : linkToProp( 'sync' ),
+    '$'    : linkToProp( '$' )
+});

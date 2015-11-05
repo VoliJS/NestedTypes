@@ -35,7 +35,7 @@
     "LICENSE"
   ],
   "license": "MIT",
-  "version": "1.2.0",
+  "version": "1.1.5",
   "scripts": {
     "test": "node_modules/.bin/mocha",
     "build": "./node_modules/.bin/webpack",

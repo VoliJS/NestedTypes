@@ -10,7 +10,7 @@ var Store = exports.Model = Model.extend({
   // end store lookup sequence on this class
   getStore : function(){ return this; },
 
-  sync : Backbone.sync,
+  sync : function(){ return Backbone.sync.apply( Backbone, arguments ); },
   // delegate item lookup to owner, and to the global store if undefined
   get : function( name ){ return this[ name ] || ( this._owner && this._owner.get( name ) ) || _store[ name ]; }
 });

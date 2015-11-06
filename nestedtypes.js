@@ -163,6 +163,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	        return owner ? owner.getStore() : this._defaultStore;
 	    },
 	
+	    getOwner : function(){
+	        return this._owner || ( this.collection && this.collection._owner );
+	    },
+	
 	    sync : function(){
 	        var store = this.getStore() || Backbone;
 	        return store.sync.apply( this, arguments );
@@ -2687,6 +2691,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	                       context.__class + '.set(', format( value ), '); this =', context );
 	    },
 	
+	    wrongWatcher : function( context, ref ){
+	        console.warn( "[Reference Error] Attribute's .has.watcher(", ref, ") must be string reference or function; attr=", context );
+	    },
+	
 	    unknownAttribute : function( context, name, value ){
 	        if( context.suppressTypeErrors ) return;
 	
@@ -2726,6 +2734,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	var trigger3         = __webpack_require__( 2 ).Events.trigger3,
 	    modelSet         = __webpack_require__( 7 ),
+	    error            = __webpack_require__( 8 ),
 	    genericIsChanged = modelSet.isChanged,
 	    setSingleAttr    = modelSet.setSingleAttr;
 	
@@ -2738,6 +2747,30 @@ return /******/ (function(modules) { // webpackBootstrap
 	// list of simple accessor methods available in options
 	var availableOptions = [ 'triggerWhenChanged', 'changeEvents', 'parse', 'clone', 'toJSON', 'value', 'cast', 'create', 'name', 'value',
 	                         'type' ];
+	
+	function parseReference( ref ){
+	    switch( typeof ref ){
+	        case 'string' :
+	            var path     = 'self. ' + ref.replace( /\^/g, 'getOwner().' ).split( '.' ),
+	                callback = path.pop(),
+	                context  = new Function( 'self', 'return ' + path.join( '.' ) );
+	
+	            return function( value ){
+	                var self = context( this );
+	
+	                if( self && self[ callback ] ){
+	                    self[ callback ]( value, this );
+	                }
+	
+	                return value;
+	            };
+	        case 'function' :
+	            return function( value ){
+	                ref.call( this, value, this );
+	                return value;
+	            };
+	    }
+	}
 	
 	var Options = Object.extend( {
 	    _options : {}, // attribute options
@@ -2764,6 +2797,16 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	        this._options = {};
 	        this.options( spec );
+	    },
+	
+	    watcher : function( ref ){
+	        var callback = parseReference( ref );
+	        if( callback ){
+	            this.set( callback );
+	        }
+	        else{
+	            error.wrongWatcher( this, ref );
+	        }
 	    },
 	
 	    proxy : function( attrs ){
@@ -2809,10 +2852,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	        if( options.proxy && typeof options.proxy === 'string' && !options.triggerWhenChanged ){
 	            options.triggerWhenChanged = options.proxy
-	                .split( ' ' )
-	                .map( function( attr ){
-	                    return 'change:' + attr;
-	                }).join( ' ' );
+	                                                .split( ' ' )
+	                                                .map( function( attr ){
+	                                                    return 'change:' + attr;
+	                                                } ).join( ' ' );
 	        }
 	
 	        return new Type( name, options );
@@ -2954,11 +2997,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	    },
 	
 	    attachMixins : function( spec ){
-	        var type = this.type,
+	        var type  = this.type,
 	            proto = type && type.prototype;
 	
 	        if( type && this.proxy ){
-	            var keys = typeof this.proxy === 'string' ? this.proxy.split( ' ' ) : _.allKeys( proto ).concat( _.keys( proto.properties ) );
+	            var keys = typeof this.proxy === 'string' ? this.proxy.split( ' ' ) : _.allKeys( proto ).concat(
+	                _.keys( proto.properties ) );
 	
 	            // for each enumerable property...
 	            for( var i = 0; i < keys.length; i++ ){
@@ -3061,9 +3105,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	        return function(){
 	            for( var i = 0; i < arguments.length; i++ ){
-	                var Type = arguments[ i ];
+	                var Type       = arguments[ i ];
 	                Type.attribute = Type.options = options;
-	                Type.value = value;
+	                Type.value     = value;
 	                Type.Attribute = this;
 	                Object.defineProperty( Type, 'has', {
 	                    get : function(){
@@ -3084,7 +3128,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    return new Options( spec );
 	}
 	
-	createOptions.Type = Attribute;
+	createOptions.Type   = Attribute;
 	createOptions.create = function( options, name ){
 	    if( !( options && options instanceof Options ) ){
 	        options = new Options( { typeOrValue : options } );
@@ -3252,13 +3296,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	    case 'object'   :
 	        return function(){ return collectionRef; };
 	    case 'string'   :
-	        var path = collectionRef.split( '.' );
-	        if( path[ 0 ] === 'store' ){
-	          path[ 0 ] = 'getStore()';
-	          path[ 1 ] = 'get("' + path[ 1 ] + '")';
-	        }
+	        var path = collectionRef
+	            .replace( /\^/g, 'getOwner().' )
+	            .replace( /^\~/, 'store.' )
+	            .replace( /^store\.(\w+)/, 'getStore().get("$1")' );
 	
-	        return new Function( 'return this.' + path.join( '.' ) );
+	        return new Function( 'return this.' + path  );
 	    }
 	}
 	

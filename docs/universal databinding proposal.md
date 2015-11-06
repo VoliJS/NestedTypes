@@ -3,28 +3,28 @@
 
 
 // for boolean
-collection.toggler( model )
+collection.toggle_f( model )
     get : m in collection
     set( true )
 
 { encoders.map( encoder => (
-    <Checklist checked={ selected.toggler( encoder ) } />
+    <Checklist checked={ selected.toggle_f( encoder ) } />
 ))}
 
 // for inputs
-model.bind.attr
+model.set_f.attr
 
 // for radio
-model.bound.selected.eql( x )
+model.toggle_f( 'selected', x )
     get : a === x,
     set( true ) : a = x
     set( false ): a = null
 
 // for clicks
-model.setter.selected.to( x )
+model.set_f.selected.to( x )
         get : a = x
 
-model.setter.selected.toggle( y )
+model.set_f.selected.toggle( y /* , =null */ )
 
 
 model.setter( 'attr', x )

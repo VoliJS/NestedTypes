@@ -67,6 +67,36 @@ module.exports = Backbone.Collection.extend( {
         } );
     },
 
+    // create bool 'toggler' function property
+    toggle : function( model, a_next ){
+        var prev = Boolean( this.get( model ) );
+
+        if( a_next !== void 0 ){
+            var next = Boolean( a_next );
+
+            if( prev !== next ){
+                if( prev ){
+                    this.remove( model );
+                }
+                else{
+                    this.add( model );
+                }
+            }
+
+            return next;
+        }
+
+        return prev;
+    },
+
+    toggler : function( model ){
+        var collection = this;
+
+        return function( next ){
+            return collection.toggle( model, next );
+        }
+    },
+
 	// ATTENTION: Overriden backbone logic with bug fixes
     get : function( obj ){
         if( obj == null ){ return void 0; }

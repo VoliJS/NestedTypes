@@ -8,20 +8,20 @@ collection.toggler( model )
     set( true )
 
 { encoders.map( encoder => (
-    <Checklist checked={ selected.toggler( encoder ) } />
+    <Checklist checked={ selected.toggle_p( encoder ) } />
 ))}
 
 // for inputs
-model.bind.attr
+model.setter( 'attr' )
 
 // for radio
-model.bound.selected.eql( x )
+model.toggler( 'selected', x )
     get : a === x,
     set( true ) : a = x
     set( false ): a = null
 
 // for clicks
-model.setter.selected.to( x )
+model.setter( 'selected', x )
         get : a = x
 
 model.setter.selected.toggle( y )

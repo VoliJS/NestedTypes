@@ -65,6 +65,30 @@ var Model = BaseModel.extend( {
 
     transaction : modelSet.transaction,
 
+    setter : function( name, val ){
+        var model = this;
+        return val === void 0 ? function( val ){
+            val === void 0 || ( model[ name ] = val );
+            return model[ name ];
+        }  : function(){
+            val === void 0 || ( model[ name ] = val );
+            return model[ name ];
+        }
+    },
+
+    toggler : function( name, asTrue ){
+        var model = this;
+
+        return function( isEql ){
+            if( isEql !== void 0 ){
+                model[ name ] = isEql ? asTrue : null;
+                return isEql;
+            }
+
+            return model[ name ] === value;
+        }
+    },
+
     set : function( a, b, c ){
         switch( typeof a ){
         case 'string' :

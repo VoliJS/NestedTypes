@@ -3184,10 +3184,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	    fset : function( val ){
 	        var link = this;
 	        return function(){ link.requestChanges( val ); }
-	    },
-	
-	    leql : function( value ){
-	        return new ValueEql( this, value );
 	    }
 	});
 	
@@ -3197,6 +3193,15 @@ return /******/ (function(modules) { // webpackBootstrap
 	        this.requestChanges = function( val ){
 	            model[ attr ] = val;
 	        }
+	    },
+	
+	    // for array links
+	    lhas : function( value ){
+	        return new ArrayHas( this, value );
+	    },
+	
+	    leql : function( value ){
+	        return new ValueEql( this, value );
 	    }
 	});
 	
@@ -3215,6 +3220,20 @@ return /******/ (function(modules) { // webpackBootstrap
 	        this.requestChanges = function( val ){
 	            link.requestChanges( val ? asTrue : null );
 	        }
+	    }
+	});
+	
+	var ArrayHas = exports.ArrayHas = BoolLink.extend({
+	    constructor : function( link, element ){
+	        var value = Boolean( _.contains( link.value, element ) );
+	        this.value = value;
+	
+	        this.requestChanges = function( next ){
+	            if( value !== Boolean( next ) ){
+	                var prev = link.value;
+	                link.requestChanges( next ? prev.concat( element ) :_.without( prev, element ) );
+	            }
+	        };
 	    }
 	});
 	

@@ -11,15 +11,17 @@ var Model      = require( './model' ),
 require( './metatypes' );
 
 Collection.subsetOf = relations.subsetOf;
-Model.from          = relations.from;
+Model.from = relations.from;
 Model.take = Collection.take = relations.take;
 
-Model.Collection    = Collection;
+Model.Collection = Collection;
 
 var Store = require( './store' );
 Object.defineProperty( exports, 'store', Store.globalProp );
 
 _.extend( exports, Backbone, {
+    Backbone  : Backbone,
+    Link      : require( './valuelink' ),
     Class     : require( './object+' ),
     error     : require( './errors' ),
     attribute : attribute,
@@ -43,7 +45,7 @@ _.extend( exports, Backbone, {
             return this.transaction( fun, this, arguments );
         }
     }
-});
+} );
 
 function linkToProp( name ){
     return {
@@ -57,4 +59,4 @@ Object.defineProperties( exports, {
     'sync' : linkToProp( 'sync' ),
     '$'    : linkToProp( '$' ),
     'ajax' : linkToProp( 'ajax' )
-});
+} );

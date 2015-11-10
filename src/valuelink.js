@@ -1,4 +1,4 @@
-require( 'object+' );
+require( './object+' );
 var _ = require( 'underscore' );
 
 var Value = exports.ValueLink = Object.extend({
@@ -21,14 +21,14 @@ exports.Attr = Value.extend({
     }
 });
 
-var Bool = exports.Bool = Value.extend({
+var BoolLink = exports.BoolLink = Value.extend({
     toggle : function(){
         var link = this;
         return function(){ link.requestChanges( !link.value ) };
     }
 });
 
-exports.AttrEql = Bool.extend({
+exports.AttrEql = BoolLink.extend({
     constructor : function( model, attr, asTrue ){
         this.value = model[ attr ] === asTrue;
         this.requestChanges = function( val ){
@@ -37,21 +37,22 @@ exports.AttrEql = Bool.extend({
     }
 });
 
-exports.CollectionHas = Bool.extend({
+exports.CollectionHas = BoolLink.extend({
     constructor : function( collection, model ){
         this.value = Boolean( collection.get( model ) );
         this.requestChanges = function( val ){ collection.toggle( model, val ); }
     }
 });
 
-exports.ArrayAttrHas = Bool.extend({
+exports.ArrayAttrHas = BoolLink.extend({
     constructor : function( model, attr, element ){
-        var current = this.value = Boolean( _.contains( model[ attr ], element ) );
+        var value = Boolean( _.contains( model[ attr ], element ) );
+        this.value = value;
 
-        this.requestChanges = function( val ){
-            if( current !== Boolean( val ) ){
+        this.requestChanges = function( next ){
+            if( value !== Boolean( next ) ){
                 var prev = model[ attr ];
-                model[ attr ] = val ? prev.concat( element ) :_.without( prev, element );
+                model[ attr ] = next ? prev.concat( element ) :_.without( prev, element );
             }
         };
     }

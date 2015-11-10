@@ -58,24 +58,26 @@ return /******/ (function(modules) { // webpackBootstrap
 	// =======================
 	
 	var Model      = __webpack_require__( 1 ),
-	    Collection = __webpack_require__( 10 ),
-	    relations  = __webpack_require__( 11 ),
+	    Collection = __webpack_require__( 11 ),
+	    relations  = __webpack_require__( 12 ),
 	    Backbone   = __webpack_require__( 2 ),
 	    _          = __webpack_require__( 5 ),
 	    attribute  = __webpack_require__( 9 );
 	
-	__webpack_require__( 12 );
+	__webpack_require__( 13 );
 	
 	Collection.subsetOf = relations.subsetOf;
-	Model.from          = relations.from;
+	Model.from = relations.from;
 	Model.take = Collection.take = relations.take;
 	
-	Model.Collection    = Collection;
+	Model.Collection = Collection;
 	
-	var Store = __webpack_require__( 13 );
+	var Store = __webpack_require__( 14 );
 	Object.defineProperty( exports, 'store', Store.globalProp );
 	
 	_.extend( exports, Backbone, {
+	    Backbone  : Backbone,
+	    Link      : __webpack_require__( 10 ),
 	    Class     : __webpack_require__( 3 ),
 	    error     : __webpack_require__( 8 ),
 	    attribute : attribute,
@@ -99,7 +101,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            return this.transaction( fun, this, arguments );
 	        }
 	    }
-	});
+	} );
 	
 	function linkToProp( name ){
 	    return {
@@ -113,7 +115,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    'sync' : linkToProp( 'sync' ),
 	    '$'    : linkToProp( '$' ),
 	    'ajax' : linkToProp( 'ajax' )
-	});
+	} );
 
 /***/ },
 /* 1 */
@@ -125,11 +127,16 @@ return /******/ (function(modules) { // webpackBootstrap
 	    attrOptions = __webpack_require__( 9 ),
 	    error       = __webpack_require__( 8 ),
 	    _           = __webpack_require__( 5 ),
+	    Link        = __webpack_require__( 10 ),
 	    ModelProto  = BaseModel.prototype;
 	
-	var setSingleAttr = modelSet.setSingleAttr,
-	    setAttrs        = modelSet.setAttrs,
-	    applyTransform  = modelSet.transform;
+	var LinkAttr     = Link.Attr,
+	    LinkEql      = Link.AttrEql,
+	    LinkArrayHas = Link.ArrayAttrHas;
+	
+	var setSingleAttr  = modelSet.setSingleAttr,
+	    setAttrs       = modelSet.setAttrs,
+	    applyTransform = modelSet.transform;
 	
 	function cloneAttrs( attrSpecs, attrs, options ){
 	    for( var name in attrs ){
@@ -187,24 +194,15 @@ return /******/ (function(modules) { // webpackBootstrap
 	    transaction : modelSet.transaction,
 	
 	    // Create bound function property for an attribute
-	    setter : function( name ){
-	        var model = this;
-	        return function( val ){
-	            if( arguments.length ) model[ name ] = val;
-	
-	            return model[ name ];
-	        }
-	    },
+	    linkVal : function( name ){ return new LinkAttr( this, name ); },
 	
 	    // Create bound boolean function property for attribute
-	    toggler : function( name, asTrue ){
-	        var model = this;
+	    linkEql : function( name, asTrue ){ return new LinkEql( this, name, asTrue ); },
 	
-	        return function( val ){
-	            if( arguments.length ) model[ name ] = val ? asTrue : null;
-	
-	            return model[ name ] === asTrue;
-	        }
+	    linkHas : function( name, value ){
+	        return this.__attributes.type === Array ?
+	               new LinkArrayHas( this, name, value ) :
+	               this[ name ].linkHas( value )
 	    },
 	
 	    set : function( a, b, c ){
@@ -293,7 +291,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	        this.__duringSet = 0;
 	        this.attributes = {};
-	        if( options.collection ) this.collection = options.collection;
+	        if( options.collection ){
+	            this.collection = options.collection;
+	        }
 	        this.cid = _.uniqueId( 'c' );
 	
 	        if( options.parse ){
@@ -391,7 +391,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	} );
 	
 	function attachMixins( Type ){
-	    var self = Type.prototype,
+	    var self      = Type.prototype,
 	        attrSpecs = self.__attributes;
 	
 	    for( name in attrSpecs ){
@@ -439,15 +439,18 @@ return /******/ (function(modules) { // webpackBootstrap
 	// Otherwise return null.
 	function create_parse( allAttrSpecs, attrSpecs ){
 	    var statements = [ 'var a = this.__attributes;' ],
-	        create = false;
+	        create     = false;
 	
 	    for( var name in allAttrSpecs ){
 	        // Is there any 'parse' option in local model definition?
-	        if( attrSpecs[ name ] && attrSpecs[ name ].parse ) create = true;
+	        if( attrSpecs[ name ] && attrSpecs[ name ].parse ){
+	            create = true;
+	        }
 	
 	        // Add statement for each attribute with 'parse' option.
 	        if( allAttrSpecs[ name ].parse ){
-	            var s = 'if("' + name + '" in r) r.' + name + '=a.' + name + '.parse.call(this,r.' + name + ',"' + name + '");';
+	            var s = 'if("' + name + '" in r) r.' + name + '=a.' + name + '.parse.call(this,r.' + name + ',"' + name +
+	                    '");';
 	            statements.push( s );
 	        }
 	    }
@@ -3165,9 +3168,74 @@ return /******/ (function(modules) { // webpackBootstrap
 /* 10 */
 /***/ function(module, exports, __webpack_require__) {
 
+	__webpack_require__( 3 );
+	var _ = __webpack_require__( 5 );
+	
+	var Value = exports.ValueLink = Object.extend({
+	    value : void 0,
+	
+	    requestChanges : function( val ){ throw new ReferenceError(); },
+	
+	    set : function( val ){
+	        var link = this;
+	        return function(){ link.requestChanges( val ); }
+	    }
+	});
+	
+	exports.Attr = Value.extend({
+	    constructor : function( model, attr ){
+	        this.value = model[ attr ];
+	        this.requestChanges = function( val ){
+	            model[ attr ] = val;
+	        }
+	    }
+	});
+	
+	var BoolLink = exports.BoolLink = Value.extend({
+	    toggle : function(){
+	        var link = this;
+	        return function(){ link.requestChanges( !link.value ) };
+	    }
+	});
+	
+	exports.AttrEql = BoolLink.extend({
+	    constructor : function( model, attr, asTrue ){
+	        this.value = model[ attr ] === asTrue;
+	        this.requestChanges = function( val ){
+	            model[ attr ] = val ? asTrue : null;
+	        }
+	    }
+	});
+	
+	exports.CollectionHas = BoolLink.extend({
+	    constructor : function( collection, model ){
+	        this.value = Boolean( collection.get( model ) );
+	        this.requestChanges = function( val ){ collection.toggle( model, val ); }
+	    }
+	});
+	
+	exports.ArrayAttrHas = BoolLink.extend({
+	    constructor : function( model, attr, element ){
+	        var value = Boolean( _.contains( model[ attr ], element ) );
+	        this.value = value;
+	
+	        this.requestChanges = function( next ){
+	            if( value !== Boolean( next ) ){
+	                var prev = model[ attr ];
+	                model[ attr ] = next ? prev.concat( element ) :_.without( prev, element );
+	            }
+	        };
+	    }
+	});
+
+/***/ },
+/* 11 */
+/***/ function(module, exports, __webpack_require__) {
+
 	var Backbone = __webpack_require__( 2 ),
 	    Model    = __webpack_require__( 1 ),
 	    error    = __webpack_require__( 8 ),
+	    LinkHas     = __webpack_require__( 10 ).CollectionHas,
 	    _        = __webpack_require__( 5 );
 	
 	var CollectionProto = Backbone.Collection.prototype;
@@ -3252,13 +3320,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    },
 	
 	    // Create function boolean property toggling the given model
-	    toggler : function( model ){
-	        var collection = this;
-	
-	        return function( next ){
-	            return typeof next === void 0 ? Boolean( this.get( model ) ) : collection.toggle( model, next );
-	        }
-	    },
+	    linkHas : function( model ){ return new LinkHas( this, model ); },
 	
 		// ATTENTION: Overriden backbone logic with bug fixes
 	    get : function( obj ){
@@ -3324,7 +3386,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 11 */
+/* 12 */
 /***/ function(module, exports, __webpack_require__) {
 
 	// Nested Relations
@@ -3333,7 +3395,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	var bbVersion  = __webpack_require__( 2 ).VERSION,
 	    attribute  = __webpack_require__( 9 ),
 	    error      = __webpack_require__( 8 ),
-	    Collection = __webpack_require__( 10 ),
+	    Collection = __webpack_require__( 11 ),
 	    _          = __webpack_require__( 5 );
 	
 	function parseReference( collectionRef ){
@@ -3548,7 +3610,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 12 */
+/* 13 */
 /***/ function(module, exports, __webpack_require__) {
 
 	// Date.parse with progressive enhancement for ISO 8601 <https://github.com/csnover/js-iso8601>
@@ -3562,7 +3624,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    Model      = __webpack_require__( 1 ),
 	    errors     = __webpack_require__( 8 ),
 	    _          = __webpack_require__( 5 ),
-	    Collection = __webpack_require__( 10 );
+	    Collection = __webpack_require__( 11 );
 	
 	// Constructors Attribute
 	// ----------------
@@ -3656,36 +3718,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	        return value == null || value instanceof Array ? value : [ value ];
 	    }
 	} ).attach( Array );
-	
-	function removeElement( self, element ){
-	    for( var i = 0; i < self.length;){
-	        var el = self[ i ];
-	
-	        if( el === element ) self.splice( i, 1 );
-	        else i++;
-	    }
-	}
-	
-	Array.prototype.toggler = function( element ){
-	    var self = this;
-	
-	    return function( val ){
-	        var prev = Boolean( _.contains( self, element ) );
-	
-	        if( arguments.length > 0 ){
-	            var next = Boolean( val );
-	
-	            if( prev !== next ){
-	                if( next ) this.push( element );
-	                else removeElement( self, element );
-	
-	                return next;
-	            }
-	        }
-	
-	        return prev;
-	    }
-	};
 	
 	// Backbone Attribute
 	// ----------------
@@ -3786,13 +3818,13 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 13 */
+/* 14 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var Backbone   = __webpack_require__( 2 ),
 	    $          = Backbone.$;
 	    Model      = __webpack_require__( 1 ),
-	    Collection = __webpack_require__( 10 ),
+	    Collection = __webpack_require__( 11 ),
 	    _          = __webpack_require__( 5 );
 	
 	var _store = null;

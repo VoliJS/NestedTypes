@@ -194,15 +194,20 @@ return /******/ (function(modules) { // webpackBootstrap
 	    transaction : modelSet.transaction,
 	
 	    // Create bound function property for an attribute
-	    linkVal : function( name ){ return new LinkAttr( this, name ); },
+	    lget : function( name ){ return new LinkAttr( this, name ); },
 	
 	    // Create bound boolean function property for attribute
-	    linkEql : function( name, asTrue ){ return new LinkEql( this, name, asTrue ); },
+	    leql : function( name, asTrue ){ return new LinkEql( this, name, asTrue ); },
 	
-	    linkHas : function( name, value ){
+	    lhas : function( name, value ){
 	        return this.__attributes.type === Array ?
 	               new LinkArrayHas( this, name, value ) :
-	               this[ name ].linkHas( value )
+	               this[ name ].lhas( value )
+	    },
+	
+	    fset : function( a, b, c ){
+	        var self = this;
+	        return function(){ self.set( a, b, c ); }
 	    },
 	
 	    set : function( a, b, c ){
@@ -3176,7 +3181,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    requestChanges : function( val ){ throw new ReferenceError(); },
 	
 	    set : function( val ){ this.requestChanges( val ); },
-	    setter : function( val ){
+	    fset : function( val ){
 	        var link = this;
 	        return function(){ link.requestChanges( val ); }
 	    }
@@ -3194,7 +3199,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	var BoolLink = exports.BoolLink = Value.extend({
 	    toggle : function(){ this.requestChanges( !this.value ); },
 	
-	    tumbler : function(){
+	    ftoggle : function(){
 	        var link = this;
 	        return function(){ link.requestChanges( !link.value ) };
 	    }
@@ -3321,8 +3326,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	        return next;
 	    },
 	
+	    ftoggle : function( model, next ){
+	        var self = this;
+	        return function(){ self.toggle( model, next ); }
+	    },
+	
 	    // Create function boolean property toggling the given model
-	    linkHas : function( model ){ return new LinkHas( this, model ); },
+	    lhas : function( model ){ return new LinkHas( this, model ); },
 	
 		// ATTENTION: Overriden backbone logic with bug fixes
 	    get : function( obj ){

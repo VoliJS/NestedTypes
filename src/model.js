@@ -71,15 +71,20 @@ var Model = BaseModel.extend( {
     transaction : modelSet.transaction,
 
     // Create bound function property for an attribute
-    linkVal : function( name ){ return new LinkAttr( this, name ); },
+    lget : function( name ){ return new LinkAttr( this, name ); },
 
     // Create bound boolean function property for attribute
-    linkEql : function( name, asTrue ){ return new LinkEql( this, name, asTrue ); },
+    leql : function( name, asTrue ){ return new LinkEql( this, name, asTrue ); },
 
-    linkHas : function( name, value ){
+    lhas : function( name, value ){
         return this.__attributes.type === Array ?
                new LinkArrayHas( this, name, value ) :
-               this[ name ].linkHas( value )
+               this[ name ].lhas( value )
+    },
+
+    fset : function( a, b, c ){
+        var self = this;
+        return function(){ self.set( a, b, c ); }
     },
 
     set : function( a, b, c ){

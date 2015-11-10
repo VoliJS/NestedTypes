@@ -85,8 +85,13 @@ module.exports = Backbone.Collection.extend( {
         return next;
     },
 
+    ftoggle : function( model, next ){
+        var self = this;
+        return function(){ self.toggle( model, next ); }
+    },
+
     // Create function boolean property toggling the given model
-    linkHas : function( model ){ return new LinkHas( this, model ); },
+    lhas : function( model ){ return new LinkHas( this, model ); },
 
 	// ATTENTION: Overriden backbone logic with bug fixes
     get : function( obj ){

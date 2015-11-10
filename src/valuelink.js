@@ -6,7 +6,7 @@ var Value = exports.ValueLink = Object.extend({
     requestChanges : function( val ){ throw new ReferenceError(); },
 
     set : function( val ){ this.requestChanges( val ); },
-    setter : function( val ){
+    fset : function( val ){
         var link = this;
         return function(){ link.requestChanges( val ); }
     }
@@ -24,7 +24,7 @@ exports.Attr = Value.extend({
 var BoolLink = exports.BoolLink = Value.extend({
     toggle : function(){ this.requestChanges( !this.value ); },
 
-    tumbler : function(){
+    ftoggle : function(){
         var link = this;
         return function(){ link.requestChanges( !link.value ) };
     }

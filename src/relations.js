@@ -63,7 +63,7 @@ exports.take = function( reference ){
 
     options.Attribute = TakeAttribute;
     return options;
-}
+};
 
 exports.from = function( masterCollection ){
     var getMaster = parseReference( masterCollection );

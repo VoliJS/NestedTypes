@@ -3279,7 +3279,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	    createSubset : function( models, options ){
 	        var SubsetOf = this.constructor.subsetOf( this ).createAttribute().type;
-	        return new SubsetOf( models, options );
+	        var subset = new SubsetOf( models, options );
+	        subset.resolve( this );
+	        return subset;
 	    }
 	}, {
 	    // Cache for subsetOf collection subclass.

@@ -4,11 +4,16 @@ var Backbone    = require( './backbone+' ),
     attrOptions = require( './attribute' ),
     error       = require( './errors' ),
     _           = require( 'underscore' ),
+    Link        = require( './valuelink' ),
     ModelProto  = BaseModel.prototype;
 
-var setSingleAttr = modelSet.setSingleAttr,
-    setAttrs        = modelSet.setAttrs,
-    applyTransform  = modelSet.transform;
+var LinkAttr     = Link.Attr,
+    LinkEql      = Link.AttrEql,
+    LinkArrayHas = Link.ArrayAttrHas;
+
+var setSingleAttr  = modelSet.setSingleAttr,
+    setAttrs       = modelSet.setAttrs,
+    applyTransform = modelSet.transform;
 
 function cloneAttrs( attrSpecs, attrs, options ){
     for( var name in attrs ){
@@ -66,24 +71,15 @@ var Model = BaseModel.extend( {
     transaction : modelSet.transaction,
 
     // Create bound function property for an attribute
-    setter : function( name ){
-        var model = this;
-        return function( val ){
-            if( arguments.length ) model[ name ] = val;
-
-            return model[ name ];
-        }
-    },
+    linkVal : function( name ){ return new LinkAttr( this, name ); },
 
     // Create bound boolean function property for attribute
-    toggler : function( name, asTrue ){
-        var model = this;
+    linkEql : function( name, asTrue ){ return new LinkEql( this, name, asTrue ); },
 
-        return function( val ){
-            if( arguments.length ) model[ name ] = val ? asTrue : null;
-
-            return model[ name ] === asTrue;
-        }
+    linkHas : function( name, value ){
+        return this.__attributes.type === Array ?
+               new LinkArrayHas( this, name, value ) :
+               this[ name ].linkHas( value )
     },
 
     set : function( a, b, c ){
@@ -172,7 +168,9 @@ var Model = BaseModel.extend( {
 
         this.__duringSet = 0;
         this.attributes = {};
-        if( options.collection ) this.collection = options.collection;
+        if( options.collection ){
+            this.collection = options.collection;
+        }
         this.cid = _.uniqueId( 'c' );
 
         if( options.parse ){
@@ -270,7 +268,7 @@ var Model = BaseModel.extend( {
 } );
 
 function attachMixins( Type ){
-    var self = Type.prototype,
+    var self      = Type.prototype,
         attrSpecs = self.__attributes;
 
     for( name in attrSpecs ){
@@ -318,15 +316,18 @@ function createDefinition( protoProps, Base ){
 // Otherwise return null.
 function create_parse( allAttrSpecs, attrSpecs ){
     var statements = [ 'var a = this.__attributes;' ],
-        create = false;
+        create     = false;
 
     for( var name in allAttrSpecs ){
         // Is there any 'parse' option in local model definition?
-        if( attrSpecs[ name ] && attrSpecs[ name ].parse ) create = true;
+        if( attrSpecs[ name ] && attrSpecs[ name ].parse ){
+            create = true;
+        }
 
         // Add statement for each attribute with 'parse' option.
         if( allAttrSpecs[ name ].parse ){
-            var s = 'if("' + name + '" in r) r.' + name + '=a.' + name + '.parse.call(this,r.' + name + ',"' + name + '");';
+            var s = 'if("' + name + '" in r) r.' + name + '=a.' + name + '.parse.call(this,r.' + name + ',"' + name +
+                    '");';
             statements.push( s );
         }
     }

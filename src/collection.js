@@ -1,6 +1,7 @@
 var Backbone = require( './backbone+' ),
     Model    = require( './model' ),
     error    = require( './errors' ),
+    LinkHas     = require( './valuelink' ).CollectionHas,
     _        = require( 'underscore' );
 
 var CollectionProto = Backbone.Collection.prototype;
@@ -85,13 +86,7 @@ module.exports = Backbone.Collection.extend( {
     },
 
     // Create function boolean property toggling the given model
-    toggler : function( model ){
-        var collection = this;
-
-        return function( next ){
-            return typeof next === void 0 ? Boolean( this.get( model ) ) : collection.toggle( model, next );
-        }
-    },
+    linkHas : function( model ){ return new LinkHas( this, model ); },
 
 	// ATTENTION: Overriden backbone logic with bug fixes
     get : function( obj ){

@@ -23,6 +23,8 @@ function parseReference( collectionRef ){
     }
 }
 
+exports.parseReference = parseReference;
+
 var TakeAttribute = attribute.Type.extend( {
     clone     : function( value ){ return value; },
     isChanged : function( a, b ){ return a !== b; },
@@ -62,38 +64,6 @@ exports.take = function( reference ){
     } );
 
     options.Attribute = TakeAttribute;
-    return options;
-};
-
-exports.valueLink = function( reference ){
-    var getMaster = parseReference( reference );
-
-    function setLink( value ){
-        var link = getMaster.call( this );
-        link && link.requestChanges( value );
-    }
-
-    function getLink(){
-        var link = getMaster.call( this );
-        return link && link.value;
-    }
-
-    var LinkAttribute = attribute.Type.extend( {
-        createPropertySpec : function(){
-            return {
-                // call to optimized set function for single argument. Doesn't work for backbone types.
-                set : setLink,
-
-                // attach get hook to the getter function, if present
-                get : getLink
-            }
-        },
-
-        set : setLink
-    } );
-
-    var options       = attribute( { toJSON : false } );
-    options.Attribute = LinkAttribute;
     return options;
 };
 

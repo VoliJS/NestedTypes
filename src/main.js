@@ -20,6 +20,7 @@ var Store = require( './store' );
 Object.defineProperty( exports, 'store', Store.globalProp );
 
 _.extend( exports, Backbone, {
+    Backbone  : Backbone,
     Class     : require( './object+' ),
     error     : require( './errors' ),
     attribute : attribute,
@@ -29,7 +30,7 @@ _.extend( exports, Backbone, {
         return attribute( { value : value } );
     },
 
-    valueLink : relations.valueLink,
+    parseReference : relations.parseReference,
 
     Collection : Collection,
     Model      : Model,

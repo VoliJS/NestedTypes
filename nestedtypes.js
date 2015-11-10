@@ -186,6 +186,27 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	    transaction : modelSet.transaction,
 	
+	    // Create bound function property for an attribute
+	    setter : function( name ){
+	        var model = this;
+	        return function( val ){
+	            if( arguments.length ) model[ name ] = val;
+	
+	            return model[ name ];
+	        }
+	    },
+	
+	    // Create bound boolean function property for attribute
+	    toggler : function( name, asTrue ){
+	        var model = this;
+	
+	        return function( val ){
+	            if( arguments.length ) model[ name ] = val ? asTrue : null;
+	
+	            return model[ name ] === asTrue;
+	        }
+	    },
+	
 	    set : function( a, b, c ){
 	        switch( typeof a ){
 	        case 'string' :
@@ -3213,6 +3234,32 @@ return /******/ (function(modules) { // webpackBootstrap
 	        } );
 	    },
 	
+	    // Toggle model in collection
+	    toggle : function( model, a_next ){
+	        var prev = Boolean( this.get( model ) ),
+	            next = a_next === void 0 ? !prev : Boolean( a_next );
+	
+	        if( prev !== next ){
+	            if( prev ){
+	                this.remove( model );
+	            }
+	            else{
+	                this.add( model );
+	            }
+	        }
+	
+	        return next;
+	    },
+	
+	    // Create function boolean property toggling the given model
+	    toggler : function( model ){
+	        var collection = this;
+	
+	        return function( next ){
+	            return typeof next === void 0 ? Boolean( this.get( model ) ) : collection.toggle( model, next );
+	        }
+	    },
+	
 		// ATTENTION: Overriden backbone logic with bug fixes
 	    get : function( obj ){
 	        if( obj == null ){ return void 0; }
@@ -3430,16 +3477,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	        return models;
 	    },
 	
-	    toggle : function( modelOrId, inSet ){
-	        var model = this.resolvedWith.get( modelOrId ),
-	            toggle = inSet === void 0;
-	
-	        if( this.get( model ) ){
-	            if( toggle || !inSet ) this.remove( model );
-	        }
-	        else{
-	            if( toggle || inSet ) this.add( model );
-	        }
+	    toggle : function( modelOrId, val ){
+	        var model = this.resolvedWith.get( modelOrId );
+	        return CollectionProto.toggle.call( this, model, val );
 	    },
 	
 	    addAll    : function(){
@@ -3521,6 +3561,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    modelSet   = __webpack_require__( 7 ),
 	    Model      = __webpack_require__( 1 ),
 	    errors     = __webpack_require__( 8 ),
+	    _          = __webpack_require__( 5 ),
 	    Collection = __webpack_require__( 10 );
 	
 	// Constructors Attribute
@@ -3615,6 +3656,36 @@ return /******/ (function(modules) { // webpackBootstrap
 	        return value == null || value instanceof Array ? value : [ value ];
 	    }
 	} ).attach( Array );
+	
+	function removeElement( self, element ){
+	    for( var i = 0; i < self.length;){
+	        var el = self[ i ];
+	
+	        if( el === element ) self.splice( i, 1 );
+	        else i++;
+	    }
+	}
+	
+	Array.prototype.toggler = function( element ){
+	    var self = this;
+	
+	    return function( val ){
+	        var prev = Boolean( _.contains( self, element ) );
+	
+	        if( arguments.length > 0 ){
+	            var next = Boolean( val );
+	
+	            if( prev !== next ){
+	                if( next ) this.push( element );
+	                else removeElement( self, element );
+	
+	                return next;
+	            }
+	        }
+	
+	        return prev;
+	    }
+	};
 	
 	// Backbone Attribute
 	// ----------------

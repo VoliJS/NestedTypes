@@ -148,16 +148,9 @@ var refsCollectionSpec = {
         return models;
     },
 
-    toggle : function( modelOrId, inSet ){
-        var model = this.resolvedWith.get( modelOrId ),
-            toggle = inSet === void 0;
-
-        if( this.get( model ) ){
-            if( toggle || !inSet ) this.remove( model );
-        }
-        else{
-            if( toggle || inSet ) this.add( model );
-        }
+    toggle : function( modelOrId, val ){
+        var model = this.resolvedWith.get( modelOrId );
+        return CollectionProto.toggle.call( this, model, val );
     },
 
     addAll    : function(){

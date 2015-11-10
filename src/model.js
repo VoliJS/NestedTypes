@@ -65,27 +65,24 @@ var Model = BaseModel.extend( {
 
     transaction : modelSet.transaction,
 
-    setter : function( name, val ){
+    // Create bound function property for an attribute
+    setter : function( name ){
         var model = this;
-        return val === void 0 ? function( val ){
-            val === void 0 || ( model[ name ] = val );
-            return model[ name ];
-        }  : function(){
-            val === void 0 || ( model[ name ] = val );
+        return function( val ){
+            if( arguments.length ) model[ name ] = val;
+
             return model[ name ];
         }
     },
 
+    // Create bound boolean function property for attribute
     toggler : function( name, asTrue ){
         var model = this;
 
-        return function( isEql ){
-            if( isEql !== void 0 ){
-                model[ name ] = isEql ? asTrue : null;
-                return isEql;
-            }
+        return function( val ){
+            if( arguments.length ) model[ name ] = val ? asTrue : null;
 
-            return model[ name ] === value;
+            return model[ name ] === asTrue;
         }
     },
 

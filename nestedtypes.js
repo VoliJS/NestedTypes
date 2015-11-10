@@ -3173,10 +3173,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	var Value = exports.ValueLink = Object.extend({
 	    value : void 0,
-	
 	    requestChanges : function( val ){ throw new ReferenceError(); },
 	
-	    set : function( val ){
+	    set : function( val ){ this.requestChanges( val ); },
+	    setter : function( val ){
 	        var link = this;
 	        return function(){ link.requestChanges( val ); }
 	    }
@@ -3192,7 +3192,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	});
 	
 	var BoolLink = exports.BoolLink = Value.extend({
-	    toggle : function(){
+	    toggle : function(){ this.requestChanges( !this.value ); },
+	
+	    tumbler : function(){
 	        var link = this;
 	        return function(){ link.requestChanges( !link.value ) };
 	    }

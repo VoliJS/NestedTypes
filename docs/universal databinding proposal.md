@@ -1,68 +1,25 @@
 (!) UNIVERSAL DATABINDING (!)
-
+Based in react links
 
 
 // for boolean
-collection.toggle_f( model )
-    get : m in collection
-    set( true )
+collection.lhas( model )
 
 { encoders.map( encoder => (
-    <Checklist checked={ selected.toggle_f( encoder ) } />
+    <Checklist key={ encoder.cid } checkedLink={ selected.lhas( encoder ) } />
 ))}
 
 // for inputs
-model.set_f.attr
+model.lget( 'attr' )
 
 // for radio
-model.toggle_f( 'selected', x )
-    get : a === x,
-    set( true ) : a = x
-    set( false ): a = null
+model.lget( 'selected' ).leql( x )
 
 // for clicks
-model.set_f.selected.to( x )
-        get : a = x
-
-model.set_f.selected.toggle( y /* , =null */ )
+model.fset( 'selected', x )
+model.lget( 'selected' ).leql( 'y' ).fset( true )
 
 
-model.setter( 'attr', x )
-model.setter( 'attr' )
-model.toggler( 'attr', x )
-
-
-function to( x ){
-    var setter = this;
-    return function(){ setter( x ); }
-}
-
-function toggle( x ){
-    var setter = this;
-    return function( y ){
-        ,,,,
-        return setter() === y;
-    }
-}
-
-makeSetter( self, name ){
-    var f = function( x ){
-        return arguments.length ? self[ name ] = x : self[ name ];
-    };
-
-    f.to = to;
-}
-
-setter : function(){
-    if( this._setters )
-    var setters = {}, self = this;
-    for( var name in this.attributes ){
-        setters[ name ] = makeSetter( name );
-    }
-
-    return setters;
-}
-
-function( x ){
-
-}
+model.fset( 'attr', x )
+model.lget( 'attr' )
+model.lget( 'attr' ).leql( x )

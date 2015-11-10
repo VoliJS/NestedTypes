@@ -42,6 +42,10 @@ var Model = BaseModel.extend( {
         return owner ? owner.getStore() : this._defaultStore;
     },
 
+    getOwner : function(){
+        return this._owner || ( this.collection && this.collection._owner );
+    },
+
     sync : function(){
         var store = this.getStore() || Backbone;
         return store.sync.apply( this, arguments );

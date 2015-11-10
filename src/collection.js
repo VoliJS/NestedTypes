@@ -67,6 +67,23 @@ module.exports = Backbone.Collection.extend( {
         } );
     },
 
+    // Toggle model in collection
+    toggle : function( model, a_next ){
+        var prev = Boolean( this.get( model ) ),
+            next = a_next === void 0 ? !prev : Boolean( a_next );
+
+        if( prev !== next ){
+            if( prev ){
+                this.remove( model );
+            }
+            else{
+                this.add( model );
+            }
+        }
+
+        return next;
+    },
+
 	// ATTENTION: Overriden backbone logic with bug fixes
     get : function( obj ){
         if( obj == null ){ return void 0; }

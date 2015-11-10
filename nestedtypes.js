@@ -76,6 +76,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	Object.defineProperty( exports, 'store', Store.globalProp );
 	
 	_.extend( exports, Backbone, {
+	    Backbone  : Backbone,
 	    Class     : __webpack_require__( 3 ),
 	    error     : __webpack_require__( 8 ),
 	    attribute : attribute,
@@ -84,6 +85,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	    value : function( value ){
 	        return attribute( { value : value } );
 	    },
+	
+	    parseReference : relations.parseReference,
 	
 	    Collection : Collection,
 	    Model      : Model,
@@ -161,6 +164,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	    getStore : function(){
 	        var owner = this._owner || this.collection;
 	        return owner ? owner.getStore() : this._defaultStore;
+	    },
+	
+	    getOwner : function(){
+	        return this._owner || ( this.collection && this.collection._owner );
 	    },
 	
 	    sync : function(){
@@ -2687,6 +2694,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	                       context.__class + '.set(', format( value ), '); this =', context );
 	    },
 	
+	    wrongWatcher : function( context, ref ){
+	        console.warn( "[Reference Error] Attribute's .has.watcher(", ref, ") must be string reference or function; attr=", context );
+	    },
+	
 	    unknownAttribute : function( context, name, value ){
 	        if( context.suppressTypeErrors ) return;
 	
@@ -2726,6 +2737,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	var trigger3         = __webpack_require__( 2 ).Events.trigger3,
 	    modelSet         = __webpack_require__( 7 ),
+	    error            = __webpack_require__( 8 ),
 	    genericIsChanged = modelSet.isChanged,
 	    setSingleAttr    = modelSet.setSingleAttr;
 	
@@ -2738,6 +2750,30 @@ return /******/ (function(modules) { // webpackBootstrap
 	// list of simple accessor methods available in options
 	var availableOptions = [ 'triggerWhenChanged', 'changeEvents', 'parse', 'clone', 'toJSON', 'value', 'cast', 'create', 'name', 'value',
 	                         'type' ];
+	
+	function parseReference( ref ){
+	    switch( typeof ref ){
+	        case 'string' :
+	            var path     = 'self. ' + ref.replace( /\^/g, 'getOwner().' ).split( '.' ),
+	                callback = path.pop(),
+	                context  = new Function( 'self', 'return ' + path.join( '.' ) );
+	
+	            return function( value ){
+	                var self = context( this );
+	
+	                if( self && self[ callback ] ){
+	                    self[ callback ]( value, this );
+	                }
+	
+	                return value;
+	            };
+	        case 'function' :
+	            return function( value ){
+	                ref.call( this, value, this );
+	                return value;
+	            };
+	    }
+	}
 	
 	var Options = Object.extend( {
 	    _options : {}, // attribute options
@@ -2764,6 +2800,16 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	        this._options = {};
 	        this.options( spec );
+	    },
+	
+	    watcher : function( ref ){
+	        var callback = parseReference( ref );
+	        if( callback ){
+	            this.set( callback );
+	        }
+	        else{
+	            error.wrongWatcher( this, ref );
+	        }
 	    },
 	
 	    proxy : function( attrs ){
@@ -2809,10 +2855,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	        if( options.proxy && typeof options.proxy === 'string' && !options.triggerWhenChanged ){
 	            options.triggerWhenChanged = options.proxy
-	                .split( ' ' )
-	                .map( function( attr ){
-	                    return 'change:' + attr;
-	                }).join( ' ' );
+	                                                .split( ' ' )
+	                                                .map( function( attr ){
+	                                                    return 'change:' + attr;
+	                                                } ).join( ' ' );
 	        }
 	
 	        return new Type( name, options );
@@ -2954,11 +3000,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	    },
 	
 	    attachMixins : function( spec ){
-	        var type = this.type,
+	        var type  = this.type,
 	            proto = type && type.prototype;
 	
 	        if( type && this.proxy ){
-	            var keys = typeof this.proxy === 'string' ? this.proxy.split( ' ' ) : _.allKeys( proto ).concat( _.keys( proto.properties ) );
+	            var keys = typeof this.proxy === 'string' ? this.proxy.split( ' ' ) : _.allKeys( proto ).concat(
+	                _.keys( proto.properties ) );
 	
 	            // for each enumerable property...
 	            for( var i = 0; i < keys.length; i++ ){
@@ -3061,9 +3108,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	        return function(){
 	            for( var i = 0; i < arguments.length; i++ ){
-	                var Type = arguments[ i ];
+	                var Type       = arguments[ i ];
 	                Type.attribute = Type.options = options;
-	                Type.value = value;
+	                Type.value     = value;
 	                Type.Attribute = this;
 	                Object.defineProperty( Type, 'has', {
 	                    get : function(){
@@ -3084,7 +3131,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    return new Options( spec );
 	}
 	
-	createOptions.Type = Attribute;
+	createOptions.Type   = Attribute;
 	createOptions.create = function( options, name ){
 	    if( !( options && options instanceof Options ) ){
 	        options = new Options( { typeOrValue : options } );
@@ -3169,6 +3216,23 @@ return /******/ (function(modules) { // webpackBootstrap
 	        } );
 	    },
 	
+	    // Toggle model in collection
+	    toggle : function( model, a_next ){
+	        var prev = Boolean( this.get( model ) ),
+	            next = a_next === void 0 ? !prev : Boolean( a_next );
+	
+	        if( prev !== next ){
+	            if( prev ){
+	                this.remove( model );
+	            }
+	            else{
+	                this.add( model );
+	            }
+	        }
+	
+	        return next;
+	    },
+	
 		// ATTENTION: Overriden backbone logic with bug fixes
 	    get : function( obj ){
 	        if( obj == null ){ return void 0; }
@@ -3247,25 +3311,26 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	function parseReference( collectionRef ){
 	    switch( typeof collectionRef ){
-	    case 'function' :
-	        return collectionRef;
-	    case 'object'   :
-	        return function(){ return collectionRef; };
-	    case 'string'   :
-	        var path = collectionRef.split( '.' );
-	        if( path[ 0 ] === 'store' ){
-	          path[ 0 ] = 'getStore()';
-	          path[ 1 ] = 'get("' + path[ 1 ] + '")';
-	        }
+	        case 'function' :
+	            return collectionRef;
+	        case 'object'   :
+	            return function(){ return collectionRef; };
+	        case 'string'   :
+	            var path = collectionRef
+	                .replace( /\^/g, 'getOwner().' )
+	                .replace( /^\~/, 'store.' )
+	                .replace( /^store\.(\w+)/, 'getStore().get("$1")' );
 	
-	        return new Function( 'return this.' + path.join( '.' ) );
+	            return new Function( 'return this.' + path );
 	    }
 	}
 	
+	exports.parseReference = parseReference;
+	
 	var TakeAttribute = attribute.Type.extend( {
-	    clone  : function( value ){ return value; },
+	    clone     : function( value ){ return value; },
 	    isChanged : function( a, b ){ return a !== b; },
-	    set : function( value, name  ){
+	    set       : function( value, name ){
 	        if( !value ) return null;
 	
 	        error.hardRefNotAssignable( this, name, value );
@@ -3274,16 +3339,16 @@ return /******/ (function(modules) { // webpackBootstrap
 	    _update : function( val, options, model, attr ){
 	        return this.delegateEvents( this.cast( val, options, model, attr ), options, model, attr );
 	    }
-	});
+	} );
 	
 	exports.take = function( reference ){
 	    var getMaster = parseReference( reference );
 	
-	    var options = attribute({
-	        value : null,
+	    var options = attribute( {
+	        value  : null,
 	        toJSON : false,
-	        type : this,
-	        get : function( ref, name ){
+	        type   : this,
+	        get    : function( ref, name ){
 	            if( !ref ){
 	                // Resolve reference.
 	                var value = getMaster.call( this );
@@ -3298,11 +3363,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	            return ref;
 	        }
-	    });
+	    } );
 	
 	    options.Attribute = TakeAttribute;
 	    return options;
-	}
+	};
 	
 	exports.from = function( masterCollection ){
 	    var getMaster = parseReference( masterCollection );
@@ -3330,7 +3395,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	                if( master && master.length ){
 	                    // Silently update attribute with object form master.
-	                    objOrId = master.get( objOrId ) || null;
+	                    objOrId                 = master.get( objOrId ) || null;
 	                    this.attributes[ name ] = objOrId;
 	
 	                    // Subscribe for events manually. delegateEvents won't be invoked.
@@ -3346,7 +3411,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        }
 	    } );
 	
-	    var options = attribute( { value : null } );
+	    var options       = attribute( { value : null } );
 	    options.Attribute = ModelRefAttribute; //todo: consider moving this to the attrSpec
 	    return options;
 	};
@@ -3355,7 +3420,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	var refsCollectionSpec = {
 	    _listenToChanges : bbVersion >= '1.2.0' ? 'update reset' : 'add remove reset', // don't bubble changes from models
-	    __class            : 'Collection.SubsetOf',
+	    __class          : 'Collection.SubsetOf',
 	
 	    resolvedWith : null,
 	    refs         : null,
@@ -3365,9 +3430,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	    },
 	
 	    clone : function( options ){
-	        var copy = CollectionProto.clone.call( this, _.omit( options, 'deep' ) );
+	        var copy          = CollectionProto.clone.call( this, _.omit( options, 'deep' ) );
 	        copy.resolvedWith = this.resolvedWith;
-	        copy.refs = this.refs;
+	        copy.refs         = this.refs;
 	
 	        return copy;
 	    },
@@ -3387,19 +3452,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	        return models;
 	    },
 	
-	    toggle : function( modelOrId, inSet ){
-	        var model = this.resolvedWith.get( modelOrId ),
-	            toggle = inSet === void 0;
-	
-	        if( this.get( model ) ){
-	            if( toggle || !inSet ) this.remove( model );
-	        }
-	        else{
-	            if( toggle || inSet ) this.add( model );
-	        }
+	    toggle : function( modelOrId, val ){
+	        var model = this.resolvedWith.get( modelOrId );
+	        return CollectionProto.toggle.call( this, model, val );
 	    },
 	
-	    addAll    : function(){
+	    addAll : function(){
 	        this.reset( this.resolvedWith.models );
 	    },
 	
@@ -3418,12 +3476,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	    getModelIds : function(){ return this.refs || _.pluck( this.models, 'id' ); },
 	
-	    justOne   : function( arg ){
+	    justOne : function( arg ){
 	        var model = arg instanceof Backbone.Model ? arg : this.resolvedWith.get( arg );
 	        this.set( [ model ] );
 	    },
 	
-	    set       : function( models, upperOptions ){
+	    set : function( models, upperOptions ){
 	        var options = { merge : false };
 	
 	        if( models ){
@@ -3450,7 +3508,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	};
 	
 	exports.subsetOf = function( masterCollection ){
-	    var SubsetOf = this.__subsetOf || ( this.__subsetOf = this.extend( refsCollectionSpec ) );
+	    var SubsetOf  = this.__subsetOf || ( this.__subsetOf = this.extend( refsCollectionSpec ) );
 	    var getMaster = parseReference( masterCollection );
 	
 	    return attribute( {

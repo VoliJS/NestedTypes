@@ -3184,6 +3184,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	    fset : function( val ){
 	        var link = this;
 	        return function(){ link.requestChanges( val ); }
+	    },
+	
+	    leql : function( value ){
+	        return new ValueEql( this, value );
 	    }
 	});
 	
@@ -3202,6 +3206,15 @@ return /******/ (function(modules) { // webpackBootstrap
 	    ftoggle : function(){
 	        var link = this;
 	        return function(){ link.requestChanges( !link.value ) };
+	    }
+	});
+	
+	var ValueEql = exports.ValueEql = BoolLink.extend({
+	    constructor : function( link, asTrue ){
+	        this.value = link.value === asTrue;
+	        this.requestChanges = function( val ){
+	            link.requestChanges( val ? asTrue : null );
+	        }
 	    }
 	});
 	

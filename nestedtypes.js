@@ -76,6 +76,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	Object.defineProperty( exports, 'store', Store.globalProp );
 	
 	_.extend( exports, Backbone, {
+	    Backbone  : Backbone,
 	    Class     : __webpack_require__( 3 ),
 	    error     : __webpack_require__( 8 ),
 	    attribute : attribute,
@@ -85,7 +86,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        return attribute( { value : value } );
 	    },
 	
-	    valueLink : relations.valueLink,
+	    parseReference : relations.parseReference,
 	
 	    Collection : Collection,
 	    Model      : Model,
@@ -3324,6 +3325,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }
 	}
 	
+	exports.parseReference = parseReference;
+	
 	var TakeAttribute = attribute.Type.extend( {
 	    clone     : function( value ){ return value; },
 	    isChanged : function( a, b ){ return a !== b; },
@@ -3363,38 +3366,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	    } );
 	
 	    options.Attribute = TakeAttribute;
-	    return options;
-	};
-	
-	exports.valueLink = function( reference ){
-	    var getMaster = parseReference( reference );
-	
-	    function setLink( value ){
-	        var link = getMaster.call( this );
-	        link && link.requestChanges( value );
-	    }
-	
-	    function getLink(){
-	        var link = getMaster.call( this );
-	        return link && link.value;
-	    }
-	
-	    var LinkAttribute = attribute.Type.extend( {
-	        createPropertySpec : function(){
-	            return {
-	                // call to optimized set function for single argument. Doesn't work for backbone types.
-	                set : setLink,
-	
-	                // attach get hook to the getter function, if present
-	                get : getLink
-	            }
-	        },
-	
-	        set : setLink
-	    } );
-	
-	    var options       = attribute( { toJSON : false } );
-	    options.Attribute = LinkAttribute;
 	    return options;
 	};
 	

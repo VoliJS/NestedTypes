@@ -65,27 +65,6 @@ var Model = BaseModel.extend( {
 
     transaction : modelSet.transaction,
 
-    // Create bound function property for an attribute
-    setter : function( name ){
-        var model = this;
-        return function( val ){
-            if( arguments.length ) model[ name ] = val;
-
-            return model[ name ];
-        }
-    },
-
-    // Create bound boolean function property for attribute
-    toggler : function( name, asTrue ){
-        var model = this;
-
-        return function( val ){
-            if( arguments.length ) model[ name ] = val ? asTrue : null;
-
-            return model[ name ] === asTrue;
-        }
-    },
-
     set : function( a, b, c ){
         switch( typeof a ){
         case 'string' :

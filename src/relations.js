@@ -9,24 +9,24 @@ var bbVersion  = require( './backbone+' ).VERSION,
 
 function parseReference( collectionRef ){
     switch( typeof collectionRef ){
-    case 'function' :
-        return collectionRef;
-    case 'object'   :
-        return function(){ return collectionRef; };
-    case 'string'   :
-        var path = collectionRef
-            .replace( /\^/g, 'getOwner().' )
-            .replace( /^\~/, 'store.' )
-            .replace( /^store\.(\w+)/, 'getStore().get("$1")' );
+        case 'function' :
+            return collectionRef;
+        case 'object'   :
+            return function(){ return collectionRef; };
+        case 'string'   :
+            var path = collectionRef
+                .replace( /\^/g, 'getOwner().' )
+                .replace( /^\~/, 'store.' )
+                .replace( /^store\.(\w+)/, 'getStore().get("$1")' );
 
-        return new Function( 'return this.' + path  );
+            return new Function( 'return this.' + path );
     }
 }
 
 var TakeAttribute = attribute.Type.extend( {
-    clone  : function( value ){ return value; },
+    clone     : function( value ){ return value; },
     isChanged : function( a, b ){ return a !== b; },
-    set : function( value, name  ){
+    set       : function( value, name ){
         if( !value ) return null;
 
         error.hardRefNotAssignable( this, name, value );
@@ -35,16 +35,16 @@ var TakeAttribute = attribute.Type.extend( {
     _update : function( val, options, model, attr ){
         return this.delegateEvents( this.cast( val, options, model, attr ), options, model, attr );
     }
-});
+} );
 
 exports.take = function( reference ){
     var getMaster = parseReference( reference );
 
-    var options = attribute({
-        value : null,
+    var options = attribute( {
+        value  : null,
         toJSON : false,
-        type : this,
-        get : function( ref, name ){
+        type   : this,
+        get    : function( ref, name ){
             if( !ref ){
                 // Resolve reference.
                 var value = getMaster.call( this );
@@ -59,9 +59,41 @@ exports.take = function( reference ){
 
             return ref;
         }
-    });
+    } );
 
     options.Attribute = TakeAttribute;
+    return options;
+};
+
+exports.valueLink = function( reference ){
+    var getMaster = parseReference( reference );
+
+    function setLink( value ){
+        var link = getMaster.call( this );
+        link && link.requestChanges( value );
+    }
+
+    function getLink(){
+        var link = getMaster.call( this );
+        return link && link.value;
+    }
+
+    var LinkAttribute = attribute.Type.extend( {
+        createPropertySpec : function(){
+            return {
+                // call to optimized set function for single argument. Doesn't work for backbone types.
+                set : setLink,
+
+                // attach get hook to the getter function, if present
+                get : getLink
+            }
+        },
+
+        set : setLink
+    } );
+
+    var options       = attribute( { toJSON : false } );
+    options.Attribute = LinkAttribute;
     return options;
 };
 
@@ -91,7 +123,7 @@ exports.from = function( masterCollection ){
 
                 if( master && master.length ){
                     // Silently update attribute with object form master.
-                    objOrId = master.get( objOrId ) || null;
+                    objOrId                 = master.get( objOrId ) || null;
                     this.attributes[ name ] = objOrId;
 
                     // Subscribe for events manually. delegateEvents won't be invoked.
@@ -107,7 +139,7 @@ exports.from = function( masterCollection ){
         }
     } );
 
-    var options = attribute( { value : null } );
+    var options       = attribute( { value : null } );
     options.Attribute = ModelRefAttribute; //todo: consider moving this to the attrSpec
     return options;
 };
@@ -116,7 +148,7 @@ var CollectionProto = Collection.prototype;
 
 var refsCollectionSpec = {
     _listenToChanges : bbVersion >= '1.2.0' ? 'update reset' : 'add remove reset', // don't bubble changes from models
-    __class            : 'Collection.SubsetOf',
+    __class          : 'Collection.SubsetOf',
 
     resolvedWith : null,
     refs         : null,
@@ -126,9 +158,9 @@ var refsCollectionSpec = {
     },
 
     clone : function( options ){
-        var copy = CollectionProto.clone.call( this, _.omit( options, 'deep' ) );
+        var copy          = CollectionProto.clone.call( this, _.omit( options, 'deep' ) );
         copy.resolvedWith = this.resolvedWith;
-        copy.refs = this.refs;
+        copy.refs         = this.refs;
 
         return copy;
     },
@@ -153,7 +185,7 @@ var refsCollectionSpec = {
         return CollectionProto.toggle.call( this, model, val );
     },
 
-    addAll    : function(){
+    addAll : function(){
         this.reset( this.resolvedWith.models );
     },
 
@@ -172,12 +204,12 @@ var refsCollectionSpec = {
 
     getModelIds : function(){ return this.refs || _.pluck( this.models, 'id' ); },
 
-    justOne   : function( arg ){
+    justOne : function( arg ){
         var model = arg instanceof Backbone.Model ? arg : this.resolvedWith.get( arg );
         this.set( [ model ] );
     },
 
-    set       : function( models, upperOptions ){
+    set : function( models, upperOptions ){
         var options = { merge : false };
 
         if( models ){
@@ -204,7 +236,7 @@ var refsCollectionSpec = {
 };
 
 exports.subsetOf = function( masterCollection ){
-    var SubsetOf = this.__subsetOf || ( this.__subsetOf = this.extend( refsCollectionSpec ) );
+    var SubsetOf  = this.__subsetOf || ( this.__subsetOf = this.extend( refsCollectionSpec ) );
     var getMaster = parseReference( masterCollection );
 
     return attribute( {

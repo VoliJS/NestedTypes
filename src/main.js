@@ -29,6 +29,8 @@ _.extend( exports, Backbone, {
         return attribute( { value : value } );
     },
 
+    valueLink : relations.valueLink,
+
     Collection : Collection,
     Model      : Model,
     Store      : Store.Model,

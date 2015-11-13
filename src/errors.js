@@ -11,6 +11,10 @@ Object.assign( Object.extend.error, {
                        context.__class + '.set(', format( value ), '); this =', context );
     },
 
+    wrongWatcher : function( context, ref ){
+        console.warn( "[Reference Error] Attribute's .has.watcher(", ref, ") must be string reference or function; attr=", context );
+    },
+
     unknownAttribute : function( context, name, value ){
         if( context.suppressTypeErrors ) return;
 

@@ -2754,7 +2754,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	function parseReference( ref ){
 	    switch( typeof ref ){
 	        case 'string' :
-	            var path     = 'self.' + ref.replace( /\^/g, 'getOwner().' ).split( '.' ),
+	            var path     = ( 'self.' + ref.replace( /\^/g, 'getOwner().' ) ).split( '.' ),
 	                callback = path.pop(),
 	                context  = new Function( 'self', 'return ' + path.join( '.' ) );
 	
@@ -2810,6 +2810,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	        else{
 	            error.wrongWatcher( this, ref );
 	        }
+	
+	        return this;
 	    },
 	
 	    proxy : function( attrs ){

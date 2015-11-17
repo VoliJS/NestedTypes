@@ -278,7 +278,8 @@
                                     if( value !== 0 ){
                                         return value * 2;
                                     }
-                                })
+                                }),
+                        b : Number.has.watcher( 'watcher' )
                     }
                 });
 
@@ -312,6 +313,15 @@
                     m.set( 'a', 0 );
 
                     expect( m.a ).to.be.equal( 66 );
+                });
+
+                it( 'may prevent attribute\'s assignment', function(){
+                    var m = new A();
+                    m.watcher = sinon.spy();
+
+                    m.b = 77;
+                    expect( m.watcher ).to.be.calledOnce;
+                    expect( m.watcher ).to.be.calledWith( 77 );
                 });
             });
 

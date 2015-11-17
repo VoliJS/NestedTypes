@@ -63,6 +63,19 @@
 
         describe( 'Nested parse method', function(){
             describe( 'Nested model', function(){
+                it( 'set _owner property', function(){
+                    var m = new B();
+
+                    expect( m.first._owner ).to.eql( m );
+                    expect( m.c._owner ).to.eql( m );
+
+                    var a = new A();
+                    var _first = m.first;
+                    m.first = a;
+                    expect( _first._owner ).to.not.ok;
+                    expect( m.first._owner ).to.eql( m );
+                });
+
                 it( 'invoke "parse" on construction', function(){
                     var spies = createSpies();
 

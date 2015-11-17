@@ -3,8 +3,9 @@
 master: [![Master Build Status](https://travis-ci.org/Volicon/backbone.nestedTypes.svg?branch=master)](https://travis-ci.org/Volicon/backbone.nestedTypes)
 develop: [![Develop Build Status](https://travis-ci.org/Volicon/backbone.nestedTypes.svg?branch=develop)](https://travis-ci.org/Volicon/backbone.nestedTypes)
 
-Version 1.1.5 highlights:
+Version 1.2.0 highlights:
 
+- React integration and data binding support. [npm install nestedreact](https://github.com/Volicon/react-backbone.glue/)
 - Fixed incompatibilities with backbone 1.2.x by removing backbone dependency, effective now and forever. Currently, stable backbone 1.1.2 is linked in.
 - npm package name is changed to just 'nestedtypes'. Thus, `npm install nestedtypes`.
 - Can be used as drop-in backbonejs replacement in your project.

@@ -4,6 +4,7 @@ require( './object+' );
 
 var trigger3         = require( './backbone+' ).Events.trigger3,
     modelSet         = require( './modelset' ),
+    error            = require( './errors' ),
     genericIsChanged = modelSet.isChanged,
     setSingleAttr    = modelSet.setSingleAttr;
 
@@ -16,6 +17,30 @@ var primitiveTypes = {
 // list of simple accessor methods available in options
 var availableOptions = [ 'triggerWhenChanged', 'changeEvents', 'parse', 'clone', 'toJSON', 'value', 'cast', 'create', 'name', 'value',
                          'type' ];
+
+function parseReference( ref ){
+    switch( typeof ref ){
+        case 'string' :
+            var path     = ( 'self.' + ref.replace( /\^/g, 'getOwner().' ) ).split( '.' ),
+                callback = path.pop(),
+                context  = new Function( 'self', 'return ' + path.join( '.' ) );
+
+            return function( value ){
+                var self = context( this );
+
+                if( self && self[ callback ] ){
+                    self[ callback ]( value, this );
+                }
+
+                return value;
+            };
+        case 'function' :
+            return function( value ){
+                ref.call( this, value, this );
+                return value;
+            };
+    }
+}
 
 var Options = Object.extend( {
     _options : {}, // attribute options
@@ -42,6 +67,18 @@ var Options = Object.extend( {
 
         this._options = {};
         this.options( spec );
+    },
+
+    watcher : function( ref ){
+        var callback = parseReference( ref );
+        if( callback ){
+            this.set( callback );
+        }
+        else{
+            error.wrongWatcher( this, ref );
+        }
+
+        return this;
     },
 
     proxy : function( attrs ){
@@ -87,10 +124,10 @@ var Options = Object.extend( {
 
         if( options.proxy && typeof options.proxy === 'string' && !options.triggerWhenChanged ){
             options.triggerWhenChanged = options.proxy
-                .split( ' ' )
-                .map( function( attr ){
-                    return 'change:' + attr;
-                }).join( ' ' );
+                                                .split( ' ' )
+                                                .map( function( attr ){
+                                                    return 'change:' + attr;
+                                                } ).join( ' ' );
         }
 
         return new Type( name, options );
@@ -232,11 +269,12 @@ var Attribute = Object.extend( {
     },
 
     attachMixins : function( spec ){
-        var type = this.type,
+        var type  = this.type,
             proto = type && type.prototype;
 
         if( type && this.proxy ){
-            var keys = typeof this.proxy === 'string' ? this.proxy.split( ' ' ) : _.allKeys( proto ).concat( _.keys( proto.properties ) );
+            var keys = typeof this.proxy === 'string' ? this.proxy.split( ' ' ) : _.allKeys( proto ).concat(
+                _.keys( proto.properties ) );
 
             // for each enumerable property...
             for( var i = 0; i < keys.length; i++ ){
@@ -339,9 +377,9 @@ var Attribute = Object.extend( {
 
         return function(){
             for( var i = 0; i < arguments.length; i++ ){
-                var Type = arguments[ i ];
+                var Type       = arguments[ i ];
                 Type.attribute = Type.options = options;
-                Type.value = value;
+                Type.value     = value;
                 Type.Attribute = this;
                 Object.defineProperty( Type, 'has', {
                     get : function(){
@@ -362,7 +400,7 @@ function createOptions( spec ){
     return new Options( spec );
 }
 
-createOptions.Type = Attribute;
+createOptions.Type   = Attribute;
 createOptions.create = function( options, name ){
     if( !( options && options instanceof Options ) ){
         options = new Options( { typeOrValue : options } );

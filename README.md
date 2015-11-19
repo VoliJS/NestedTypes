@@ -1,11 +1,11 @@
 # Getting Started
 
-master: [![Master Build Status](https://travis-ci.org/Volicon/backbone.nestedTypes.svg?branch=master)](https://travis-ci.org/Volicon/backbone.nestedTypes)
-develop: [![Develop Build Status](https://travis-ci.org/Volicon/backbone.nestedTypes.svg?branch=develop)](https://travis-ci.org/Volicon/backbone.nestedTypes)
+master: [![Master Build Status](https://travis-ci.org/Volicon/NestedTypes.svg?branch=master)](https://travis-ci.org/Volicon/NestedTypes)
+develop: [![Develop Build Status](https://travis-ci.org/Volicon/NestedTypes.svg?branch=develop)](https://travis-ci.org/Volicon/NestedTypes)
 
 Version 1.2.0 highlights:
 
-- React integration and data binding support. [npm install nestedreact](https://github.com/Volicon/react-backbone.glue/)
+- React integration and data binding support. [npm install nestedreact](https://github.com/Volicon/NestedReact/)
 - Fixed incompatibilities with backbone 1.2.x by removing backbone dependency, effective now and forever. Currently, stable backbone 1.1.2 is linked in.
 - npm package name is changed to just 'nestedtypes'. Thus, `npm install nestedtypes`.
 - Can be used as drop-in backbonejs replacement in your project.
@@ -34,7 +34,7 @@ Nested.store = new Nested.LazyStore.defaults({
 Why? Because now Stores are first-class objects in the system, they can be created with `new`,  
 they supports hierarchical lookups, they may have different transports, and more. The more about it later.
 
-Browse complete documentation here: http://volicon.github.io/backbone.nestedTypes/
+Browse complete documentation here: http://volicon.github.io/NestedTypes/
 
 ## What it is
 

@@ -181,6 +181,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    __class      : 'Model',
 	
 	    __duringSet : 0,
+	    _transactionId : {},
 	
 	    defaults : function(){ return {}; },
 	
@@ -273,10 +274,15 @@ return /******/ (function(modules) { // webpackBootstrap
 	            attrs     = attributes || {},
 	            options   = opts || {};
 	
+	        this._events = null;
 	        this.__duringSet = 0;
+	        this._pending = false;
+	        this._changing = false;
+	        this._transactionId = {};
 	        this.attributes = {};
-	        if( options.collection ) this.collection = options.collection;
 	        this.cid = _.uniqueId( 'c' );
+	
+	        if( options.collection ) this.collection = options.collection;
 	
 	        if( options.parse ){
 	            attrs = this.parse( attrs, options ) || {};
@@ -596,7 +602,15 @@ return /******/ (function(modules) { // webpackBootstrap
 	Object.assign( Class.prototype, Events );
 	
 	// So hard to believe :) You won't. Optimized JIT-friendly event trigger functions to be used from model.set
-	// Two specialized functions for event triggering...
+	// three specialized functions for event triggering...
+	Events.trigger1 = function( self, name, a ){
+	    var _events = self._events;
+	    if( _events ){
+	        _fireEvent1( _events[ name ], a );
+	        _fireEvent2( _events.all, name, a );
+	    }
+	};
+	
 	Events.trigger2 = function( self, name, a, b ){
 	    var _events = self._events;
 	    if( _events ){
@@ -614,6 +628,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	};
 	
 	// ...and specialized functions with triggering loops. Crappy JS JIT loves these small functions and code duplication.
+	function _fireEvent1( events, a ){
+	    if( events )
+	        for( var i = 0, l = events.length, ev; i < l; i ++ )
+	            (ev = events[i]).callback.call(ev.ctx, a );
+	}
+	
 	function _fireEvent2( events, a, b ){
 	    if( events )
 	        for( var i = 0, l = events.length, ev; i < l; i ++ )
@@ -631,6 +651,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        for( var i = 0, l = events.length, ev; i < l; i ++ )
 	            (ev = events[i]).callback.call(ev.ctx, a, b, c, d);
 	}
+
 
 /***/ },
 /* 3 */
@@ -2498,6 +2519,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    while( model._pending ){
 	        options        = model._pending;
 	        model._pending = false;
+	        model._transactionId = {};
 	        trigger2( model, 'change', model, options );
 	    }
 	
@@ -2531,6 +2553,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        while( this._pending ){
 	            options       = this._pending;
 	            this._pending = false;
+	            model._transactionId = {};
 	            trigger2( this, 'change', this, options );
 	        }
 	
@@ -2610,6 +2633,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        while( model._pending ){
 	            options        = model._pending;
 	            model._pending = false;
+	            model._transactionId = {};
 	            trigger2( model, 'change', model, options );
 	        }
 	    }
@@ -2676,6 +2700,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        bbSetAttrs( this, attrs, options );
 	    }
 	}
+
 
 /***/ },
 /* 8 */
@@ -3152,6 +3177,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	var Backbone = __webpack_require__( 2 ),
 	    Model    = __webpack_require__( 1 ),
 	    error    = __webpack_require__( 8 ),
+	    Events   = __webpack_require__( 2 ).Events,
+	    trigger1 = Events.trigger1,
 	    _        = __webpack_require__( 5 );
 	
 	var CollectionProto = Backbone.Collection.prototype;
@@ -3162,7 +3189,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	        var res = func.apply( this, arguments );
 	
-	        --this.__changing || ( this._changed && this.trigger( this.triggerWhenChanged, this ) );
+	        --this.__changing || ( this._changed && trigger1( this, this.triggerWhenChanged, this ) );
 	
 	        return res;
 	    };
@@ -3173,7 +3200,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	        this._changed = true;
 	    }
 	    else{
-	        this.trigger( this.triggerWhenChanged, this );
+	        this._transactionId = {};
+	        trigger1( this, this.triggerWhenChanged, this );
 	    }
 	}
 	
@@ -3189,16 +3217,23 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	    __changing : 0,
 	    _changed : false,
+	    _transactionId : {},
 	
 	    // ATTENTION: Overriden backbone logic with bug fixes
-	    constructor : function( models, options ){
-	        options || (options = {});
-	        if (options.model) this.model = options.model;
-	        if (options.comparator !== void 0) this.comparator = options.comparator;
+	    constructor : function( models, a_options ){
+	        // initialize members...
 	        this._reset();
-	
+	        this._events = null;
 	        this.__changing = 0;
 	        this._changed = false;
+	        this._transactionId = {};
+	
+	        // initialize optional members...
+	        var options = a_options || {};
+	        if (options.model) this.model = options.model;
+	        if (options.comparator !== void 0) this.comparator = options.comparator;
+	
+	        // fill with data and invoke constructor...
 	        if (models) this.reset( models, options );
 	        this.listenTo( this, this._listenToChanges, handleChange );
 	        this.initialize.apply(this, arguments);

@@ -1,6 +1,8 @@
 var Backbone = require( './backbone+' ),
     Model    = require( './model' ),
     error    = require( './errors' ),
+    Events   = require( './backbone+' ).Events,
+    trigger1 = Events.trigger1,
     _        = require( 'underscore' );
 
 var CollectionProto = Backbone.Collection.prototype;
@@ -11,7 +13,7 @@ function transaction( func ){
 
         var res = func.apply( this, arguments );
 
-        --this.__changing || ( this._changed && this.trigger( this.triggerWhenChanged, this ) );
+        --this.__changing || ( this._changed && trigger1( this, this.triggerWhenChanged, this ) );
 
         return res;
     };
@@ -22,7 +24,8 @@ function handleChange(){
         this._changed = true;
     }
     else{
-        this.trigger( this.triggerWhenChanged, this );
+        this._transactionId = {};
+        trigger1( this, this.triggerWhenChanged, this );
     }
 }
 
@@ -38,16 +41,23 @@ module.exports = Backbone.Collection.extend( {
 
     __changing : 0,
     _changed : false,
+    _transactionId : {},
 
     // ATTENTION: Overriden backbone logic with bug fixes
-    constructor : function( models, options ){
-        options || (options = {});
-        if (options.model) this.model = options.model;
-        if (options.comparator !== void 0) this.comparator = options.comparator;
+    constructor : function( models, a_options ){
+        // initialize members...
         this._reset();
-
+        this._events = null;
         this.__changing = 0;
         this._changed = false;
+        this._transactionId = {};
+
+        // initialize optional members...
+        var options = a_options || {};
+        if (options.model) this.model = options.model;
+        if (options.comparator !== void 0) this.comparator = options.comparator;
+
+        // fill with data and invoke constructor...
         if (models) this.reset( models, options );
         this.listenTo( this, this._listenToChanges, handleChange );
         this.initialize.apply(this, arguments);

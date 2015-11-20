@@ -57,6 +57,7 @@ var Model = BaseModel.extend( {
     __class      : 'Model',
 
     __duringSet : 0,
+    _transactionId : {},
 
     defaults : function(){ return {}; },
 
@@ -149,10 +150,15 @@ var Model = BaseModel.extend( {
             attrs     = attributes || {},
             options   = opts || {};
 
+        this._events = null;
         this.__duringSet = 0;
+        this._pending = false;
+        this._changing = false;
+        this._transactionId = {};
         this.attributes = {};
-        if( options.collection ) this.collection = options.collection;
         this.cid = _.uniqueId( 'c' );
+
+        if( options.collection ) this.collection = options.collection;
 
         if( options.parse ){
             attrs = this.parse( attrs, options ) || {};

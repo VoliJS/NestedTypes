@@ -72,6 +72,7 @@ function setSingleAttr( model, key, value, attrSpec ){
     while( model._pending ){
         options        = model._pending;
         model._pending = false;
+        model._transactionId = {};
         trigger2( model, 'change', model, options );
     }
 
@@ -105,6 +106,7 @@ function transaction( a_fun, context, args ){
         while( this._pending ){
             options       = this._pending;
             this._pending = false;
+            model._transactionId = {};
             trigger2( this, 'change', this, options );
         }
 
@@ -184,6 +186,7 @@ function bbSetAttrs( model, attrs, opts ){
         while( model._pending ){
             options        = model._pending;
             model._pending = false;
+            model._transactionId = {};
             trigger2( model, 'change', model, options );
         }
     }

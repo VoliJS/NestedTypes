@@ -86,7 +86,7 @@ define( function( require, exports, module ){
     describe( 'Flat models', function(){
         this.timeout( 100000 );
 
-        describe( 'primitive types', function(){
+        describe( 'Create performance', function(){
             var n, b;
 
             describe( '1-attr model, 1M create', function(){
@@ -94,32 +94,31 @@ define( function( require, exports, module ){
                     for( var i = 0; i < 1000000; i++ ){
                         b = new BSmall();
                     }
-                });
+                } );
 
                 it( 'Nested', function(){
                     for( var i = 0; i < 1000000; i++ ){
                         n = new NSmall();
                     }
-                });
-            });
+                } );
+            } );
 
-            describe( '1-attr model, 300K collection', function(){
-/*
+            describe( '1-attr model, 100K collection.create', function(){
                 it( 'Backbone', function(){
                     var c = new BSmallCollection();
                     for( var i = 0; i < 100000; i++ ){
                         c.create();
                     }
-                });*/
+                } );
 
                 it( 'Nested', function(){
                     var c = new NSmall.Collection();
 
-                    for( var i = 0; i < 300000; i++ ){
+                    for( var i = 0; i < 100000; i++ ){
                         c.create();
                     }
-                });
-            });
+                } );
+            } );
 
             describe( '20-attrs model, 1M create', function(){
 
@@ -127,14 +126,35 @@ define( function( require, exports, module ){
                     for( var i = 0; i < 1000000; i++ ){
                         b = new BLarge();
                     }
-                });
+                } );
 
                 it( 'Nested', function(){
                     for( var i = 0; i < 1000000; i++ ){
                         n = new NLarge();
                     }
-                });
-            });
+                } );
+            } );
+
+            describe( '20-attr model, 100K collection.create', function(){
+                it( 'Backbone', function(){
+                    var c = new BLargeCollection();
+                    for( var i = 0; i < 100000; i++ ){
+                        c.create();
+                    }
+                } );
+
+                it( 'Nested', function(){
+                    var c = new NLarge.Collection();
+
+                    for( var i = 0; i < 100000; i++ ){
+                        c.create();
+                    }
+                } );
+            } );
+        });
+
+        describe( 'Update performance', function(){
+            var n, b;
 
             describe( '1-attr model, 1M .set( "a1", number )', function(){
 

@@ -3382,13 +3382,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	    reset : transaction( function( a_models, a_options ){
 	        var options = a_options || {},
-	            models = a_models;
+	            models = a_models,
+	            previous = this.models;
 	
-	        for( var i = 0, l = this.models.length; i < l; i++ ){
-	            this._removeReference( this.models[ i ], options );
+	        for( var i = 0, l = previous.length; i < l; i++ ){
+	            this._removeReference( previous[ i ], options );
 	        }
 	
-	        options.previousModels = this.models;
+	        options.previousModels = previous;
 	
 	        this._reset();
 	
@@ -3396,7 +3397,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        fastCopy( newOptions, a_options );
 	        models = this.add( models, newOptions );
 	
-	        if( !options.silent ) trigger2( this, 'reset', this, options );
+	        options.silent || trigger2( this, 'reset', this, options );
 	
 	        return models;
 	    } ),

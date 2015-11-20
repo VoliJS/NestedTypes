@@ -2553,7 +2553,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        while( this._pending ){
 	            options       = this._pending;
 	            this._pending = false;
-	            model._transactionId = {};
+	            this._transactionId = {};
 	            trigger2( this, 'change', this, options );
 	        }
 	

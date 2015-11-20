@@ -623,6 +623,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	// So hard to believe :) You won't. Optimized JIT-friendly event trigger functions to be used from model.set
 	// Two specialized functions for event triggering...
+	Events.trigger1 = function( self, name, a ){
+	    var _events = self._events;
+	    if( _events ){
+	        _fireEvent1( _events[ name ], a );
+	        _fireEvent2( _events.all, name, a );
+	    }
+	};
+	
 	Events.trigger2 = function( self, name, a, b ){
 	    var _events = self._events;
 	    if( _events ){
@@ -640,6 +648,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	};
 	
 	// ...and specialized functions with triggering loops. Crappy JS JIT loves these small functions and code duplication.
+	function _fireEvent1( events, a ){
+	    if( events )
+	        for( var i = 0, l = events.length, ev; i < l; i ++ )
+	            (ev = events[i]).callback.call(ev.ctx, a );
+	}
+	
 	function _fireEvent2( events, a, b ){
 	    if( events )
 	        for( var i = 0, l = events.length, ev; i < l; i ++ )
@@ -3166,6 +3180,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    Model    = __webpack_require__( 1 ),
 	    Events   = Backbone.Events,
 	    error    = __webpack_require__( 8 ),
+	    trigger1 = Events.trigger1,
 	    trigger2 = Events.trigger2,
 	    trigger3 = Events.trigger3;
 	_            = __webpack_require__( 5 );
@@ -3178,7 +3193,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	        var res = func.apply( this, arguments );
 	
-	        --this.__changing || ( this._changed && this.trigger( this.triggerWhenChanged, this ) );
+	        --this.__changing || ( this._changed && trigger1( this, this.triggerWhenChanged, this ) );
 	
 	        return res;
 	    };
@@ -3189,7 +3204,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        this._changed = true;
 	    }
 	    else{
-	        this.trigger( this.triggerWhenChanged, this );
+	        trigger1( this, this.triggerWhenChanged, this );
 	    }
 	}
 	
@@ -3209,8 +3224,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	    _changed   : false,
 	
 	    // ATTENTION: Overriden backbone logic with bug fixes
-	    constructor : function( models, options ){
-	        options || (options = {});
+	    constructor : function( models, a_options ){
+	        var options = a_options || {};
 	        if( options.model ) this.model = options.model;
 	        if( options.comparator !== void 0 ) this.comparator = options.comparator;
 	        this._reset();
@@ -3275,12 +3290,28 @@ return /******/ (function(modules) { // webpackBootstrap
 	        return collectionSet( this, models, options );
 	    } ),
 	
+	    create : function( a_model, a_options ){
+	        var options = {}, model = a_model;
+	        fastCopy( options, a_options );
+	
+	        if( !(model = this._prepareModel( model, options )) ) return false;
+	        if( !options.wait ) this.add( model, options );
+	        var collection  = this;
+	        var success     = options.success;
+	        options.success = function( model, resp ){
+	            if( options.wait ) collection.add( model, options );
+	            if( success ) success( model, resp, options );
+	        };
+	
+	        model.save( null, options );
+	        return model;
+	    },
+	
 	    _onModelEvent : function( event, model, collection, options ){
 	        switch( event ){
 	            case 'add' :
 	            case 'remove' :
-	                if( collection !== this ) return;
-	                trigger3( this, event, model, collection, options );
+	                if( collection === this ) trigger3( this, event, model, collection, options );
 	                break;
 	            case 'destroy' :
 	                this.remove( model, options );
@@ -3324,9 +3355,33 @@ return /******/ (function(modules) { // webpackBootstrap
 	    },
 	
 	    remove : transaction( CollectionProto.remove ),
-	    add    : transaction( CollectionProto.add ),
-	    reset  : transaction( CollectionProto.reset ),
-	    sort   : transaction( CollectionProto.sort ),
+	
+	    add : function( models, a_options ){
+	        var options = { merge : false, add : true, remove : false };
+	        fastCopy( options, a_options );
+	        return this.set( models, options );
+	    },
+	
+	    // Prepare a hash of attributes (or other model) to be added to this
+	    // collection.
+	    _prepareModel : function( attrs, a_options ){
+	        if( attrs instanceof Model ) return attrs;
+	
+	        var options = {};
+	        fastCopy( options, a_options );
+	        options.collection = this;
+	
+	        var model = new this.model( attrs, options );
+	
+	        if( !model.validationError ) return model;
+	
+	        trigger3( this, 'invalid', this, model.validationError, options );
+	
+	        return false;
+	    },
+	
+	    reset : transaction( CollectionProto.reset ),
+	    sort  : transaction( CollectionProto.sort ),
 	
 	    getModelIds : function(){ return _.pluck( this.models, 'id' ); },
 	

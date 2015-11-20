@@ -36,6 +36,14 @@ Object.assign( Class.prototype, Events );
 
 // So hard to believe :) You won't. Optimized JIT-friendly event trigger functions to be used from model.set
 // Two specialized functions for event triggering...
+Events.trigger1 = function( self, name, a ){
+    var _events = self._events;
+    if( _events ){
+        _fireEvent1( _events[ name ], a );
+        _fireEvent2( _events.all, name, a );
+    }
+};
+
 Events.trigger2 = function( self, name, a, b ){
     var _events = self._events;
     if( _events ){
@@ -53,6 +61,12 @@ Events.trigger3 = function( self, name, a, b, c ){
 };
 
 // ...and specialized functions with triggering loops. Crappy JS JIT loves these small functions and code duplication.
+function _fireEvent1( events, a ){
+    if( events )
+        for( var i = 0, l = events.length, ev; i < l; i ++ )
+            (ev = events[i]).callback.call(ev.ctx, a );
+}
+
 function _fireEvent2( events, a, b ){
     if( events )
         for( var i = 0, l = events.length, ev; i < l; i ++ )

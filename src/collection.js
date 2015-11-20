@@ -2,6 +2,7 @@ var Backbone = require( './backbone+' ),
     Model    = require( './model' ),
     Events   = Backbone.Events,
     error    = require( './errors' ),
+    trigger1 = Events.trigger1,
     trigger2 = Events.trigger2,
     trigger3 = Events.trigger3;
 _            = require( 'underscore' );
@@ -14,7 +15,7 @@ function transaction( func ){
 
         var res = func.apply( this, arguments );
 
-        --this.__changing || ( this._changed && this.trigger( this.triggerWhenChanged, this ) );
+        --this.__changing || ( this._changed && trigger1( this, this.triggerWhenChanged, this ) );
 
         return res;
     };
@@ -25,7 +26,7 @@ function handleChange(){
         this._changed = true;
     }
     else{
-        this.trigger( this.triggerWhenChanged, this );
+        trigger1( this, this.triggerWhenChanged, this );
     }
 }
 
@@ -45,8 +46,8 @@ module.exports = Backbone.Collection.extend( {
     _changed   : false,
 
     // ATTENTION: Overriden backbone logic with bug fixes
-    constructor : function( models, options ){
-        options || (options = {});
+    constructor : function( models, a_options ){
+        var options = a_options || {};
         if( options.model ) this.model = options.model;
         if( options.comparator !== void 0 ) this.comparator = options.comparator;
         this._reset();
@@ -111,6 +112,23 @@ module.exports = Backbone.Collection.extend( {
         return collectionSet( this, models, options );
     } ),
 
+    create : function( a_model, a_options ){
+        var options = {}, model = a_model;
+        fastCopy( options, a_options );
+
+        if( !(model = this._prepareModel( model, options )) ) return false;
+        if( !options.wait ) this.add( model, options );
+        var collection  = this;
+        var success     = options.success;
+        options.success = function( model, resp ){
+            if( options.wait ) collection.add( model, options );
+            if( success ) success( model, resp, options );
+        };
+
+        model.save( null, options );
+        return model;
+    },
+
     _onModelEvent : function( event, model, collection, options ){
         switch( event ){
             case 'add' :
@@ -159,9 +177,33 @@ module.exports = Backbone.Collection.extend( {
     },
 
     remove : transaction( CollectionProto.remove ),
-    add    : transaction( CollectionProto.add ),
-    reset  : transaction( CollectionProto.reset ),
-    sort   : transaction( CollectionProto.sort ),
+
+    add : function( models, a_options ){
+        var options = { merge : false, add : true, remove : false };
+        fastCopy( options, a_options );
+        return this.set( models, options );
+    },
+
+    // Prepare a hash of attributes (or other model) to be added to this
+    // collection.
+    _prepareModel : function( attrs, a_options ){
+        if( attrs instanceof Model ) return attrs;
+
+        var options = {};
+        fastCopy( options, a_options );
+        options.collection = this;
+
+        var model = new this.model( attrs, options );
+
+        if( !model.validationError ) return model;
+
+        trigger3( this, 'invalid', this, model.validationError, options );
+
+        return false;
+    },
+
+    reset : transaction( CollectionProto.reset ),
+    sort  : transaction( CollectionProto.sort ),
 
     getModelIds : function(){ return _.pluck( this.models, 'id' ); },
 

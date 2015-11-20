@@ -2,83 +2,94 @@ define( function( require, exports, module ){
     var Nested   = require( '../nestedtypes' ),
         Backbone = require( 'backbone' );
 
+    var NLarge = Nested.Model.extend({
+        defaults : {
+            a1 : 1, a2 : 2, a3 : 3, a4: 4, a5 : 5, a6: 6, a7: 7, a8: 8, a9: 9, a10 : 10,
+            b1 : 1, b2 : 2, b3 : 3, b4: 4, b5 : 5, b6: 6, b7: 7, b8: 8, b9: 9, b10 : 10
+        },
+
+        updateSet : function(){
+            this.set({
+                a1 : this.a1 + 1,
+                a2 : this.a2 + 1,
+                a3 : this.a3 + 1,
+                a4 : this.a4 + 1,
+                a5 : this.a5 + 1
+            });
+        },
+
+        updateTransaction : Nested.transaction(function(){
+            this.a1 = this.a1 + 1;
+            this.a2 = this.a2 + 1;
+            this.a3 = this.a3 + 1;
+            this.a4 = this.a4 + 1;
+            this.a5 = this.a5 + 1;
+        }),
+
+        updateAdHocTransaction : function(){
+            this.transaction( function(){
+                this.a1 = this.a1 + 1;
+                this.a2 = this.a2 + 1;
+                this.a3 = this.a3 + 1;
+                this.a4 = this.a4 + 1;
+                this.a5 = this.a5 + 1;
+            }, {} );
+        },
+
+        save(){}
+    });
+
+    var BLarge = Backbone.Model.extend({
+        defaults : {
+            a1 : 1, a2 : 2, a3 : 3, a4: 4, a5 : 5, a6: 6, a7: 7, a8: 8, a9: 9, a10 : 10,
+            b1 : 1, b2 : 2, b3 : 3, b4: 4, b5 : 5, b6: 6, b7: 7, b8: 8, b9: 9, b10 : 10
+        },
+
+        updateSet : function(){
+            this.set({
+                a1 : this.get( 'a1' ) + 1,
+                a2 : this.get( 'a2' ) + 1,
+                a3 : this.get( 'a3' ) + 1,
+                a4 : this.get( 'a4' ) + 1,
+                a5 : this.get( 'a5' ) + 1
+            });
+        },
+
+        save(){}
+    });
+
+    var BLargeCollection = Backbone.Collection.extend({
+        model : BLarge
+    });
+
+
+    var NSmall = Nested.Model.extend({
+        defaults : {
+            a1 : 1
+        },
+
+        save(){}
+    });
+
+    var BSmall = Backbone.Model.extend({
+        defaults : {
+            a1 : 1
+        },
+
+        save(){}
+    });
+
+    var BSmallCollection = Backbone.Collection.extend({
+        model : BSmall
+    });
+
     describe( 'Flat models', function(){
         this.timeout( 100000 );
 
         describe( 'primitive types', function(){
-            var NLarge, BLarge, NSmall, BSmall;
-
-            function makeDefinitions(){
-                NLarge = Nested.Model.extend({
-                    defaults : {
-                        a1 : 1, a2 : 2, a3 : 3, a4: 4, a5 : 5, a6: 6, a7: 7, a8: 8, a9: 9, a10 : 10,
-                        b1 : 1, b2 : 2, b3 : 3, b4: 4, b5 : 5, b6: 6, b7: 7, b8: 8, b9: 9, b10 : 10
-                    },
-
-                    updateSet : function(){
-                        this.set({
-                            a1 : this.a1 + 1,
-                            a2 : this.a2 + 1,
-                            a3 : this.a3 + 1,
-                            a4 : this.a4 + 1,
-                            a5 : this.a5 + 1
-                        });
-                    },
-
-                    updateTransaction : Nested.transaction(function(){
-                        this.a1 = this.a1 + 1;
-                        this.a2 = this.a2 + 1;
-                        this.a3 = this.a3 + 1;
-                        this.a4 = this.a4 + 1;
-                        this.a5 = this.a5 + 1;
-                    }),
-
-                    updateAdHocTransaction : function(){
-                        this.transaction( function(){
-                            this.a1 = this.a1 + 1;
-                            this.a2 = this.a2 + 1;
-                            this.a3 = this.a3 + 1;
-                            this.a4 = this.a4 + 1;
-                            this.a5 = this.a5 + 1;
-                        }, {} );
-                    }
-                });
-
-                BLarge = Backbone.Model.extend({
-                    defaults : {
-                        a1 : 1, a2 : 2, a3 : 3, a4: 4, a5 : 5, a6: 6, a7: 7, a8: 8, a9: 9, a10 : 10,
-                        b1 : 1, b2 : 2, b3 : 3, b4: 4, b5 : 5, b6: 6, b7: 7, b8: 8, b9: 9, b10 : 10
-                    },
-
-                    updateSet : function(){
-                        this.set({
-                            a1 : this.get( 'a1' ) + 1,
-                            a2 : this.get( 'a2' ) + 1,
-                            a3 : this.get( 'a3' ) + 1,
-                            a4 : this.get( 'a4' ) + 1,
-                            a5 : this.get( 'a5' ) + 1
-                        });
-                    }
-                });
-
-                NSmall = Nested.Model.extend({
-                    defaults : {
-                        a1 : 1
-                    }
-                });
-
-                BSmall = Backbone.Model.extend({
-                    defaults : {
-                        a1 : 1
-                    }
-                });
-            }
-
             var n, b;
 
             describe( '1-attr model, 1M create', function(){
-                makeDefinitions();
-
                 it( 'Backbone', function(){
                     for( var i = 0; i < 1000000; i++ ){
                         b = new BSmall();
@@ -92,8 +103,25 @@ define( function( require, exports, module ){
                 });
             });
 
+            describe( '1-attr model, 300K collection', function(){
+/*
+                it( 'Backbone', function(){
+                    var c = new BSmallCollection();
+                    for( var i = 0; i < 100000; i++ ){
+                        c.create();
+                    }
+                });*/
+
+                it( 'Nested', function(){
+                    var c = new NSmall.Collection();
+
+                    for( var i = 0; i < 300000; i++ ){
+                        c.create();
+                    }
+                });
+            });
+
             describe( '20-attrs model, 1M create', function(){
-                makeDefinitions();
 
                 it( 'Backbone', function(){
                     for( var i = 0; i < 1000000; i++ ){
@@ -109,7 +137,6 @@ define( function( require, exports, module ){
             });
 
             describe( '1-attr model, 1M .set( "a1", number )', function(){
-                makeDefinitions();
 
                 var b = new BSmall();
 
@@ -137,7 +164,7 @@ define( function( require, exports, module ){
             });
 
             describe( '20-attrs model, 1M .set( "a1", number )', function(){
-                makeDefinitions();
+                
 
                 var b = new BLarge();
 
@@ -165,7 +192,6 @@ define( function( require, exports, module ){
             });
 
             describe( '20-attrs model, 10M .get( "a1" )', function(){
-                makeDefinitions();
 
                 var b = new BLarge({ a1: 1 }), x;
 
@@ -193,7 +219,6 @@ define( function( require, exports, module ){
             });
 
             describe( 'both models, 1M read and write', function(){
-                makeDefinitions();
 
                 it( 'Backbone', function(){
                     var l = new BLarge(), s = new BSmall();
@@ -224,7 +249,6 @@ define( function( require, exports, module ){
             });
 
             describe( '1M 5-attr transactional updates', function(){
-                makeDefinitions();
 
                 it( 'Backbone', function(){
                     var l = new BLarge();
@@ -259,5 +283,6 @@ define( function( require, exports, module ){
                 });
             });
         });
+        
     });
 });

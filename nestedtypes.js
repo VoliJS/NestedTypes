@@ -299,12 +299,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	            options   = opts || {};
 	
 	        this.__duringSet = 0;
-	        this._changed = null;
-	        this._changing = this._pending = false;
+	        this._changed = this._changing = this._pending = false;
 	        this.attributes = {};
+	        this.cid = _.uniqueId( 'c' );
 	
 	        if( options.collection ) this.collection = options.collection;
-	        this.cid = _.uniqueId( 'c' );
 	
 	        if( options.parse ){
 	            attrs = this.parse( attrs, options ) || {};
@@ -3165,8 +3164,11 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	var Backbone = __webpack_require__( 2 ),
 	    Model    = __webpack_require__( 1 ),
+	    Events   = Backbone.Events,
 	    error    = __webpack_require__( 8 ),
-	    _        = __webpack_require__( 5 );
+	    trigger2 = Events.trigger2,
+	    trigger3 = Events.trigger3;
+	_            = __webpack_require__( 5 );
 	
 	var CollectionProto = Backbone.Collection.prototype;
 	
@@ -3191,9 +3193,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }
 	}
 	
+	var attrChangeRegexp = /^change:(\w+)$/;
+	
 	module.exports = Backbone.Collection.extend( {
 	    triggerWhenChanged : 'changes',
-	    _listenToChanges : Backbone.VERSION >= '1.2.0' ? 'update change reset' : 'add remove change reset',
+	    _listenToChanges   : Backbone.VERSION >= '1.2.0' ? 'update change reset' : 'add remove change reset',
 	    __class            : 'Collection',
 	
 	    model : Model,
@@ -3202,20 +3206,20 @@ return /******/ (function(modules) { // webpackBootstrap
 	    _store : null,
 	
 	    __changing : 0,
-	    _changed : false,
+	    _changed   : false,
 	
 	    // ATTENTION: Overriden backbone logic with bug fixes
 	    constructor : function( models, options ){
 	        options || (options = {});
-	        if (options.model) this.model = options.model;
-	        if (options.comparator !== void 0) this.comparator = options.comparator;
+	        if( options.model ) this.model = options.model;
+	        if( options.comparator !== void 0 ) this.comparator = options.comparator;
 	        this._reset();
 	
 	        this.__changing = 0;
-	        this._changed = false;
-	        if (models) this.reset( models, options );
+	        this._changed   = false;
+	        if( models ) this.reset( models, options );
 	        this.listenTo( this, this._listenToChanges, handleChange );
-	        this.initialize.apply(this, arguments);
+	        this.initialize.apply( this, arguments );
 	    },
 	
 	    getStore : function(){
@@ -3223,7 +3227,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    },
 	
 	    sync : function(){
-	      return this.getStore().sync.apply( this, arguments );
+	        return this.getStore().sync.apply( this, arguments );
 	    },
 	
 	    isValid : function( options ){
@@ -3249,7 +3253,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        return next;
 	    },
 	
-		// ATTENTION: Overriden backbone logic with bug fixes
+	    // ATTENTION: Overriden backbone logic with bug fixes
 	    get : function( obj ){
 	        if( obj == null ){ return void 0; }
 	
@@ -3258,6 +3262,50 @@ return /******/ (function(modules) { // webpackBootstrap
 	        }
 	
 	        return this._byId[ obj ];
+	    },
+	
+	    set : transaction( function( models, options ){
+	        if( models ){
+	            if( typeof models !== 'object' || !( models instanceof Array || models instanceof Model ||
+	                Object.getPrototypeOf( models ) === Object.prototype ) ){
+	                error.wrongCollectionSetArg( this, models );
+	            }
+	        }
+	
+	        return collectionSet( this, models, options );
+	    } ),
+	
+	    _onModelEvent : function( event, model, collection, options ){
+	        switch( event ){
+	            case 'add' :
+	            case 'remove' :
+	                if( collection !== this ) return;
+	                trigger3( this, event, model, collection, options );
+	                break;
+	            case 'destroy' :
+	                this.remove( model, options );
+	                trigger3( this, event, model, collection, options );
+	                break;
+	            case 'change' :
+	            case 'sync' :
+	            case 'invalid' :
+	                trigger2( this, event, model, collection );
+	                break;
+	            default:
+	                var attrChange = event.match( attrChangeRegexp );
+	                if( attrChange ){
+	                    if( model && attrChange[ 1 ] === model.idAttribute ){
+	                        delete this._byId[ model.previous( model.idAttribute ) ];
+	                        if( model.id != null ) this._byId[ model.id ] = model;
+	                    }
+	
+	                    trigger3( this, event, model, collection, options );
+	                }
+	                else{
+	                    this.trigger.apply( this, arguments );
+	                }
+	        }
+	
 	    },
 	
 	    deepClone : function(){ return this.clone( { deep : true } ); },
@@ -3270,17 +3318,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	        return new this.constructor( models );
 	    },
-	
-	    set : transaction( function( models, options ){
-	        if( models ){
-	            if( typeof models !== 'object' || !( models instanceof Array || models instanceof Model ||
-	                Object.getPrototypeOf( models ) === Object.prototype ) ){
-	                error.wrongCollectionSetArg( this, models );
-	            }
-	        }
-	
-	        return CollectionProto.set.call( this, models, options );
-	    } ),
 	
 	    transaction : function( func, self, args ){
 	        return transaction( func ).apply( self || this, args );
@@ -3295,7 +3332,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	    createSubset : function( models, options ){
 	        var SubsetOf = this.constructor.subsetOf( this ).createAttribute().type;
-	        var subset = new SubsetOf( models, options );
+	        var subset   = new SubsetOf( models, options );
 	        subset.resolve( this );
 	        return subset;
 	    }
@@ -3307,12 +3344,116 @@ return /******/ (function(modules) { // webpackBootstrap
 	    },
 	    extend     : function(){
 	        // Need to subsetOf cache when extending the collection
-	        var This = Backbone.Collection.extend.apply( this, arguments );
+	        var This        = Backbone.Collection.extend.apply( this, arguments );
 	        This.__subsetOf = null;
 	        return This;
 	    }
 	} );
-
+	
+	function fastCopy( dest, source ){
+	    if( source ){
+	        for( var i in source ){
+	            dest[ i ] = source[ i ];
+	        }
+	    }
+	}
+	
+	function collectionSet( self, a_models, a_options ){
+	    var options = { add : true, remove : true, merge : true },
+	        models  = a_models;
+	
+	    fastCopy( options, a_options );
+	
+	    if( options.parse ) models = self.parse( models, options );
+	    var singular    = !( models && models instanceof Array );
+	    models          = singular ? (models ? [ models ] : []) : models.slice();
+	    var i, l, id, model, attrs, existing, sort;
+	    var at          = options.at;
+	    var targetModel = self.model;
+	    var sortable    = self.comparator && (at == null) && options.sort !== false;
+	    var sortAttr    = typeof self.comparator == 'string' ? self.comparator : null;
+	    var toAdd       = [], toRemove = [], modelMap = {};
+	    var add         = options.add, merge = options.merge, remove = options.remove;
+	    var order       = !sortable && add && remove ? [] : false;
+	
+	// Turn bare objects into model references, and prevent invalid models
+	// from being added.
+	    for( i = 0, l = models.length; i < l; i++ ){
+	        attrs = models[ i ] || {};
+	        if( attrs instanceof Model ){
+	            id = model = attrs;
+	        }
+	        else{
+	            id = attrs[ targetModel.prototype.idAttribute || 'id' ];
+	        }
+	
+	        // If a duplicate is found, prevent it from being added and
+	        // optionally merge it into the existing model.
+	        if( existing = self.get( id ) ){
+	            if( remove ) modelMap[ existing.cid ] = true;
+	            if( merge ){
+	                attrs = attrs === model ? model.attributes : attrs;
+	                if( options.parse ) attrs = existing.parse( attrs, options );
+	                existing.set( attrs, options );
+	                if( sortable && !sort && existing.hasChanged( sortAttr ) ) sort = true;
+	            }
+	            models[ i ] = existing;
+	
+	            // If this is a new, valid model, push it to the `toAdd` list.
+	        }
+	        else if( add ){
+	            model = models[ i ] = self._prepareModel( attrs, options );
+	            if( !model ) continue;
+	            toAdd.push( model );
+	            self._addReference( model, options );
+	        }
+	
+	        // Do not add multiple models with the same `id`.
+	        model = existing || model;
+	        if( order && (model.isNew() || !modelMap[ model.id ]) ) order.push( model );
+	        modelMap[ model.id ] = true;
+	    }
+	
+	// Remove nonexistent models if appropriate.
+	    if( remove ){
+	        for( i = 0, l = self.length; i < l; ++i ){
+	            if( !modelMap[ (model = self.models[ i ]).cid ] ) toRemove.push( model );
+	        }
+	        if( toRemove.length ) self.remove( toRemove, options );
+	    }
+	
+	// See if sorting is needed, update `length` and splice in new models.
+	    if( toAdd.length || (order && order.length) ){
+	        if( sortable ) sort = true;
+	        self.length += toAdd.length;
+	        if( at != null ){
+	            for( i = 0, l = toAdd.length; i < l; i++ ){
+	                self.models.splice( at + i, 0, toAdd[ i ] );
+	            }
+	        }
+	        else{
+	            if( order ) self.models.length = 0;
+	            var orderedModels = order || toAdd;
+	            for( i = 0, l = orderedModels.length; i < l; i++ ){
+	                self.models.push( orderedModels[ i ] );
+	            }
+	        }
+	    }
+	
+	// Silently sort the collection if appropriate.
+	    if( sort ) self.sort( { silent : true } );
+	
+	// Unless silenced, it's time to fire all appropriate add/sort events.
+	    if( !options.silent ){
+	        for( i = 0, l = toAdd.length; i < l; i++ ){
+	            trigger3( model = toAdd[ i ], 'add', model, self, options );
+	        }
+	        if( sort || (order && order.length) ) trigger2( self, 'sort', self, options );
+	    }
+	
+	// Return the added (or merged) model (or models).
+	    return singular ? models[ 0 ] : models;
+	}
 
 /***/ },
 /* 11 */

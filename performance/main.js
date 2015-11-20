@@ -103,6 +103,21 @@ define( function( require, exports, module ){
                 } );
             } );
 
+            describe( '20-attrs model, 1M create', function(){
+
+                it( 'Backbone', function(){
+                    for( var i = 0; i < 1000000; i++ ){
+                        b = new BLarge();
+                    }
+                } );
+
+                it( 'Nested', function(){
+                    for( var i = 0; i < 1000000; i++ ){
+                        n = new NLarge();
+                    }
+                } );
+            } );
+
             describe( '1-attr model, 100K collection.create', function(){
                 it( 'Backbone', function(){
                     var c = new BSmallCollection();
@@ -116,21 +131,6 @@ define( function( require, exports, module ){
 
                     for( var i = 0; i < 100000; i++ ){
                         c.create();
-                    }
-                } );
-            } );
-
-            describe( '20-attrs model, 1M create', function(){
-
-                it( 'Backbone', function(){
-                    for( var i = 0; i < 1000000; i++ ){
-                        b = new BLarge();
-                    }
-                } );
-
-                it( 'Nested', function(){
-                    for( var i = 0; i < 1000000; i++ ){
-                        n = new NLarge();
                     }
                 } );
             } );
@@ -149,6 +149,40 @@ define( function( require, exports, module ){
                     for( var i = 0; i < 100000; i++ ){
                         c.create();
                     }
+                } );
+            } );
+
+            describe( '1-attr model, 100K collection reset', function(){
+                var arr = [];
+                for( var i = 0; i < 100000; i++ ){
+                    arr.push({ a1 : i });
+                }
+
+                it( 'Backbone', function(){
+                    var c = new BSmallCollection();
+                    c.reset( arr );
+                } );
+
+                it( 'Nested', function(){
+                    var c = new NSmall.Collection();
+                    c.reset( arr );
+                } );
+            } );
+
+            describe( '20-attr model, 100K collection reset', function(){
+                var arr = [];
+                for( var i = 0; i < 100000; i++ ){
+                    arr.push({ a1 : i, a2 : i, a3: i, a4 : i, a5 : i, a6 : i, a7 : i, a8: i, a9 : i, a10 : i});
+                }
+
+                it( 'Backbone', function(){
+                    var c = new BLargeCollection();
+                    c.reset( arr );
+                } );
+
+                it( 'Nested', function(){
+                    var c = new NLarge.Collection();
+                    c.reset( arr );
                 } );
             } );
         });

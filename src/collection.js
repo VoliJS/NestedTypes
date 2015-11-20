@@ -13,7 +13,10 @@ function transaction( func ){
 
         var res = func.apply( this, arguments );
 
-        --this.__changing || ( this._changed && trigger1( this, this.triggerWhenChanged, this ) );
+        if( !--this.__changing && this._changed ){
+            this._transactionId = {};
+            trigger1( this, this.triggerWhenChanged, this );
+        }
 
         return res;
     };

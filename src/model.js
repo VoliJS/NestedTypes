@@ -34,6 +34,30 @@ var Model = BaseModel.extend( {
                 var name = this.idAttribute;
                 setSingleAttr( this, name, value, this.__attributes[ name ] );
             }
+        },
+
+        changed : function(){
+            var changed = this._changed;
+
+            if( !changed ){
+                var last = this.attributes,
+                    prev = this._previousAttributes,
+                    attrSpecs = this.__attributes;
+
+                changed = {};
+
+                for( var name in attrSpecs ){
+                    var attrSpec = attrSpecs[ name ];
+
+                    if( attrSpec.isChanged( last[ name ], prev[ name ] ) ){
+                        changed[ name ] = last[ name ];
+                    }
+                }
+
+                this._changed = changed;
+            }
+
+            return changed;
         }
     },
 
@@ -57,6 +81,7 @@ var Model = BaseModel.extend( {
     __class      : 'Model',
 
     __duringSet : 0,
+    _changed : null,
 
     defaults : function(){ return {}; },
 
@@ -150,7 +175,10 @@ var Model = BaseModel.extend( {
             options   = opts || {};
 
         this.__duringSet = 0;
+        this._changed = null;
+        this._changing = this._pending = false;
         this.attributes = {};
+
         if( options.collection ) this.collection = options.collection;
         this.cid = _.uniqueId( 'c' );
 
@@ -170,8 +198,7 @@ var Model = BaseModel.extend( {
         // Execute attributes transform function instead of this.set
         applyTransform( this, attrs, attrSpecs, options );
 
-        this.attributes = attrs;
-        this.changed = {};
+        this._previousAttributes = this.attributes = attrs;
         this.initialize.apply( this, arguments );
     },
     // override get to invoke native getter...

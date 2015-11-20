@@ -158,6 +158,30 @@ return /******/ (function(modules) { // webpackBootstrap
 	                var name = this.idAttribute;
 	                setSingleAttr( this, name, value, this.__attributes[ name ] );
 	            }
+	        },
+	
+	        changed : function(){
+	            var changed = this._changed;
+	
+	            if( !changed ){
+	                var last = this.attributes,
+	                    prev = this._previousAttributes,
+	                    attrSpecs = this.__attributes;
+	
+	                changed = {};
+	
+	                for( var name in attrSpecs ){
+	                    var attrSpec = attrSpecs[ name ];
+	
+	                    if( attrSpec.isChanged( last[ name ], prev[ name ] ) ){
+	                        changed[ name ] = last[ name ];
+	                    }
+	                }
+	
+	                this._changed = changed;
+	            }
+	
+	            return changed;
 	        }
 	    },
 	
@@ -181,6 +205,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    __class      : 'Model',
 	
 	    __duringSet : 0,
+	    _changed : null,
 	
 	    defaults : function(){ return {}; },
 	
@@ -274,7 +299,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	            options   = opts || {};
 	
 	        this.__duringSet = 0;
+	        this._changed = null;
+	        this._changing = this._pending = false;
 	        this.attributes = {};
+	
 	        if( options.collection ) this.collection = options.collection;
 	        this.cid = _.uniqueId( 'c' );
 	
@@ -294,8 +322,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        // Execute attributes transform function instead of this.set
 	        applyTransform( this, attrs, attrSpecs, options );
 	
-	        this.attributes = attrs;
-	        this.changed = {};
+	        this._previousAttributes = this.attributes = attrs;
 	        this.initialize.apply( this, arguments );
 	    },
 	    // override get to invoke native getter...
@@ -2475,17 +2502,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	    if( !changing ){
 	        model._previousAttributes = new model.Attributes( current );
-	        model.changed             = {};
+	        model._changed             = null;
 	    }
 	
-	    var prev      = model._previousAttributes,
-	        options   = {},
-	        val       = attrSpec.transform( value, options, model, key ),
-	        isChanged = attrSpec.isChanged;
+	    var options   = {},
+	        val       = attrSpec.transform( value, options, model, key );
 	
-	    isChanged( prev[ key ], val ) ? model.changed[ key ] = val : delete model.changed[ key ];
-	
-	    if( isChanged( current[ key ], val ) ){
+	    if( attrSpec.isChanged( current[ key ], val ) ){
 	        current[ key ] = val;
 	        model._pending = options;
 	        trigger3( model, 'change:' + key, model, val, options );
@@ -2520,7 +2543,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	    if( notChanging ){
 	        this._previousAttributes = new this.Attributes( this.attributes );
-	        this.changed             = {};
+	        this._changed             = null;
 	    }
 	
 	    this.__begin();
@@ -2565,10 +2588,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	    if( !changing ){
 	        model._previousAttributes = new model.Attributes( current );
-	        model.changed             = {};
+	        model._changed             = null;
 	    }
-	
-	    var prev = model._previousAttributes;
 	
 	    // For each `set` attribute, update or delete the current value.
 	    for( var attr in attrs ){
@@ -2580,14 +2601,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            changes.push( attr );
 	        }
 	
-	        if( isChanged( prev[ attr ], val ) ){
-	            model.changed[ attr ] = val;
-	        }
-	        else{
-	            delete model.changed[ attr ];
-	        }
-	
-	        unset ? delete current[ attr ] : current[ attr ] = val;
+	        current[ attr ] = unset ? undefined : val;
 	    }
 	
 	    // Trigger all relevant attribute changes.

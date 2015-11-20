@@ -49,17 +49,13 @@ function setSingleAttr( model, key, value, attrSpec ){
 
     if( !changing ){
         model._previousAttributes = new model.Attributes( current );
-        model.changed             = {};
+        model._changed             = null;
     }
 
-    var prev      = model._previousAttributes,
-        options   = {},
-        val       = attrSpec.transform( value, options, model, key ),
-        isChanged = attrSpec.isChanged;
+    var options   = {},
+        val       = attrSpec.transform( value, options, model, key );
 
-    isChanged( prev[ key ], val ) ? model.changed[ key ] = val : delete model.changed[ key ];
-
-    if( isChanged( current[ key ], val ) ){
+    if( attrSpec.isChanged( current[ key ], val ) ){
         current[ key ] = val;
         model._pending = options;
         trigger3( model, 'change:' + key, model, val, options );
@@ -94,7 +90,7 @@ function transaction( a_fun, context, args ){
 
     if( notChanging ){
         this._previousAttributes = new this.Attributes( this.attributes );
-        this.changed             = {};
+        this._changed             = null;
     }
 
     this.__begin();
@@ -139,10 +135,8 @@ function bbSetAttrs( model, attrs, opts ){
 
     if( !changing ){
         model._previousAttributes = new model.Attributes( current );
-        model.changed             = {};
+        model._changed             = null;
     }
-
-    var prev = model._previousAttributes;
 
     // For each `set` attribute, update or delete the current value.
     for( var attr in attrs ){
@@ -154,14 +148,7 @@ function bbSetAttrs( model, attrs, opts ){
             changes.push( attr );
         }
 
-        if( isChanged( prev[ attr ], val ) ){
-            model.changed[ attr ] = val;
-        }
-        else{
-            delete model.changed[ attr ];
-        }
-
-        unset ? delete current[ attr ] : current[ attr ] = val;
+        current[ attr ] = unset ? undefined : val;
     }
 
     // Trigger all relevant attribute changes.

@@ -90,6 +90,41 @@ var Model = BaseModel.extend( {
 
     transaction : modelSet.transaction,
 
+    // Determine if the model has changed since the last `"change"` event.
+    // If you specify an attribute name, determine if that attribute has changed.
+    hasChanged: function(attr) {
+        if (attr == null) return !_.isEmpty( this.changed );
+        return this.__attributes[ attr ].isChanged( this.attributes[ attr ], this._previousAttributes[ attr ]);
+    },
+
+    // Return an object containing all the attributes that have changed, or
+    // false if there are no changed attributes. Useful for determining what
+    // parts of a view need to be updated and/or what attributes need to be
+    // persisted to the server. Unset attributes will be set to undefined.
+    // You can also pass an attributes object to diff against the model,
+    // determining if there *would be* a change.
+    // TODO: Test it
+    changedAttributes: function(diff) {
+        if (!diff) return this.hasChanged() ? _.clone(this.changed) : false;
+
+        var val, changed = false,
+            old = this._changing ? this._previousAttributes : this.attributes,
+            attrSpecs = this.__attributes;
+
+        for (var attr in diff) {
+            if ( !attrSpecs[ attr ].isChanged( old[attr], ( val = diff[ attr ] ))) continue;
+            (changed || (changed = {}))[attr] = val;
+        }
+
+        return changed;
+    },
+
+    // Get all of the attributes of the model at the time of the previous
+    // `"change"` event.
+    previousAttributes: function() {
+        return new this.Attributes( this._previousAttributes );
+    },
+
     set : function( a, b, c ){
         switch( typeof a ){
         case 'string' :

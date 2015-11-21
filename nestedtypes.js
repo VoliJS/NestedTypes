@@ -214,6 +214,41 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	    transaction : modelSet.transaction,
 	
+	    // Determine if the model has changed since the last `"change"` event.
+	    // If you specify an attribute name, determine if that attribute has changed.
+	    hasChanged: function(attr) {
+	        if (attr == null) return !_.isEmpty( this.changed );
+	        return this.__attributes[ attr ].isChanged( this.attributes[ attr ], this._previousAttributes[ attr ]);
+	    },
+	
+	    // Return an object containing all the attributes that have changed, or
+	    // false if there are no changed attributes. Useful for determining what
+	    // parts of a view need to be updated and/or what attributes need to be
+	    // persisted to the server. Unset attributes will be set to undefined.
+	    // You can also pass an attributes object to diff against the model,
+	    // determining if there *would be* a change.
+	    // TODO: Test it
+	    changedAttributes: function(diff) {
+	        if (!diff) return this.hasChanged() ? _.clone(this.changed) : false;
+	
+	        var val, changed = false,
+	            old = this._changing ? this._previousAttributes : this.attributes,
+	            attrSpecs = this.__attributes;
+	
+	        for (var attr in diff) {
+	            if ( !attrSpecs[ attr ].isChanged( old[attr], ( val = diff[ attr ] ))) continue;
+	            (changed || (changed = {}))[attr] = val;
+	        }
+	
+	        return changed;
+	    },
+	
+	    // Get all of the attributes of the model at the time of the previous
+	    // `"change"` event.
+	    previousAttributes: function() {
+	        return new this.Attributes( this._previousAttributes );
+	    },
+	
 	    set : function( a, b, c ){
 	        switch( typeof a ){
 	        case 'string' :
@@ -922,10 +957,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	    // Bind an event to a `callback` function. Passing `"all"` will bind
 	    // the callback to all events fired.
+	    // TODO: move to backbone+
 	    on: function(name, callback, context) {
 	      if (!eventsApi(this, 'on', name, [callback, context]) || !callback) return this;
-	      this._events || (this._events = {});
-	      var events = this._events[name] || (this._events[name] = []);
+	      var _events = this._events || ( this._events = {} ),
+	        events = _events[name] || ( _events[name] = [] );
 	      events.push({callback: callback, context: context, ctx: context || this});
 	      return this;
 	    },
@@ -1128,41 +1164,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	      return this.set(attrs, _.extend({}, options, {unset: true}));
 	    },
 	
-	    // Determine if the model has changed since the last `"change"` event.
-	    // If you specify an attribute name, determine if that attribute has changed.
-	    hasChanged: function(attr) {
-	      if (attr == null) return !_.isEmpty(this.changed);
-	      return _.has(this.changed, attr);
-	    },
-	
-	    // Return an object containing all the attributes that have changed, or
-	    // false if there are no changed attributes. Useful for determining what
-	    // parts of a view need to be updated and/or what attributes need to be
-	    // persisted to the server. Unset attributes will be set to undefined.
-	    // You can also pass an attributes object to diff against the model,
-	    // determining if there *would be* a change.
-	    changedAttributes: function(diff) {
-	      if (!diff) return this.hasChanged() ? _.clone(this.changed) : false;
-	      var val, changed = false;
-	      var old = this._changing ? this._previousAttributes : this.attributes;
-	      for (var attr in diff) {
-	        if (_.isEqual(old[attr], (val = diff[attr]))) continue;
-	        (changed || (changed = {}))[attr] = val;
-	      }
-	      return changed;
-	    },
-	
 	    // Get the previous value of an attribute, recorded at the time the last
 	    // `"change"` event was fired.
 	    previous: function(attr) {
 	      if (attr == null || !this._previousAttributes) return null;
 	      return this._previousAttributes[attr];
-	    },
-	
-	    // Get all of the attributes of the model at the time of the previous
-	    // `"change"` event.
-	    previousAttributes: function() {
-	      return _.clone(this._previousAttributes);
 	    },
 	
 	    // Fetch the model from the server. If the server's representation of the
@@ -2966,7 +2972,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        var options = {}, model = a_model;
 	        fastCopy( options, a_options );
 	
-	        if( !(model = this._prepareModel( model, options )) ) return false;
+	        if( !(model = _prepareModel( this, model, options )) ) return false;
 	        if( !options.wait ) this.add( model, options );
 	        var collection  = this;
 	        var success     = options.success;
@@ -2980,33 +2986,34 @@ return /******/ (function(modules) { // webpackBootstrap
 	    },
 	
 	    _onModelEvent : function( event, model, collection, options ){
+	        var attrChange = event.match( attrChangeRegexp );
+	        if( attrChange ){
+	            if( model && attrChange[ 1 ] === model.idAttribute ){
+	                delete this._byId[ model.previous( model.idAttribute ) ];
+	                if( model.id != null ) this._byId[ model.id ] = model;
+	            }
+	
+	            trigger3( this, event, model, collection, options );
+	            return;
+	        }
+	
 	        switch( event ){
 	            case 'add' :
 	            case 'remove' :
 	                if( collection === this ) trigger3( this, event, model, collection, options );
-	                break;
-	            case 'destroy' :
-	                this.remove( model, options );
-	                trigger3( this, event, model, collection, options );
 	                break;
 	            case 'change' :
 	            case 'sync' :
 	            case 'invalid' :
 	                trigger2( this, event, model, collection );
 	                break;
-	            default:
-	                var attrChange = event.match( attrChangeRegexp );
-	                if( attrChange ){
-	                    if( model && attrChange[ 1 ] === model.idAttribute ){
-	                        delete this._byId[ model.previous( model.idAttribute ) ];
-	                        if( model.id != null ) this._byId[ model.id ] = model;
-	                    }
+	            case 'destroy' :
+	                this.remove( model, options );
+	                trigger3( this, event, model, collection, options );
+	                break;
 	
-	                    trigger3( this, event, model, collection, options );
-	                }
-	                else{
-	                    this.trigger.apply( this, arguments );
-	                }
+	            default:
+	                this.trigger.apply( this, arguments );
 	        }
 	
 	    },
@@ -3032,24 +3039,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	        var options = { merge : false, add : true, remove : false };
 	        fastCopy( options, a_options );
 	        return this.set( models, options );
-	    },
-	
-	    // Prepare a hash of attributes (or other model) to be added to this
-	    // collection.
-	    _prepareModel : function( attrs, a_options ){
-	        if( attrs instanceof Model ) return attrs;
-	
-	        var options = {};
-	        fastCopy( options, a_options );
-	        options.collection = this;
-	
-	        var model = new this.model( attrs, options );
-	
-	        if( !model.validationError ) return model;
-	
-	        trigger3( this, 'invalid', this, model.validationError, options );
-	
-	        return false;
 	    },
 	
 	    reset : transaction( function( a_models, a_options ){
@@ -3117,7 +3106,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    models          = singular ? (models ? [ models ] : []) : models.slice();
 	    var i, l, id, model, attrs, existing, sort;
 	    var at          = options.at;
-	    var targetModel = self.model;
+	    var idAttribute = self.model.prototype.idAttribute || 'id';
 	    var sortable    = self.comparator && (at == null) && options.sort !== false;
 	    var sortAttr    = typeof self.comparator == 'string' ? self.comparator : null;
 	    var toAdd       = [], toRemove = [], modelMap = {};
@@ -3128,12 +3117,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	// from being added.
 	    for( i = 0, l = models.length; i < l; i++ ){
 	        attrs = models[ i ] || {};
-	        if( attrs instanceof Model ){
-	            id = model = attrs;
-	        }
-	        else{
-	            id = attrs[ targetModel.prototype.idAttribute || 'id' ];
-	        }
+	        id = attrs instanceof Model ? ( model = attrs ) : attrs[ idAttribute ];
 	
 	        // If a duplicate is found, prevent it from being added and
 	        // optionally merge it into the existing model.
@@ -3145,12 +3129,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	                existing.set( attrs, options );
 	                if( sortable && !sort && existing.hasChanged( sortAttr ) ) sort = true;
 	            }
+	
 	            models[ i ] = existing;
 	
 	            // If this is a new, valid model, push it to the `toAdd` list.
 	        }
 	        else if( add ){
-	            model = models[ i ] = self._prepareModel( attrs, options );
+	            model = models[ i ] = _prepareModel( self, attrs, options );
 	            if( !model ) continue;
 	            toAdd.push( model );
 	            self._addReference( model, options );
@@ -3201,6 +3186,22 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	// Return the added (or merged) model (or models).
 	    return singular ? models[ 0 ] : models;
+	}
+	
+	function _prepareModel( collection, attrs, a_options ){
+	    if( attrs instanceof Model ) return attrs;
+	
+	    var options = {};
+	    fastCopy( options, a_options );
+	    options.collection = collection;
+	
+	    var model = new collection.model( attrs, options );
+	
+	    if( !model.validationError ) return model;
+	
+	    trigger3( collection, 'invalid', collection, model.validationError, options );
+	
+	    return false;
 	}
 
 /***/ },

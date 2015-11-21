@@ -116,7 +116,7 @@ module.exports = Backbone.Collection.extend( {
         var options = {}, model = a_model;
         fastCopy( options, a_options );
 
-        if( !(model = this._prepareModel( model, options )) ) return false;
+        if( !(model = _prepareModel( this, model, options )) ) return false;
         if( !options.wait ) this.add( model, options );
         var collection  = this;
         var success     = options.success;
@@ -130,33 +130,34 @@ module.exports = Backbone.Collection.extend( {
     },
 
     _onModelEvent : function( event, model, collection, options ){
+        var attrChange = event.match( attrChangeRegexp );
+        if( attrChange ){
+            if( model && attrChange[ 1 ] === model.idAttribute ){
+                delete this._byId[ model.previous( model.idAttribute ) ];
+                if( model.id != null ) this._byId[ model.id ] = model;
+            }
+
+            trigger3( this, event, model, collection, options );
+            return;
+        }
+
         switch( event ){
             case 'add' :
             case 'remove' :
                 if( collection === this ) trigger3( this, event, model, collection, options );
-                break;
-            case 'destroy' :
-                this.remove( model, options );
-                trigger3( this, event, model, collection, options );
                 break;
             case 'change' :
             case 'sync' :
             case 'invalid' :
                 trigger2( this, event, model, collection );
                 break;
-            default:
-                var attrChange = event.match( attrChangeRegexp );
-                if( attrChange ){
-                    if( model && attrChange[ 1 ] === model.idAttribute ){
-                        delete this._byId[ model.previous( model.idAttribute ) ];
-                        if( model.id != null ) this._byId[ model.id ] = model;
-                    }
+            case 'destroy' :
+                this.remove( model, options );
+                trigger3( this, event, model, collection, options );
+                break;
 
-                    trigger3( this, event, model, collection, options );
-                }
-                else{
-                    this.trigger.apply( this, arguments );
-                }
+            default:
+                this.trigger.apply( this, arguments );
         }
 
     },
@@ -182,24 +183,6 @@ module.exports = Backbone.Collection.extend( {
         var options = { merge : false, add : true, remove : false };
         fastCopy( options, a_options );
         return this.set( models, options );
-    },
-
-    // Prepare a hash of attributes (or other model) to be added to this
-    // collection.
-    _prepareModel : function( attrs, a_options ){
-        if( attrs instanceof Model ) return attrs;
-
-        var options = {};
-        fastCopy( options, a_options );
-        options.collection = this;
-
-        var model = new this.model( attrs, options );
-
-        if( !model.validationError ) return model;
-
-        trigger3( this, 'invalid', this, model.validationError, options );
-
-        return false;
     },
 
     reset : transaction( function( a_models, a_options ){
@@ -267,7 +250,7 @@ function collectionSet( self, a_models, a_options ){
     models          = singular ? (models ? [ models ] : []) : models.slice();
     var i, l, id, model, attrs, existing, sort;
     var at          = options.at;
-    var targetModel = self.model;
+    var idAttribute = self.model.prototype.idAttribute || 'id';
     var sortable    = self.comparator && (at == null) && options.sort !== false;
     var sortAttr    = typeof self.comparator == 'string' ? self.comparator : null;
     var toAdd       = [], toRemove = [], modelMap = {};
@@ -278,12 +261,7 @@ function collectionSet( self, a_models, a_options ){
 // from being added.
     for( i = 0, l = models.length; i < l; i++ ){
         attrs = models[ i ] || {};
-        if( attrs instanceof Model ){
-            id = model = attrs;
-        }
-        else{
-            id = attrs[ targetModel.prototype.idAttribute || 'id' ];
-        }
+        id = attrs instanceof Model ? ( model = attrs ) : attrs[ idAttribute ];
 
         // If a duplicate is found, prevent it from being added and
         // optionally merge it into the existing model.
@@ -295,12 +273,13 @@ function collectionSet( self, a_models, a_options ){
                 existing.set( attrs, options );
                 if( sortable && !sort && existing.hasChanged( sortAttr ) ) sort = true;
             }
+
             models[ i ] = existing;
 
             // If this is a new, valid model, push it to the `toAdd` list.
         }
         else if( add ){
-            model = models[ i ] = self._prepareModel( attrs, options );
+            model = models[ i ] = _prepareModel( self, attrs, options );
             if( !model ) continue;
             toAdd.push( model );
             self._addReference( model, options );
@@ -351,4 +330,20 @@ function collectionSet( self, a_models, a_options ){
 
 // Return the added (or merged) model (or models).
     return singular ? models[ 0 ] : models;
+}
+
+function _prepareModel( collection, attrs, a_options ){
+    if( attrs instanceof Model ) return attrs;
+
+    var options = {};
+    fastCopy( options, a_options );
+    options.collection = collection;
+
+    var model = new collection.model( attrs, options );
+
+    if( !model.validationError ) return model;
+
+    trigger3( collection, 'invalid', collection, model.validationError, options );
+
+    return false;
 }

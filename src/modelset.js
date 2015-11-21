@@ -142,13 +142,12 @@ function bbSetAttrs( model, attrs, opts ){
     for( var attr in attrs ){
         var attrSpec  = attrSpecs[ attr ],
             isChanged = attrSpec ? attrSpec.isChanged : genericIsChanged,
-            val       = attrs[ attr ];
+            val       = unset ? undefined : attrs[ attr ];
 
         if( isChanged( current[ attr ], val ) ){
+            current[ attr ] = val;
             changes.push( attr );
         }
-
-        current[ attr ] = unset ? undefined : val;
     }
 
     // Trigger all relevant attribute changes.

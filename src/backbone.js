@@ -615,14 +615,6 @@
       this._byId  = {};
     },
 
-    // Internal method to create a model's ties to a collection.
-    _addReference: function(model, options) {
-      this._byId[model.cid] = model;
-      if (model.id != null) this._byId[model.id] = model;
-      if (!model.collection) model.collection = this;
-      model.on('all', this._onModelEvent, this);
-    },
-
     // Internal method to sever a model's ties to a collection.
     _removeReference: function(model, options) {
       if (this === model.collection) delete model.collection;

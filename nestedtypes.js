@@ -682,6 +682,21 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }
 	};
 	
+	Events.onAll = function( self, callback, context ){
+	    var record = {callback: callback, context: context, ctx: context || self};
+	        _events = self._events || ( self._events = {} ),
+	        events = _events.all;
+	
+	    if( events ){
+	        events.push( record );
+	    }
+	    else{
+	        _events.all = [ record ];
+	    }
+	
+	    return self;
+	};
+	
 	// ...and specialized functions with triggering loops. Crappy JS JIT loves these small functions and code duplication.
 	function _fireEvent1( events, a ){
 	    if( events )
@@ -1488,14 +1503,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	      this.length = 0;
 	      this.models = [];
 	      this._byId  = {};
-	    },
-	
-	    // Internal method to create a model's ties to a collection.
-	    _addReference: function(model, options) {
-	      this._byId[model.cid] = model;
-	      if (model.id != null) this._byId[model.id] = model;
-	      if (!model.collection) model.collection = this;
-	      model.on('all', this._onModelEvent, this);
 	    },
 	
 	    // Internal method to sever a model's ties to a collection.
@@ -2860,6 +2867,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    error    = __webpack_require__( 8 ),
 	    trigger1 = Events.trigger1,
 	    trigger2 = Events.trigger2,
+	    onAll    = Events.onAll,
 	    trigger3 = Events.trigger3;
 	_            = __webpack_require__( 5 );
 	
@@ -3145,7 +3153,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            model = models[ i ] = _prepareModel( self, attrs, options );
 	            if( !model ) continue;
 	            toAdd.push( model );
-	            self._addReference( model, options );
+	            _addReference( self, model, options );
 	        }
 	
 	        // Do not add multiple models with the same `id`.
@@ -3229,14 +3237,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 	
 	function prepareAndRef( self, models, options ){
-	    var copy = [];
+	    var copy = new Array( models.length );
 	
 	    for( var i = 0; i < models.length; i++ ){
-	        var model = _prepareModel( self, models[ i ] || {}, options );
+	        var model = copy[ i ] = _prepareModel( self, models[ i ] || {}, options );
 	
 	        if( model ){
-	            copy.push( model );
-	            self._addReference( model, options );
+	            _addReference( self, model, options );
 	        }
 	    }
 	
@@ -3263,6 +3270,15 @@ return /******/ (function(modules) { // webpackBootstrap
 	    trigger3( collection, 'invalid', collection, model.validationError, options );
 	
 	    return false;
+	}
+	
+	// Internal method to create a model's ties to a collection.
+	function _addReference( self, model, options) {
+	    self._byId[model.cid] = model;
+	    if (model.id != null) self._byId[model.id] = model;
+	    if (!model.collection) model.collection = self;
+	
+	    onAll( model, self._onModelEvent, self );
 	}
 
 /***/ },

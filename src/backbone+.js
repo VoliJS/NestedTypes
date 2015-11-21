@@ -60,6 +60,21 @@ Events.trigger3 = function( self, name, a, b, c ){
     }
 };
 
+Events.onAll = function( self, callback, context ){
+    var record = {callback: callback, context: context, ctx: context || self};
+        _events = self._events || ( self._events = {} ),
+        events = _events.all;
+
+    if( events ){
+        events.push( record );
+    }
+    else{
+        _events.all = [ record ];
+    }
+
+    return self;
+};
+
 // ...and specialized functions with triggering loops. Crappy JS JIT loves these small functions and code duplication.
 function _fireEvent1( events, a ){
     if( events )

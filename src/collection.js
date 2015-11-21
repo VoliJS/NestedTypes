@@ -4,6 +4,7 @@ var Backbone = require( './backbone+' ),
     error    = require( './errors' ),
     trigger1 = Events.trigger1,
     trigger2 = Events.trigger2,
+    onAll    = Events.onAll,
     trigger3 = Events.trigger3;
 _            = require( 'underscore' );
 
@@ -289,7 +290,7 @@ function collectionSet( self, a_models, a_options ){
             model = models[ i ] = _prepareModel( self, attrs, options );
             if( !model ) continue;
             toAdd.push( model );
-            self._addReference( model, options );
+            _addReference( self, model, options );
         }
 
         // Do not add multiple models with the same `id`.
@@ -373,14 +374,13 @@ function emptyCollectionSet( self, a_models, a_options ){
 }
 
 function prepareAndRef( self, models, options ){
-    var copy = [];
+    var copy = new Array( models.length );
 
     for( var i = 0; i < models.length; i++ ){
-        var model = _prepareModel( self, models[ i ] || {}, options );
+        var model = copy[ i ] = _prepareModel( self, models[ i ] || {}, options );
 
         if( model ){
-            copy.push( model );
-            self._addReference( model, options );
+            _addReference( self, model, options );
         }
     }
 
@@ -407,4 +407,13 @@ function _prepareModel( collection, attrs, a_options ){
     trigger3( collection, 'invalid', collection, model.validationError, options );
 
     return false;
+}
+
+// Internal method to create a model's ties to a collection.
+function _addReference( self, model, options) {
+    self._byId[model.cid] = model;
+    if (model.id != null) self._byId[model.id] = model;
+    if (!model.collection) model.collection = self;
+
+    onAll( model, self._onModelEvent, self );
 }

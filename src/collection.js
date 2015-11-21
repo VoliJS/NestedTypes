@@ -35,7 +35,7 @@ var attrChangeRegexp = /^change:(\w+)$/;
 
 module.exports = Backbone.Collection.extend( {
     triggerWhenChanged : 'changes',
-    _listenToChanges   : Backbone.VERSION >= '1.2.0' ? 'update change reset' : 'add remove change reset',
+    _listenToChanges   : 'update change reset',
     __class            : 'Collection',
 
     model : Model,
@@ -113,6 +113,18 @@ module.exports = Backbone.Collection.extend( {
         return this.length ? collectionSet( this, models, options ) : emptyCollectionSet( this, models, options );
     } ),
 
+    // Remove a model, or a list of models from the set.
+    remove: transaction( function(a_models, a_options) {
+        var singular = !( a_models && a_models instanceof Array ),
+            models = singular ? [ a_models ] : a_models.splice(),
+            options = a_options || {};
+
+        var removed = _removeModels( this, models, options );
+
+        if (!options.silent && removed ) trigger2( this, 'update', this, options);
+        return singular ? models[0] : models;
+    }),
+
     create : function( a_model, a_options ){
         var options = {}, model = a_model;
         fastCopy( options, a_options );
@@ -177,8 +189,6 @@ module.exports = Backbone.Collection.extend( {
     transaction : function( func, self, args ){
         return transaction( func ).apply( self || this, args );
     },
-
-    remove : transaction( CollectionProto.remove ),
 
     add : function( models, a_options ){
         var options = { merge : false, add : true, remove : false };
@@ -304,7 +314,7 @@ function collectionSet( self, a_models, a_options ){
         for( i = 0, l = self.length; i < l; ++i ){
             if( !modelMap[ (model = self.models[ i ]).cid ] ) toRemove.push( model );
         }
-        if( toRemove.length ) self.remove( toRemove, options );
+        if( toRemove.length ) _removeModels( self, toRemove, options );
     }
 
 // See if sorting is needed, update `length` and splice in new models.
@@ -332,6 +342,7 @@ function collectionSet( self, a_models, a_options ){
     if( !options.silent ){
         notifyAdd( self, models, options );
         if( sort || (order && order.length) ) trigger2( self, 'sort', self, options );
+        if (toAdd.length || toRemove.length) this.trigger('update', this, options);
     }
 
 // Return the added (or merged) model (or models).
@@ -364,9 +375,10 @@ function emptyCollectionSet( self, a_models, a_options ){
     if( sort ) self.sort( { silent : true } );
 
 // Unless silenced, it's time to fire all appropriate add/sort events.
-    if( !options.silent ){
+    if( models.length && !options.silent ){
         notifyAdd( self, models, options );
         if( sort || order ) trigger2( self, 'sort', self, options );
+        trigger2( this, 'update', this, options );
     }
 
 // Return the added (or merged) model (or models).
@@ -416,4 +428,31 @@ function _addReference( self, model, options) {
     if (!model.collection) model.collection = self;
 
     onAll( model, self._onModelEvent, self );
+}
+
+function _removeModels( self, toRemove, options ){
+    var origLength = self.length,
+        models = self.models,
+        _byId = self._byId;
+
+    for( var i = 0; i < toRemove.length; i++ ) {
+        var model = self.get( toRemove[ i ] );
+        if( model ){
+            delete _byId[ model.id ];
+            delete _byId[ model.cid ];
+
+            var index = self.indexOf( model );
+            models.splice( index, 1 );
+            self.length--;
+
+            if (!options.silent) {
+                options.index = index;
+                model.trigger('remove', model, self, options);
+            }
+
+            self._removeReference(model, options);
+        }
+    }
+
+    return origLength - self.length;
 }

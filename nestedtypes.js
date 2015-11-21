@@ -1369,29 +1369,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	      return Backbone.sync.apply(this, arguments);
 	    },
 	
-	    // Remove a model, or a list of models from the set.
-	    remove: function(models, options) {
-	      var singular = !_.isArray(models);
-	      models = singular ? [models] : _.clone(models);
-	      options || (options = {});
-	      var i, l, index, model;
-	      for (i = 0, l = models.length; i < l; i++) {
-	        model = models[i] = this.get(models[i]);
-	        if (!model) continue;
-	        delete this._byId[model.id];
-	        delete this._byId[model.cid];
-	        index = this.indexOf(model);
-	        this.models.splice(index, 1);
-	        this.length--;
-	        if (!options.silent) {
-	          options.index = index;
-	          model.trigger('remove', model, this, options);
-	        }
-	        this._removeReference(model, options);
-	      }
-	      return singular ? models[0] : models;
-	    },
-	
 	    // Add a model to the end of the collection.
 	    push: function(model, options) {
 	      return this.add(model, _.extend({at: this.length}, options));
@@ -2897,7 +2874,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	module.exports = Backbone.Collection.extend( {
 	    triggerWhenChanged : 'changes',
-	    _listenToChanges   : Backbone.VERSION >= '1.2.0' ? 'update change reset' : 'add remove change reset',
+	    _listenToChanges   : 'update change reset',
 	    __class            : 'Collection',
 	
 	    model : Model,
@@ -2975,6 +2952,18 @@ return /******/ (function(modules) { // webpackBootstrap
 	        return this.length ? collectionSet( this, models, options ) : emptyCollectionSet( this, models, options );
 	    } ),
 	
+	    // Remove a model, or a list of models from the set.
+	    remove: transaction( function(a_models, a_options) {
+	        var singular = !( a_models && a_models instanceof Array ),
+	            models = singular ? [ a_models ] : a_models.splice(),
+	            options = a_options || {};
+	
+	        var removed = _removeModels( this, models, options );
+	
+	        if (!options.silent && removed ) trigger2( this, 'update', this, options);
+	        return singular ? models[0] : models;
+	    }),
+	
 	    create : function( a_model, a_options ){
 	        var options = {}, model = a_model;
 	        fastCopy( options, a_options );
@@ -3039,8 +3028,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	    transaction : function( func, self, args ){
 	        return transaction( func ).apply( self || this, args );
 	    },
-	
-	    remove : transaction( CollectionProto.remove ),
 	
 	    add : function( models, a_options ){
 	        var options = { merge : false, add : true, remove : false };
@@ -3166,7 +3153,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        for( i = 0, l = self.length; i < l; ++i ){
 	            if( !modelMap[ (model = self.models[ i ]).cid ] ) toRemove.push( model );
 	        }
-	        if( toRemove.length ) self.remove( toRemove, options );
+	        if( toRemove.length ) _removeModels( self, toRemove, options );
 	    }
 	
 	// See if sorting is needed, update `length` and splice in new models.
@@ -3194,6 +3181,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    if( !options.silent ){
 	        notifyAdd( self, models, options );
 	        if( sort || (order && order.length) ) trigger2( self, 'sort', self, options );
+	        if (toAdd.length || toRemove.length) this.trigger('update', this, options);
 	    }
 	
 	// Return the added (or merged) model (or models).
@@ -3226,9 +3214,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	    if( sort ) self.sort( { silent : true } );
 	
 	// Unless silenced, it's time to fire all appropriate add/sort events.
-	    if( !options.silent ){
+	    if( models.length && !options.silent ){
 	        notifyAdd( self, models, options );
 	        if( sort || order ) trigger2( self, 'sort', self, options );
+	        trigger2( this, 'update', this, options );
 	    }
 	
 	// Return the added (or merged) model (or models).
@@ -3278,6 +3267,33 @@ return /******/ (function(modules) { // webpackBootstrap
 	    if (!model.collection) model.collection = self;
 	
 	    onAll( model, self._onModelEvent, self );
+	}
+	
+	function _removeModels( self, toRemove, options ){
+	    var origLength = self.length,
+	        models = self.models,
+	        _byId = self._byId;
+	
+	    for( var i = 0; i < toRemove.length; i++ ) {
+	        var model = self.get( toRemove[ i ] );
+	        if( model ){
+	            delete _byId[ model.id ];
+	            delete _byId[ model.cid ];
+	
+	            var index = self.indexOf( model );
+	            models.splice( index, 1 );
+	            self.length--;
+	
+	            if (!options.silent) {
+	                options.index = index;
+	                model.trigger('remove', model, self, options);
+	            }
+	
+	            self._removeReference(model, options);
+	        }
+	    }
+	
+	    return origLength - self.length;
 	}
 
 /***/ },
@@ -3403,7 +3419,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	var CollectionProto = Collection.prototype;
 	
 	var refsCollectionSpec = {
-	    _listenToChanges : bbVersion >= '1.2.0' ? 'update reset' : 'add remove reset', // don't bubble changes from models
+	    _listenToChanges : 'update reset', // don't bubble changes from models
 	    __class          : 'Collection.SubsetOf',
 	
 	    resolvedWith : null,

@@ -299,7 +299,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            options   = opts || {};
 	
 	        this.__duringSet = 0;
-	        this._changed = this._changing = this._pending = false;
+	        this._changing = this._pending = false;
 	        this.attributes = {};
 	        this.cid = _.uniqueId( 'c' );
 	
@@ -2515,7 +2515,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	    if( !changing ){
 	        model._previousAttributes = new model.Attributes( current );
-	        model._changed             = null;
+	        if( model._changed ) model._changed = null;
 	    }
 	
 	    var options   = {},
@@ -2556,7 +2556,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	    if( notChanging ){
 	        this._previousAttributes = new this.Attributes( this.attributes );
-	        this._changed             = null;
+	        if( this._changed ) this._changed = null;
 	    }
 	
 	    this.__begin();
@@ -2601,7 +2601,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	    if( !changing ){
 	        model._previousAttributes = new model.Attributes( current );
-	        model._changed             = null;
+	        if( model._changed ) model._changed = null;
 	    }
 	
 	    // For each `set` attribute, update or delete the current value.

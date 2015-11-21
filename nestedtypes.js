@@ -2965,7 +2965,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            }
 	        }
 	
-	        return collectionSet( this, models, options );
+	        return this.length ? collectionSet( this, models, options ) : emptyCollectionSet( this, models, options );
 	    } ),
 	
 	    create : function( a_model, a_options ){
@@ -3056,7 +3056,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	        var newOptions = { silent : true };
 	        fastCopy( newOptions, a_options );
-	        models = this.add( models, newOptions );
+	        models = this.set( models, newOptions );
 	
 	        options.silent || trigger2( this, 'reset', this, options );
 	
@@ -3094,6 +3094,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	        }
 	    }
 	}
+	
+	// todo: Special case optimizations:
+	// regular set as comes from fetch:
+	// - [] -> [ a, b, ... ]
+	//      When the set is initially empty, attrs, not models.
+	// - [ a, b, ... ] -> [ a, b, ... ]
+	//      Populated collection with a few changes, attrs, not models.
 	
 	function collectionSet( self, a_models, a_options ){
 	    var options = { add : true, remove : true, merge : true },
@@ -3178,14 +3185,68 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	// Unless silenced, it's time to fire all appropriate add/sort events.
 	    if( !options.silent ){
-	        for( i = 0, l = toAdd.length; i < l; i++ ){
-	            trigger3( model = toAdd[ i ], 'add', model, self, options );
-	        }
+	        notifyAdd( self, models, options );
 	        if( sort || (order && order.length) ) trigger2( self, 'sort', self, options );
 	    }
 	
 	// Return the added (or merged) model (or models).
 	    return singular ? models[ 0 ] : models;
+	}
+	
+	function emptyCollectionSet( self, a_models, a_options ){
+	    var options = {}, models  = a_models;
+	    fastCopy( options, a_options );
+	
+	    if( options.parse ) models = self.parse( models, options );
+	    var singular    = !( models && models instanceof Array );
+	    models          = singular ? (models ? [ models ] : []) : models;
+	    var sort;
+	    var sortable    = self.comparator && options.sort !== false;
+	    var order       = !sortable ? [] : false;
+	
+	// Turn bare objects into model references, and prevent invalid models
+	// from being added.
+	    models = prepareAndRef( self, models, options );
+	
+	// See if sorting is needed, update `length` and splice in new models.
+	    if( models.length || order ){
+	        if( sortable ) sort = true;
+	        self.length = models.length;
+	        self.models = models;
+	    }
+	
+	// Silently sort the collection if appropriate.
+	    if( sort ) self.sort( { silent : true } );
+	
+	// Unless silenced, it's time to fire all appropriate add/sort events.
+	    if( !options.silent ){
+	        notifyAdd( self, models, options );
+	        if( sort || order ) trigger2( self, 'sort', self, options );
+	    }
+	
+	// Return the added (or merged) model (or models).
+	    return singular ? models[ 0 ] : models;
+	}
+	
+	function prepareAndRef( self, models, options ){
+	    var copy = [];
+	
+	    for( var i = 0; i < models.length; i++ ){
+	        var model = _prepareModel( self, models[ i ] || {}, options );
+	
+	        if( model ){
+	            copy.push( model );
+	            self._addReference( model, options );
+	        }
+	    }
+	
+	    return copy;
+	}
+	
+	function notifyAdd( self, models, options ){
+	    for( var model, i = 0, l = models.length; i < l; i++ ){
+	        trigger3( model = models[ i ], 'add', model, self, options );
+	    }
 	}
 	
 	function _prepareModel( collection, attrs, a_options ){

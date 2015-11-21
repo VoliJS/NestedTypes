@@ -193,11 +193,11 @@ define( function( require, exports, module ){
                     update.push({ id: i, a1 : i + 1 });
                 }
 
-                /* it( 'Backbone', function(){
+                 it( 'Backbone', function(){
                     var c = new BSmallCollection();
                     c.set( arr );
                     c.set( update );
-                } ); */
+                } );
 
                 it( 'Nested', function(){
                     var c = new NSmall.Collection();

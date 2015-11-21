@@ -3181,7 +3181,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    if( !options.silent ){
 	        notifyAdd( self, models, options );
 	        if( sort || (order && order.length) ) trigger2( self, 'sort', self, options );
-	        if (toAdd.length || toRemove.length) this.trigger('update', this, options);
+	        if (toAdd.length || toRemove.length) trigger2( self, 'update', this, options);
 	    }
 	
 	// Return the added (or merged) model (or models).

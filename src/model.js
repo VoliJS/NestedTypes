@@ -175,7 +175,7 @@ var Model = BaseModel.extend( {
             options   = opts || {};
 
         this.__duringSet = 0;
-        this._changed = this._changing = this._pending = false;
+        this._changing = this._pending = false;
         this.attributes = {};
         this.cid = _.uniqueId( 'c' );
 

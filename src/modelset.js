@@ -49,7 +49,7 @@ function setSingleAttr( model, key, value, attrSpec ){
 
     if( !changing ){
         model._previousAttributes = new model.Attributes( current );
-        model._changed             = null;
+        if( model._changed ) model._changed = null;
     }
 
     var options   = {},
@@ -90,7 +90,7 @@ function transaction( a_fun, context, args ){
 
     if( notChanging ){
         this._previousAttributes = new this.Attributes( this.attributes );
-        this._changed             = null;
+        if( this._changed ) this._changed = null;
     }
 
     this.__begin();
@@ -135,7 +135,7 @@ function bbSetAttrs( model, attrs, opts ){
 
     if( !changing ){
         model._previousAttributes = new model.Attributes( current );
-        model._changed             = null;
+        if( model._changed ) model._changed = null;
     }
 
     // For each `set` attribute, update or delete the current value.

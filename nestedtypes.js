@@ -2855,7 +2855,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	        var res = func.apply( this, arguments );
 	
-	        --this.__changing || ( this._changed && trigger1( this, this.triggerWhenChanged, this ) );
+	        --this.__changing || ( this._changed && trigger1( this, 'changes', this ) );
 	
 	        return res;
 	    };
@@ -2866,7 +2866,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        this._changed = true;
 	    }
 	    else{
-	        trigger1( this, this.triggerWhenChanged, this );
+	        trigger1( this, 'changes', this );
 	    }
 	}
 	

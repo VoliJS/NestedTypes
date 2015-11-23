@@ -16,7 +16,10 @@ function transaction( func ){
 
         var res = func.apply( this, arguments );
 
-        --this.__changing || ( this._changed && trigger1( this, 'changes', this ) );
+        if( !--this.__changing && this._changed ){
+            this._changeToken = {};
+            trigger1( this, 'changes', this );
+        }
 
         return res;
     };
@@ -27,6 +30,7 @@ function handleChange(){
         this._changed = true;
     }
     else{
+        this._changeToken = {};
         trigger1( this, 'changes', this );
     }
 }
@@ -45,6 +49,7 @@ module.exports = Backbone.Collection.extend( {
 
     __changing : 0,
     _changed   : false,
+    _changeToken : {},
 
     // ATTENTION: Overriden backbone logic with bug fixes
     constructor : function( models, a_options ){
@@ -55,6 +60,8 @@ module.exports = Backbone.Collection.extend( {
 
         this.__changing = 0;
         this._changed   = false;
+        this._changeToken = {};
+
         if( models ) this.reset( models, options );
         this.listenTo( this, this._listenToChanges, handleChange );
         this.initialize.apply( this, arguments );

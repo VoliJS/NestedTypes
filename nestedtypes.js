@@ -206,6 +206,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	    __duringSet : 0,
 	    _changed : null,
+	    _changeToken : {},
 	
 	    defaults : function(){ return {}; },
 	
@@ -335,6 +336,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	        this.__duringSet = 0;
 	        this._changing = this._pending = false;
+	        this._changeToken = {};
 	        this.attributes = {};
 	        this.cid = _.uniqueId( 'c' );
 	
@@ -2196,6 +2198,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    while( model._pending ){
 	        options        = model._pending;
 	        model._pending = false;
+	        model._changeToken = {};
 	        trigger2( model, 'change', model, options );
 	    }
 	
@@ -2229,6 +2232,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        while( this._pending ){
 	            options       = this._pending;
 	            this._pending = false;
+	            this._changeToken = {};
 	            trigger2( this, 'change', this, options );
 	        }
 	
@@ -2298,6 +2302,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        while( model._pending ){
 	            options        = model._pending;
 	            model._pending = false;
+	            model._changeToken = {};
 	            trigger2( model, 'change', model, options );
 	        }
 	    }
@@ -2855,7 +2860,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	        var res = func.apply( this, arguments );
 	
-	        --this.__changing || ( this._changed && trigger1( this, 'changes', this ) );
+	        if( !--this.__changing && this._changed ){
+	            this._changeToken = {};
+	            trigger1( this, 'changes', this );
+	        }
 	
 	        return res;
 	    };
@@ -2866,6 +2874,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        this._changed = true;
 	    }
 	    else{
+	        this._changeToken = {};
 	        trigger1( this, 'changes', this );
 	    }
 	}
@@ -2884,6 +2893,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	    __changing : 0,
 	    _changed   : false,
+	    _changeToken : {},
 	
 	    // ATTENTION: Overriden backbone logic with bug fixes
 	    constructor : function( models, a_options ){
@@ -2894,6 +2904,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	        this.__changing = 0;
 	        this._changed   = false;
+	        this._changeToken = {};
+	
 	        if( models ) this.reset( models, options );
 	        this.listenTo( this, this._listenToChanges, handleChange );
 	        this.initialize.apply( this, arguments );

@@ -82,6 +82,7 @@ var Model = BaseModel.extend( {
 
     __duringSet : 0,
     _changed : null,
+    _changeToken : {},
 
     defaults : function(){ return {}; },
 
@@ -211,6 +212,7 @@ var Model = BaseModel.extend( {
 
         this.__duringSet = 0;
         this._changing = this._pending = false;
+        this._changeToken = {};
         this.attributes = {};
         this.cid = _.uniqueId( 'c' );
 

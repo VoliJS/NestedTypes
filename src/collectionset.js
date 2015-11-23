@@ -1,7 +1,41 @@
+/**
+ * Optimized collections core
+ *
+ * remove( models, options )
+ * Optimized for few models removal. One?
+ *  - dereference models, updating the index
+ *  - pre-allocate array copy, fill with models present in index.
+ *  - send 'remove' and 'update'
+
+ * add( models, options )
+ * Optimized for few models added. One?
+ *  - push models to existing array, updating the index
+ *      - update existing models
+ *      - for sorted collections, use binary search and splice. One? Yes.
+ *  - send 'add' and 'update'
+
+ * set( models, options )
+ * Optimized for few added and few removed.
+ *  - create pre-allocated array of models with index
+ *      - use existing models when possible, set if merge == true
+ *      - skip non-existing, when add === false
+ *  - dereference models missing in new index
+ *      - or add them to index, if remove == false
+ *  - sort if needed
+ *  - send 'add', 'remove', and 'update'
+
+ * setEmpty( models, options )
+ *  - create pre-allocated array of models with index
+ *  - sort if needed
+ *  - send 'add' and 'update'
+ */
+
+
+
 // parsed, a_models is an array, a_options is (copied) object
 var ObjectProto = Object.prototype;
 
-exports.emptySet = emptySet;
+exports.reset = emptySet;
 function emptySet( self, a_models, a_options ){
     var singular    = !( a_models && a_models instanceof Array ),
         models      = singular ? ( a_models ? [ a_models ] : [] ) : a_models,
@@ -196,6 +230,8 @@ function _addReference( self, model ) {
     onAll( model, self._onModelEvent, self );
 }
 
+
+// O( toRemove ) * 2 * O( models )
 function _removeModels( self, toRemove, options ){
     var origLength = self.length,
         models = self.models,

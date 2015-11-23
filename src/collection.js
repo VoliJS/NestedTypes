@@ -307,7 +307,7 @@ function collectionSet( self, a_models, a_options ){
             model = models[ i ] = _prepareModel( self, attrs, options );
             if( !model ) continue;
             toAdd.push( model );
-            _addReference( self, model, options );
+            _addReference( self, model );
         }
 
         // Do not add multiple models with the same `id`.
@@ -385,7 +385,7 @@ function emptyCollectionSet( self, a_models, a_options ){
     if( models.length && !options.silent ){
         notifyAdd( self, models, options );
         if( sort || order ) trigger2( self, 'sort', self, options );
-        trigger2( this, 'update', this, options );
+        trigger2( self, 'update', self, options );
     }
 
 // Return the added (or merged) model (or models).
@@ -393,13 +393,14 @@ function emptyCollectionSet( self, a_models, a_options ){
 }
 
 function prepareAndRef( self, models, options ){
-    var copy = new Array( models.length );
+    var copy = [];
 
     for( var i = 0; i < models.length; i++ ){
-        var model = copy[ i ] = _prepareModel( self, models[ i ] || {}, options );
+        var model = _prepareModel( self, models[ i ] || {}, options );
 
         if( model ){
-            _addReference( self, model, options );
+            copy.push( model );
+            _addReference( self, model );
         }
     }
 
@@ -429,7 +430,7 @@ function _prepareModel( collection, attrs, a_options ){
 }
 
 // Internal method to create a model's ties to a collection.
-function _addReference( self, model, options) {
+function _addReference( self, model ) {
     self._byId[model.cid] = model;
     if (model.id != null) self._byId[model.id] = model;
     if (!model.collection) model.collection = self;

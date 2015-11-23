@@ -25,6 +25,10 @@ Collection
         3. build new array
         4. remove old models.
         
+        Difference between set and reset will be:
+            set will reuse existing models
+            if merge - invoke set
+            if add - add. 
 
     add( models )
     remove( models )

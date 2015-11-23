@@ -232,6 +232,120 @@ define( function( require, exports, module ){
         describe( 'Update performance', function(){
             var n, b;
 
+            describe( '1-attr model, 100K collection.create', function(){
+                it( 'Backbone', function(){
+                    var c = new BSmallCollection();
+                    for( var i = 0; i < 100000; i++ ){
+                        c.create();
+                    }
+                } );
+
+                it( 'Nested', function(){
+                    var c = new NSmall.Collection();
+
+                    for( var i = 0; i < 100000; i++ ){
+                        c.create();
+                    }
+                } );
+            } );
+
+            describe( '20-attr model, 100K collection.create', function(){
+                it( 'Backbone', function(){
+                    var c = new BLargeCollection();
+                    for( var i = 0; i < 100000; i++ ){
+                        c.create();
+                    }
+                } );
+
+                it( 'Nested', function(){
+                    var c = new NLarge.Collection();
+
+                    for( var i = 0; i < 100000; i++ ){
+                        c.create();
+                    }
+                } );
+            } );
+
+            describe( '1-attr model, 100K collection reset', function(){
+                var arr = [];
+                for( var i = 0; i < 100000; i++ ){
+                    arr.push({ a1 : i });
+                }
+
+                it( 'Backbone', function(){
+                    var c = new BSmallCollection();
+                    c.reset( arr );
+                } );
+
+                it( 'Nested', function(){
+                    var c = new NSmall.Collection();
+                    c.reset( arr );
+                } );
+            } );
+
+            describe( '20-attr model, 100K collection reset', function(){
+                var arr = [];
+                for( var i = 0; i < 100000; i++ ){
+                    arr.push({ a1 : i, a2 : i, a3: i, a4 : i, a5 : i, a6 : i, a7 : i, a8: i, a9 : i, a10 : i});
+                }
+
+                it( 'Backbone', function(){
+                    var c = new BLargeCollection();
+                    c.reset( arr );
+                } );
+
+                it( 'Nested', function(){
+                    var c = new NLarge.Collection();
+                    c.reset( arr );
+                } );
+            } );
+
+            describe( '1-attr model, 100K collection set/update', function(){
+                var arr = [], update = [];
+                for( var i = 0; i < 100000; i++ ){
+                    arr.push({ id: i, a1 : i });
+                    update.push({ id: i, a1 : i + 1 });
+                }
+
+                 it( 'Backbone', function(){
+                    var c = new BSmallCollection();
+                    c.set( arr );
+                    c.set( update );
+                } );
+
+                it( 'Nested', function(){
+                    var c = new NSmall.Collection();
+                    c.set( arr );
+                    c.set( update );
+                } );
+
+            } );
+
+            describe( '20-attr model, 100K collection set/update', function(){
+                var arr = [], update = [];
+                for( var i = 0; i < 200000; i++ ){
+                    arr.push({ id : i, a1 : i, a2 : i, a3: i, a4 : i, a5 : i, a6 : i, a7 : i, a8: i, a9 : i, a10 : i});
+                    i++;
+                    update.push({ id : i - 1, a1 : i, a2 : i, a3: i, a4 : i, a5 : i, a6 : i, a7 : i, a8: i, a9 : i, a10 : i});
+                }
+
+                it( 'Backbone', function(){
+                    var c = new BLargeCollection();
+                    c.set( arr );
+                    c.set( update );
+                } );
+
+                it( 'Nested', function(){
+                    var c = new NLarge.Collection();
+                    c.set( arr );
+                    c.set( update );
+                } );
+            } );
+        });
+
+        describe( 'Update performance', function(){
+            var n, b;
+
             describe( '1-attr model, 1M .set( "a1", number )', function(){
 
                 var b = new BSmall();
@@ -260,6 +374,7 @@ define( function( require, exports, module ){
             });
 
             describe( '20-attrs model, 1M .set( "a1", number )', function(){
+
 
 
                 var b = new BLarge();
@@ -379,6 +494,7 @@ define( function( require, exports, module ){
                 });
             });
         });
+
 
     });
 });

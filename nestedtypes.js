@@ -142,6 +142,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	    return attrs;
 	}
 	
+	var cidCount = 0;
+	
 	var Model = BaseModel.extend( {
 	    triggerWhenChanged : 'change',
 	
@@ -159,6 +161,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	                setSingleAttr( this, name, value, this.__attributes[ name ] );
 	            }
 	        },
+	
+	        cid : function(){ return 'c' + this._cid; },
 	
 	        changed : function(){
 	            var changed = this._changed;
@@ -207,6 +211,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    __duringSet : 0,
 	    _changed : null,
 	    _changeToken : {},
+	    _cid : 0,
 	
 	    defaults : function(){ return {}; },
 	
@@ -338,7 +343,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        this._changing = this._pending = false;
 	        this._changeToken = {};
 	        this.attributes = {};
-	        this.cid = _.uniqueId( 'c' );
+	        this._cid = cidCount++;
 	
 	        if( options.collection ) this.collection = options.collection;
 	
@@ -3229,7 +3234,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    if( models.length && !options.silent ){
 	        notifyAdd( self, models, options );
 	        if( sort || order ) trigger2( self, 'sort', self, options );
-	        trigger2( this, 'update', this, options );
+	        trigger2( self, 'update', self, options );
 	    }
 	
 	// Return the added (or merged) model (or models).

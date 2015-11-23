@@ -18,6 +18,8 @@ function cloneAttrs( attrSpecs, attrs, options ){
     return attrs;
 }
 
+var cidCount = 0;
+
 var Model = BaseModel.extend( {
     triggerWhenChanged : 'change',
 
@@ -35,6 +37,8 @@ var Model = BaseModel.extend( {
                 setSingleAttr( this, name, value, this.__attributes[ name ] );
             }
         },
+
+        cid : function(){ return 'c' + this._cid; },
 
         changed : function(){
             var changed = this._changed;
@@ -83,6 +87,7 @@ var Model = BaseModel.extend( {
     __duringSet : 0,
     _changed : null,
     _changeToken : {},
+    _cid : 0,
 
     defaults : function(){ return {}; },
 
@@ -214,7 +219,7 @@ var Model = BaseModel.extend( {
         this._changing = this._pending = false;
         this._changeToken = {};
         this.attributes = {};
-        this.cid = _.uniqueId( 'c' );
+        this._cid = cidCount++;
 
         if( options.collection ) this.collection = options.collection;
 

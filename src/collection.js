@@ -385,7 +385,7 @@ function emptyCollectionSet( self, a_models, a_options ){
     if( models.length && !options.silent ){
         notifyAdd( self, models, options );
         if( sort || order ) trigger2( self, 'sort', self, options );
-        trigger2( this, 'update', this, options );
+        trigger2( self, 'update', self, options );
     }
 
 // Return the added (or merged) model (or models).

@@ -211,9 +211,13 @@ module.exports = Backbone.Collection.extend( {
     _onModelEvent : function( event, model, collection, options ){
         var attrChange = event.match( attrChangeRegexp );
         if( attrChange ){
-            if( model && attrChange[ 1 ] === model.idAttribute ){
-                delete this._byId[ model.previous( model.idAttribute ) ];
-                if( model.id != null ) this._byId[ model.id ] = model;
+            var idAttribute = model.idAttribute,
+                _byId = this._byId;
+
+            if( model && attrChange[ 1 ] === idAttribute ){
+                delete _byId[ model._previousAttributes[ idAttribute ] ];
+                var id = model.id;
+                id == null || ( _byId[ id ] = model );
             }
 
             trigger3( this, event, model, collection, options );

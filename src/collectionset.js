@@ -1,13 +1,15 @@
 /**
  * Optimized collections core
+ * all methods receive array and options objects, and must return array.
  *
- * remove( models, options )
+ * [x] remove( models, options )
  * Optimized for few models removal. One?
  *  - dereference models, updating the index
  *  - pre-allocate array copy, fill with models present in index.
  *  - send 'remove' and 'update'
+ *  (!) options.index is not supported.
 
- * add( models, options )
+ * [x] add( models, options )
  * Optimized for few models added. One?
  *  - push models to existing array, updating the index
  *      - update existing models
@@ -24,7 +26,7 @@
  *  - sort if needed
  *  - send 'add', 'remove', and 'update'
 
- * setEmpty( models, options )
+ * [x] setEmpty( models, options )
  *  - create pre-allocated array of models with index
  *  - sort if needed
  *  - send 'add' and 'update'
@@ -35,19 +37,15 @@
 // parsed, a_models is an array, a_options is (copied) object
 var ObjectProto = Object.prototype;
 
-exports.reset = emptySet;
-function emptySet( self, a_models, a_options ){
-    var singular    = !( a_models && a_models instanceof Array ),
-        models      = singular ? ( a_models ? [ a_models ] : [] ) : a_models,
-        options = fastCopy( {}, a_options );
-
-
-    if( options.parse ) models = self.parse( models, options );
+exports.setEmpty = function setEmpty( self, a_models, a_options ){
+    var options = fastCopy( {}, a_options ),
+        models = options.parse ? self.parse( a_models, options ) : a_models;
 
 // Turn bare objects into model references, and prevent invalid models
 // from being added.
-    var models = emptyAssign( self, a_models, a_options ),
-        sort = self.comparator && models.length && a_options.sort !== false;
+    models = emptyAssign( self, models, a_options );
+
+    var sort = self.comparator && models.length && a_options.sort !== false;
 
 // Silently sort the collection if appropriate.
     if( sort ) self.sort( { silent : true } );
@@ -60,7 +58,7 @@ function emptySet( self, a_models, a_options ){
     }
 
     return models;
-}
+};
 
 // assign models and update index
 function emptyAssign( self, source, options ){
@@ -71,13 +69,7 @@ function emptyAssign( self, source, options ){
         var model = toModel( self, source[ i ] || {}, options );
 
         if( model ){
-            models[ j++ ] = model;
-            var    id = model.id;
-            id == null || ( _byId[ id ] = model );
-            _byId[ model.cid ] = model;
-
-            model.collection || ( model.collection = self );
-            onAll( model, self._onModelEvent, self );
+            models[ j++ ] = addReference( self, model, _byId );
         }
     }
 
@@ -104,8 +96,7 @@ function toModel( collection, attrs, a_options ){
     return model;
 }
 
-exports.fastCopy = fastCopy;
-function fastCopy( dest, source ){
+exports.fastCopy = function fastCopy( dest, source ){
     if( source ){
         for( var i in source ){
             dest[ i ] = source[ i ];
@@ -113,106 +104,151 @@ function fastCopy( dest, source ){
     }
 
     return dest;
+};
+
+function appendIndex( model, _byId ){
+    var    id = model.id;
+    id == null || ( _byId[ id ] = model );
+    _byId[ model.cid ] = model;
 }
 
-// todo: Special case optimizations:
-// regular set as comes from fetch:
-// - [] -> [ a, b, ... ]
-//      When the set is initially empty, attrs, not models.
-// - [ a, b, ... ] -> [ a, b, ... ]
-//      Populated collection with a few changes, attrs, not models.
+function addReference( self, model, _byId ){
+    var    id = model.id;
+    id == null || ( _byId[ id ] = model );
+    _byId[ model.cid ] = model;
 
-exports.set = set;
-function set( self, a_models, a_options ){
-    var options = { add : true, remove : true, merge : true },
-        models  = a_models;
+    model.collection || ( model.collection = self );
+    onAll( model, self._onModelEvent, self );
 
-    fastCopy( options, a_options );
+    return model;
+}
 
-    if( options.parse ) models = self.parse( models, options );
-    var singular    = !( models && models instanceof Array );
-    models          = singular ? (models ? [ models ] : []) : models.slice();
-    var i, l, id, model, attrs, existing, sort;
-    var at          = options.at;
-    var idAttribute = self.model.prototype.idAttribute || 'id';
-    var sortable    = self.comparator && (at == null) && options.sort !== false;
-    var sortAttr    = typeof self.comparator == 'string' ? self.comparator : null;
-    var toAdd       = [], toRemove = [], modelMap = {};
-    var add         = options.add, merge = options.merge, remove = options.remove;
-    var order       = !sortable && add && remove ? [] : false;
+/**
+ *  * set( models, options )
+ * Guidlines:
+ *      - fastest case should be - no add/remove.
+ *          - keep index and models in place, sort if necessary.
+ *      - no reused elements - switch to fast path.
+ *
+ *      - few things added and removed - reasonably ok.
+ *
+ *  - create pre-allocated array of models with index
+ *      - use existing models when possible, set if merge == true
+ *      - skip non-existing, when add === false
+ *  - dereference models missing in new index
+ *      - or add them to index, if remove == false
+ *  - sort if needed
+ *  - send 'add', 'remove', and 'update'
+ */
 
-// Turn bare objects into model references, and prevent invalid models
-// from being added.
-    for( i = 0, l = models.length; i < l; i++ ){
-        attrs = models[ i ] || {};
-        id = attrs instanceof Model ? ( model = attrs ) : attrs[ idAttribute ];
 
-        // If a duplicate is found, prevent it from being added and
-        // optionally merge it into the existing model.
-        if( existing = self.get( id ) ){
-            if( remove ) modelMap[ existing.cid ] = true;
+
+
+exports.set = function set( self, a_toSet, a_options ){
+    var options = a_options,
+        toSet  = options.parse ? self.parse( a_toSet, options ) : a_toSet;
+
+    var merge  = a_options.merge, add = a_options.add, remove = a_options.remove,
+        parse = a_options.parse;
+
+    if( merge  === void 0 ) merge  = true;
+    if( add    === void 0 ) add    = true;
+    if( remove === void 0 ) remove = true;
+
+    var sort = false,
+        sortable = self.comparator && (at == null) && a_options.sort !== false,
+        sortAttr = typeof this.comparator === 'string' ? this.comparator : null;
+
+    var Model = self.model,
+        idAttribute = Model.prototype.idAttribute || 'id';
+
+    // 1. Create new array and index
+    var models = new Array( toSet.length ),
+        _byId = {}, added = [];
+
+    for( var i = 0, j =0; i < toSet.length; i++ ){
+        // handle existing models...
+        var source = toSet[ i ],
+            existing  = self.get( source );
+
+        if( existing ){
+            models[ j++ ] = appendIndex( existing, _byId );
+
             if( merge ){
-                attrs = attrs === model ? model.attributes : attrs;
-                if( options.parse ) attrs = existing.parse( attrs, options );
+                var attrs = source.attributes || source;
+                if( parse ) attrs = existing.parse( attrs, options );
                 existing.set( attrs, options );
                 if( sortable && !sort && existing.hasChanged( sortAttr ) ) sort = true;
             }
-
-            models[ i ] = existing;
-
-            // If this is a new, valid model, push it to the `toAdd` list.
         }
         else if( add ){
-            model = models[ i ] = toModel( self, attrs, options );
-            if( !model ) continue;
-            toAdd.push( model );
-            _addReference( self, model );
-        }
-
-        // Do not add multiple models with the same `id`.
-        model = existing || model;
-        if( order && (model.isNew() || !modelMap[ model.id ]) ) order.push( model );
-        modelMap[ model.id ] = true;
-    }
-
-// Remove nonexistent models if appropriate.
-    if( remove ){
-        for( i = 0, l = self.length; i < l; ++i ){
-            if( !modelMap[ (model = self.models[ i ]).cid ] ) toRemove.push( model );
-        }
-        if( toRemove.length ) _removeModels( self, toRemove, options );
-    }
-
-// See if sorting is needed, update `length` and splice in new models.
-    if( toAdd.length || (order && order.length) ){
-        if( sortable ) sort = true;
-        self.length += toAdd.length;
-        if( at != null ){
-            for( i = 0, l = toAdd.length; i < l; i++ ){
-                self.models.splice( at + i, 0, toAdd[ i ] );
+            var model = toModel( self, source, options );
+            if( model ){
+                added.push( models[ j++ ] = addReference( self, model, _byId ) );
             }
         }
-        else{
-            if( order ) self.models.length = 0;
-            var orderedModels = order || toAdd;
-            for( i = 0, l = orderedModels.length; i < l; i++ ){
-                self.models.push( orderedModels[ i ] );
-            }
-        }
+
+        // todo: Do not add multiple models with the same `id`.
     }
 
-// Silently sort the collection if appropriate.
+    models.length = j;
+
+    // Put collection to consistent state...
+    var prev = self.models;
+    self.models = models;
+    self._byId = _byId;
+
+    // keep models, if removing is denied...
+    remove || transferModels( self, prev );
+
+    // sort, if needed...
     if( sort ) self.sort( { silent : true } );
 
-// Unless silenced, it's time to fire all appropriate add/sort events.
+    // dereference removed models...
+    var removed = remove ? dereferenceModels( self, prev, options ) : 0;
+
     if( !options.silent ){
-        notifyAdd( self, models, options );
-        if( sort || (order && order.length) ) trigger2( self, 'sort', self, options );
-        if (toAdd.length || toRemove.length) trigger2( self, 'update', this, options);
+        notifyAdd( self, added, options );
+        if( sort ) trigger2( self, 'sort', self, options );
+        if (added.length || removed ) trigger2( self, 'update', this, options);
     }
 
-// Return the added (or merged) model (or models).
-    return singular ? models[ 0 ] : models;
+    return models;
+};
+
+function dereferenceModels( self, models, options ){
+    var _byId = self._byId,
+        silent = options.silent,
+        removed = 0;
+
+    for( var i = 0; i < models.length; i++ ){
+        var model = models[ i ];
+
+        if( !_byId[ model.cid ] ){
+            silent || trigger3( model, 'remove', model, self, options );
+
+            // remove reference to collection
+            model.offAll( self._onModelEvent, self );
+            if( self === model.collection ) model.collection = void 0;
+
+            removed++;
+        }
+    }
+
+    return removed;
+}
+
+function transferModels( self, toTransfer ){
+    var models = self.models,
+        _byId  = self._byId;
+
+    for( var i = 0; i < toTransfer.length; i++ ){
+        var model = toTransfer[ i ];
+
+        if( !_byId[ model.cid ] ){
+            models.push( appendIndex( prev[ i ], _byId ) );
+        }
+    }
 }
 
 function notifyAdd( self, models, options ){
@@ -221,40 +257,211 @@ function notifyAdd( self, models, options ){
     }
 }
 
-// Internal method to create a model's ties to a collection.
-function _addReference( self, model ) {
-    self._byId[model.cid] = model;
-    if (model.id != null) self._byId[model.id] = model;
-    if (!model.collection) model.collection = self;
+/**
+ *  * add( models, options )
+ * Optimized for few models added. One?
+ *  - push models to existing array, updating the index
+ *      - for sorted collections, use binary search and splice. One? Yes.
+ *  - send 'add' and 'update'
+ */
+exports.add = function( self, a_toAdd, a_options ){
+    var sort = self.comparator && a_options.sort !== false,
+        toAdd  = options.parse ? self.parse( a_toAdd, options ) : a_toAdd,
+        _byId = self._byId,
+        models = self.models;
 
-    onAll( model, self._onModelEvent, self );
-}
+    // todo: check if we need to make fast path for single argument
+    for( var i = 0; i < toAdd.length; i++ ){
+        // skip existing models...
+        var source = toAdd[ i ],
+            model  = self.get( source );
 
+        if( model ) continue;
 
-// O( toRemove ) * 2 * O( models )
-function _removeModels( self, toRemove, options ){
-    var origLength = self.length,
-        models = self.models,
-        _byId = self._byId;
+        // convert source to model...
+        // todo: check if we need to copy options
+        model = toModel( self, source || {}, options );
 
-    for( var i = 0; i < toRemove.length; i++ ) {
-        var model = self.get( toRemove[ i ] );
         if( model ){
-            delete _byId[ model.id ];
-            delete _byId[ model.cid ];
+            // update index...
+            addReference( self, model, _byId );
 
-            var index = self.indexOf( model );
-            models.splice( index, 1 );
-            self.length--;
-
-            if (!options.silent) {
-                options.index = index;
-                model.trigger('remove', model, self, options);
+            // update array...
+            if( sort ){
+                var index = _.sortedIndex( models, model, self.comparator );
+                models.splice( index, 0, model );
+            }
+            else{
+                models.push( model );
             }
 
-            self._removeReference(model, options);
+            // notify listeners...
+            options.silent || trigger3( model, 'add', model, self, options );
         }
     }
 
-    return origLength - self.length;
+    // todo: check if something really was added
+    options.silent || trigger2( self, 'update', self, a_options );
+};
+
+exports.remove = function remove( self, a_toRemove, a_options ){
+    var _byId = self._byId;
+
+    // 1. Remove models from index
+    var toRemove = new Array[ a_toRemove.length ],
+        removed = 0, i, j;
+
+    for( i = 0; i < a_toRemove.length; i++ ) {
+        var model = self.get( a_toRemove[ i ] );
+        if( model ){
+            toRemove[ removed++ ] = model;
+
+            delete _byId[ model.cid ];
+
+            var id = model.id;
+            id == null ||  delete _byId[ id ];
+        }
+    }
+
+    // 2. Remove models from array
+    var prev = self.models,
+        models = self.models = new Array( prev.length - removed );
+
+    for( i = 0, j = 0; i < prev.length; i++ ){
+        model = prev[ i ];
+
+        if( _byId[ model.cid ] ){
+            models[ j++ ] = model;
+        }
+    }
+
+    // 3. Send notifications and dereference models
+    for( i = 0; i < removed; i++ ){
+        a_options.silent || trigger3( model, 'remove', model, self, a_options );
+
+        // remove reference to collection
+        model.offAll( self._onModelEvent, self );
+        if( self === model.collection ) model.collection = void 0;
+    }
+
+    a_options.silent || !toRemove.length || trigger2( self, 'update', self, a_options );
+
+    return toRemove;
+};
+
+// Update a collection by `set`-ing a new list of models, adding new ones,
+// removing models that are no longer present, and merging models that
+// already exist in the collection, as necessary. Similar to **Model#set**,
+// the core operation for updating the data contained by the collection.
+function set(self, models, options) {
+    if (models == null) return;
+
+    options = _.defaults({}, options, setOptions);
+    if (options.parse && !self._isModel(models)) models = self.parse(models, options);
+
+    var singular = !_.isArray(models);
+    models = singular ? [models] : models.slice();
+
+    var at = options.at;
+    if (at != null) at = +at;
+    if (at < 0) at += self.length + 1;
+
+    var set = [];
+    var toAdd = [];
+    var toRemove = [];
+    var modelMap = {};
+
+    var add = options.add;
+    var merge = options.merge;
+    var remove = options.remove;
+
+    var sort = false;
+    var sortable = self.comparator && (at == null) && options.sort !== false;
+    var sortAttr = _.isString(self.comparator) ? self.comparator : null;
+
+    // Turn bare objects into model references, and prevent invalid models
+    // from being added.
+    var model, reused = 0;
+
+    for (var i = 0; i < models.length; i++) {
+        model = models[i];
+
+        // If a duplicate is found, prevent it from being added and
+        // optionally merge it into the existing model.
+        var existing = self.get( model );
+        if (existing) {
+            if (merge && model !== existing) {
+                var attrs = model.attributes || model;
+                if (options.parse) attrs = existing.parse(attrs, options);
+                existing.set(attrs, options);
+                if( sortable && !sort ) sort = existing.hasChanged( sortAttr );
+            }
+
+            if( !modelMap[ existing.cid ] ){
+                modelMap[ existing.cid ] = true;
+                reused++;
+            }
+
+            // If self is a new, valid model, push it to the `toAdd` list.
+        } else if (add) {
+            model = models[i] = self._prepareModel(model, options);
+            // todo: ref model here! (?) No
+            if (model) toAdd.push( model );
+        }
+    }
+
+    // (!) fast path 1 - no intersection.
+    // Remove all, add all, valid models inside, all copied.
+    if( !reused && remove ) return fastReplace( self, toAdd, options );
+
+    var length = self.models.length;
+    if( remove && reused < length ){
+        var copy = Array( reused + toAdd.length ),
+            j = 0;
+
+        for (i = 0; i < self.length; i++) {
+            model = self.models[i];
+            if( modelMap[ model.cid ] ){
+                copy[ j++ ] = model;
+            }
+            else{
+                // remove refs
+            }
+        }
+
+        for( i = 0; i < toAdd.length; i++ ){
+            copy[ j++ ] = refModel( self, toAdd[ i ] );
+        }
+    }
+    else {
+        // Fast path 2 - nothing to remove, if all models are touched.
+        // Modify array in place, using push.
+        if( at !== void 0 ){
+            var rest = self.models.splice( at, self.length - at );
+            self.models = self.models.concat( toAdd, rest );
+        }
+        else{
+            for( i = 0; i < toAdd.length; i++ ){
+                // add reference, add to index, use push.
+                self.models.push( refModel( self, toAdd[ i ] ) );
+            }
+        }
+    }
+
+    // Silently sort the collection if appropriate.
+    if (sort || ( sortable && toAdd.length ) ) self.sort({silent: true});
+
+    // Unless silenced, it's time to fire all appropriate add/sort events.
+    if (!options.silent) {
+        for (i = 0; i < toAdd.length; i++) {
+            if (at != null) options.index = at + i;
+            model = toAdd[i];
+            model.trigger('add', model, self, options);
+        }
+        if (sort || orderChanged) self.trigger('sort', self, options);
+        if (toAdd.length || toRemove.length) self.trigger('update', self, options);
+    }
+
+    // Return the added (or merged) model (or models).
+    return singular ? models[0] : models;
 }

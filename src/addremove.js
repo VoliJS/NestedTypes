@@ -45,6 +45,13 @@ function _toModel( collection, attrs, a_options ){
     return model;
 }
 
+function _notifyAdd( self, models, options ){
+    for( var i = 0; i < models.length; i++ ){
+        var model = models[ i ];
+        trigger3( model, 'add', model, self, options );
+    }
+}
+
 // fast-path for singular add and remove...
 function addOne( collection, el, options ){
     if( collection.get( el ) ){
@@ -127,11 +134,7 @@ function addMany( collection, a_toAdd, a_options ){
     if( sort && addedCount ){ collection.sort({ silent : true }); }
 
     if( !options.silent ){
-        for( i = 0; i < addedCount; i++ ){
-            model = added[ i ];
-            trigger3( model, 'add', model, collection, options );
-        }
-
+        _notifyAdd( collection, added, options );
         addedCount && trigger2( collection, 'update', collection, a_options );
     }
 
@@ -208,4 +211,45 @@ function removeMany( collection, toRemove, a_options ){
     a_options.silent || !removed.length || trigger2( collection, 'update', collection, a_options );
 
     return removed;
+}
+
+exports.setEmpty = function setEmpty( self, a_models, a_options ){
+    var options = fastCopy( {}, a_options ),
+        models = options.parse ? self.parse( a_models, options ) : a_models;
+
+    models = emptyAssign( self, models, a_options );
+
+    var sort = self.comparator && models.length && a_options.sort !== false;
+
+    if( sort ) self.sort( { silent : true } );
+
+    if( models.length && !options.silent ){
+        _notifyAdd( self, models, options );
+        if( sort ) trigger2( self, 'sort', self, options );
+        trigger2( self, 'update', self, options );
+    }
+
+    return models;
+};
+
+// assign models and update index
+function emptyAssign( self, source, options ){
+    var models = Array( source.length ),
+        _byId = {};
+
+    for( var i = 0, j = 0; i < source.length; i++ ){
+        var model = _toModel( self, source[ i ] || {}, options );
+
+        if( model ){
+            models[ j++ ] = model;
+            _addIndex( _byId, model );
+            _addReference( self, model );
+        }
+    }
+
+    self.length = models.length = j;
+    self.models = models;
+    self._byId =_byId;
+
+    return models;
 }

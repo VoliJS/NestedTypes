@@ -685,7 +685,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	};
 	
 	Events.onAll = function( self, callback, context ){
-	    var record = {callback: callback, context: context, ctx: context || self};
+	    var record = {callback: callback, context: context, ctx: context || self},
 	        _events = self._events || ( self._events = {} ),
 	        events = _events.all;
 	
@@ -2854,6 +2854,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	var CollectionProto = Backbone.Collection.prototype;
 	
+	// transactional wrapper for collections
 	function transaction( func ){
 	    return function(){
 	        this.__changing++ || ( this._changed = false );
@@ -2867,6 +2868,38 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	        return res;
 	    };
+	}
+	
+	// wrapper for standard collections modification methods
+	// with type checks and casts
+	function method( method ){
+	    return function( a_models, options ){
+	        var res;
+	
+	        this.__changing++ || ( this._changed = false );
+	
+	        if( a_models ){
+	            if( a_models instanceof Array ){
+	                res = method( a_models, options );
+	            }
+	            else if( a_models instanceof collection.model || Object.getPrototypeOf( a_models ) === ObjectProto ){
+	                res = method( [ a_models ], options )[ 0 ];
+	            }
+	            else{
+	                error.wrongCollectionSetArg( collection, a_models );
+	            }
+	        }
+	        else{
+	            method( [], options );
+	        }
+	
+	        if( !--this.__changing && this._changed ){
+	            this._changeToken = {};
+	            trigger1( this, 'changes', this );
+	        }
+	
+	        return res;
+	    }
 	}
 	
 	function handleChange(){
@@ -2942,7 +2975,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	        return next;
 	    },
 	
-	    // ATTENTION: Overriden backbone logic with bug fixes
 	    get : function( obj ){
 	        if( obj == null ){ return void 0; }
 	
@@ -2953,27 +2985,54 @@ return /******/ (function(modules) { // webpackBootstrap
 	        return this._byId[ obj ];
 	    },
 	
-	    set : transaction( function( models, options ){
-	        if( models ){
-	            if( typeof models !== 'object' || !( models instanceof Array || models instanceof Model ||
-	                Object.getPrototypeOf( models ) === Object.prototype ) ){
-	                error.wrongCollectionSetArg( this, models );
-	            }
-	        }
-	
-	        return this.length ? collectionSet( this, models, options ) : emptyCollectionSet( this, models, options );
+	    set : method( function( models, options ){
+	        return this.length ?
+	               collectionSet( this, models, options ) :
+	               emptyCollectionSet( this, models, options );
 	    } ),
 	
+	    add : method( function( models, a_options ){
+	        var options = fastCopy({
+	            merge : false,
+	            add : true,
+	            remove : false
+	        }, a_options );
+	
+	        return this.length ?
+	               collectionSet( this, models, options )
+	            : emptyCollectionSet( this, models, options );
+	    }),
+	
+	    reset : method( function( a_models, a_options ){
+	        var options = a_options || {},
+	            models = a_models,
+	            previous = this.models;
+	
+	        for( var i = 0, l = previous.length; i < l; i++ ){
+	            this._removeReference( previous[ i ], options );
+	        }
+	
+	        options.previousModels = previous;
+	
+	        this._reset();
+	
+	        models = emptyCollectionSet( this, models, fastCopy( { silent : true }, options ) );
+	
+	        options.silent || trigger2( this, 'reset', this, options );
+	
+	        return models;
+	    } ),
+	
+	    sort  : transaction( CollectionProto.sort ),
 	    // Remove a model, or a list of models from the set.
-	    remove: transaction( function(a_models, a_options) {
-	        var singular = !( a_models && a_models instanceof Array ),
-	            models = singular ? [ a_models ] : a_models.splice(),
+	    remove: method( function(a_models, a_options) {
+	        var models = a_models.splice(),
 	            options = a_options || {};
 	
 	        var removed = _removeModels( this, models, options );
 	
-	        if (!options.silent && removed ) trigger2( this, 'update', this, options);
-	        return singular ? models[0] : models;
+	        if (!options.silent && removed ) trigger2( this, 'update', this, options );
+	        return models;
 	    }),
 	
 	    create : function( a_model, a_options ){
@@ -2996,9 +3055,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	    _onModelEvent : function( event, model, collection, options ){
 	        var attrChange = event.match( attrChangeRegexp );
 	        if( attrChange ){
-	            if( model && attrChange[ 1 ] === model.idAttribute ){
-	                delete this._byId[ model.previous( model.idAttribute ) ];
-	                if( model.id != null ) this._byId[ model.id ] = model;
+	            var idAttribute = model.idAttribute,
+	                _byId = this._byId;
+	
+	            if( model && attrChange[ 1 ] === idAttribute ){
+	                delete _byId[ model._previousAttributes[ idAttribute ] ];
+	                var id = model.id;
+	                id == null || ( _byId[ id ] = model );
 	            }
 	
 	            trigger3( this, event, model, collection, options );
@@ -3041,36 +3104,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	        return transaction( func ).apply( self || this, args );
 	    },
 	
-	    add : function( models, a_options ){
-	        var options = { merge : false, add : true, remove : false };
-	        fastCopy( options, a_options );
-	        return this.set( models, options );
-	    },
-	
-	    reset : transaction( function( a_models, a_options ){
-	        var options = a_options || {},
-	            models = a_models,
-	            previous = this.models;
-	
-	        for( var i = 0, l = previous.length; i < l; i++ ){
-	            this._removeReference( previous[ i ], options );
-	        }
-	
-	        options.previousModels = previous;
-	
-	        this._reset();
-	
-	        var newOptions = { silent : true };
-	        fastCopy( newOptions, a_options );
-	        models = this.set( models, newOptions );
-	
-	        options.silent || trigger2( this, 'reset', this, options );
-	
-	        return models;
-	    } ),
-	
-	    sort  : transaction( CollectionProto.sort ),
-	
 	    getModelIds : function(){ return _.pluck( this.models, 'id' ); },
 	
 	    createSubset : function( models, options ){
@@ -3092,221 +3125,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	        return This;
 	    }
 	} );
-	
-	function fastCopy( dest, source ){
-	    if( source ){
-	        for( var i in source ){
-	            dest[ i ] = source[ i ];
-	        }
-	    }
-	}
-	
-	// todo: Special case optimizations:
-	// regular set as comes from fetch:
-	// - [] -> [ a, b, ... ]
-	//      When the set is initially empty, attrs, not models.
-	// - [ a, b, ... ] -> [ a, b, ... ]
-	//      Populated collection with a few changes, attrs, not models.
-	
-	function collectionSet( self, a_models, a_options ){
-	    var options = { add : true, remove : true, merge : true },
-	        models  = a_models;
-	
-	    fastCopy( options, a_options );
-	
-	    if( options.parse ) models = self.parse( models, options );
-	    var singular    = !( models && models instanceof Array );
-	    models          = singular ? (models ? [ models ] : []) : models.slice();
-	    var i, l, id, model, attrs, existing, sort;
-	    var at          = options.at;
-	    var idAttribute = self.model.prototype.idAttribute || 'id';
-	    var sortable    = self.comparator && (at == null) && options.sort !== false;
-	    var sortAttr    = typeof self.comparator == 'string' ? self.comparator : null;
-	    var toAdd       = [], toRemove = [], modelMap = {};
-	    var add         = options.add, merge = options.merge, remove = options.remove;
-	    var order       = !sortable && add && remove ? [] : false;
-	
-	// Turn bare objects into model references, and prevent invalid models
-	// from being added.
-	    for( i = 0, l = models.length; i < l; i++ ){
-	        attrs = models[ i ] || {};
-	        id = attrs instanceof Model ? ( model = attrs ) : attrs[ idAttribute ];
-	
-	        // If a duplicate is found, prevent it from being added and
-	        // optionally merge it into the existing model.
-	        if( existing = self.get( id ) ){
-	            if( remove ) modelMap[ existing.cid ] = true;
-	            if( merge ){
-	                attrs = attrs === model ? model.attributes : attrs;
-	                if( options.parse ) attrs = existing.parse( attrs, options );
-	                existing.set( attrs, options );
-	                if( sortable && !sort && existing.hasChanged( sortAttr ) ) sort = true;
-	            }
-	
-	            models[ i ] = existing;
-	
-	            // If this is a new, valid model, push it to the `toAdd` list.
-	        }
-	        else if( add ){
-	            model = models[ i ] = _prepareModel( self, attrs, options );
-	            if( !model ) continue;
-	            toAdd.push( model );
-	            _addReference( self, model, options );
-	        }
-	
-	        // Do not add multiple models with the same `id`.
-	        model = existing || model;
-	        if( order && (model.isNew() || !modelMap[ model.id ]) ) order.push( model );
-	        modelMap[ model.id ] = true;
-	    }
-	
-	// Remove nonexistent models if appropriate.
-	    if( remove ){
-	        for( i = 0, l = self.length; i < l; ++i ){
-	            if( !modelMap[ (model = self.models[ i ]).cid ] ) toRemove.push( model );
-	        }
-	        if( toRemove.length ) _removeModels( self, toRemove, options );
-	    }
-	
-	// See if sorting is needed, update `length` and splice in new models.
-	    if( toAdd.length || (order && order.length) ){
-	        if( sortable ) sort = true;
-	        self.length += toAdd.length;
-	        if( at != null ){
-	            for( i = 0, l = toAdd.length; i < l; i++ ){
-	                self.models.splice( at + i, 0, toAdd[ i ] );
-	            }
-	        }
-	        else{
-	            if( order ) self.models.length = 0;
-	            var orderedModels = order || toAdd;
-	            for( i = 0, l = orderedModels.length; i < l; i++ ){
-	                self.models.push( orderedModels[ i ] );
-	            }
-	        }
-	    }
-	
-	// Silently sort the collection if appropriate.
-	    if( sort ) self.sort( { silent : true } );
-	
-	// Unless silenced, it's time to fire all appropriate add/sort events.
-	    if( !options.silent ){
-	        notifyAdd( self, models, options );
-	        if( sort || (order && order.length) ) trigger2( self, 'sort', self, options );
-	        if (toAdd.length || toRemove.length) trigger2( self, 'update', this, options);
-	    }
-	
-	// Return the added (or merged) model (or models).
-	    return singular ? models[ 0 ] : models;
-	}
-	
-	function emptyCollectionSet( self, a_models, a_options ){
-	    var options = {}, models  = a_models;
-	    fastCopy( options, a_options );
-	
-	    if( options.parse ) models = self.parse( models, options );
-	    var singular    = !( models && models instanceof Array );
-	    models          = singular ? (models ? [ models ] : []) : models;
-	    var sort;
-	    var sortable    = self.comparator && options.sort !== false;
-	    var order       = !sortable ? [] : false;
-	
-	// Turn bare objects into model references, and prevent invalid models
-	// from being added.
-	    models = prepareAndRef( self, models, options );
-	
-	// See if sorting is needed, update `length` and splice in new models.
-	    if( models.length || order ){
-	        if( sortable ) sort = true;
-	        self.length = models.length;
-	        self.models = models;
-	    }
-	
-	// Silently sort the collection if appropriate.
-	    if( sort ) self.sort( { silent : true } );
-	
-	// Unless silenced, it's time to fire all appropriate add/sort events.
-	    if( models.length && !options.silent ){
-	        notifyAdd( self, models, options );
-	        if( sort || order ) trigger2( self, 'sort', self, options );
-	        trigger2( this, 'update', this, options );
-	    }
-	
-	// Return the added (or merged) model (or models).
-	    return singular ? models[ 0 ] : models;
-	}
-	
-	function prepareAndRef( self, models, options ){
-	    var copy = new Array( models.length );
-	
-	    for( var i = 0; i < models.length; i++ ){
-	        var model = copy[ i ] = _prepareModel( self, models[ i ] || {}, options );
-	
-	        if( model ){
-	            _addReference( self, model, options );
-	        }
-	    }
-	
-	    return copy;
-	}
-	
-	function notifyAdd( self, models, options ){
-	    for( var model, i = 0, l = models.length; i < l; i++ ){
-	        trigger3( model = models[ i ], 'add', model, self, options );
-	    }
-	}
-	
-	function _prepareModel( collection, attrs, a_options ){
-	    if( attrs instanceof Model ) return attrs;
-	
-	    var options = {};
-	    fastCopy( options, a_options );
-	    options.collection = collection;
-	
-	    var model = new collection.model( attrs, options );
-	
-	    if( !model.validationError ) return model;
-	
-	    trigger3( collection, 'invalid', collection, model.validationError, options );
-	
-	    return false;
-	}
-	
-	// Internal method to create a model's ties to a collection.
-	function _addReference( self, model, options) {
-	    self._byId[model.cid] = model;
-	    if (model.id != null) self._byId[model.id] = model;
-	    if (!model.collection) model.collection = self;
-	
-	    onAll( model, self._onModelEvent, self );
-	}
-	
-	function _removeModels( self, toRemove, options ){
-	    var origLength = self.length,
-	        models = self.models,
-	        _byId = self._byId;
-	
-	    for( var i = 0; i < toRemove.length; i++ ) {
-	        var model = self.get( toRemove[ i ] );
-	        if( model ){
-	            delete _byId[ model.id ];
-	            delete _byId[ model.cid ];
-	
-	            var index = self.indexOf( model );
-	            models.splice( index, 1 );
-	            self.length--;
-	
-	            if (!options.silent) {
-	                options.index = index;
-	                model.trigger('remove', model, self, options);
-	            }
-	
-	            self._removeReference(model, options);
-	        }
-	    }
-	
-	    return origLength - self.length;
-	}
 
 /***/ },
 /* 11 */

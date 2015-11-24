@@ -61,7 +61,7 @@ Events.trigger3 = function( self, name, a, b, c ){
 };
 
 Events.onAll = function( self, callback, context ){
-    var record = {callback: callback, context: context, ctx: context || self};
+    var record = {callback: callback, context: context, ctx: context || self},
         _events = self._events || ( self._events = {} ),
         events = _events.all;
 

@@ -1,14 +1,22 @@
-var Backbone = require( './backbone+' ),
+var _        = require( 'underscore' ),
+    Backbone = require( './backbone+' ),
     Model    = require( './model' ),
     Events   = Backbone.Events,
     error    = require( './errors' ),
     trigger1 = Events.trigger1,
     trigger2 = Events.trigger2,
-    onAll    = Events.onAll,
-    trigger3 = Events.trigger3;
-_            = require( 'underscore' );
+    trigger3 = Events.trigger3,
+    core     = require( './collectionset' );
 
-var CollectionProto = Backbone.Collection.prototype;
+var fastCopy    = core.fastCopy,
+    toModel     = core.toModel,
+    addOne      = core.addOne,
+    removeOne   = core.removeOne,
+    removeMany  = core.removeMany,
+    setMany     = core.setMany,
+    replaceMany = core.replaceMany;
+
+CollectionProto = Backbone.Collection.prototype;
 
 // transactional wrapper for collections
 function transaction( func ){
@@ -27,27 +35,18 @@ function transaction( func ){
 }
 
 // wrapper for standard collections modification methods
-// with type checks and casts
+// wrap call in transaction and convert singular args
 function method( method ){
     return function( a_models, options ){
-        var res;
-
         this.__changing++ || ( this._changed = false );
 
-        if( a_models ){
-            if( a_models instanceof Array ){
-                res = method( a_models, options );
-            }
-            else if( a_models instanceof collection.model || Object.getPrototypeOf( a_models ) === ObjectProto ){
-                res = method( [ a_models ], options )[ 0 ];
-            }
-            else{
-                error.wrongCollectionSetArg( collection, a_models );
-            }
-        }
-        else{
-            method( [], options );
-        }
+        var models = options.parse ? this.parse( a_models ) : a_models;
+
+        var res = models ? (
+            models instanceof Array ?
+                method( models, options )
+                : method( [ models ], options )[ 0 ]
+        ) : method( [], options );
 
         if( !--this.__changing && this._changed ){
             this._changeToken = {};
@@ -80,23 +79,29 @@ module.exports = Backbone.Collection.extend( {
     _owner : null,
     _store : null,
 
-    __changing : 0,
-    _changed   : false,
+    __changing   : 0,
+    _changed     : false,
     _changeToken : {},
 
-    // ATTENTION: Overriden backbone logic with bug fixes
     constructor : function( models, a_options ){
         var options = a_options || {};
-        if( options.model ) this.model = options.model;
-        if( options.comparator !== void 0 ) this.comparator = options.comparator;
-        this._reset();
 
-        this.__changing = 0;
-        this._changed   = false;
+        this.__changing   = 0;
+        this._changed     = false;
         this._changeToken = {};
+        this._owner = this._store = null;
 
-        if( models ) this.reset( models, options );
+        this.model      = options.model || this.model;
+        this.comparator = options.comparator || this.comparator;
+
+        this.models = [];
+        this._byId  = {};
+        this.length = 0;
+
+        if( models ) this.reset( this, models, fastCopy( { silent : true }, options ) );
+
         this.listenTo( this, this._listenToChanges, handleChange );
+
         this.initialize.apply( this, arguments );
     },
 
@@ -143,64 +148,65 @@ module.exports = Backbone.Collection.extend( {
 
     set : method( function( models, options ){
         return this.length ?
-               collectionSet( this, models, options ) :
-               emptyCollectionSet( this, models, options );
+               setMany( this, models, options ) :
+               replaceMany( this, models, options );
     } ),
 
-    add : method( function( models, a_options ){
-        var options = fastCopy({
-            merge : false,
-            add : true,
-            remove : false
-        }, a_options );
-
-        return this.length ?
-               collectionSet( this, models, options )
-            : emptyCollectionSet( this, models, options );
-    }),
-
     reset : method( function( a_models, a_options ){
-        var options = a_options || {},
-            models = a_models,
+        var options  = a_options || {},
+            models   = a_models,
             previous = this.models;
-
-        for( var i = 0, l = previous.length; i < l; i++ ){
-            this._removeReference( previous[ i ], options );
-        }
 
         options.previousModels = previous;
 
-        this._reset();
-
-        models = emptyCollectionSet( this, models, fastCopy( { silent : true }, options ) );
+        models = replaceMany( this, models, fastCopy( { silent : true }, options ) );
 
         options.silent || trigger2( this, 'reset', this, options );
 
         return models;
     } ),
 
-    sort  : transaction( CollectionProto.sort ),
+    sort : transaction( CollectionProto.sort ),
+
+// Methods with singular fast-path
+//------------------------------------------------
+    add : transaction( function( a_models, a_options ){
+        if( a_models ){
+            if( a_models instanceof Array ){
+                return this.length ?
+                       setMany( this, a_models, fastCopy( {
+                           merge  : false,
+                           add    : true,
+                           remove : false
+                       }, a_options ) )
+                    : replaceMany( this, a_models, a_options || {} );
+            }
+
+            return addOne( this, a_models, a_options || {} );
+        }
+    } ),
+
     // Remove a model, or a list of models from the set.
-    remove: method( function(a_models, a_options) {
-        var models = a_models.splice(),
-            options = a_options || {};
+    remove : transaction( function( a_models, a_options ){
+        if( a_models ){
+            if( a_models instanceof Array ){
+                return removeMany( this, a_models, a_options || {} );
+            }
 
-        var removed = _removeModels( this, models, options );
-
-        if (!options.silent && removed ) trigger2( this, 'update', this, options );
-        return models;
-    }),
+            return removeOne( this, a_models, a_options || {} );
+        }
+    } ),
 
     create : function( a_model, a_options ){
         var options = {}, model = a_model;
         fastCopy( options, a_options );
 
-        if( !(model = _prepareModel( this, model, options )) ) return false;
-        if( !options.wait ) this.add( model, options );
+        if( !(model = toModel( this, model, options )) ) return false;
+        if( !options.wait ) addOne( this, model, options );
         var collection  = this;
         var success     = options.success;
         options.success = function( model, resp ){
-            if( options.wait ) collection.add( model, options );
+            if( options.wait ) addOne( collection, model, options );
             if( success ) success( model, resp, options );
         };
 
@@ -211,29 +217,23 @@ module.exports = Backbone.Collection.extend( {
     _onModelEvent : function( event, model, collection, options ){
         var attrChange = event.match( attrChangeRegexp );
         if( attrChange ){
-            var idAttribute = model.idAttribute,
-                _byId = this._byId;
-
-            if( model && attrChange[ 1 ] === idAttribute ){
-                delete _byId[ model._previousAttributes[ idAttribute ] ];
-                var id = model.id;
-                id == null || ( _byId[ id ] = model );
-            }
-
+            updateIndex( model, attrChange[ 1 ], this._byId );
             trigger3( this, event, model, collection, options );
             return;
         }
 
         switch( event ){
-            case 'add' :
-            case 'remove' :
-                if( collection === this ) trigger3( this, event, model, collection, options );
-                break;
-            case 'change' :
+            case 'change' : //TODO: does it need to be sorted when fields have changed?
             case 'sync' :
             case 'invalid' :
                 trigger2( this, event, model, collection );
                 break;
+
+            case 'add' :
+            case 'remove' :
+                if( collection === this ) trigger3( this, event, model, collection, options );
+                break;
+
             case 'destroy' :
                 this.remove( model, options );
                 trigger3( this, event, model, collection, options );
@@ -281,3 +281,13 @@ module.exports = Backbone.Collection.extend( {
         return This;
     }
 } );
+
+function updateIndex( model, attr, _byId ){
+    var idAttribute = model.idAttribute;
+
+    if( model && attr === idAttribute ){
+        delete _byId[ model._previousAttributes[ idAttribute ] ];
+        var id = model.id;
+        id == null || ( _byId[ id ] = model );
+    }
+}

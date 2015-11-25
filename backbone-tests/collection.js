@@ -797,7 +797,7 @@
   });
 
   QUnit.test ("reset with different values", function(assert) {
-    var col = new Backbone.Collection({id: 1});
+    var col = new ( Backbone.Model.extend({}).Collection )({id: 1});
     col.reset({id: 1, a: 1});
     assert.equal(col.get(1).get('a'), 1);
   });
@@ -1047,7 +1047,7 @@
 
   QUnit.test("#1655 - groupBy can be used with a string argument.", function(assert) {
     assert.expect(3);
-    var collection = new Backbone.Collection([{x: 1}, {x: 2}]);
+    var collection = new (Backbone.Model.defaults({ x: 0 }).Collection) ([{x: 1}, {x: 2}]);
     var grouped = collection.groupBy('x');
     assert.strictEqual(_.keys(grouped).length, 2);
     assert.strictEqual(grouped[1][0].get('x'), 1);

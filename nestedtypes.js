@@ -204,6 +204,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    _owner : null,
 	
 	    __attributes : { id : attrOptions( { value : undefined } ).createAttribute( 'id' ) },
+	    Attributes : function( x ){ this.id = x.id; },
 	    __class      : 'Model',
 	
 	    __duringSet : 0,
@@ -414,7 +415,17 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	    // extend Model and its Collection
 	    extend : function( protoProps, staticProps ){
-	        var This = Object.extend.call( this );
+	        var ctor;
+	
+	        if( typeof protoProps === 'function' ){
+	            ctor = protoProps;
+	            protoProps = void 0;
+	        }
+	        else{
+	            ctor = protoProps && protoProps.hasOwnProperty( 'constructor' ) && protoProps.constructor;
+	        }
+	
+	        var This = Object.extend.call( this, ctor );
 	        This.Collection = this.Collection.extend();
 	        return protoProps ? This.define( protoProps, staticProps ) : This;
 	    },
@@ -1522,9 +1533,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	  // right here:
 	  var methods = ['forEach', 'each', 'map', 'collect', 'reduce', 'foldl',
 	    'inject', 'reduceRight', 'foldr', 'find', 'detect', 'filter', 'select',
-	    'reject', 'every', 'all', 'some', 'any', 'include', 'contains', 'invoke',
+	    'reject', 'every', 'all', 'some', 'any', 'include', 'includes', 'partition', 'contains', 'invoke',
 	    'max', 'min', 'toArray', 'size', 'first', 'head', 'take', 'initial', 'rest',
-	    'tail', 'drop', 'last', 'without', 'difference', 'indexOf', 'shuffle',
+	    'tail', 'drop', 'last', 'without', 'difference', 'indexOf', 'shuffle', 'findIndex', 'findLastIndex',
 	    'lastIndexOf', 'isEmpty', 'chain', 'sample'];
 	
 	  // Mix in each Underscore method as a proxy to `Collection#models`.
@@ -3182,7 +3193,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    offAll    = Events.offAll;
 	
 	function sortedIndex( array, obj, iteratee, context ){
-	    if( iteratee.length == 2 ){
+	    if( typeof iteratee === 'function' && iteratee.length == 2 ){
 	        var value = obj;
 	        var low = 0, high = array.length;
 	        while (low < high) {
@@ -3500,7 +3511,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	    // rebuild index...
 	    for( var i = 0; i < toAdd.length; i++ ){
-	        _addIndex( _byId, model );
+	        _addIndex( _byId, toAdd[ i ] );
 	    }
 	}
 	

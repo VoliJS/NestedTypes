@@ -8,7 +8,7 @@ var _        = require( 'underscore' ),
     offAll    = Events.offAll;
 
 function sortedIndex( array, obj, iteratee, context ){
-    if( iteratee.length == 2 ){
+    if( typeof iteratee === 'function' && iteratee.length == 2 ){
         var value = obj;
         var low = 0, high = array.length;
         while (low < high) {
@@ -326,7 +326,7 @@ function fpNoIntersection( collection, toAdd ){
 
     // rebuild index...
     for( var i = 0; i < toAdd.length; i++ ){
-        _addIndex( _byId, model );
+        _addIndex( _byId, toAdd[ i ] );
     }
 }
 

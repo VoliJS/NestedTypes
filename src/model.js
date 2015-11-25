@@ -78,6 +78,7 @@ var Model = BaseModel.extend( {
     _owner : null,
 
     __attributes : { id : attrOptions( { value : undefined } ).createAttribute( 'id' ) },
+    Attributes : function( x ){ this.id = x.id; },
     __class      : 'Model',
 
     __duringSet : 0,
@@ -288,7 +289,17 @@ var Model = BaseModel.extend( {
 
     // extend Model and its Collection
     extend : function( protoProps, staticProps ){
-        var This = Object.extend.call( this );
+        var ctor;
+
+        if( typeof protoProps === 'function' ){
+            ctor = protoProps;
+            protoProps = void 0;
+        }
+        else{
+            ctor = protoProps && protoProps.hasOwnProperty( 'constructor' ) && protoProps.constructor;
+        }
+
+        var This = Object.extend.call( this, ctor );
         This.Collection = this.Collection.extend();
         return protoProps ? This.define( protoProps, staticProps ) : This;
     },

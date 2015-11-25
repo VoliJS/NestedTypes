@@ -41,7 +41,7 @@ function method( method ){
         this.__changing++ || ( this._changed = false );
 
         var options = a_options || {},
-            models = options.parse ? this.parse( a_models ) : a_models;
+            models = options.parse ? this.parse( a_models, options ) : a_models;
 
         var res = models ? (
             models instanceof Array ?
@@ -231,7 +231,6 @@ module.exports = Backbone.Collection.extend( {
         switch( event ){
             case 'change' : //TODO: does it need to be sorted when fields have changed?
             case 'sync' :
-            case 'invalid' :
                 trigger2( this, event, model, collection );
                 break;
 
@@ -242,6 +241,7 @@ module.exports = Backbone.Collection.extend( {
 
             case 'destroy' :
                 this.remove( model, options );
+            case 'invalid' :
                 trigger3( this, event, model, collection, options );
                 break;
 

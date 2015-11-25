@@ -629,14 +629,16 @@
 
   QUnit.test("create with wait:true should not call collection.parse", function(assert) {
     assert.expect(0);
-    var Collection = Backbone.Collection.extend({
-      url: '/test',
-      parse: function () {
-        assert.ok(false);
+    var Model = Backbone.Model.extend({
+      collection : {
+        url: '/test',
+        parse: function () {
+          assert.ok(false);
+        }
       }
     });
 
-    var collection = new Collection;
+    var collection = new Model.Collection;
 
     collection.create({}, {wait: true});
     this.ajaxSettings.success();

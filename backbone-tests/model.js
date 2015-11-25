@@ -453,7 +453,7 @@
 
   QUnit.test("change, hasChanged, changedAttributes, previous, previousAttributes", function(assert) {
     assert.expect(9);
-    var model = new Backbone.Model({name: "Tim", age: 10});
+    var model = new ( Backbone.Model.defaults({name: "Tim", age: 10}) )();
     assert.deepEqual(model.changedAttributes(), false);
     model.on('change', function() {
       assert.ok(model.hasChanged('name'), 'name changed');
@@ -470,7 +470,7 @@
 
   QUnit.test("changedAttributes", function(assert) {
     assert.expect(3);
-    var model = new Backbone.Model({a: 'a', b: 'b'});
+    var model = new (Backbone.Model.defaults({a: 'a', b: 'b'}))();
     assert.deepEqual(model.changedAttributes(), false);
     assert.equal(model.changedAttributes({a: 'a'}), false);
     assert.equal(model.changedAttributes({a: 'b'}).a, 'b');
@@ -929,7 +929,7 @@
 
   QUnit.test("hasChanged works outside of change events, and true within", function(assert) {
     assert.expect(6);
-    var model = new Backbone.Model({x: 1});
+    var model = new ( Backbone.Model.defaults({x: 1}))();
     model.on('change:x', function() {
       assert.ok(model.hasChanged('x'));
       assert.equal(model.get('x'), 1);

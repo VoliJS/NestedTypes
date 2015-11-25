@@ -191,6 +191,18 @@ var refsCollectionSpec = {
         CollectionProto.set.call( this, models, _.defaults( options, upperOptions ) );
     },
 
+    reset : function( models, upperOptions ){
+        var options = { merge : false };
+
+        if( models ){
+            if( models instanceof Array && models.length && typeof models[ 0 ] !== 'object' ){
+                options.merge = options.parse = true;
+            }
+        }
+
+        CollectionProto.reset.call( this, models, _.defaults( options, upperOptions ) );
+    },
+
     resolve : function( collection ){
         if( collection && collection.length ){
             this.resolvedWith = collection;

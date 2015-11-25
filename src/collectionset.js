@@ -1,4 +1,14 @@
-module.export = {
+var _        = require( 'underscore' ),
+    Backbone = require( './backbone+' ),
+    Events   = Backbone.Events,
+    trigger1 = Events.trigger1,
+    trigger2 = Events.trigger2,
+    trigger3 = Events.trigger3,
+    onAll    = Events.onAll,
+    offAll    = Events.offAll;
+
+
+module.exports = {
     fastCopy    : fastCopy,
     toModel     : toModel,
     addOne      : addOne,
@@ -146,14 +156,14 @@ function replaceMany( self, models, a_options ){
     var options = fastCopy( {}, a_options ),
         notify  = !options.silent;
 
-    var removed = this.models;
+    var removed = self.models;
     var added   = _replaceModels( self, models, options );
 
     var sort = self.comparator && added.length && options.sort !== false;
     if( sort ) self.sort( silence );
 
     // Remove refs from old models, if any...
-    removed.length && _removeModels( this, removed, options );
+    removed.length && _removeModels( self, removed, options );
 
     if( notify ){
         added.length && _notifyAdd( self, added, options );
@@ -258,12 +268,12 @@ function setMany( self, a_models, a_options ){
 
     if( remove ){
         // fast path 1 - nothing to remove...
-        if( reused == this.models.length ){
+        if( reused == self.models.length ){
             fpAdd( self, toAdd );
         }
         // fast path 2 - no intersection...
         else if( !reused ){
-            toRemove = this.models;
+            toRemove = self.models;
             fpNoIntersection( self, toAdd );
         }
         // No luck. Reallocate models, update index...
@@ -278,7 +288,7 @@ function setMany( self, a_models, a_options ){
 
     // alter position, whenever
     if( at !== void 0 ){
-        _move( this.models, at, toAdd.length );
+        _move( self.models, at, toAdd.length );
     }
     else if( sort || ( sortable && toAdd.length ) ){
         self.sort( { silent : true } );
@@ -294,7 +304,7 @@ function setMany( self, a_models, a_options ){
     }
 
     // Return the added (or merged) model (or models).
-    return this.models;
+    return self.models;
 }
 
 function fpNoIntersection( collection, toAdd ){
@@ -345,7 +355,7 @@ function fpMerge( collection, keepCount, toKeep, toAdd ){
         nextModels[ j++ ] = model;
     }
 
-    this.models = nextModels;
+    self.models = nextModels;
 
     return toRemove;
 }

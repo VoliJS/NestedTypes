@@ -75,6 +75,30 @@ Events.onAll = function( self, callback, context ){
     return self;
 };
 
+Events.offAll = function( self, callback, context) {
+    var retain, ev, events, j, k;
+    if( !self._events ) return self;
+
+    if (events = self._events.all ) {
+        self._events.all = retain = [];
+
+        if( callback || context ) {
+            for (j = 0, k = events.length; j < k; j++) {
+                ev = events[j];
+                if ((callback && callback !== ev.callback && callback !== ev.callback._callback) ||
+                    (context && context !== ev.context)) {
+                    retain.push(ev);
+                }
+            }
+        }
+
+        if (!retain.length) delete self._events.all;
+    }
+
+    return self;
+};
+
+
 // ...and specialized functions with triggering loops. Crappy JS JIT loves these small functions and code duplication.
 function _fireEvent1( events, a ){
     if( events )

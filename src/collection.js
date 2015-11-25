@@ -37,16 +37,17 @@ function transaction( func ){
 // wrapper for standard collections modification methods
 // wrap call in transaction and convert singular args
 function method( method ){
-    return function( a_models, options ){
+    return function( a_models, a_options ){
         this.__changing++ || ( this._changed = false );
 
-        var models = options.parse ? this.parse( a_models ) : a_models;
+        var options = a_options || {},
+            models = options.parse ? this.parse( a_models ) : a_models;
 
         var res = models ? (
             models instanceof Array ?
-                method( models, options )
-                : method( [ models ], options )[ 0 ]
-        ) : method( [], options );
+                method.call( this, models, options )
+                : method.call( this, [ models ], options )[ 0 ]
+        ) : method.call( this, [], options );
 
         if( !--this.__changing && this._changed ){
             this._changeToken = {};
@@ -98,7 +99,7 @@ module.exports = Backbone.Collection.extend( {
         this._byId  = {};
         this.length = 0;
 
-        if( models ) this.reset( this, models, fastCopy( { silent : true }, options ) );
+        if( models ) this.reset( models, fastCopy( { silent : true }, options ) );
 
         this.listenTo( this, this._listenToChanges, handleChange );
 

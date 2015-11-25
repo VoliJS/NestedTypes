@@ -288,11 +288,7 @@ function setMany( self, a_models, a_options ){
 
     // Unless silenced, it's time to fire all appropriate add/sort events.
     if( !options.silent ){
-        for( i = 0; i < toAdd.length; i++ ){
-            if( at != null ) options.index = at + i;
-            model = toAdd[ i ];
-            trigger3( self, 'add', model, self, options );
-        }
+        _notifyAdd( self, toAdd, options );
         if( sort ) trigger2( self, 'sort', self, options );
         if( toAdd.length || toRemove.length ) trigger2( self, 'update', self, options );
     }
@@ -397,8 +393,11 @@ function _move( source, at, len ){
 }
 
 function _notifyAdd( self, models, options ){
+    var at = options.at;
+
     for( var i = 0; i < models.length; i++ ){
         var model = models[ i ];
+        if( at != null ) options.index = at + i;
         trigger3( model, 'add', model, self, options );
     }
 }

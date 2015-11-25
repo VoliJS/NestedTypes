@@ -225,9 +225,10 @@ module.exports = Backbone.Collection.extend( {
     },
 
     _onModelEvent : function( event, model, collection, options ){
-        var attrChange = event.match( attrChangeRegexp );
-        if( attrChange ){
-            updateIndex( model, attrChange[ 1 ], this._byId );
+        // TODO: create event map to optimize events dispatching
+        // Make it a class. Member will be 'change:idAttr'
+        if( event === 'change:' + model.idAttribute ){
+            updateIndex( model, this._byId );
             trigger3( this, event, model, collection, options );
             return;
         }
@@ -245,12 +246,8 @@ module.exports = Backbone.Collection.extend( {
 
             case 'destroy' :
                 this.remove( model, options );
-            case 'invalid' :
+            default :
                 trigger3( this, event, model, collection, options );
-                break;
-
-            default:
-                this.trigger.apply( this, arguments );
         }
 
     },
@@ -292,12 +289,8 @@ module.exports = Backbone.Collection.extend( {
     }
 } );
 
-function updateIndex( model, attr, _byId ){
-    var idAttribute = model.idAttribute;
-
-    if( model && attr === idAttribute ){
-        delete _byId[ model._previousAttributes[ idAttribute ] ];
-        var id = model.id;
-        id == null || ( _byId[ id ] = model );
-    }
+function updateIndex( model, _byId ){
+    delete _byId[ model._previousAttributes[ idAttribute ] ];
+    var id = model.id;
+    id == null || ( _byId[ id ] = model );
 }

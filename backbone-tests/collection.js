@@ -2,16 +2,22 @@
 
   var a, b, c, d, e, col, otherCol;
 
+  var Model = Backbone.Model.extend({});
+
+  var M = Backbone.Model.defaults({
+    label : String
+  });
+
   QUnit.module("Backbone.Collection", {
 
     beforeEach: function(assert) {
-      a         = new Backbone.Model({id: 3, label: 'a'});
-      b         = new Backbone.Model({id: 2, label: 'b'});
-      c         = new Backbone.Model({id: 1, label: 'c'});
-      d         = new Backbone.Model({id: 0, label: 'd'});
+      a         = new M({id: 3, label: 'a'});
+      b         = new M({id: 2, label: 'b'});
+      c         = new M({id: 1, label: 'c'});
+      d         = new M({id: 0, label: 'd'});
       e         = null;
-      col       = new Backbone.Collection([a,b,c,d]);
-      otherCol  = new Backbone.Collection();
+      col       = new M.Collection([a,b,c,d]);
+      otherCol  = new M.Collection();
     }
 
   });
@@ -36,7 +42,7 @@
 
   QUnit.test("String comparator.", function(assert) {
     assert.expect(1);
-    var collection = new Backbone.Collection([
+    var collection = new M.Collection([
       {id: 3},
       {id: 1},
       {id: 2}
@@ -45,14 +51,22 @@
   });
 
   QUnit.test("new and parse", function(assert) {
-    assert.expect(3);
-    var Collection = Backbone.Collection.extend({
-      parse : function(data) {
-        return _.filter(data, function(datum) {
-          return datum.a % 2 === 0;
-        });
+    var M = Backbone.Model.extend({
+      defaults : {
+        a : 0
+      },
+
+      collection : {
+        parse : function(data) {
+          return _.filter(data, function(datum) {
+            return datum.a % 2 === 0;
+          });
+        }
       }
     });
+
+    assert.expect(3);
+    var Collection = M.Collection;
     var models = [{a: 1}, {a: 2}, {a: 3}, {a: 4}];
     var collection = new Collection(models, {parse: true});
     assert.strictEqual(collection.length, 2);
@@ -62,10 +76,9 @@
 
   QUnit.test("clone preserves model and comparator", function(assert) {
     assert.expect(3);
-    var Model = Backbone.Model.extend();
     var comparator = function(model){ return model.id; };
 
-    var collection = new Backbone.Collection([{id: 1}], {
+    var collection = new Model.Collection([{id: 1}], {
       model: Model,
       comparator: comparator
     }).clone();
@@ -102,13 +115,18 @@
   });
 
   QUnit.test('get with "undefined" id', function(assert) {
-    var collection = new Backbone.Collection([{id: 1}, {id: 'undefined'}]);
+
+    var collection = new Model.Collection([{id: 1}, {id: 'undefined'}]);
     assert.equal(collection.get(1).id, 1);
   });
 
   QUnit.test("update index when id changes", function(assert) {
     assert.expect(4);
-    var col = new Backbone.Collection();
+    var Model = Backbone.Model.defaults({
+      name : String
+    });
+
+    var col = new Model.Collection();
     col.add([
       {id : 0, name : 'one'},
       {id : 1, name : 'two'}
@@ -136,7 +154,7 @@
     assert.expect(14);
     var added, opts, secondAdded;
     added = opts = secondAdded = null;
-    e = new Backbone.Model({id: 10, label : 'e'});
+    e = new M({id: 10, label : 'e'});
     otherCol.add(e);
     otherCol.on('add', function() {
       secondAdded = true;
@@ -153,17 +171,17 @@
     assert.equal(secondAdded, null);
     assert.ok(opts.amazing);
 
-    var f = new Backbone.Model({id: 20, label : 'f'});
-    var g = new Backbone.Model({id: 21, label : 'g'});
-    var h = new Backbone.Model({id: 22, label : 'h'});
-    var atCol = new Backbone.Collection([f, g, h]);
+    var f = new M({id: 20, label : 'f'});
+    var g = new M({id: 21, label : 'g'});
+    var h = new M({id: 22, label : 'h'});
+    var atCol = new M.Collection([f, g, h]);
     assert.equal(atCol.length, 3);
     atCol.add(e, {at: 1});
     assert.equal(atCol.length, 4);
     assert.equal(atCol.at(1), e);
     assert.equal(atCol.last(), h);
 
-    var coll = new Backbone.Collection(new Array(2));
+    var coll = new M.Collection(new Array(2));
     var addCount = 0;
     coll.on('add', function(){
       addCount += 1;
@@ -402,10 +420,14 @@
   });
 
   QUnit.test("events are unbound on remove", function(assert) {
+    var M = Backbone.Model.defaults({
+        name : String
+    });
+
     assert.expect(3);
     var counter = 0;
-    var dj = new Backbone.Model();
-    var emcees = new Backbone.Collection([dj]);
+    var dj = new M();
+    var emcees = new M.Collection([dj]);
     emcees.on('change', function(){ counter++; });
     dj.set({name : 'Kool'});
     assert.equal(counter, 1);

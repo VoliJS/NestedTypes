@@ -7,6 +7,18 @@ var _        = require( 'underscore' ),
     onAll    = Events.onAll,
     offAll    = Events.offAll;
 
+function sortedIndex( array, obj, iteratee, context ){
+    if( iteratee.length == 2 ){
+        var value = obj;
+        var low = 0, high = array.length;
+        while (low < high) {
+            var mid = Math.floor((low + high) / 2);
+            if (iteratee.call( context, array[mid], value) < 0 ) low = mid + 1; else high = mid;
+        }
+        return low;
+    }
+    else return _.sortedIndex( array, obj, iteratee, context );
+}
 
 module.exports = {
     fastCopy    : fastCopy,
@@ -49,17 +61,18 @@ function toModel( collection, attrs, a_options ){
 
 // fast-path for singular add and remove...
 function addOne( collection, el, options ){
-    if( collection.get( el ) ){
-        return;
+    var model = collection.get( el );
+    if( model ){
+        return model;
     }
 
-    var model = toModel( collection, el, options );
+    model = toModel( collection, el, options );
     if( model ){
         var models = collection.models,
             at     = options.at;
 
         if( collection.comparator && at == null && options.sort !== false ){
-            at = _.sortedIndex( models, model, collection.comparator );
+            at = sortedIndex( models, model, collection.comparator, collection );
         }
 
         if( at ){
@@ -88,7 +101,7 @@ function removeOne( collection, el, options ){
             sorted = collection.comparator && options.sort !== false;
 
         var at = sorted ?
-                 _.sortedIndex( models, model, collection.comparator )
+                 sortedIndex( models, model, collection.comparator, collection )
             : _.indexOf( models, model );
 
         models.splice( at, 1 );
@@ -115,8 +128,8 @@ function removeMany( collection, toRemove, a_options ){
     var _byId = collection._byId;
 
     // 1. Remove models from index
-    var removed = new Array[ toRemove.length ],
-        removed = 0, i, j;
+    var removed = Array( toRemove.length ),
+        i, j;
 
     for( i = 0, j = 0; i < toRemove.length; i++ ){
         var model = collection.get( toRemove[ i ] );
@@ -130,7 +143,7 @@ function removeMany( collection, toRemove, a_options ){
 
     // 2. Remove models from array
     var prev   = collection.models,
-        models = collection.models = new Array( prev.length - j );
+        models = collection.models = Array( prev.length - j );
 
     for( i = 0, j = 0; i < prev.length; i++ ){
         model = prev[ i ];
@@ -143,7 +156,7 @@ function removeMany( collection, toRemove, a_options ){
     models.length = j;
 
     // 3. Send notifications and dereference models
-    _removeModels( this, removed, a_options );
+    _removeModels( collection, removed, a_options );
 
     a_options.silent || !removed.length || trigger2( collection, 'update', collection, a_options );
 
@@ -180,7 +193,7 @@ function _removeModels( collection, removed, options ){
     var silent = options.silent;
     for( var i = 0; i < removed.length; i++ ){
         var model = removed[ i ];
-        silent || trigger3( model, 'remove', model, this, options );
+        silent || trigger3( model, 'remove', model, collection, options );
         _removeReference( collection, model );
     }
 }
@@ -200,7 +213,7 @@ function _replaceModels( self, source, options ){
         }
     }
 
-    self.length = models.length = j;
+    models.length = j;
     self.models = models;
     self._byId  = _byId;
 
@@ -257,8 +270,8 @@ function setMany( self, a_models, a_options ){
             }
         }
         else if( add ){
-            model = models[ i ] = self._prepareModel( model, options );
-            _addReference( this, model );
+            model = models[ i ] = toModel( self, model, options );
+            _addReference( self, model );
             if( model ) toAdd.push( model );
         }
     }
@@ -294,7 +307,7 @@ function setMany( self, a_models, a_options ){
         self.sort( { silent : true } );
     }
 
-    if( toRemove.length ) _removeModels( this, toRemove, options );
+    if( toRemove.length ) _removeModels( self, toRemove, options );
 
     // Unless silenced, it's time to fire all appropriate add/sort events.
     if( !options.silent ){
@@ -330,8 +343,8 @@ function fpAdd( collection, toAdd ){
 
 function fpMerge( collection, keepCount, toKeep, toAdd ){
     var nextModels = Array( keepCount + toAdd.length ),
-        toRemove = Array( prevModels.length - keepCount ),
         prevModels = collection.models,
+        toRemove = Array( prevModels.length - keepCount ),
         _byId = collection._byId,
         j = 0, model;
 
@@ -371,7 +384,7 @@ function _addReference( collection, model ){
 }
 
 function _removeReference( collection, model ){
-    if( this === model.collection ){
+    if( collection === model.collection ){
         model.collection = void 0;
     }
     offAll( model, collection._onModelEvent, collection );

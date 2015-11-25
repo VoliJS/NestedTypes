@@ -75,6 +75,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	var Store = __webpack_require__( 14 );
 	Object.defineProperty( exports, 'store', Store.globalProp );
 	
+	exports.store = new Store.Model();
+	
 	_.extend( exports, Backbone, {
 	    Backbone  : Backbone,
 	    Class     : __webpack_require__( 3 ),
@@ -2952,6 +2954,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	    _changed     : false,
 	    _changeToken : {},
 	
+	    properties : {
+	        length : function(){
+	            return this.models.length;
+	        }
+	    },
+	
 	    constructor : function( models, a_options ){
 	        var options = a_options || {};
 	
@@ -2965,7 +2973,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	        this.models = [];
 	        this._byId  = {};
-	        this.length = 0;
 	
 	        if( models ) this.reset( models, fastCopy( { silent : true }, options ) );
 	
@@ -3122,7 +3129,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                         return model.clone( options );
 	                     } ) : this.models;
 	
-	        return new this.constructor( models );
+	        return new this.constructor( models, { model : this.model, comparator : this.comparator } );
 	    },
 	
 	    transaction : function( func, self, args ){
@@ -3174,6 +3181,18 @@ return /******/ (function(modules) { // webpackBootstrap
 	    onAll    = Events.onAll,
 	    offAll    = Events.offAll;
 	
+	function sortedIndex( array, obj, iteratee, context ){
+	    if( iteratee.length == 2 ){
+	        var value = obj;
+	        var low = 0, high = array.length;
+	        while (low < high) {
+	            var mid = Math.floor((low + high) / 2);
+	            if (iteratee.call( context, array[mid], value) < 0 ) low = mid + 1; else high = mid;
+	        }
+	        return low;
+	    }
+	    else return _.sortedIndex( array, obj, iteratee, context );
+	}
 	
 	module.exports = {
 	    fastCopy    : fastCopy,
@@ -3216,17 +3235,18 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	// fast-path for singular add and remove...
 	function addOne( collection, el, options ){
-	    if( collection.get( el ) ){
-	        return;
+	    var model = collection.get( el );
+	    if( model ){
+	        return model;
 	    }
 	
-	    var model = toModel( collection, el, options );
+	    model = toModel( collection, el, options );
 	    if( model ){
 	        var models = collection.models,
 	            at     = options.at;
 	
 	        if( collection.comparator && at == null && options.sort !== false ){
-	            at = _.sortedIndex( models, model, collection.comparator );
+	            at = sortedIndex( models, model, collection.comparator, collection );
 	        }
 	
 	        if( at ){
@@ -3255,7 +3275,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            sorted = collection.comparator && options.sort !== false;
 	
 	        var at = sorted ?
-	                 _.sortedIndex( models, model, collection.comparator )
+	                 sortedIndex( models, model, collection.comparator, collection )
 	            : _.indexOf( models, model );
 	
 	        models.splice( at, 1 );
@@ -3282,8 +3302,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	    var _byId = collection._byId;
 	
 	    // 1. Remove models from index
-	    var removed = new Array[ toRemove.length ],
-	        removed = 0, i, j;
+	    var removed = Array( toRemove.length ),
+	        i, j;
 	
 	    for( i = 0, j = 0; i < toRemove.length; i++ ){
 	        var model = collection.get( toRemove[ i ] );
@@ -3297,7 +3317,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	    // 2. Remove models from array
 	    var prev   = collection.models,
-	        models = collection.models = new Array( prev.length - j );
+	        models = collection.models = Array( prev.length - j );
 	
 	    for( i = 0, j = 0; i < prev.length; i++ ){
 	        model = prev[ i ];
@@ -3310,7 +3330,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    models.length = j;
 	
 	    // 3. Send notifications and dereference models
-	    _removeModels( this, removed, a_options );
+	    _removeModels( collection, removed, a_options );
 	
 	    a_options.silent || !removed.length || trigger2( collection, 'update', collection, a_options );
 	
@@ -3347,7 +3367,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    var silent = options.silent;
 	    for( var i = 0; i < removed.length; i++ ){
 	        var model = removed[ i ];
-	        silent || trigger3( model, 'remove', model, this, options );
+	        silent || trigger3( model, 'remove', model, collection, options );
 	        _removeReference( collection, model );
 	    }
 	}
@@ -3367,7 +3387,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        }
 	    }
 	
-	    self.length = models.length = j;
+	    models.length = j;
 	    self.models = models;
 	    self._byId  = _byId;
 	
@@ -3424,8 +3444,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	            }
 	        }
 	        else if( add ){
-	            model = models[ i ] = self._prepareModel( model, options );
-	            _addReference( this, model );
+	            model = models[ i ] = toModel( self, model, options );
+	            _addReference( self, model );
 	            if( model ) toAdd.push( model );
 	        }
 	    }
@@ -3461,7 +3481,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        self.sort( { silent : true } );
 	    }
 	
-	    if( toRemove.length ) _removeModels( this, toRemove, options );
+	    if( toRemove.length ) _removeModels( self, toRemove, options );
 	
 	    // Unless silenced, it's time to fire all appropriate add/sort events.
 	    if( !options.silent ){
@@ -3497,8 +3517,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	function fpMerge( collection, keepCount, toKeep, toAdd ){
 	    var nextModels = Array( keepCount + toAdd.length ),
-	        toRemove = Array( prevModels.length - keepCount ),
 	        prevModels = collection.models,
+	        toRemove = Array( prevModels.length - keepCount ),
 	        _byId = collection._byId,
 	        j = 0, model;
 	
@@ -3538,7 +3558,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 	
 	function _removeReference( collection, model ){
-	    if( this === model.collection ){
+	    if( collection === model.collection ){
 	        model.collection = void 0;
 	    }
 	    offAll( model, collection._onModelEvent, collection );

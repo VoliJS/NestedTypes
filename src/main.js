@@ -19,6 +19,8 @@ Model.Collection    = Collection;
 var Store = require( './store' );
 Object.defineProperty( exports, 'store', Store.globalProp );
 
+exports.store = new Store.Model();
+
 _.extend( exports, Backbone, {
     Backbone  : Backbone,
     Class     : require( './object+' ),

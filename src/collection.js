@@ -84,6 +84,12 @@ module.exports = Backbone.Collection.extend( {
     _changed     : false,
     _changeToken : {},
 
+    properties : {
+        length : function(){
+            return this.models.length;
+        }
+    },
+
     constructor : function( models, a_options ){
         var options = a_options || {};
 
@@ -97,7 +103,6 @@ module.exports = Backbone.Collection.extend( {
 
         this.models = [];
         this._byId  = {};
-        this.length = 0;
 
         if( models ) this.reset( models, fastCopy( { silent : true }, options ) );
 
@@ -254,7 +259,7 @@ module.exports = Backbone.Collection.extend( {
                          return model.clone( options );
                      } ) : this.models;
 
-        return new this.constructor( models );
+        return new this.constructor( models, { model : this.model, comparator : this.comparator } );
     },
 
     transaction : function( func, self, args ){

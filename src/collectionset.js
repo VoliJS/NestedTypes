@@ -71,6 +71,13 @@ function addOne( collection, el, options ){
         var models = collection.models,
             at     = options.at;
 
+        if (at != null){
+            at = +at;
+            if (at < 0) at += this.length + 1;
+            if( at < 0 ) at = 0;
+            if( at > this.length ) at = this.length;
+        }
+
         if( collection.comparator && at == null && options.sort !== false ){
             at = sortedIndex( models, model, collection.comparator, collection );
         }
@@ -231,8 +238,12 @@ function setMany( self, a_models, a_options ){
         models  = a_models;
 
     var at = options.at;
-    if( at != null ) at = +at;
-    if( at < 0 ) at += self.length + 1;
+    if (at != null){
+        at = +at;
+        if (at < 0) at += this.length + 1;
+        if( at < 0 ) at = 0;
+        if( at > this.length ) at = this.length;
+    }
 
     var toAdd    = [],
         toRemove = [],

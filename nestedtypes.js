@@ -211,7 +211,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    _changed : null,
 	    _changeToken : {},
 	
-	    defaults : function(){ return {}; },
+	    defaults : function( attrs, options ){ return new this.Attributes( attrs ); },
 	
 	    __begin  : modelSet.__begin,
 	    __commit : modelSet.__commit,
@@ -2971,6 +2971,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	        }
 	    },
 	
+	    modelId: function( attrs ) {
+	        return attrs[this.model.prototype.idAttribute || 'id'];
+	    },
+	
 	    constructor : function( models, a_options ){
 	        var options = a_options || {};
 	
@@ -3256,6 +3260,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	        var models = collection.models,
 	            at     = options.at;
 	
+	        if (at != null){
+	            at = +at;
+	            if (at < 0) at += this.length + 1;
+	            if( at < 0 ) at = 0;
+	            if( at > this.length ) at = this.length;
+	        }
+	
 	        if( collection.comparator && at == null && options.sort !== false ){
 	            at = sortedIndex( models, model, collection.comparator, collection );
 	        }
@@ -3416,8 +3427,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	        models  = a_models;
 	
 	    var at = options.at;
-	    if( at != null ) at = +at;
-	    if( at < 0 ) at += self.length + 1;
+	    if (at != null){
+	        at = +at;
+	        if (at < 0) at += this.length + 1;
+	        if( at < 0 ) at = 0;
+	        if( at > this.length ) at = this.length;
+	    }
 	
 	    var toAdd    = [],
 	        toRemove = [],

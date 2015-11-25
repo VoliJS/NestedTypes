@@ -85,7 +85,7 @@ var Model = BaseModel.extend( {
     _changed : null,
     _changeToken : {},
 
-    defaults : function(){ return {}; },
+    defaults : function( attrs, options ){ return new this.Attributes( attrs ); },
 
     __begin  : modelSet.__begin,
     __commit : modelSet.__commit,

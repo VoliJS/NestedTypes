@@ -90,6 +90,10 @@ module.exports = Backbone.Collection.extend( {
         }
     },
 
+    modelId: function( attrs ) {
+        return attrs[this.model.prototype.idAttribute || 'id'];
+    },
+
     constructor : function( models, a_options ){
         var options = a_options || {};
 

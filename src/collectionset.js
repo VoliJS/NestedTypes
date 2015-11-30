@@ -196,6 +196,34 @@ function replaceMany( self, models, a_options ){
     return added;
 }
 
+function emptySetMany( self, models, a_options ){
+    var options = fastCopy( {}, a_options ),
+        notify  = !options.silent;
+
+    _reallocate( self, models, function( source ){
+        var model = toModel( self, source, options );
+
+        if( model ){
+            return _addReference( self, model );
+        }
+    });
+
+    var added = this.models;
+
+    var sort = self.comparator && added.length && options.sort !== false;
+    if( sort ) self.sort( silence );
+
+    if( notify ){
+        added.length && _notifyAdd( self, added, options );
+        sort && trigger2( self, 'sort', self, options );
+        if( added.length || removed.length ){
+            trigger2( self, 'update', self, options );
+        }
+    }
+
+    return added;
+}
+
 function _removeModels( collection, removed, options ){
     var silent = options.silent;
     for( var i = 0; i < removed.length; i++ ){
@@ -383,6 +411,166 @@ function fpMerge( collection, keepCount, toKeep, toAdd ){
 
     return toRemove;
 }
+
+// Update a collection by `set`-ing a new list of models, adding new ones,
+// removing models that are no longer present, and merging models that
+// already exist in the collection, as necessary. Similar to **Model#set**,
+// the core operation for updating the data contained by the collection.
+function setMany2( self, a_models, a_options ){
+    if( a_models == null ) return;
+
+    var options = fastCopy( { merge : true }, a_options ),
+        models  = a_models;
+
+    var merge  = options.merge;
+
+    var sort     = false,
+        sortable = self.comparator && at == null && options.sort !== false,
+        sortAttr = typeof self.comparator == 'string' ? self.comparator : null;
+
+    // Turn bare objects into model references, and prevent invalid models
+    // from being added.
+    var previous = self.models,
+        toAdd = [];
+
+    _reallocate( self, models, function( source, _byCid ){
+        // If a duplicate is found, prevent it from being added and
+        // optionally merge it into the existing model.
+        var existing = self.get( source );
+        if( existing ){
+            if( merge && source !== existing ){
+                var attrs = source.attributes || source;
+                if( options.parse ) attrs = existing.parse( attrs, options );
+                existing.set( attrs, options );
+                if( sortable && !sort ) sort = existing.hasChanged( sortAttr );
+            }
+
+            if( !_byCid[ existing.cid ] ){
+                return existing;
+            }
+        }
+        else{
+            var model = toModel( self, model, options );
+            if( model ){
+                toAdd.push( model );
+                return _addReference( self, model );
+            }
+        }
+    });
+
+    if( sort || ( sortable && toAdd.length ) ){
+        self.sort( { silent : true } );
+    }
+
+    // remove references and fire 'remove' events if needed...
+    if( this.models.length - toAdd.length < previous.length ){
+        _garbageCollect( self, previous, options );
+    }
+
+    // Unless silenced, it's time to fire all appropriate add/sort events.
+    if( !options.silent ){
+        _notifyAdd( self, toAdd, options );
+        if( sort ) trigger2( self, 'sort', self, options );
+        if( toAdd.length || toRemove.length ) trigger2( self, 'update', self, options );
+    }
+
+    // Return the added (or merged) model (or models).
+    return self.models;
+}
+
+// Remove references from models missing in collection's index
+// Send 'remove' events if no silent
+function _garbageCollect( collection, previous, options ){
+    var _byId = collection._byId,
+        silent = options.silent;
+
+    // Filter out removed models and remove them from the index...
+    for( var i = 0; i < previous.length; i++ ){
+        var model = previous[ i ];
+
+        if( !_byId[ model.cid ] ){
+            silent || trigger3( model, 'remove', model, collection, options );
+            _removeReference( collection, model );
+        }
+    }
+}
+
+/**
+ * create - factory function to create model from attrs
+ * merge  - function to merge attrs and models
+ */
+
+// assign models and update index
+function _mergeModels( self, source, options ){
+    var models = Array( source.length ),
+        _byId  = {},
+        added  = [];
+
+    for( var i = 0, j = 0; i < source.length; i++ ){
+        var spec = source[ i ],
+            model = null;
+
+        var existing = self.get( source );
+        if( existing ){
+            source === existing || merge( existing, source );
+
+            _byId[ existing.cid ] || ( model = existing );
+        }
+        else{
+            var model = toModel( self, model, options );
+            if( model ){
+                _addReference( self, model );
+                toAdd.push( model );
+                return model;
+            }
+        }
+
+        if( spec ){
+            var model = spec instanceof Model ? model : _create( self, spec, options );
+
+
+        }
+        if( model ){
+            models[ j++ ] = model;
+            _addIndex( _byId, model );
+        }
+    }
+
+    models.length = j;
+    self.models = models;
+    self._byId  = _byId;
+
+    return models;
+}
+
+// reallocate model and index
+function _reallocate( self, source, getModel){
+    var models = Array( source.length ),
+        _byId   = {};
+
+    for( var i = 0, j = 0; i < source.length; i++ ){
+        var src = source[ i ];
+        if( src ){
+            var model = getModel( src, _byId );
+            // add to array and indexes...
+            if( model ){
+                models[ j++ ] = model;
+
+                _byId[ model.cid ] = model;
+
+                var id = model.id;
+                if( id ){
+                    _byId[ id ] = model;
+                }
+            }
+        }
+    }
+
+    models.length = j;
+    self.models = models;
+    self._byId = _byId;
+}
+
 /**
  * Helper functions
  */
@@ -392,6 +580,7 @@ function fpMerge( collection, keepCount, toKeep, toAdd ){
 function _addReference( collection, model ){
     model.collection || ( model.collection = collection );
     onAll( model, collection._onModelEvent, collection );
+    return model;
 }
 
 function _removeReference( collection, model ){

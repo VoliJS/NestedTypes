@@ -8,22 +8,24 @@ export const Test = Model.extend( {
     idAttribute : 'name',
 
     defaults : {
+        executedAt : Date.value( null ),
         name      : String,
         time      : Integer.value( null ),
         faster    : Number.value( null ),
         exception : Error.value( null ),
-        init      : Function.value( () => {} ),
-        test      : Function
+        init      : Function.has.toJSON( false ),
+        test      : Function.has.toJSON( false )
     },
 
     run(){
         this.transaction( () =>{
             this.exception = null;
-            this.time = null;
+            this.time = 0;
+            this.executedAt = new Date();
 
             try{
                 const context = this.init() || {};
-                this.time = measure( this.test, context );
+                this.time = Math.max( measure( this.test, context ), 1 );
             }
             catch( e ){
                 this.exception = e;
@@ -46,6 +48,7 @@ export const Group = Model.extend( {
     idAttribute : 'name',
 
     defaults : {
+        lastExecuted : Date.value( null ),
         name     : String,
         tests    : Test.Collection,
         selected : Test.from( 'tests' )
@@ -58,6 +61,7 @@ export const Group = Model.extend( {
     },
 
     run(){
+        this.executedAt = new Date();
         this.tests.each( test => test.run() );
     }
 } );

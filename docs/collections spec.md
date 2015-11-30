@@ -7,34 +7,40 @@ Collection
             used in nested collections creation.
     
     reset()
-    reset( models )
-    reset( models, options )        
-        set collection to defined state, updating them in a bulk.
-        optimize to be as fast as possible.
-        
-    set( models )
-        set collection to defined state, generating the set
-        of individual update operations.
+        =>
+            clean up indexes
             
-        update existing models
-        remove unneeded models
-        add missing models
+    reset( models )
+        =>
+            regenerate models and indexes
+            
+    reset( models, options )        
+        valid options:
+            parse = false
+            silent = false
+            sort = true            
+        =>
+            regenerate models and indexes
+            no add/remove events
         
-        1. iterate through models
-        2. build new index
-        3. build new array
-        4. remove old models.
-        
-        Difference between set and reset will be:
-            set will reuse existing models
-            if merge - invoke set
-            if add - add. 
+    set( models, options )
+        options:
+            merge = true
+            parse = false
+            silent = false
+            sort = true
+        =>
+            regenerate data structures
+            reuse existing models
+            fire add/remove
 
     add( models )
+        options:
+            parse = false
+            silent = false            
+            at = undefined
+            sort = true
+            
     remove( models )
-
-individual operations:
-    addModel( model )
-    removeModel( model )
-    setModel( model )
-        
+        options
+            silent = false

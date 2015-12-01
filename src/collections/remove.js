@@ -11,7 +11,19 @@ module.exports = {
  *      - silent : Boolean = false
  */
 
-function removeOne( collection, el, options ){
+function RemoveOptions( options ){
+    this.silent = options.silent;
+}
+
+RemoveOptions.prototype = {
+    add    : false,
+    remove : true,
+    merge  : false
+};
+
+function removeOne( collection, el, a_options ){
+    var options = new RemoveOptions( a_options );
+
     var model = collection.get( el );
     if( model ){
         // TODO: for sorted collection, find element with binary search.
@@ -38,15 +50,17 @@ function removeOne( collection, el, options ){
  * 3. Send notifications and remove references
  */
 function removeMany( collection, toRemove, a_options ){
+    var options = new RemoveOptions( a_options );
+
     var _byId = collection._byId;
 
     var removed = _removeFromIndex( collection, toRemove );
 
     _reallocate( collection, removed.length );
 
-    _removeModels( collection, removed, a_options );
+    _removeModels( collection, removed, options );
 
-    a_options.silent || !removed.length || trigger2( collection, 'update', collection, a_options );
+    options.silent || !removed.length || trigger2( collection, 'update', collection, options );
 
     return removed;
 }

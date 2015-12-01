@@ -1,10 +1,29 @@
-function emptySetMany( self, models, a_options ){
-    var options = fastCopy( {}, a_options ),
-        notify  = !options.silent;
+function SetOptions( options ){
+    this.silent = options.silent;
+    this.parse  = options.parse;
+    this.sort   = options.sort;
+
+    this.merge = options.merge == null || options.merge;
+}
+
+SetOptions.prototype = {
+    remove : true,
+    add    : true
+};
+
+
+function emptySetMany( self, models, a_options, silent ){
+    var options = new SetOptions( a_options );
+
+    if( silent ){
+        options.silent = silent;
+    }
+
+    var notify = !options.silent;
 
     _reallocate( self, models, function( source ){
         return castAndRef( self, source, options );
-    });
+    } );
 
     var added = this.models;
 
@@ -23,10 +42,10 @@ function emptySetMany( self, models, a_options ){
 }
 
 function setMany( self, a_models, a_options ){
-    var options = fastCopy( { merge : true }, a_options ),
+    var options = new SetOptions( a_options ),
         models  = a_models;
 
-    var merge  = options.merge;
+    var merge = options.merge;
 
     var sort     = false,
         sortable = self.comparator && at == null && options.sort !== false,
@@ -35,7 +54,7 @@ function setMany( self, a_models, a_options ){
     // Turn bare objects into model references, and prevent invalid models
     // from being added.
     var previous = self.models,
-        toAdd = [];
+        toAdd    = [];
 
     _reallocate( self, models, function( source, _byCid ){
         // If a duplicate is found, prevent it from being added and
@@ -60,7 +79,7 @@ function setMany( self, a_models, a_options ){
                 return model;
             }
         }
-    });
+    } );
 
     if( sort || ( sortable && toAdd.length ) ){
         self.sort( { silent : true } );
@@ -86,7 +105,7 @@ function setMany( self, a_models, a_options ){
 // Remove references from models missing in collection's index
 // Send 'remove' events if no silent
 function _garbageCollect( collection, previous, options ){
-    var _byId = collection._byId,
+    var _byId  = collection._byId,
         silent = options.silent;
 
     // Filter out removed models and remove them from the index...
@@ -101,9 +120,9 @@ function _garbageCollect( collection, previous, options ){
 }
 
 // reallocate model and index
-function _reallocate( self, source, getModel){
+function _reallocate( self, source, getModel ){
     var models = Array( source.length ),
-        _byId   = {};
+        _byId  = {};
 
     for( var i = 0, j = 0; i < source.length; i++ ){
         var src = source[ i ];
@@ -118,6 +137,6 @@ function _reallocate( self, source, getModel){
     }
 
     models.length = j;
-    self.models = models;
-    self._byId = _byId;
+    self.models   = models;
+    self._byId    = _byId;
 }

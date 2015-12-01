@@ -141,6 +141,10 @@ function bbSetAttrs( model, attrs, opts ){
     }
 
     // For each `set` attribute, update or delete the current value.
+    // Todo: optimize for complete attrs set. Iterate through attributes names array,
+    // or (may be better) create precompiled loop unrolled forEach, extracting specs
+    // and values.
+    // Beware of single attr update with options. Need deep refactoring to remove penalty.
     for( var attr in attrs ){
         var attrSpec  = attrSpecs[ attr ],
             isChanged = attrSpec ? attrSpec.isChanged : genericIsChanged,

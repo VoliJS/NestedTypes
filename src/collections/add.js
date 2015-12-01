@@ -1,5 +1,32 @@
+/**
+ * Add models to collection, if models with the same id doesn't belong to collection
+ * options:
+ *  - silent = false
+ *  - sort = true
+ *  - at = null
+ *  - pass through other options
+ */
+
+function AddOptions( a_options ){
+    var options = a_options || {};
+    this.silent = options.silent;
+    this.parse  = options.parse;
+    this.sort   = options.sort;
+
+    this.at     = options.at;
+    this.index  = null;
+}
+
+AddOptions.prototype = {
+    add    : true,
+    remove : false,
+    merge  : false
+};
+
 // fast-path for singular add and remove...
-function addOne( collection, el, options ){
+function addOne( collection, el, a_options ){
+    var options = new AddOptions( a_options );
+
     var model = collection.get( el );
     if( model ){
         return model;
@@ -17,10 +44,10 @@ function addOne( collection, el, options ){
                 at = sortedIndex( models, model, collection.comparator, collection );
             }
         }
-        else {
+        else{
             // if at is given, it overrides sorting option...
             at = +at;
-            if (at < 0) at += this.length + 1;
+            if( at < 0 ) at += this.length + 1;
             if( at < 0 ) at = 0;
             if( at > this.length ) at = this.length;
         }
@@ -47,9 +74,9 @@ function addOne( collection, el, options ){
  * update index and models array.
  */
 function addMany( self, models, a_options ){
-    var options = fastCopy( {}, a_options ),
+    var options = new AddOptions( a_options ),
         notify  = !options.silent,
-        added = [];
+        added   = [];
 
     _append( self, models, function( source ){
         var model = castAndRef( self, source, options );
@@ -57,11 +84,18 @@ function addMany( self, models, a_options ){
             added.push( model );
             return model;
         }
-    });
+    } );
 
-    // TODO: Implement 'at' support
-    var sort = self.comparator && added.length && options.sort !== false;
-    if( sort ) self.sort( silence );
+    var at     = a_options.at,
+        insert = at != null,
+        sort   = self.comparator && added.length && options.sort !== false && !insert;
+
+    if( insert ){
+        _move( this.models, at, added.length );
+    }
+    else if( sort ){
+        self.sort( silence );
+    }
 
     if( notify ){
         _notifyAdd( self, added, options );
@@ -77,7 +111,7 @@ function addMany( self, models, a_options ){
 // append data to model and index
 function _append( self, source, getModel ){
     var models = self.models,
-        _byId   = self._byId;
+        _byId  = self._byId;
 
     for( var i = 0; i < source.length; i++ ){
         var src = source[ i ];
@@ -89,5 +123,13 @@ function _append( self, source, getModel ){
                 _addIndex( _byId, model );
             }
         }
+    }
+}
+
+function _move( source, at, len ){
+    for( var j = source.length - len, i = at; j < source.length; i++, j++ ){
+        var x       = source[ i ];
+        source[ i ] = source[ j ];
+        source[ j ] = x;
     }
 }

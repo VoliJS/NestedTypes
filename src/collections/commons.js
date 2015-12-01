@@ -22,7 +22,7 @@ function _removeRefs( collection ){
     var models = collection.models;
 
     collection.models = [];
-    collection._byId = {};
+    collection._byId  = {};
 
     for( var i = 0; i < models.length; i++ ){
         _removeReference( collection, models[ i ] );
@@ -48,14 +48,6 @@ function _removeIndex( _byId, model ){
     }
 }
 
-function _move( source, at, len ){
-    for( var j = source.length - len, i = at; j < source.length; i++, j++ ){
-        var x       = source[ i ];
-        source[ i ] = source[ j ];
-        source[ j ] = x;
-    }
-}
-
 function _notifyAdd( self, models, options ){
     var at = options.at;
 
@@ -77,15 +69,19 @@ function fastCopy( dest, source ){
     return dest;
 }
 
+
+function ModelOptions( options, collection ){
+    this.parse      = options.parse;
+    this.collection = collection;
+}
+
 // convert argument to model. Return false if fails.
 function toModel( collection, attrs, a_options ){
     // Only subtype of current collection model is allowed
     var Model = collection.model;
     if( attrs instanceof Model ) return attrs;
 
-    var options        = fastCopy( {}, a_options );
-    options.collection = collection;
-    var model          = new Model( attrs, options );
+    var model          = new Model( attrs, new ModelOptions( a_options, collection ) );
 
     if( model.validationError ){
         trigger3( collection, 'invalid', collection, model.validationError, options );
@@ -101,9 +97,7 @@ function castAndRef( collection, attrs, a_options ){
         model = attrs;
 
     if( !( attrs instanceof Model ) ){
-        var options        = fastCopy( {}, a_options );
-        options.collection = collection;
-        model          = new Model( attrs, options );
+        model              = new Model( attrs, new ModelOptions( a_options, collection ) );
 
         if( model.validationError ){
             trigger3( collection, 'invalid', collection, model.validationError, options );
@@ -119,12 +113,44 @@ function castAndRef( collection, attrs, a_options ){
 function sortedIndex( array, obj, iteratee, context ){
     if( typeof iteratee === 'function' && iteratee.length == 2 ){
         var value = obj;
-        var low = 0, high = array.length;
-        while (low < high) {
-            var mid = Math.floor((low + high) / 2);
-            if (iteratee.call( context, array[mid], value) < 0 ) low = mid + 1; else high = mid;
+        var low   = 0, high = array.length;
+        while( low < high ){
+            var mid = Math.floor( (low + high) / 2 );
+            if( iteratee.call( context, array[ mid ], value ) < 0 ) low = mid + 1;
+            else high = mid;
         }
         return low;
     }
     else return _.sortedIndex( array, obj, iteratee, context );
+}
+
+function ModelEventsDispatcher( model ){
+    this[ 'change:' + model.prototype.idAttribute ] = updateIdAttr;
+}
+
+ModelEventsDispatcher.prototype = {
+    change  : trigger2,
+    sync    : trigger2,
+    add     : triggerWhenRelevant,
+    remove  : triggerWhenRelevant,
+    destroy : function( self, event, model, collection, options ){
+        self.remove( model, options );
+        trigger3( self, event, model, collection, options );
+    }
+};
+
+function triggerWhenRelevant( self, event, model, collection, options ){
+    if( collection === self ){
+        trigger3( self, event, model, collection, options );
+    }
+}
+
+function updateIdAttr( self, event, model, collection, options ){
+    var _byId = self._byId;
+
+    _byId[ model._previousAttributes[ idAttribute ] ] = void 0;
+    var id                                            = model.id;
+    id == null || ( _byId[ id ] = model );
+
+    trigger3( self, event, model, collection, options );
 }

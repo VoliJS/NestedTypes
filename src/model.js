@@ -6,10 +6,11 @@ var Backbone    = require( './backbone+' ),
     _           = require( 'underscore' ),
     ModelProto  = BaseModel.prototype;
 
-var setSingleAttr = modelSet.setSingleAttr,
-    setAttrs        = modelSet.setAttrs,
-    applyTransform  = modelSet.transform;
+var setSingleAttr  = modelSet.setSingleAttr,
+    setAttrs       = modelSet.setAttrs,
+    applyTransform = modelSet.transform;
 
+// TODO: create loop unrolled function (or extract keys array to prototype)
 function cloneAttrs( attrSpecs, attrs, options ){
     for( var name in attrs ){
         attrs[ name ] = attrSpecs[ name ].clone( attrs[ name ], options );
@@ -40,8 +41,8 @@ var Model = BaseModel.extend( {
             var changed = this._changed;
 
             if( !changed ){
-                var last = this.attributes,
-                    prev = this._previousAttributes,
+                var last      = this.attributes,
+                    prev      = this._previousAttributes,
                     attrSpecs = this.__attributes;
 
                 changed = {};
@@ -78,11 +79,11 @@ var Model = BaseModel.extend( {
     _owner : null,
 
     __attributes : { id : attrOptions( { value : undefined } ).createAttribute( 'id' ) },
-    Attributes : function( x ){ this.id = x.id; },
+    Attributes   : function( x ){ this.id = x.id; },
     __class      : 'Model',
 
-    __duringSet : 0,
-    _changed : null,
+    __duringSet  : 0,
+    _changed     : null,
     _changeToken : {},
 
     defaults : function( attrs, options ){ return new this.Attributes( attrs ); },
@@ -94,9 +95,9 @@ var Model = BaseModel.extend( {
 
     // Determine if the model has changed since the last `"change"` event.
     // If you specify an attribute name, determine if that attribute has changed.
-    hasChanged: function(attr) {
-        if (attr == null) return !_.isEmpty( this.changed );
-        return this.__attributes[ attr ].isChanged( this.attributes[ attr ], this._previousAttributes[ attr ]);
+    hasChanged : function( attr ){
+        if( attr == null ) return !_.isEmpty( this.changed );
+        return this.__attributes[ attr ].isChanged( this.attributes[ attr ], this._previousAttributes[ attr ] );
     },
 
     // Return an object containing all the attributes that have changed, or
@@ -106,16 +107,16 @@ var Model = BaseModel.extend( {
     // You can also pass an attributes object to diff against the model,
     // determining if there *would be* a change.
     // TODO: Test it
-    changedAttributes: function(diff) {
-        if (!diff) return this.hasChanged() ? _.clone(this.changed) : false;
+    changedAttributes : function( diff ){
+        if( !diff ) return this.hasChanged() ? _.clone( this.changed ) : false;
 
         var val, changed = false,
-            old = this._changing ? this._previousAttributes : this.attributes,
-            attrSpecs = this.__attributes;
+            old          = this._changing ? this._previousAttributes : this.attributes,
+            attrSpecs    = this.__attributes;
 
-        for (var attr in diff) {
-            if ( !attrSpecs[ attr ].isChanged( old[attr], ( val = diff[ attr ] ))) continue;
-            (changed || (changed = {}))[attr] = val;
+        for( var attr in diff ){
+            if( !attrSpecs[ attr ].isChanged( old[ attr ], ( val = diff[ attr ] ) ) ) continue;
+            (changed || (changed = {}))[ attr ] = val;
         }
 
         return changed;
@@ -123,30 +124,30 @@ var Model = BaseModel.extend( {
 
     // Get all of the attributes of the model at the time of the previous
     // `"change"` event.
-    previousAttributes: function() {
+    previousAttributes : function(){
         return new this.Attributes( this._previousAttributes );
     },
 
     set : function( a, b, c ){
         switch( typeof a ){
-        case 'string' :
-            var attrSpec = this.__attributes[ a ];
+            case 'string' :
+                var attrSpec = this.__attributes[ a ];
 
-            if( attrSpec && !attrSpec.isBackboneType && !c ){
-                return setSingleAttr( this, a, b, attrSpec );
-            }
+                if( attrSpec && !attrSpec.isBackboneType && !c ){
+                    return setSingleAttr( this, a, b, attrSpec );
+                }
 
-            var attrs = {};
-            attrs[ a ] = b;
-            return setAttrs( this, attrs, c );
+                var attrs  = {};
+                attrs[ a ] = b;
+                return setAttrs( this, attrs, c );
 
-        case 'object' :
-            if( a && Object.getPrototypeOf( a ) === Object.prototype ){
-                return setAttrs( this, a, b );
-            }
+            case 'object' :
+                if( a && Object.getPrototypeOf( a ) === Object.prototype ){
+                    return setAttrs( this, a, b );
+                }
 
-        default :
-            error.argumentIsNotAnObject( this, a );
+            default :
+                error.argumentIsNotAnObject( this, a );
         }
     },
 
@@ -212,10 +213,10 @@ var Model = BaseModel.extend( {
             options   = opts || {};
 
         this.__duringSet = 0;
-        this._changing = this._pending = false;
+        this._changing   = this._pending = false;
         this._changeToken = {};
-        this.attributes = {};
-        this.cid = _.uniqueId( 'c' );
+        this.attributes   = {};
+        this.cid          = _.uniqueId( 'c' );
 
         if( options.collection ) this.collection = options.collection;
 
@@ -292,14 +293,14 @@ var Model = BaseModel.extend( {
         var ctor;
 
         if( typeof protoProps === 'function' ){
-            ctor = protoProps;
+            ctor       = protoProps;
             protoProps = void 0;
         }
         else{
             ctor = protoProps && protoProps.hasOwnProperty( 'constructor' ) && protoProps.constructor;
         }
 
-        var This = Object.extend.call( this, ctor );
+        var This        = Object.extend.call( this, ctor );
         This.Collection = this.Collection.extend();
         return protoProps ? This.define( protoProps, staticProps ) : This;
     },
@@ -323,7 +324,7 @@ var Model = BaseModel.extend( {
 } );
 
 function attachMixins( Type ){
-    var self = Type.prototype,
+    var self      = Type.prototype,
         attrSpecs = self.__attributes;
 
     for( name in attrSpecs ){
@@ -360,7 +361,7 @@ function createDefinition( protoProps, Base ){
 
     return _.extend( _.omit( protoProps, 'collection', 'attributes' ), {
         __attributes : new Attributes( allAttrSpecs ),
-        _parse       : create_parse( allAttrSpecs, attrSpecs ) || Base.prototype._parse,
+        _parse       : createParse( allAttrSpecs, attrSpecs ) || Base.prototype._parse,
         defaults     : defaultsAsFunction || createDefaults( allAttrSpecs ),
         properties   : createAttrsNativeProps( protoProps.properties, attrSpecs ),
         Attributes   : Attributes
@@ -369,9 +370,9 @@ function createDefinition( protoProps, Base ){
 
 // Create attributes 'parse' option function only if local 'parse' options present.
 // Otherwise return null.
-function create_parse( allAttrSpecs, attrSpecs ){
+function createParse( allAttrSpecs, attrSpecs ){
     var statements = [ 'var a = this.__attributes;' ],
-        create = false;
+        create     = false;
 
     for( var name in allAttrSpecs ){
         // Is there any 'parse' option in local model definition?
@@ -412,17 +413,17 @@ function isValidJSON( value ){
     }
 
     switch( typeof value ){
-    case 'number' :
-    case 'string' :
-    case 'boolean' :
-        return true;
+        case 'number' :
+        case 'string' :
+        case 'boolean' :
+            return true;
 
-    case 'object':
-        var proto = Object.getPrototypeOf( value );
+        case 'object':
+            var proto = Object.getPrototypeOf( value );
 
-        if( proto === Object.prototype || proto === Array.prototype ){
-            return _.every( value, isValidJSON );
-        }
+            if( proto === Object.prototype || proto === Array.prototype ){
+                return _.every( value, isValidJSON );
+            }
     }
 
     return false;
@@ -430,60 +431,45 @@ function isValidJSON( value ){
 
 // Create optimized model.defaults( attrs, options ) function
 function createDefaults( attrSpecs ){
-    var statements = [], init = {}, refs = {};
+    var assign_f = [], create_f = [];
+
+    function appendExpr( name, expr ){
+        assign_f.push( 'this.' + name + '=a.' + name + '===undefined?' + expr + ':a.' + name + ';' );
+        create_f.push( 'this.' + name + '=' + expr + ';' );
+    }
 
     // Compile optimized constructor function for efficient deep copy of JSON literals in defaults.
     _.each( attrSpecs, function( attrSpec, name ){
         if( attrSpec.value === undefined && attrSpec.type ){
             // if type with no value is given, create an empty object
-            init[ name ] = attrSpec;
-            statements.push( 'this.' + name + '=i.' + name + '.create( o );' );
+            appendExpr( name, 'i.' + name + '.create( o )' );
         }
         else{
             // If value is given, type casting logic will do the job later, converting value to the proper type.
             if( isValidJSON( attrSpec.value ) ){
                 // JSON literals must be deep copied.
-                statements.push( 'this.' + name + '=' + JSON.stringify( attrSpec.value ) + ';' );
+                appendExpr( name, JSON.stringify( attrSpec.value ) );
             }
             else if( attrSpec.value === undefined ){
                 // handle undefined value separately. Usual case for model ids.
-                statements.push( 'this.' + name + '=undefined;' );
+                appendExpr( name, 'undefined' );
             }
             else{
                 // otherwise, copy value by reference.
-                refs[ name ] = attrSpec.value;
-                statements.push( 'this.' + name + '=r.' + name + ';' );
+                appendExpr( name, 'i.' + name + '.value' );
             }
-
         }
     } );
 
-    var Defaults = new Function( 'r', 'i', 'o', statements.join( '' ) );
-    Defaults.prototype = Object.prototype;
+    var CreateDefaults = new Function( 'i', assign_f.join( '' ) ),
+        AssignDefaults = new Function( 'a', 'i', assign_f.join( '' ) );
+
+    CreateDefaults.prototype = AssignDefaults.prototype = Object.prototype;
 
     // Create model.defaults( attrs, options ) function
     // 'attrs' will override default values, options will be passed to nested backbone types
-    return function( attrs, options ){
-        var opts = options, name;
-
-        // 'collection' and 'parse' options must not be passed down to default nested models and collections
-        if( options && ( options.collection || options.parse ) ){
-            opts = {};
-            for( name in options ){
-                if( name !== 'collection' && name !== 'parse' ){
-                    opts[ name ] = options[ name ];
-                }
-            }
-        }
-
-        var defaults = new Defaults( refs, init, opts );
-
-        // assign attrs, overriding defaults
-        for( var name in attrs ){
-            defaults[ name ] = attrs[ name ];
-        }
-
-        return defaults;
+    return function( attrs ){
+        return attrs ? new AssignDefaults( attrs, this.__attributes ) : new CreateDefaults( this.__attributes );
     }
 }
 

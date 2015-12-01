@@ -163,13 +163,10 @@ module.exports = Backbone.Collection.extend( {
     } ),
 
     reset : method( function( a_models, a_options ){
-        var options  = a_options || {},
-            models   = a_models,
-            previous = this.models;
+        var options  = a_options || {};
 
-        options.previousModels = previous;
-
-        models = replaceMany( this, models, fastCopy( { silent : true }, options ) );
+        options.previousModels = _removeRefs( this );
+        var models = emptySetMany( this, a_models, fastCopy( { silent : true }, options ) );
 
         options.silent || trigger2( this, 'reset', this, options );
 

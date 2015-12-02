@@ -1,6 +1,20 @@
 /**
  * Helper functions
  */
+module.exports = {
+    SilentOptions : SilentOptions,
+
+};
+
+var silence = { silent : true };
+
+function SilentOptions( a_options ){
+    var options = a_options || {};
+    this.parse = options.parse;
+    this.sort = options.sort;
+}
+
+SilentOptions.prototype = silence;
 
 
 // Ownership and events subscription
@@ -18,7 +32,7 @@ function _removeReference( collection, model ){
     offAll( model, collection._onModelEvent, collection );
 }
 
-function _removeRefs( collection ){
+function _dispose( collection ){
     var models = collection.models;
 
     collection.models = [];
@@ -87,25 +101,6 @@ function toModel( collection, attrs, a_options ){
         trigger3( collection, 'invalid', collection, model.validationError, options );
         return false;
     }
-
-    return model;
-}
-
-function castAndRef( collection, attrs, a_options ){
-    // Only subtype of current collection model is allowed
-    var Model = collection.model,
-        model = attrs;
-
-    if( !( attrs instanceof Model ) ){
-        model              = new Model( attrs, new ModelOptions( a_options, collection ) );
-
-        if( model.validationError ){
-            trigger3( collection, 'invalid', collection, model.validationError, options );
-            return false;
-        }
-    }
-
-    _addReference( collection, model );
 
     return model;
 }

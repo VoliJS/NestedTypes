@@ -22,7 +22,11 @@ function emptySetMany( self, models, a_options, silent ){
     var notify = !options.silent;
 
     _reallocate( self, models, function( source ){
-        return castAndRef( self, source, options );
+        var model = toModel( self, source, options );
+        if( model ){
+            _addReference( self, model );
+            return model;
+        }
     } );
 
     var added = this.models;
@@ -73,8 +77,9 @@ function setMany( self, a_models, a_options ){
             }
         }
         else{
-            var model = castAndRef( self, model, options );
+            var model = toModel( self, model, options );
             if( model ){
+                _addReference( self, model );
                 toAdd.push( model );
                 return model;
             }

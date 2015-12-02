@@ -7,6 +7,12 @@
  *  - pass through other options
  */
 
+module.exports = {
+    addOne : addOne,
+    addMany : addMany
+};
+
+
 function AddOptions( a_options ){
     var options = a_options || {};
     this.silent = options.silent;
@@ -32,7 +38,7 @@ function addOne( collection, el, a_options ){
         return model;
     }
 
-    model = castAndRef( collection, el, options );
+    model = toModel( collection, el, options );
 
     if( model ){
         var models = collection.models,
@@ -60,6 +66,7 @@ function addOne( collection, el, a_options ){
         }
 
         _addIndex( collection._byId, model );
+        _addReference( collection, model );
 
         if( !options.silent ){
             trigger3( model, 'add', model, collection, options );
@@ -79,8 +86,9 @@ function addMany( self, models, a_options ){
         added   = [];
 
     _append( self, models, function( source ){
-        var model = castAndRef( self, source, options );
+        var model = toModel( self, source, options );
         if( model ){
+            _addReference( self, model );
             added.push( model );
             return model;
         }

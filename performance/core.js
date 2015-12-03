@@ -99,7 +99,7 @@ export const Group = Model.extend( {
     defaults : {
         executedAt : Date.value( null ),
         name     : String,
-        tests    : Test.Collection.has.proxy( 'time count ops' ),
+        tests    : Test.Collection,
         selected : Test.from( 'tests' ),
         iterations : Integer
     },

@@ -52,14 +52,7 @@ function replaceMany( self, models, a_options ){
 
 
 
-function _removeModels( collection, removed, options ){
-    var silent = options.silent;
-    for( var i = 0; i < removed.length; i++ ){
-        var model = removed[ i ];
-        silent || trigger3( model, 'remove', model, collection, options );
-        _removeReference( collection, model );
-    }
-}
+
 
 // assign models and update index
 function _replaceModels( self, source, options ){

@@ -6,12 +6,17 @@
  *  - at = null
  *  - pass through other options
  */
+var Events   = require( '../backbone+' ).Events,
+    trigger2 = Events.trigger2,
+    trigger3 = Events.trigger3;
 
-module.exports = {
-    addOne : addOne,
-    addMany : addMany
-};
-
+var Commons      = require( './commons' ),
+    addIndex     = Commons.addIndex,
+    addReference = Commons.addReference,
+    notifyAdd    = Commons.notifyAdd,
+    sortedIndex  = Commons.sortedIndex,
+    toModel      = Commons.toModel,
+    silence      = Commons.silence;
 
 function AddOptions( a_options ){
     var options = a_options || {};
@@ -19,8 +24,8 @@ function AddOptions( a_options ){
     this.parse  = options.parse;
     this.sort   = options.sort;
 
-    this.at     = options.at;
-    this.index  = null;
+    this.at    = options.at;
+    this.index = null;
 }
 
 AddOptions.prototype = {
@@ -30,7 +35,7 @@ AddOptions.prototype = {
 };
 
 // fast-path for singular add and remove...
-function addOne( collection, el, a_options ){
+exports.addOne = function addOne( collection, el, a_options ){
     var options = new AddOptions( a_options );
 
     var model = collection.get( el );
@@ -65,8 +70,8 @@ function addOne( collection, el, a_options ){
             models.push( model );
         }
 
-        _addIndex( collection._byId, model );
-        _addReference( collection, model );
+        addIndex( collection._byId, model );
+        addReference( collection, model );
 
         if( !options.silent ){
             trigger3( model, 'add', model, collection, options );
@@ -75,12 +80,12 @@ function addOne( collection, el, a_options ){
 
         return model;
     }
-}
+};
 
 /**
  * update index and models array.
  */
-function addMany( self, models, a_options ){
+exports.addMany = function addMany( self, models, a_options ){
     var options = new AddOptions( a_options ),
         notify  = !options.silent,
         added   = [];
@@ -88,7 +93,7 @@ function addMany( self, models, a_options ){
     _append( self, models, function( source ){
         var model = toModel( self, source, options );
         if( model ){
-            _addReference( self, model );
+            addReference( self, model );
             added.push( model );
             return model;
         }
@@ -106,7 +111,7 @@ function addMany( self, models, a_options ){
     }
 
     if( notify ){
-        _notifyAdd( self, added, options );
+        notifyAdd( self, added, options );
         sort && trigger2( self, 'sort', self, options );
         if( added.length ){
             trigger2( self, 'update', self, options );
@@ -114,7 +119,7 @@ function addMany( self, models, a_options ){
     }
 
     return added;
-}
+};
 
 // append data to model and index
 function _append( self, source, getModel ){
@@ -128,7 +133,7 @@ function _append( self, source, getModel ){
             // add to array and indexes...
             if( model ){
                 models.push( model );
-                _addIndex( _byId, model );
+                addIndex( _byId, model );
             }
         }
     }

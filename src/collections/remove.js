@@ -1,15 +1,13 @@
-
-module.exports = {
-    removeOne : removeOne,
-    removeMany : removeMany
-};
-
 /**
  * Remove single element from collection
  * el: ModelId | ModelCid | Model | ModelAttrs
  * Options:
  *      - silent : Boolean = false
  */
+
+var Commons = require( './commons' ),
+    removeIndex = Commons.removeIndex,
+    removeReference = Commons.removeReference;
 
 function RemoveOptions( options ){
     this.silent = options.silent;
@@ -21,7 +19,7 @@ RemoveOptions.prototype = {
     merge  : false
 };
 
-function removeOne( collection, el, a_options ){
+exports.removeOne = function removeOne( collection, el, a_options ){
     var options = new RemoveOptions( a_options );
 
     var model = collection.get( el );
@@ -32,24 +30,24 @@ function removeOne( collection, el, a_options ){
 
         models.splice( at, 1 );
 
-        _removeIndex( collection._byId, model );
+        removeIndex( collection._byId, model );
 
         silent || trigger3( model, 'remove', model, collection, options );
 
-        _removeReference( collection, model );
+        removeReference( collection, model );
 
         silent || trigger2( collection, 'update', collection, options );
 
         return model;
     }
-}
+};
 
 /** Optimized for removing many elements
  * 1. Remove elements from the index, checking for duplicates
  * 2. Create new models array matching index
  * 3. Send notifications and remove references
  */
-function removeMany( collection, toRemove, a_options ){
+exports.removeMany = function removeMany( collection, toRemove, a_options ){
     var options = new RemoveOptions( a_options );
 
     var _byId = collection._byId;
@@ -63,7 +61,7 @@ function removeMany( collection, toRemove, a_options ){
     options.silent || !removed.length || trigger2( collection, 'update', collection, options );
 
     return removed;
-}
+};
 
 // remove models from the index...
 function _removeFromIndex( collection, toRemove ){
@@ -74,7 +72,7 @@ function _removeFromIndex( collection, toRemove ){
         var model = collection.get( toRemove[ i ] );
         if( model ){
             removed[ j++ ] = model;
-            _removeIndex( _byId, model );
+            removeIndex( _byId, model );
         }
     }
 
@@ -98,4 +96,13 @@ function _reallocate( collection, removed ){
     }
 
     models.length = j;
+}
+
+function _removeModels( collection, removed, options ){
+    var silent = options.silent;
+    for( var i = 0; i < removed.length; i++ ){
+        var model = removed[ i ];
+        silent || trigger3( model, 'remove', model, collection, options );
+        removeReference( collection, model );
+    }
 }

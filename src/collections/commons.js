@@ -1,12 +1,35 @@
 /**
  * Helper functions
  */
-module.exports = {
-    SilentOptions : SilentOptions,
 
-};
+var Events = require( '../backbone+' ),
+    trigger3 = Events.trigger3,
+    trigger2 = Events.trigger2;
+
+var _ = require( 'underscore' );
 
 var silence = { silent : true };
+
+module.exports = {
+    SilentOptions : SilentOptions,
+    silence : silence,
+
+    addReference : addReference,
+    removeReference : removeReference,
+
+    addIndex : addIndex,
+    removeIndex : removeIndex,
+
+    dispose : dispose,
+
+    notifyAdd : notifyAdd,
+
+    toModel : toModel,
+
+    sortedIndex : sortedIndex,
+
+    ModelEventsDispatcher : ModelEventsDispatcher
+};
 
 function SilentOptions( a_options ){
     var options = a_options || {};
@@ -18,13 +41,13 @@ SilentOptions.prototype = silence;
 
 
 // Ownership and events subscription
-function _addReference( collection, model ){
+function addReference( collection, model ){
     model.collection || ( model.collection = collection );
     onAll( model, collection._onModelEvent, collection );
     return model;
 }
 
-function _removeReference( collection, model ){
+function removeReference( collection, model ){
     if( collection === model.collection ){
         model.collection = void 0;
     }
@@ -32,21 +55,21 @@ function _removeReference( collection, model ){
     offAll( model, collection._onModelEvent, collection );
 }
 
-function _dispose( collection ){
+function dispose( collection ){
     var models = collection.models;
 
     collection.models = [];
     collection._byId  = {};
 
     for( var i = 0; i < models.length; i++ ){
-        _removeReference( collection, models[ i ] );
+        removeReference( collection, models[ i ] );
     }
 
     return models;
 }
 
 // Index management
-function _addIndex( _byId, model ){
+function addIndex( _byId, model ){
     _byId[ model.cid ] = model;
     var id             = model.id;
     if( id != null ){
@@ -54,7 +77,7 @@ function _addIndex( _byId, model ){
     }
 }
 
-function _removeIndex( _byId, model ){
+function removeIndex( _byId, model ){
     delete _byId[ model.cid ];
     var id = model.id;
     if( id != null ){
@@ -62,7 +85,7 @@ function _removeIndex( _byId, model ){
     }
 }
 
-function _notifyAdd( self, models, options ){
+function notifyAdd( self, models, options ){
     var at = options.at;
 
     for( var i = 0; i < models.length; i++ ){
@@ -71,18 +94,6 @@ function _notifyAdd( self, models, options ){
         trigger3( model, 'add', model, self, options );
     }
 }
-
-// Copy options as fast as its possible.
-function fastCopy( dest, source ){
-    if( source ){
-        for( var i in source ){
-            dest[ i ] = source[ i ];
-        }
-    }
-
-    return dest;
-}
-
 
 function ModelOptions( options, collection ){
     this.parse      = options.parse;
@@ -120,27 +131,27 @@ function sortedIndex( array, obj, iteratee, context ){
 }
 
 function ModelEventsDispatcher( model ){
-    this[ 'change:' + model.prototype.idAttribute ] = updateIdAttr;
+    this[ 'change:' + model.prototype.idAttribute ] = _updateIdAttr;
 }
 
 ModelEventsDispatcher.prototype = {
     change  : trigger2,
     sync    : trigger2,
-    add     : triggerWhenRelevant,
-    remove  : triggerWhenRelevant,
+    add     : _triggerWhenRelevant,
+    remove  : _triggerWhenRelevant,
     destroy : function( self, event, model, collection, options ){
         self.remove( model, options );
         trigger3( self, event, model, collection, options );
     }
 };
 
-function triggerWhenRelevant( self, event, model, collection, options ){
+function _triggerWhenRelevant( self, event, model, collection, options ){
     if( collection === self ){
         trigger3( self, event, model, collection, options );
     }
 }
 
-function updateIdAttr( self, event, model, collection, options ){
+function _updateIdAttr( self, event, model, collection, options ){
     var _byId = self._byId;
 
     _byId[ model._previousAttributes[ idAttribute ] ] = void 0;

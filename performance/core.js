@@ -28,7 +28,7 @@ export const Test = Model.extend( {
     },
 
     properties : {
-        ops : function(){
+        ops(){
             return this.time ? Integer( this.count * 1000 / this.time ) : 0;
         }
     },
@@ -75,6 +75,20 @@ export const Test = Model.extend( {
             this.transaction( () =>{
                 this.tests.each( test => test.faster = ops && test.ops ? test.ops / ops : null );
             } );
+        },
+
+        properties : {
+            time(){
+                return this.reduce( ( ( sum, test ) => sum + test.time ), 0 );
+            },
+
+            count(){
+                return this.reduce( ( ( sum, test ) => sum + test.count ), 0 );
+            },
+
+            ops(){
+                return this.time ? Integer( this.count * 1000 / this.time ) : 0;
+            }
         }
     }
 });
@@ -85,7 +99,7 @@ export const Group = Model.extend( {
     defaults : {
         executedAt : Date.value( null ),
         name     : String,
-        tests    : Test.Collection,
+        tests    : Test.Collection.has.proxy( 'time count ops' ),
         selected : Test.from( 'tests' ),
         iterations : Integer
     },

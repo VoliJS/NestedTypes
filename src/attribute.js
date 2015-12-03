@@ -122,6 +122,7 @@ var Options = Object.extend( {
 
         if( options.changeEvents ) options.triggerWhenChanged = options.changeEvents;
 
+        //TODO: It looks like a bug. Remove.
         if( options.proxy && typeof options.proxy === 'string' && !options.triggerWhenChanged ){
             options.triggerWhenChanged = options.proxy
                                                 .split( ' ' )
@@ -290,6 +291,7 @@ var Attribute = Object.extend( {
                     spec[ name ] = proxyFunction( this.name, name );
                 }
                 // ...or create native property, if it's the property.
+                // TODO: Looks like extra check. Need to remove. Everything should be proxied.
                 else if( prop.get ){
                     Object.defineProperty( spec, name, proxyProperty( this.name, name ) );
                 }

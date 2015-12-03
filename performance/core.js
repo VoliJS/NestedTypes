@@ -1,9 +1,10 @@
+import { Model } from 'nestedtypes'
+
 function emptyTest( n, context ){
     for( var i = 0; i < n; i++ ){
         // do nothing
     }
 }
-
 
 function measure( fun, context, iterations ){
     const start = window.performance.now();
@@ -32,38 +33,34 @@ export const Test = Model.extend( {
         }
     },
 
+    _measure( iterations, cumulative = false ){
+        if( !cumulative ){
+            this.time = this.count = 0;
+        }
 
-    addIterations( iterations ){
-            const context = this.init( iterations ) || {},
-                  time = measure( this.test, iterations, context );
-
-            this.time += time;
-            this.count += iterations;
+        const context = this.init( iterations ) || {};
+        this.time += measure( this.test, iterations, context );
+        this.count += iterations;
     },
 
-    run( iterations ){
+    _estimate(){
+        this._measure( 100 );
+
+        for( let n = 200; this.time < 200; n *= 2 ){
+            this._measure( n, true );
+        }
+
+        return this.ops * 3;
+    },
+
+    run( a_iterations ){
         this.transaction( () =>{
             this.exception = null;
-            this.count = this.time = 0;
             this.executedAt = new Date();
 
             try{
-                var fixedIterations = iterations || this.iterations;
-                if( fixedIterations ){
-                    addIterations( fixedIterations );
-                }
-                else{
-                    // estimate amount of iterations required for 3 seconds...
-                    for( let n = 100; this.time < 200; n *= 2 ){
-                        addIterations( n );
-                    }
-
-                    if( this.time < 3000 ){
-                        const ops = this.ops;
-                        this.count = this.time = 0;
-                        addIterations( ops * 3 );
-                    }
-                }
+                var iterations = this.iterations || a_iterations || _estimate();
+                this._measure( iterations );
             }
             catch( e ){
                 this.exception = e;

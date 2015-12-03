@@ -2887,7 +2887,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	var Add     = __webpack_require__( 12 ),
 	    addOne  = Add.addOne,
-	    addMany = Add.addMany;
+	    addMany = Add.addMany,
+	    AddOptions = Add.AddOptions;
 	
 	var Remove     = __webpack_require__( 13 ),
 	    removeOne  = Remove.removeOne,
@@ -3348,7 +3349,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    toModel      = Commons.toModel,
 	    silence      = Commons.silence;
 	
-	function AddOptions( a_options ){
+	exports.AddOptions = AddOptions = function( a_options ){
 	    var options = a_options || {};
 	    this.silent = options.silent;
 	    this.parse  = options.parse;
@@ -3356,7 +3357,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	    this.at    = options.at;
 	    this.index = null;
-	}
+	};
 	
 	AddOptions.prototype = {
 	    add    : true,
@@ -3599,7 +3600,7 @@ return /******/ (function(modules) { // webpackBootstrap
 /* 14 */
 /***/ function(module, exports, __webpack_require__) {
 
-	/* WEBPACK VAR INJECTION */(function(module) {var Commons         = __webpack_require__( 11 ),
+	var Commons         = __webpack_require__( 11 ),
 	    addIndex        = Commons.addIndex,
 	    addReference    = Commons.addReference,
 	    notifyAdd       = Commons.notifyAdd,
@@ -3657,7 +3658,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    return added;
 	};
 	
-	module.setMany = function setMany( self, a_models, a_options ){
+	exports.setMany = function setMany( self, a_models, a_options ){
 	    var options = new SetOptions( a_options ),
 	        models  = a_models;
 	
@@ -3757,25 +3758,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	    self.models   = models;
 	    self._byId    = _byId;
 	}
-	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(15)(module)))
 
 /***/ },
-/* 15 */
-/***/ function(module, exports) {
-
-	module.exports = function(module) {
-		if(!module.webpackPolyfill) {
-			module.deprecate = function() {};
-			module.paths = [];
-			// module.parent = undefined by default
-			module.children = [];
-			module.webpackPolyfill = 1;
-		}
-		return module;
-	}
-
-
-/***/ },
+/* 15 */,
 /* 16 */
 /***/ function(module, exports, __webpack_require__) {
 

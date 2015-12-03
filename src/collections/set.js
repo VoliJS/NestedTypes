@@ -56,7 +56,7 @@ exports.emptySetMany = function emptySetMany( self, models, a_options, silent ){
     return added;
 };
 
-module.setMany = function setMany( self, a_models, a_options ){
+exports.setMany = function setMany( self, a_models, a_options ){
     var options = new SetOptions( a_options ),
         models  = a_models;
 

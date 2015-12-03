@@ -14,7 +14,8 @@ var Commons = require( './collections/commons' ),
 
 var Add     = require( './collections/add' ),
     addOne  = Add.addOne,
-    addMany = Add.addMany;
+    addMany = Add.addMany,
+    AddOptions = Add.AddOptions;
 
 var Remove     = require( './collections/remove' ),
     removeOne  = Remove.removeOne,

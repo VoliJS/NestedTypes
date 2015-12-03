@@ -18,7 +18,7 @@ var Commons      = require( './commons' ),
     toModel      = Commons.toModel,
     silence      = Commons.silence;
 
-function AddOptions( a_options ){
+exports.AddOptions = AddOptions = function( a_options ){
     var options = a_options || {};
     this.silent = options.silent;
     this.parse  = options.parse;
@@ -26,7 +26,7 @@ function AddOptions( a_options ){
 
     this.at    = options.at;
     this.index = null;
-}
+};
 
 AddOptions.prototype = {
     add    : true,

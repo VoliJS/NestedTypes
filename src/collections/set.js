@@ -88,7 +88,7 @@ exports.setMany = function setMany( self, a_models, a_options ){
             }
         }
         else{
-            var model = toModel( self, model, options );
+            var model = toModel( self, source, options );
             if( model ){
                 addReference( self, model );
                 toAdd.push( model );

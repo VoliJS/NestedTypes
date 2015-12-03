@@ -2958,8 +2958,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	SilentOptions.prototype.silent = true;
 	
-	function CreateOptions( options ){
-	    AddOptions.call( this, options );
+	function CreateOptions( options, collection ){
+	    AddOptions.call( this, options, collection );
 	    this.wait = options && options.wait;
 	}
 	
@@ -3095,7 +3095,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    } ),
 	
 	    create : function( a_model, a_options ){
-	        var options = new CreateOptions( a_options ),
+	        var options = new CreateOptions( a_options, this ),
 	            model   = a_model;
 	
 	        if( !(model = toModel( this, model, options )) ) return false;
@@ -3318,7 +3318,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	function _updateIdAttr( self, event, model, collection, options ){
 	    var _byId = self._byId;
 	
-	    _byId[ model._previousAttributes[ idAttribute ] ] = void 0;
+	    _byId[ model._previousAttributes[ model.idAttribute ] ] = void 0;
 	    var id                                            = model.id;
 	    id == null || ( _byId[ id ] = model );
 	
@@ -3349,13 +3349,22 @@ return /******/ (function(modules) { // webpackBootstrap
 	    toModel      = Commons.toModel,
 	    silence      = Commons.silence;
 	
-	exports.AddOptions = AddOptions = function( a_options ){
+	exports.AddOptions = AddOptions = function( a_options, collection ){
 	    var options = a_options || {};
 	    this.silent = options.silent;
 	    this.parse  = options.parse;
 	    this.sort   = options.sort;
 	
-	    this.at    = options.at;
+	    var at = options.at;
+	    if( at != null ){
+	        // if at is given, it overrides sorting option...
+	        at = +at;
+	        if( at < 0 ) at += collection.length + 1;
+	        if( at < 0 ) at = 0;
+	        if( at > collection.length ) at = collection.length;
+	    }
+	
+	    this.at = at;
 	    this.index = null;
 	};
 	
@@ -3367,7 +3376,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	// fast-path for singular add and remove...
 	exports.addOne = function addOne( collection, el, a_options ){
-	    var options = new AddOptions( a_options );
+	    var options = new AddOptions( a_options, collection );
 	
 	    var model = collection.get( el );
 	    if( model ){
@@ -3385,13 +3394,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	            if( collection.comparator && options.sort !== false ){
 	                at = sortedIndex( models, model, collection.comparator, collection );
 	            }
-	        }
-	        else{
-	            // if at is given, it overrides sorting option...
-	            at = +at;
-	            if( at < 0 ) at += collection.length + 1;
-	            if( at < 0 ) at = 0;
-	            if( at > collection.length ) at = collection.length;
 	        }
 	
 	        if( at ){
@@ -3417,7 +3419,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	 * update index and models array.
 	 */
 	exports.addMany = function addMany( self, models, a_options ){
-	    var options = new AddOptions( a_options ),
+	    var options = new AddOptions( a_options, self ),
 	        notify  = !options.silent,
 	        added   = [];
 	
@@ -3430,12 +3432,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	        }
 	    } );
 	
-	    var at     = a_options.at,
+	    var at     = options.at,
 	        insert = at != null,
 	        sort   = self.comparator && added.length && options.sort !== false && !insert;
 	
 	    if( insert ){
-	        _move( self.models, at, added.length );
+	        _move( self.models, at, added );
 	    }
 	    else if( sort ){
 	        self.sort( silence );
@@ -3470,11 +3472,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }
 	}
 	
-	function _move( source, at, len ){
-	    for( var j = source.length - len, i = at; j < source.length; i++, j++ ){
-	        var x       = source[ i ];
-	        source[ i ] = source[ j ];
-	        source[ j ] = x;
+	function _move( source, at, added ){
+	    for( var j = source.length - 1, k = j - added.length; k >= at; k--, j-- ){
+	        source[ j ] = source[ k ];
+	    }
+	
+	    for( i = 0, j = at; i < added.length; i++, j++ ){
+	        source[ j ] = added[ i ];
 	    }
 	}
 
@@ -3690,7 +3694,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            }
 	        }
 	        else{
-	            var model = toModel( self, model, options );
+	            var model = toModel( self, source, options );
 	            if( model ){
 	                addReference( self, model );
 	                toAdd.push( model );

@@ -85,8 +85,8 @@ function SilentOptions( a_options ){
 
 SilentOptions.prototype.silent = true;
 
-function CreateOptions( options ){
-    AddOptions.call( this, options );
+function CreateOptions( options, collection ){
+    AddOptions.call( this, options, collection );
     this.wait = options && options.wait;
 }
 
@@ -222,7 +222,7 @@ module.exports = Backbone.Collection.extend( {
     } ),
 
     create : function( a_model, a_options ){
-        var options = new CreateOptions( a_options ),
+        var options = new CreateOptions( a_options, this ),
             model   = a_model;
 
         if( !(model = toModel( this, model, options )) ) return false;

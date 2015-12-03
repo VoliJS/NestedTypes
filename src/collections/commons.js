@@ -156,7 +156,7 @@ function _triggerWhenRelevant( self, event, model, collection, options ){
 function _updateIdAttr( self, event, model, collection, options ){
     var _byId = self._byId;
 
-    _byId[ model._previousAttributes[ idAttribute ] ] = void 0;
+    _byId[ model._previousAttributes[ model.idAttribute ] ] = void 0;
     var id                                            = model.id;
     id == null || ( _byId[ id ] = model );
 

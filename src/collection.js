@@ -1,20 +1,28 @@
 var _        = require( 'underscore' ),
     Backbone = require( './backbone+' ),
-    Model    = require( './model' ),
-    Events   = Backbone.Events,
-    error    = require( './errors' ),
+    Model    = require( './model' );
+
+var Events   = Backbone.Events,
     trigger1 = Events.trigger1,
     trigger2 = Events.trigger2,
-    trigger3 = Events.trigger3,
-    core     = require( './collectionset' );
+    trigger3 = Events.trigger3;
 
-var fastCopy    = core.fastCopy,
-    toModel     = core.toModel,
-    addOne      = core.addOne,
-    removeOne   = core.removeOne,
-    removeMany  = core.removeMany,
-    setMany     = core.setMany,
-    replaceMany = core.replaceMany;
+var Commons = require( './collections/commons' ),
+    toModel = Commons.toModel,
+    dispose = Commons.dispose,
+    ModelEventsDispatcher = Commons.ModelEventsDispatcher;
+
+var Add     = require( './collections/add' ),
+    addOne  = Add.addOne,
+    addMany = Add.addMany;
+
+var Remove     = require( './collections/remove' ),
+    removeOne  = Remove.removeOne,
+    removeMany = Remove.removeMany;
+
+var Set          = require( './collections/set' ),
+    setMany      = Set.setMany,
+    emptySetMany = Set.emptySetMany;
 
 CollectionProto = Backbone.Collection.prototype;
 
@@ -41,11 +49,11 @@ function method( method ){
         this.__changing++ || ( this._changed = false );
 
         var options = a_options || {},
-            models = options.parse ? this.parse( a_models, options ) : a_models;
+            models  = options.parse ? this.parse( a_models, options ) : a_models;
 
         var res = models ? (
             models instanceof Array ?
-                method.call( this, models, options )
+            method.call( this, models, options )
                 : method.call( this, [ models ], options )[ 0 ]
         ) : method.call( this, [], options );
 
@@ -70,8 +78,8 @@ function handleChange(){
 
 function SilentOptions( a_options ){
     var options = a_options || {};
-    this.parse = options.parse;
-    this.sort = options.sort;
+    this.parse  = options.parse;
+    this.sort   = options.sort;
 }
 
 SilentOptions.prototype.silent = true;
@@ -96,14 +104,14 @@ module.exports = Backbone.Collection.extend( {
     _changeToken : {},
 
     _dispatcher : null,
-    properties : {
+    properties  : {
         length : function(){
             return this.models.length;
         }
     },
 
-    modelId: function( attrs ) {
-        return attrs[this.model.prototype.idAttribute || 'id'];
+    modelId : function( attrs ){
+        return attrs[ this.model.prototype.idAttribute || 'id' ];
     },
 
     constructor : function( models, a_options ){
@@ -112,7 +120,7 @@ module.exports = Backbone.Collection.extend( {
         this.__changing   = 0;
         this._changed     = false;
         this._changeToken = {};
-        this._owner = this._store = null;
+        this._owner       = this._store = null;
 
         this.model      = options.model || this.model;
         this.comparator = options.comparator || this.comparator;
@@ -175,10 +183,10 @@ module.exports = Backbone.Collection.extend( {
     } ),
 
     reset : method( function( a_models, a_options ){
-        var options  = a_options || {};
+        var options = a_options || {};
 
-        options.previousModels = _removeRefs( this );
-        var models = emptySetMany( this, a_models, new SilentOptions( options ) );
+        options.previousModels = dispose( this );
+        var models             = emptySetMany( this, a_models, new SilentOptions( options ) );
 
         options.silent || trigger2( this, 'reset', this, options );
 
@@ -195,8 +203,8 @@ module.exports = Backbone.Collection.extend( {
         if( a_models ){
             return a_models instanceof Array ? (
                 this.length ?
-                    addMany( this, a_models, options )
-                    : setEmpty( this, a_models, options )
+                addMany( this, a_models, options )
+                    : emptySetMany( this, a_models, options )
             ) : addOne( this, a_models, options );
         }
     } ),
@@ -208,13 +216,13 @@ module.exports = Backbone.Collection.extend( {
         if( a_models ){
             return a_models instanceof Array ?
                    removeMany( this, a_models, options )
-                   : removeOne( this, a_models, options );
+                : removeOne( this, a_models, options );
         }
     } ),
 
     create : function( a_model, a_options ){
         var options = new CreateOptions( a_options ),
-            model = a_model;
+            model   = a_model;
 
         if( !(model = toModel( this, model, options )) ) return false;
         if( !options.wait ) addOne( this, model, options );
@@ -232,7 +240,7 @@ module.exports = Backbone.Collection.extend( {
     _onModelEvent : function( event, model, collection, options ){
         // lazy initialize dispatcher...
         var dispatcher = this._dispatcher || ( this.constructor.prototype._dispatcher = new ModelEventsDispatcher( this.model ) ),
-            handler = dispatcher[ event ] || trigger3;
+            handler    = dispatcher[ event ] || trigger3;
 
         handler( this, event, model, collection, options );
     },

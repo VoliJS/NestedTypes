@@ -5,9 +5,13 @@
  *      - silent : Boolean = false
  */
 
-var Commons = require( './commons' ),
-    removeIndex = Commons.removeIndex,
+var Commons         = require( './commons' ),
+    removeIndex     = Commons.removeIndex,
     removeReference = Commons.removeReference;
+
+var Events   = require( '../backbone+' ).Events,
+    trigger3 = Events.trigger3,
+    trigger2 = Events.trigger2;
 
 function RemoveOptions( options ){
     this.silent = options.silent;
@@ -24,8 +28,9 @@ exports.removeOne = function removeOne( collection, el, a_options ){
 
     var model = collection.get( el );
     if( model ){
-        // TODO: for sorted collection, find element with binary search.
-        var at = _.indexOf( models, model ),
+        var models = collection.models,
+            // TODO: for sorted collection, find element with binary search.
+            at     = _.indexOf( models, model ),
             silent = options.silent;
 
         models.splice( at, 1 );
@@ -66,7 +71,7 @@ exports.removeMany = function removeMany( collection, toRemove, a_options ){
 // remove models from the index...
 function _removeFromIndex( collection, toRemove ){
     var removed = Array( toRemove.length ),
-        _byId = collection._byId;
+        _byId   = collection._byId;
 
     for( var i = 0, j = 0; i < toRemove.length; i++ ){
         var model = collection.get( toRemove[ i ] );
@@ -85,7 +90,7 @@ function _removeFromIndex( collection, toRemove ){
 function _reallocate( collection, removed ){
     var prev   = collection.models,
         models = collection.models = Array( prev.length - removed ),
-        _byId  = collection._byId;
+        _byId = collection._byId;
 
     for( var i = 0, j = 0; i < prev.length; i++ ){
         var model = prev[ i ];

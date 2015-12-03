@@ -59,12 +59,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	var Model      = __webpack_require__( 1 ),
 	    Collection = __webpack_require__( 10 ),
-	    relations  = __webpack_require__( 12 ),
+	    relations  = __webpack_require__( 16 ),
 	    Backbone   = __webpack_require__( 2 ),
 	    _          = __webpack_require__( 5 ),
 	    attribute  = __webpack_require__( 9 );
 	
-	__webpack_require__( 13 );
+	__webpack_require__( 17 );
 	
 	Collection.subsetOf = relations.subsetOf;
 	Model.from          = relations.from;
@@ -72,7 +72,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	Model.Collection    = Collection;
 	
-	var Store = __webpack_require__( 14 );
+	var Store = __webpack_require__( 18 );
 	Object.defineProperty( exports, 'store', Store.globalProp );
 	
 	exports.store = new Store.Model();
@@ -132,10 +132,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	    _           = __webpack_require__( 5 ),
 	    ModelProto  = BaseModel.prototype;
 	
-	var setSingleAttr = modelSet.setSingleAttr,
-	    setAttrs        = modelSet.setAttrs,
-	    applyTransform  = modelSet.transform;
+	var setSingleAttr  = modelSet.setSingleAttr,
+	    setAttrs       = modelSet.setAttrs,
+	    applyTransform = modelSet.transform;
 	
+	// TODO: create loop unrolled function (or extract keys array to prototype)
 	function cloneAttrs( attrSpecs, attrs, options ){
 	    for( var name in attrs ){
 	        attrs[ name ] = attrSpecs[ name ].clone( attrs[ name ], options );
@@ -166,8 +167,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	            var changed = this._changed;
 	
 	            if( !changed ){
-	                var last = this.attributes,
-	                    prev = this._previousAttributes,
+	                var last      = this.attributes,
+	                    prev      = this._previousAttributes,
 	                    attrSpecs = this.__attributes;
 	
 	                changed = {};
@@ -204,11 +205,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	    _owner : null,
 	
 	    __attributes : { id : attrOptions( { value : undefined } ).createAttribute( 'id' ) },
-	    Attributes : function( x ){ this.id = x.id; },
+	    Attributes   : function( x ){ this.id = x.id; },
 	    __class      : 'Model',
 	
-	    __duringSet : 0,
-	    _changed : null,
+	    __duringSet  : 0,
+	    _changed     : null,
 	    _changeToken : {},
 	
 	    defaults : function( attrs, options ){ return new this.Attributes( attrs ); },
@@ -220,9 +221,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	    // Determine if the model has changed since the last `"change"` event.
 	    // If you specify an attribute name, determine if that attribute has changed.
-	    hasChanged: function(attr) {
-	        if (attr == null) return !_.isEmpty( this.changed );
-	        return this.__attributes[ attr ].isChanged( this.attributes[ attr ], this._previousAttributes[ attr ]);
+	    hasChanged : function( attr ){
+	        if( attr == null ) return !_.isEmpty( this.changed );
+	        return this.__attributes[ attr ].isChanged( this.attributes[ attr ], this._previousAttributes[ attr ] );
 	    },
 	
 	    // Return an object containing all the attributes that have changed, or
@@ -232,16 +233,16 @@ return /******/ (function(modules) { // webpackBootstrap
 	    // You can also pass an attributes object to diff against the model,
 	    // determining if there *would be* a change.
 	    // TODO: Test it
-	    changedAttributes: function(diff) {
-	        if (!diff) return this.hasChanged() ? _.clone(this.changed) : false;
+	    changedAttributes : function( diff ){
+	        if( !diff ) return this.hasChanged() ? _.clone( this.changed ) : false;
 	
 	        var val, changed = false,
-	            old = this._changing ? this._previousAttributes : this.attributes,
-	            attrSpecs = this.__attributes;
+	            old          = this._changing ? this._previousAttributes : this.attributes,
+	            attrSpecs    = this.__attributes;
 	
-	        for (var attr in diff) {
-	            if ( !attrSpecs[ attr ].isChanged( old[attr], ( val = diff[ attr ] ))) continue;
-	            (changed || (changed = {}))[attr] = val;
+	        for( var attr in diff ){
+	            if( !attrSpecs[ attr ].isChanged( old[ attr ], ( val = diff[ attr ] ) ) ) continue;
+	            (changed || (changed = {}))[ attr ] = val;
 	        }
 	
 	        return changed;
@@ -249,30 +250,30 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	    // Get all of the attributes of the model at the time of the previous
 	    // `"change"` event.
-	    previousAttributes: function() {
+	    previousAttributes : function(){
 	        return new this.Attributes( this._previousAttributes );
 	    },
 	
 	    set : function( a, b, c ){
 	        switch( typeof a ){
-	        case 'string' :
-	            var attrSpec = this.__attributes[ a ];
+	            case 'string' :
+	                var attrSpec = this.__attributes[ a ];
 	
-	            if( attrSpec && !attrSpec.isBackboneType && !c ){
-	                return setSingleAttr( this, a, b, attrSpec );
-	            }
+	                if( attrSpec && !attrSpec.isBackboneType && !c ){
+	                    return setSingleAttr( this, a, b, attrSpec );
+	                }
 	
-	            var attrs = {};
-	            attrs[ a ] = b;
-	            return setAttrs( this, attrs, c );
+	                var attrs  = {};
+	                attrs[ a ] = b;
+	                return setAttrs( this, attrs, c );
 	
-	        case 'object' :
-	            if( a && Object.getPrototypeOf( a ) === Object.prototype ){
-	                return setAttrs( this, a, b );
-	            }
+	            case 'object' :
+	                if( a && Object.getPrototypeOf( a ) === Object.prototype ){
+	                    return setAttrs( this, a, b );
+	                }
 	
-	        default :
-	            error.argumentIsNotAnObject( this, a );
+	            default :
+	                error.argumentIsNotAnObject( this, a );
 	        }
 	    },
 	
@@ -338,10 +339,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	            options   = opts || {};
 	
 	        this.__duringSet = 0;
-	        this._changing = this._pending = false;
+	        this._changing   = this._pending = false;
 	        this._changeToken = {};
-	        this.attributes = {};
-	        this.cid = _.uniqueId( 'c' );
+	        this.attributes   = {};
+	        this.cid          = _.uniqueId( 'c' );
 	
 	        if( options.collection ) this.collection = options.collection;
 	
@@ -418,14 +419,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	        var ctor;
 	
 	        if( typeof protoProps === 'function' ){
-	            ctor = protoProps;
+	            ctor       = protoProps;
 	            protoProps = void 0;
 	        }
 	        else{
 	            ctor = protoProps && protoProps.hasOwnProperty( 'constructor' ) && protoProps.constructor;
 	        }
 	
-	        var This = Object.extend.call( this, ctor );
+	        var This        = Object.extend.call( this, ctor );
 	        This.Collection = this.Collection.extend();
 	        return protoProps ? This.define( protoProps, staticProps ) : This;
 	    },
@@ -449,7 +450,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	} );
 	
 	function attachMixins( Type ){
-	    var self = Type.prototype,
+	    var self      = Type.prototype,
 	        attrSpecs = self.__attributes;
 	
 	    for( name in attrSpecs ){
@@ -486,7 +487,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	    return _.extend( _.omit( protoProps, 'collection', 'attributes' ), {
 	        __attributes : new Attributes( allAttrSpecs ),
-	        _parse       : create_parse( allAttrSpecs, attrSpecs ) || Base.prototype._parse,
+	        _parse       : createParse( allAttrSpecs, attrSpecs ) || Base.prototype._parse,
 	        defaults     : defaultsAsFunction || createDefaults( allAttrSpecs ),
 	        properties   : createAttrsNativeProps( protoProps.properties, attrSpecs ),
 	        Attributes   : Attributes
@@ -495,9 +496,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	// Create attributes 'parse' option function only if local 'parse' options present.
 	// Otherwise return null.
-	function create_parse( allAttrSpecs, attrSpecs ){
+	function createParse( allAttrSpecs, attrSpecs ){
 	    var statements = [ 'var a = this.__attributes;' ],
-	        create = false;
+	        create     = false;
 	
 	    for( var name in allAttrSpecs ){
 	        // Is there any 'parse' option in local model definition?
@@ -538,17 +539,17 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }
 	
 	    switch( typeof value ){
-	    case 'number' :
-	    case 'string' :
-	    case 'boolean' :
-	        return true;
+	        case 'number' :
+	        case 'string' :
+	        case 'boolean' :
+	            return true;
 	
-	    case 'object':
-	        var proto = Object.getPrototypeOf( value );
+	        case 'object':
+	            var proto = Object.getPrototypeOf( value );
 	
-	        if( proto === Object.prototype || proto === Array.prototype ){
-	            return _.every( value, isValidJSON );
-	        }
+	            if( proto === Object.prototype || proto === Array.prototype ){
+	                return _.every( value, isValidJSON );
+	            }
 	    }
 	
 	    return false;
@@ -556,60 +557,45 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	// Create optimized model.defaults( attrs, options ) function
 	function createDefaults( attrSpecs ){
-	    var statements = [], init = {}, refs = {};
+	    var assign_f = [], create_f = [];
+	
+	    function appendExpr( name, expr ){
+	        assign_f.push( 'this.' + name + '=a.' + name + '===undefined?' + expr + ':a.' + name + ';' );
+	        create_f.push( 'this.' + name + '=' + expr + ';' );
+	    }
 	
 	    // Compile optimized constructor function for efficient deep copy of JSON literals in defaults.
 	    _.each( attrSpecs, function( attrSpec, name ){
 	        if( attrSpec.value === undefined && attrSpec.type ){
 	            // if type with no value is given, create an empty object
-	            init[ name ] = attrSpec;
-	            statements.push( 'this.' + name + '=i.' + name + '.create( o );' );
+	            appendExpr( name, 'i.' + name + '.create()' );
 	        }
 	        else{
 	            // If value is given, type casting logic will do the job later, converting value to the proper type.
 	            if( isValidJSON( attrSpec.value ) ){
 	                // JSON literals must be deep copied.
-	                statements.push( 'this.' + name + '=' + JSON.stringify( attrSpec.value ) + ';' );
+	                appendExpr( name, JSON.stringify( attrSpec.value ) );
 	            }
 	            else if( attrSpec.value === undefined ){
 	                // handle undefined value separately. Usual case for model ids.
-	                statements.push( 'this.' + name + '=undefined;' );
+	                appendExpr( name, 'undefined' );
 	            }
 	            else{
 	                // otherwise, copy value by reference.
-	                refs[ name ] = attrSpec.value;
-	                statements.push( 'this.' + name + '=r.' + name + ';' );
+	                appendExpr( name, 'i.' + name + '.value' );
 	            }
-	
 	        }
 	    } );
 	
-	    var Defaults = new Function( 'r', 'i', 'o', statements.join( '' ) );
-	    Defaults.prototype = Object.prototype;
+	    var CreateDefaults = new Function( 'i', assign_f.join( '' ) ),
+	        AssignDefaults = new Function( 'a', 'i', assign_f.join( '' ) );
+	
+	    CreateDefaults.prototype = AssignDefaults.prototype = Object.prototype;
 	
 	    // Create model.defaults( attrs, options ) function
 	    // 'attrs' will override default values, options will be passed to nested backbone types
-	    return function( attrs, options ){
-	        var opts = options, name;
-	
-	        // 'collection' and 'parse' options must not be passed down to default nested models and collections
-	        if( options && ( options.collection || options.parse ) ){
-	            opts = {};
-	            for( name in options ){
-	                if( name !== 'collection' && name !== 'parse' ){
-	                    opts[ name ] = options[ name ];
-	                }
-	            }
-	        }
-	
-	        var defaults = new Defaults( refs, init, opts );
-	
-	        // assign attrs, overriding defaults
-	        for( var name in attrs ){
-	            defaults[ name ] = attrs[ name ];
-	        }
-	
-	        return defaults;
+	    return function( attrs ){
+	        return attrs ? new AssignDefaults( attrs, this.__attributes ) : new CreateDefaults( this.__attributes );
 	    }
 	}
 	
@@ -2308,6 +2294,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }
 	
 	    // For each `set` attribute, update or delete the current value.
+	    // Todo: optimize for complete attrs set. Iterate through attributes names array,
+	    // or (may be better) create precompiled loop unrolled forEach, extracting specs
+	    // and values.
+	    // Beware of single attr update with options. Need deep refactoring to remove penalty.
 	    for( var attr in attrs ){
 	        var attrSpec  = attrSpecs[ attr ],
 	            isChanged = attrSpec ? attrSpec.isChanged : genericIsChanged,
@@ -2585,6 +2575,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	        if( options.changeEvents ) options.triggerWhenChanged = options.changeEvents;
 	
+	        //TODO: It looks like a bug. Remove.
 	        if( options.proxy && typeof options.proxy === 'string' && !options.triggerWhenChanged ){
 	            options.triggerWhenChanged = options.proxy
 	                                                .split( ' ' )
@@ -2753,6 +2744,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                    spec[ name ] = proxyFunction( this.name, name );
 	                }
 	                // ...or create native property, if it's the property.
+	                // TODO: Looks like extra check. Need to remove. Everything should be proxied.
 	                else if( prop.get ){
 	                    Object.defineProperty( spec, name, proxyProperty( this.name, name ) );
 	                }
@@ -2881,21 +2873,29 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	var _        = __webpack_require__( 5 ),
 	    Backbone = __webpack_require__( 2 ),
-	    Model    = __webpack_require__( 1 ),
-	    Events   = Backbone.Events,
-	    error    = __webpack_require__( 8 ),
+	    Model    = __webpack_require__( 1 );
+	
+	var Events   = Backbone.Events,
 	    trigger1 = Events.trigger1,
 	    trigger2 = Events.trigger2,
-	    trigger3 = Events.trigger3,
-	    core     = __webpack_require__( 11 );
+	    trigger3 = Events.trigger3;
 	
-	var fastCopy    = core.fastCopy,
-	    toModel     = core.toModel,
-	    addOne      = core.addOne,
-	    removeOne   = core.removeOne,
-	    removeMany  = core.removeMany,
-	    setMany     = core.setMany,
-	    replaceMany = core.replaceMany;
+	var Commons = __webpack_require__( 11 ),
+	    toModel = Commons.toModel,
+	    dispose = Commons.dispose,
+	    ModelEventsDispatcher = Commons.ModelEventsDispatcher;
+	
+	var Add     = __webpack_require__( 12 ),
+	    addOne  = Add.addOne,
+	    addMany = Add.addMany;
+	
+	var Remove     = __webpack_require__( 13 ),
+	    removeOne  = Remove.removeOne,
+	    removeMany = Remove.removeMany;
+	
+	var Set          = __webpack_require__( 14 ),
+	    setMany      = Set.setMany,
+	    emptySetMany = Set.emptySetMany;
 	
 	CollectionProto = Backbone.Collection.prototype;
 	
@@ -2922,11 +2922,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	        this.__changing++ || ( this._changed = false );
 	
 	        var options = a_options || {},
-	            models = options.parse ? this.parse( a_models, options ) : a_models;
+	            models  = options.parse ? this.parse( a_models, options ) : a_models;
 	
 	        var res = models ? (
 	            models instanceof Array ?
-	                method.call( this, models, options )
+	            method.call( this, models, options )
 	                : method.call( this, [ models ], options )[ 0 ]
 	        ) : method.call( this, [], options );
 	
@@ -2949,7 +2949,18 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }
 	}
 	
-	var attrChangeRegexp = /^change:(\w+)$/;
+	function SilentOptions( a_options ){
+	    var options = a_options || {};
+	    this.parse  = options.parse;
+	    this.sort   = options.sort;
+	}
+	
+	SilentOptions.prototype.silent = true;
+	
+	function CreateOptions( options ){
+	    AddOptions.call( this, options );
+	    this.wait = options && options.wait;
+	}
 	
 	module.exports = Backbone.Collection.extend( {
 	    triggerWhenChanged : 'changes',
@@ -2965,14 +2976,15 @@ return /******/ (function(modules) { // webpackBootstrap
 	    _changed     : false,
 	    _changeToken : {},
 	
-	    properties : {
+	    _dispatcher : null,
+	    properties  : {
 	        length : function(){
 	            return this.models.length;
 	        }
 	    },
 	
-	    modelId: function( attrs ) {
-	        return attrs[this.model.prototype.idAttribute || 'id'];
+	    modelId : function( attrs ){
+	        return attrs[ this.model.prototype.idAttribute || 'id' ];
 	    },
 	
 	    constructor : function( models, a_options ){
@@ -2981,7 +2993,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        this.__changing   = 0;
 	        this._changed     = false;
 	        this._changeToken = {};
-	        this._owner = this._store = null;
+	        this._owner       = this._store = null;
 	
 	        this.model      = options.model || this.model;
 	        this.comparator = options.comparator || this.comparator;
@@ -2989,7 +3001,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        this.models = [];
 	        this._byId  = {};
 	
-	        if( models ) this.reset( models, fastCopy( { silent : true }, options ) );
+	        if( models ) this.reset( models, new SilentOptions( options ) );
 	
 	        this.listenTo( this, this._listenToChanges, handleChange );
 	
@@ -3040,17 +3052,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	    set : method( function( models, options ){
 	        return this.length ?
 	               setMany( this, models, options ) :
-	               replaceMany( this, models, options );
+	               emptySetMany( this, models, options );
 	    } ),
 	
 	    reset : method( function( a_models, a_options ){
-	        var options  = a_options || {},
-	            models   = a_models,
-	            previous = this.models;
+	        var options = a_options || {};
 	
-	        options.previousModels = previous;
-	
-	        models = replaceMany( this, models, fastCopy( { silent : true }, options ) );
+	        options.previousModels = dispose( this );
+	        var models             = emptySetMany( this, a_models, new SilentOptions( options ) );
 	
 	        options.silent || trigger2( this, 'reset', this, options );
 	
@@ -3062,35 +3071,31 @@ return /******/ (function(modules) { // webpackBootstrap
 	// Methods with singular fast-path
 	//------------------------------------------------
 	    add : transaction( function( a_models, a_options ){
-	        if( a_models ){
-	            if( a_models instanceof Array ){
-	                return this.length ?
-	                       setMany( this, a_models, fastCopy( {
-	                           merge  : false,
-	                           add    : true,
-	                           remove : false
-	                       }, a_options ) )
-	                    : replaceMany( this, a_models, a_options || {} );
-	            }
+	        var options = a_options || {};
 	
-	            return addOne( this, a_models, a_options || {} );
+	        if( a_models ){
+	            return a_models instanceof Array ? (
+	                this.length ?
+	                addMany( this, a_models, options )
+	                    : emptySetMany( this, a_models, options )
+	            ) : addOne( this, a_models, options );
 	        }
 	    } ),
 	
 	    // Remove a model, or a list of models from the set.
 	    remove : transaction( function( a_models, a_options ){
-	        if( a_models ){
-	            if( a_models instanceof Array ){
-	                return removeMany( this, a_models, a_options || {} );
-	            }
+	        var options = a_options || {};
 	
-	            return removeOne( this, a_models, a_options || {} );
+	        if( a_models ){
+	            return a_models instanceof Array ?
+	                   removeMany( this, a_models, options )
+	                : removeOne( this, a_models, options );
 	        }
 	    } ),
 	
 	    create : function( a_model, a_options ){
-	        var options = {}, model = a_model;
-	        fastCopy( options, a_options );
+	        var options = new CreateOptions( a_options ),
+	            model   = a_model;
 	
 	        if( !(model = toModel( this, model, options )) ) return false;
 	        if( !options.wait ) addOne( this, model, options );
@@ -3106,29 +3111,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	    },
 	
 	    _onModelEvent : function( event, model, collection, options ){
-	        if( event === 'change:' + model.idAttribute ){
-	            updateIndex( model, this._byId );
-	            trigger3( this, event, model, collection, options );
-	            return;
-	        }
+	        // lazy initialize dispatcher...
+	        var dispatcher = this._dispatcher || ( this.constructor.prototype._dispatcher = new ModelEventsDispatcher( this.model ) ),
+	            handler    = dispatcher[ event ] || trigger3;
 	
-	        switch( event ){
-	            case 'change' : //TODO: does it need to be sorted when fields have changed?
-	            case 'sync' :
-	                trigger2( this, event, model, collection );
-	                break;
-	
-	            case 'add' :
-	            case 'remove' :
-	                if( collection === this ) trigger3( this, event, model, collection, options );
-	                break;
-	
-	            case 'destroy' :
-	                this.remove( model, options );
-	            default :
-	                trigger3( this, event, model, collection, options );
-	        }
-	
+	        handler( this, event, model, collection, options );
 	    },
 	
 	    deepClone : function(){ return this.clone( { deep : true } ); },
@@ -3167,58 +3154,113 @@ return /******/ (function(modules) { // webpackBootstrap
 	        return This;
 	    }
 	} );
-	
-	function updateIndex( model, _byId ){
-	    delete _byId[ model._previousAttributes[ idAttribute ] ];
-	    var id = model.id;
-	    id == null || ( _byId[ id ] = model );
-	}
 
 /***/ },
 /* 11 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var _        = __webpack_require__( 5 ),
-	    Backbone = __webpack_require__( 2 ),
-	    Events   = Backbone.Events,
-	    trigger1 = Events.trigger1,
-	    trigger2 = Events.trigger2,
+	/**
+	 * Helper functions
+	 */
+	
+	var Events   = __webpack_require__( 2 ).Events,
 	    trigger3 = Events.trigger3,
+	    trigger2 = Events.trigger2,
 	    onAll    = Events.onAll,
 	    offAll    = Events.offAll;
 	
-	function sortedIndex( array, obj, iteratee, context ){
-	    if( typeof iteratee === 'function' && iteratee.length == 2 ){
-	        var value = obj;
-	        var low = 0, high = array.length;
-	        while (low < high) {
-	            var mid = Math.floor((low + high) / 2);
-	            if (iteratee.call( context, array[mid], value) < 0 ) low = mid + 1; else high = mid;
-	        }
-	        return low;
-	    }
-	    else return _.sortedIndex( array, obj, iteratee, context );
-	}
+	var _ = __webpack_require__( 5 );
+	
+	var silence = { silent : true };
 	
 	module.exports = {
-	    fastCopy    : fastCopy,
-	    toModel     : toModel,
-	    addOne      : addOne,
-	    removeOne   : removeOne,
-	    removeMany  : removeMany,
-	    setMany     : setMany,
-	    replaceMany : replaceMany
+	    SilentOptions : SilentOptions,
+	    silence       : silence,
+	
+	    addReference    : addReference,
+	    removeReference : removeReference,
+	
+	    addIndex    : addIndex,
+	    removeIndex : removeIndex,
+	
+	    dispose : dispose,
+	
+	    notifyAdd : notifyAdd,
+	
+	    toModel : toModel,
+	
+	    sortedIndex : sortedIndex,
+	
+	    ModelEventsDispatcher : ModelEventsDispatcher
 	};
 	
-	// Copy options as fast as its possible.
-	function fastCopy( dest, source ){
-	    if( source ){
-	        for( var i in source ){
-	            dest[ i ] = source[ i ];
-	        }
+	function SilentOptions( a_options ){
+	    var options = a_options || {};
+	    this.parse  = options.parse;
+	    this.sort   = options.sort;
+	}
+	
+	SilentOptions.prototype = silence;
+	
+	
+	// Ownership and events subscription
+	function addReference( collection, model ){
+	    model.collection || ( model.collection = collection );
+	    onAll( model, collection._onModelEvent, collection );
+	    return model;
+	}
+	
+	function removeReference( collection, model ){
+	    if( collection === model.collection ){
+	        model.collection = void 0;
 	    }
 	
-	    return dest;
+	    offAll( model, collection._onModelEvent, collection );
+	}
+	
+	function dispose( collection ){
+	    var models = collection.models;
+	
+	    collection.models = [];
+	    collection._byId  = {};
+	
+	    for( var i = 0; i < models.length; i++ ){
+	        removeReference( collection, models[ i ] );
+	    }
+	
+	    return models;
+	}
+	
+	// Index management
+	function addIndex( _byId, model ){
+	    _byId[ model.cid ] = model;
+	    var id             = model.id;
+	    if( id != null ){
+	        _byId[ id ] = model;
+	    }
+	}
+	
+	function removeIndex( _byId, model ){
+	    delete _byId[ model.cid ];
+	    var id = model.id;
+	    if( id != null ){
+	        delete _byId[ id ];
+	    }
+	}
+	
+	function notifyAdd( self, models, options ){
+	    var at = options.at;
+	
+	    for( var i = 0; i < models.length; i++ ){
+	        var model = models[ i ];
+	        if( at != null ) options.index = at + i;
+	        trigger3( model, 'add', model, self, options );
+	    }
+	}
+	
+	function ModelOptions( options, collection ){
+	    this.parse      = options.parse;
+	    this.collection = collection;
 	}
 	
 	// convert argument to model. Return false if fails.
@@ -3227,9 +3269,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    var Model = collection.model;
 	    if( attrs instanceof Model ) return attrs;
 	
-	    var options        = fastCopy( {}, a_options );
-	    options.collection = collection;
-	    var model          = new Model( attrs, options );
+	    var model = new Model( attrs, new ModelOptions( a_options, collection ) );
 	
 	    if( model.validationError ){
 	        trigger3( collection, 'invalid', collection, model.validationError, options );
@@ -3239,27 +3279,118 @@ return /******/ (function(modules) { // webpackBootstrap
 	    return model;
 	}
 	
+	function sortedIndex( array, obj, iteratee, context ){
+	    if( typeof iteratee === 'function' && iteratee.length == 2 ){
+	        var value = obj;
+	        var low   = 0, high = array.length;
+	        while( low < high ){
+	            var mid = Math.floor( (low + high) / 2 );
+	            if( iteratee.call( context, array[ mid ], value ) < 0 ) low = mid + 1;
+	            else high = mid;
+	        }
+	        return low;
+	    }
+	    else return _.sortedIndex( array, obj, iteratee, context );
+	}
+	
+	function ModelEventsDispatcher( model ){
+	    this[ 'change:' + model.prototype.idAttribute ] = _updateIdAttr;
+	}
+	
+	ModelEventsDispatcher.prototype = {
+	    change  : trigger2,
+	    sync    : trigger2,
+	    add     : _triggerWhenRelevant,
+	    remove  : _triggerWhenRelevant,
+	    destroy : function( self, event, model, collection, options ){
+	        self.remove( model, options );
+	        trigger3( self, event, model, collection, options );
+	    }
+	};
+	
+	function _triggerWhenRelevant( self, event, model, collection, options ){
+	    if( collection === self ){
+	        trigger3( self, event, model, collection, options );
+	    }
+	}
+	
+	function _updateIdAttr( self, event, model, collection, options ){
+	    var _byId = self._byId;
+	
+	    _byId[ model._previousAttributes[ idAttribute ] ] = void 0;
+	    var id                                            = model.id;
+	    id == null || ( _byId[ id ] = model );
+	
+	    trigger3( self, event, model, collection, options );
+	}
+
+/***/ },
+/* 12 */
+/***/ function(module, exports, __webpack_require__) {
+
+	/**
+	 * Add models to collection, if models with the same id doesn't belong to collection
+	 * options:
+	 *  - silent = false
+	 *  - sort = true
+	 *  - at = null
+	 *  - pass through other options
+	 */
+	var Events   = __webpack_require__( 2 ).Events,
+	    trigger2 = Events.trigger2,
+	    trigger3 = Events.trigger3;
+	
+	var Commons      = __webpack_require__( 11 ),
+	    addIndex     = Commons.addIndex,
+	    addReference = Commons.addReference,
+	    notifyAdd    = Commons.notifyAdd,
+	    sortedIndex  = Commons.sortedIndex,
+	    toModel      = Commons.toModel,
+	    silence      = Commons.silence;
+	
+	function AddOptions( a_options ){
+	    var options = a_options || {};
+	    this.silent = options.silent;
+	    this.parse  = options.parse;
+	    this.sort   = options.sort;
+	
+	    this.at    = options.at;
+	    this.index = null;
+	}
+	
+	AddOptions.prototype = {
+	    add    : true,
+	    remove : false,
+	    merge  : false
+	};
+	
 	// fast-path for singular add and remove...
-	function addOne( collection, el, options ){
+	exports.addOne = function addOne( collection, el, a_options ){
+	    var options = new AddOptions( a_options );
+	
 	    var model = collection.get( el );
 	    if( model ){
 	        return model;
 	    }
 	
 	    model = toModel( collection, el, options );
+	
 	    if( model ){
 	        var models = collection.models,
 	            at     = options.at;
 	
-	        if (at != null){
-	            at = +at;
-	            if (at < 0) at += this.length + 1;
-	            if( at < 0 ) at = 0;
-	            if( at > this.length ) at = this.length;
+	        if( at == null ){
+	            // if collection is sorted, use binary search to find position
+	            if( collection.comparator && options.sort !== false ){
+	                at = sortedIndex( models, model, collection.comparator, collection );
+	            }
 	        }
-	
-	        if( collection.comparator && at == null && options.sort !== false ){
-	            at = sortedIndex( models, model, collection.comparator, collection );
+	        else{
+	            // if at is given, it overrides sorting option...
+	            at = +at;
+	            if( at < 0 ) at += collection.length + 1;
+	            if( at < 0 ) at = 0;
+	            if( at > collection.length ) at = collection.length;
 	        }
 	
 	        if( at ){
@@ -3269,8 +3400,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	            models.push( model );
 	        }
 	
-	        _addIndex( collection._byId, model );
-	        _addReference( collection, model );
+	        addIndex( collection._byId, model );
+	        addReference( collection, model );
 	
 	        if( !options.silent ){
 	            trigger3( model, 'add', model, collection, options );
@@ -3279,322 +3410,62 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	        return model;
 	    }
-	}
+	};
 	
-	function removeOne( collection, el, options ){
-	    var model = collection.get( el );
-	    if( model ){
-	        var models = collection.models,
-	            sorted = collection.comparator && options.sort !== false;
-	
-	        var at = sorted ?
-	                 sortedIndex( models, model, collection.comparator, collection )
-	            : _.indexOf( models, model );
-	
-	        models.splice( at, 1 );
-	
-	        _removeIndex( collection._byId, model );
-	
-	        if( !options.silent ){
-	            trigger3( model, 'remove', model, collection, options );
-	            trigger2( collection, 'update', collection, options );
-	        }
-	
-	        _removeReference( collection, model );
-	
-	        return model;
-	    }
-	}
-	
-	/** Optimized for removing many elements
-	 * 1. Remove elements from the index, checking for duplicates
-	 * 2. Create new models array matching index
-	 * 3. Send notifications and remove references
+	/**
+	 * update index and models array.
 	 */
-	function removeMany( collection, toRemove, a_options ){
-	    var _byId = collection._byId;
+	exports.addMany = function addMany( self, models, a_options ){
+	    var options = new AddOptions( a_options ),
+	        notify  = !options.silent,
+	        added   = [];
 	
-	    // 1. Remove models from index
-	    var removed = Array( toRemove.length ),
-	        i, j;
-	
-	    for( i = 0, j = 0; i < toRemove.length; i++ ){
-	        var model = collection.get( toRemove[ i ] );
+	    _append( self, models, function( source ){
+	        var model = toModel( self, source, options );
 	        if( model ){
-	            removed[ j++ ] = model;
-	            _removeIndex( _byId, model );
+	            addReference( self, model );
+	            added.push( model );
+	            return model;
 	        }
+	    } );
+	
+	    var at     = a_options.at,
+	        insert = at != null,
+	        sort   = self.comparator && added.length && options.sort !== false && !insert;
+	
+	    if( insert ){
+	        _move( self.models, at, added.length );
 	    }
-	
-	    removed.length = j;
-	
-	    // 2. Remove models from array
-	    var prev   = collection.models,
-	        models = collection.models = Array( prev.length - j );
-	
-	    for( i = 0, j = 0; i < prev.length; i++ ){
-	        model = prev[ i ];
-	
-	        if( _byId[ model.cid ] ){
-	            models[ j++ ] = model;
-	        }
+	    else if( sort ){
+	        self.sort( silence );
 	    }
-	
-	    models.length = j;
-	
-	    // 3. Send notifications and dereference models
-	    _removeModels( collection, removed, a_options );
-	
-	    a_options.silent || !removed.length || trigger2( collection, 'update', collection, a_options );
-	
-	    return removed;
-	}
-	
-	var silence = { silent : true };
-	
-	function replaceMany( self, models, a_options ){
-	    var options = fastCopy( {}, a_options ),
-	        notify  = !options.silent;
-	
-	    var removed = self.models;
-	    var added   = _replaceModels( self, models, options );
-	
-	    var sort = self.comparator && added.length && options.sort !== false;
-	    if( sort ) self.sort( silence );
-	
-	    // Remove refs from old models, if any...
-	    removed.length && _removeModels( self, removed, options );
 	
 	    if( notify ){
-	        added.length && _notifyAdd( self, added, options );
+	        notifyAdd( self, added, options );
 	        sort && trigger2( self, 'sort', self, options );
-	        if( added.length || removed.length ){
+	        if( added.length ){
 	            trigger2( self, 'update', self, options );
 	        }
 	    }
 	
 	    return added;
-	}
+	};
 	
-	function _removeModels( collection, removed, options ){
-	    var silent = options.silent;
-	    for( var i = 0; i < removed.length; i++ ){
-	        var model = removed[ i ];
-	        silent || trigger3( model, 'remove', model, collection, options );
-	        _removeReference( collection, model );
-	    }
-	}
+	// append data to model and index
+	function _append( self, source, getModel ){
+	    var models = self.models,
+	        _byId  = self._byId;
 	
-	// assign models and update index
-	function _replaceModels( self, source, options ){
-	    var models = Array( source.length ),
-	        _byId  = {};
-	
-	    for( var i = 0, j = 0; i < source.length; i++ ){
-	        var model = toModel( self, source[ i ] || {}, options );
-	
-	        if( model ){
-	            models[ j++ ] = model;
-	            _addIndex( _byId, model );
-	            _addReference( self, model );
-	        }
-	    }
-	
-	    models.length = j;
-	    self.models = models;
-	    self._byId  = _byId;
-	
-	    return models;
-	}
-	
-	// Update a collection by `set`-ing a new list of models, adding new ones,
-	// removing models that are no longer present, and merging models that
-	// already exist in the collection, as necessary. Similar to **Model#set**,
-	// the core operation for updating the data contained by the collection.
-	function setMany( self, a_models, a_options ){
-	    if( a_models == null ) return;
-	
-	    var options = fastCopy( { add : true, remove : true, merge : true }, a_options ),
-	        models  = a_models;
-	
-	    var at = options.at;
-	    if (at != null){
-	        at = +at;
-	        if (at < 0) at += this.length + 1;
-	        if( at < 0 ) at = 0;
-	        if( at > this.length ) at = this.length;
-	    }
-	
-	    var toAdd    = [],
-	        toRemove = [],
-	        modelMap = {};
-	
-	    var add    = options.add,
-	        merge  = options.merge,
-	        remove = options.remove;
-	
-	    var sort     = false,
-	        sortable = self.comparator && at == null && options.sort !== false,
-	        sortAttr = typeof self.comparator == 'string' ? self.comparator : null;
-	
-	    // Turn bare objects into model references, and prevent invalid models
-	    // from being added.
-	    var model, reused = 0;
-	
-	    for( var i = 0; i < models.length; i++ ){
-	        model = models[ i ];
-	
-	        // If a duplicate is found, prevent it from being added and
-	        // optionally merge it into the existing model.
-	        var existing = self.get( model );
-	        if( existing ){
-	            if( merge && model !== existing ){
-	                var attrs = model.attributes || model;
-	                if( options.parse ) attrs = existing.parse( attrs, options );
-	                existing.set( attrs, options );
-	                if( sortable && !sort ) sort = existing.hasChanged( sortAttr );
-	            }
-	
-	            if( !modelMap[ existing.cid ] ){
-	                modelMap[ existing.cid ] = true;
-	                reused++;
+	    for( var i = 0; i < source.length; i++ ){
+	        var src = source[ i ];
+	        if( src && !self.get( src ) ){
+	            var model = getModel( src, _byId );
+	            // add to array and indexes...
+	            if( model ){
+	                models.push( model );
+	                addIndex( _byId, model );
 	            }
 	        }
-	        else if( add ){
-	            model = models[ i ] = toModel( self, model, options );
-	            _addReference( self, model );
-	            if( model ) toAdd.push( model );
-	        }
-	    }
-	
-	    // Some models are reused...
-	    var toRemove = [];
-	
-	    if( remove ){
-	        // fast path 1 - nothing to remove...
-	        if( reused == self.models.length ){
-	            fpAdd( self, toAdd );
-	        }
-	        // fast path 2 - no intersection...
-	        else if( !reused ){
-	            toRemove = self.models;
-	            fpNoIntersection( self, toAdd );
-	        }
-	        // No luck. Reallocate models, update index...
-	        else{
-	            toRemove = fpMerge( self, reused, modelMap, toAdd );
-	        }
-	    }
-	    else{
-	        // fast path 3 - not allowed to remove
-	        fpAdd( self, toAdd );
-	    }
-	
-	    // alter position, whenever
-	    if( at !== void 0 ){
-	        _move( self.models, at, toAdd.length );
-	    }
-	    else if( sort || ( sortable && toAdd.length ) ){
-	        self.sort( { silent : true } );
-	    }
-	
-	    if( toRemove.length ) _removeModels( self, toRemove, options );
-	
-	    // Unless silenced, it's time to fire all appropriate add/sort events.
-	    if( !options.silent ){
-	        _notifyAdd( self, toAdd, options );
-	        if( sort ) trigger2( self, 'sort', self, options );
-	        if( toAdd.length || toRemove.length ) trigger2( self, 'update', self, options );
-	    }
-	
-	    // Return the added (or merged) model (or models).
-	    return self.models;
-	}
-	
-	function fpNoIntersection( collection, toAdd ){
-	    collection.models = toAdd;
-	    var _byId = collection._byId = {};
-	
-	    // rebuild index...
-	    for( var i = 0; i < toAdd.length; i++ ){
-	        _addIndex( _byId, toAdd[ i ] );
-	    }
-	}
-	
-	function fpAdd( collection, toAdd ){
-	    var models = collection.models,
-	        _byId = collection._byId;
-	
-	    for( var i = 0; i < toAdd.length; i++ ){
-	        var model = toAdd[ i ];
-	        _addIndex( _byId, model );
-	        models.push( model );
-	    }
-	}
-	
-	function fpMerge( collection, keepCount, toKeep, toAdd ){
-	    var nextModels = Array( keepCount + toAdd.length ),
-	        prevModels = collection.models,
-	        toRemove = Array( prevModels.length - keepCount ),
-	        _byId = collection._byId,
-	        j = 0, model;
-	
-	    // Filter out removed models and remove them from the index...
-	    for( var i = 0, r = 0; i < prevModels.length; i++ ){
-	        model = prevModels[ i ];
-	
-	        if( toKeep[ model.cid ] ){
-	            nextModels[ j++ ] = model;
-	        }
-	        else{
-	            _removeIndex( _byId, model );
-	            toRemove[ r++ ] = model;
-	        }
-	    }
-	
-	    // Merge in added models and add them to the index...
-	    for( i = 0; i < toAdd.length; i++ ){
-	        model = toAdd[ i ];
-	        _addIndex( _byId, model );
-	        nextModels[ j++ ] = model;
-	    }
-	
-	    self.models = nextModels;
-	
-	    return toRemove;
-	}
-	/**
-	 * Helper functions
-	 */
-	
-	
-	// Ownership and events subscription
-	function _addReference( collection, model ){
-	    model.collection || ( model.collection = collection );
-	    onAll( model, collection._onModelEvent, collection );
-	}
-	
-	function _removeReference( collection, model ){
-	    if( collection === model.collection ){
-	        model.collection = void 0;
-	    }
-	    offAll( model, collection._onModelEvent, collection );
-	}
-	
-	// Index management
-	function _addIndex( _byId, model ){
-	    _byId[ model.cid ] = model;
-	    var id             = model.id;
-	    if( id != null ){
-	        _byId[ id ] = model;
-	    }
-	}
-	
-	function _removeIndex( _byId, model ){
-	    delete _byId[ model.cid ];
-	    var id = model.id;
-	    if( id != null ){
-	        delete _byId[ id ];
 	    }
 	}
 	
@@ -3605,19 +3476,307 @@ return /******/ (function(modules) { // webpackBootstrap
 	        source[ j ] = x;
 	    }
 	}
+
+/***/ },
+/* 13 */
+/***/ function(module, exports, __webpack_require__) {
+
+	/**
+	 * Remove single element from collection
+	 * el: ModelId | ModelCid | Model | ModelAttrs
+	 * Options:
+	 *      - silent : Boolean = false
+	 */
 	
-	function _notifyAdd( self, models, options ){
-	    var at = options.at;
+	var Commons         = __webpack_require__( 11 ),
+	    removeIndex     = Commons.removeIndex,
+	    removeReference = Commons.removeReference;
 	
-	    for( var i = 0; i < models.length; i++ ){
-	        var model = models[ i ];
-	        if( at != null ) options.index = at + i;
-	        trigger3( model, 'add', model, self, options );
+	var Events   = __webpack_require__( 2 ).Events,
+	    trigger3 = Events.trigger3,
+	    trigger2 = Events.trigger2;
+	
+	function RemoveOptions( options ){
+	    this.silent = options.silent;
+	}
+	
+	RemoveOptions.prototype = {
+	    add    : false,
+	    remove : true,
+	    merge  : false
+	};
+	
+	exports.removeOne = function removeOne( collection, el, a_options ){
+	    var options = new RemoveOptions( a_options );
+	
+	    var model = collection.get( el );
+	    if( model ){
+	        var models = collection.models,
+	            // TODO: for sorted collection, find element with binary search.
+	            at     = _.indexOf( models, model ),
+	            silent = options.silent;
+	
+	        models.splice( at, 1 );
+	
+	        removeIndex( collection._byId, model );
+	
+	        silent || trigger3( model, 'remove', model, collection, options );
+	
+	        removeReference( collection, model );
+	
+	        silent || trigger2( collection, 'update', collection, options );
+	
+	        return model;
+	    }
+	};
+	
+	/** Optimized for removing many elements
+	 * 1. Remove elements from the index, checking for duplicates
+	 * 2. Create new models array matching index
+	 * 3. Send notifications and remove references
+	 */
+	exports.removeMany = function removeMany( collection, toRemove, a_options ){
+	    var options = new RemoveOptions( a_options );
+	
+	    var _byId = collection._byId;
+	
+	    var removed = _removeFromIndex( collection, toRemove );
+	
+	    _reallocate( collection, removed.length );
+	
+	    _removeModels( collection, removed, options );
+	
+	    options.silent || !removed.length || trigger2( collection, 'update', collection, options );
+	
+	    return removed;
+	};
+	
+	// remove models from the index...
+	function _removeFromIndex( collection, toRemove ){
+	    var removed = Array( toRemove.length ),
+	        _byId   = collection._byId;
+	
+	    for( var i = 0, j = 0; i < toRemove.length; i++ ){
+	        var model = collection.get( toRemove[ i ] );
+	        if( model ){
+	            removed[ j++ ] = model;
+	            removeIndex( _byId, model );
+	        }
+	    }
+	
+	    removed.length = j;
+	
+	    return removed;
+	}
+	
+	// Allocate new models array removing models not present in the index.
+	function _reallocate( collection, removed ){
+	    var prev   = collection.models,
+	        models = collection.models = Array( prev.length - removed ),
+	        _byId = collection._byId;
+	
+	    for( var i = 0, j = 0; i < prev.length; i++ ){
+	        var model = prev[ i ];
+	
+	        if( _byId[ model.cid ] ){
+	            models[ j++ ] = model;
+	        }
+	    }
+	
+	    models.length = j;
+	}
+	
+	function _removeModels( collection, removed, options ){
+	    var silent = options.silent;
+	    for( var i = 0; i < removed.length; i++ ){
+	        var model = removed[ i ];
+	        silent || trigger3( model, 'remove', model, collection, options );
+	        removeReference( collection, model );
 	    }
 	}
 
 /***/ },
-/* 12 */
+/* 14 */
+/***/ function(module, exports, __webpack_require__) {
+
+	/* WEBPACK VAR INJECTION */(function(module) {var Commons         = __webpack_require__( 11 ),
+	    addIndex        = Commons.addIndex,
+	    addReference    = Commons.addReference,
+	    notifyAdd       = Commons.notifyAdd,
+	    removeReference = Commons.removeReference,
+	    toModel         = Commons.toModel,
+	    silence         = Commons.silence;
+	
+	var Events   = __webpack_require__( 2 ).Events,
+	    trigger3 = Events.trigger3,
+	    trigger2 = Events.trigger2;
+	
+	function SetOptions( options ){
+	    this.silent = options.silent;
+	    this.parse  = options.parse;
+	    this.sort   = options.sort;
+	
+	    this.merge = options.merge == null || options.merge;
+	}
+	
+	SetOptions.prototype = {
+	    remove : true,
+	    add    : true
+	};
+	
+	exports.emptySetMany = function emptySetMany( self, models, a_options, silent ){
+	    var options = new SetOptions( a_options );
+	
+	    if( silent ){
+	        options.silent = silent;
+	    }
+	
+	    var notify = !options.silent;
+	
+	    _reallocate( self, models, function( source ){
+	        var model = toModel( self, source, options );
+	        if( model ){
+	            addReference( self, model );
+	            return model;
+	        }
+	    } );
+	
+	    var added = self.models;
+	
+	    var sort = self.comparator && added.length && options.sort !== false;
+	    if( sort ) self.sort( silence );
+	
+	    if( notify ){
+	        notifyAdd( self, added, options );
+	        sort && trigger2( self, 'sort', self, options );
+	        if( added.length ){
+	            trigger2( self, 'update', self, options );
+	        }
+	    }
+	
+	    return added;
+	};
+	
+	module.setMany = function setMany( self, a_models, a_options ){
+	    var options = new SetOptions( a_options ),
+	        models  = a_models;
+	
+	    var merge = options.merge;
+	
+	    var sort     = false,
+	        sortable = self.comparator && at == null && options.sort !== false,
+	        sortAttr = typeof self.comparator == 'string' ? self.comparator : null;
+	
+	    // Turn bare objects into model references, and prevent invalid models
+	    // from being added.
+	    var previous = self.models,
+	        toAdd    = [];
+	
+	    _reallocate( self, models, function( source, _byCid ){
+	        // If a duplicate is found, prevent it from being added and
+	        // optionally merge it into the existing model.
+	        var existing = self.get( source );
+	        if( existing ){
+	            if( merge && source !== existing ){
+	                var attrs = source.attributes || source;
+	                if( options.parse ) attrs = existing.parse( attrs, options );
+	                existing.set( attrs, options );
+	                if( sortable && !sort ) sort = existing.hasChanged( sortAttr );
+	            }
+	
+	            if( !_byCid[ existing.cid ] ){
+	                return existing;
+	            }
+	        }
+	        else{
+	            var model = toModel( self, model, options );
+	            if( model ){
+	                addReference( self, model );
+	                toAdd.push( model );
+	                return model;
+	            }
+	        }
+	    } );
+	
+	    if( sort || ( sortable && toAdd.length ) ){
+	        self.sort( { silent : true } );
+	    }
+	
+	    // remove references and fire 'remove' events if needed...
+	    var removed = self.models.length - toAdd.length < previous.length;
+	    if( removed ){
+	        _garbageCollect( self, previous, options );
+	    }
+	
+	    // Unless silenced, it's time to fire all appropriate add/sort events.
+	    if( !options.silent ){
+	        notifyAdd( self, toAdd, options );
+	        if( sort ) trigger2( self, 'sort', self, options );
+	        if( toAdd.length || removed ) trigger2( self, 'update', self, options );
+	    }
+	
+	    // Return the added (or merged) model (or models).
+	    return self.models;
+	};
+	
+	// Remove references from models missing in collection's index
+	// Send 'remove' events if no silent
+	function _garbageCollect( collection, previous, options ){
+	    var _byId  = collection._byId,
+	        silent = options.silent;
+	
+	    // Filter out removed models and remove them from the index...
+	    for( var i = 0; i < previous.length; i++ ){
+	        var model = previous[ i ];
+	
+	        if( !_byId[ model.cid ] ){
+	            silent || trigger3( model, 'remove', model, collection, options );
+	            removeReference( collection, model );
+	        }
+	    }
+	}
+	
+	// reallocate model and index
+	function _reallocate( self, source, getModel ){
+	    var models = Array( source.length ),
+	        _byId  = {};
+	
+	    for( var i = 0, j = 0; i < source.length; i++ ){
+	        var src = source[ i ];
+	        if( src ){
+	            var model = getModel( src, _byId );
+	            // add to array and indexes...
+	            if( model ){
+	                models[ j++ ] = model;
+	                addIndex( _byId, model );
+	            }
+	        }
+	    }
+	
+	    models.length = j;
+	    self.models   = models;
+	    self._byId    = _byId;
+	}
+	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(15)(module)))
+
+/***/ },
+/* 15 */
+/***/ function(module, exports) {
+
+	module.exports = function(module) {
+		if(!module.webpackPolyfill) {
+			module.deprecate = function() {};
+			module.paths = [];
+			// module.parent = undefined by default
+			module.children = [];
+			module.webpackPolyfill = 1;
+		}
+		return module;
+	}
+
+
+/***/ },
+/* 16 */
 /***/ function(module, exports, __webpack_require__) {
 
 	// Nested Relations
@@ -3855,7 +4014,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 13 */
+/* 17 */
 /***/ function(module, exports, __webpack_require__) {
 
 	// Date.parse with progressive enhancement for ISO 8601 <https://github.com/csnover/js-iso8601>
@@ -4062,7 +4221,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 14 */
+/* 18 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var Backbone   = __webpack_require__( 2 ),

@@ -1,3 +1,15 @@
+var Commons         = require( './commons' ),
+    addIndex        = Commons.addIndex,
+    addReference    = Commons.addReference,
+    notifyAdd       = Commons.notifyAdd,
+    removeReference = Commons.removeReference,
+    toModel         = Commons.toModel,
+    silence         = Commons.silence;
+
+var Events   = require( '../backbone+' ).Events,
+    trigger3 = Events.trigger3,
+    trigger2 = Events.trigger2;
+
 function SetOptions( options ){
     this.silent = options.silent;
     this.parse  = options.parse;
@@ -11,8 +23,7 @@ SetOptions.prototype = {
     add    : true
 };
 
-
-function emptySetMany( self, models, a_options, silent ){
+exports.emptySetMany = function emptySetMany( self, models, a_options, silent ){
     var options = new SetOptions( a_options );
 
     if( silent ){
@@ -24,18 +35,18 @@ function emptySetMany( self, models, a_options, silent ){
     _reallocate( self, models, function( source ){
         var model = toModel( self, source, options );
         if( model ){
-            _addReference( self, model );
+            addReference( self, model );
             return model;
         }
     } );
 
-    var added = this.models;
+    var added = self.models;
 
     var sort = self.comparator && added.length && options.sort !== false;
     if( sort ) self.sort( silence );
 
     if( notify ){
-        _notifyAdd( self, added, options );
+        notifyAdd( self, added, options );
         sort && trigger2( self, 'sort', self, options );
         if( added.length ){
             trigger2( self, 'update', self, options );
@@ -43,9 +54,9 @@ function emptySetMany( self, models, a_options, silent ){
     }
 
     return added;
-}
+};
 
-function setMany( self, a_models, a_options ){
+module.setMany = function setMany( self, a_models, a_options ){
     var options = new SetOptions( a_options ),
         models  = a_models;
 
@@ -79,7 +90,7 @@ function setMany( self, a_models, a_options ){
         else{
             var model = toModel( self, model, options );
             if( model ){
-                _addReference( self, model );
+                addReference( self, model );
                 toAdd.push( model );
                 return model;
             }
@@ -91,21 +102,21 @@ function setMany( self, a_models, a_options ){
     }
 
     // remove references and fire 'remove' events if needed...
-    var removed = this.models.length - toAdd.length < previous.length;
+    var removed = self.models.length - toAdd.length < previous.length;
     if( removed ){
         _garbageCollect( self, previous, options );
     }
 
     // Unless silenced, it's time to fire all appropriate add/sort events.
     if( !options.silent ){
-        _notifyAdd( self, toAdd, options );
+        notifyAdd( self, toAdd, options );
         if( sort ) trigger2( self, 'sort', self, options );
         if( toAdd.length || removed ) trigger2( self, 'update', self, options );
     }
 
     // Return the added (or merged) model (or models).
     return self.models;
-}
+};
 
 // Remove references from models missing in collection's index
 // Send 'remove' events if no silent
@@ -119,7 +130,7 @@ function _garbageCollect( collection, previous, options ){
 
         if( !_byId[ model.cid ] ){
             silent || trigger3( model, 'remove', model, collection, options );
-            _removeReference( collection, model );
+            removeReference( collection, model );
         }
     }
 }
@@ -136,7 +147,7 @@ function _reallocate( self, source, getModel ){
             // add to array and indexes...
             if( model ){
                 models[ j++ ] = model;
-                _addIndex( _byId, model );
+                addIndex( _byId, model );
             }
         }
     }

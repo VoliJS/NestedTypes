@@ -442,7 +442,7 @@ function createDefaults( attrSpecs ){
     _.each( attrSpecs, function( attrSpec, name ){
         if( attrSpec.value === undefined && attrSpec.type ){
             // if type with no value is given, create an empty object
-            appendExpr( name, 'i.' + name + '.create( o )' );
+            appendExpr( name, 'i.' + name + '.create()' );
         }
         else{
             // If value is given, type casting logic will do the job later, converting value to the proper type.

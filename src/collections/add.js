@@ -58,9 +58,9 @@ exports.addOne = function addOne( collection, el, a_options ){
         else{
             // if at is given, it overrides sorting option...
             at = +at;
-            if( at < 0 ) at += this.length + 1;
+            if( at < 0 ) at += collection.length + 1;
             if( at < 0 ) at = 0;
-            if( at > this.length ) at = this.length;
+            if( at > collection.length ) at = collection.length;
         }
 
         if( at ){
@@ -104,7 +104,7 @@ exports.addMany = function addMany( self, models, a_options ){
         sort   = self.comparator && added.length && options.sort !== false && !insert;
 
     if( insert ){
-        _move( this.models, at, added.length );
+        _move( self.models, at, added.length );
     }
     else if( sort ){
         self.sort( silence );

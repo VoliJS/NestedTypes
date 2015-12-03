@@ -2,9 +2,11 @@
  * Helper functions
  */
 
-var Events = require( '../backbone+' ),
+var Events   = require( '../backbone+' ).Events,
     trigger3 = Events.trigger3,
-    trigger2 = Events.trigger2;
+    trigger2 = Events.trigger2,
+    onAll    = Events.onAll,
+    offAll    = Events.offAll;
 
 var _ = require( 'underscore' );
 
@@ -12,12 +14,12 @@ var silence = { silent : true };
 
 module.exports = {
     SilentOptions : SilentOptions,
-    silence : silence,
+    silence       : silence,
 
-    addReference : addReference,
+    addReference    : addReference,
     removeReference : removeReference,
 
-    addIndex : addIndex,
+    addIndex    : addIndex,
     removeIndex : removeIndex,
 
     dispose : dispose,
@@ -33,8 +35,8 @@ module.exports = {
 
 function SilentOptions( a_options ){
     var options = a_options || {};
-    this.parse = options.parse;
-    this.sort = options.sort;
+    this.parse  = options.parse;
+    this.sort   = options.sort;
 }
 
 SilentOptions.prototype = silence;
@@ -106,7 +108,7 @@ function toModel( collection, attrs, a_options ){
     var Model = collection.model;
     if( attrs instanceof Model ) return attrs;
 
-    var model          = new Model( attrs, new ModelOptions( a_options, collection ) );
+    var model = new Model( attrs, new ModelOptions( a_options, collection ) );
 
     if( model.validationError ){
         trigger3( collection, 'invalid', collection, model.validationError, options );

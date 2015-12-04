@@ -32,13 +32,7 @@ exports.emptySetMany = function emptySetMany( self, models, a_options, silent ){
 
     var notify = !options.silent;
 
-    _reallocate( self, models, function( source ){
-        var model = toModel( self, source, options );
-        if( model ){
-            addReference( self, model );
-            return model;
-        }
-    } );
+    _reallocateEmpty( self, models, options );
 
     var added = self.models;
 
@@ -60,42 +54,33 @@ exports.setMany = function setMany( self, a_models, a_options ){
     var options = new SetOptions( a_options ),
         models  = a_models;
 
-    var merge = options.merge;
-
     var sort     = false,
         sortable = self.comparator && at == null && options.sort !== false,
         sortAttr = typeof self.comparator == 'string' ? self.comparator : null;
+
+    var merge = options.merge ? function( source, existing ){
+        if( source !== existing ){
+            var attrs = source.attributes || source;
+            if( options.parse ) attrs = existing.parse( attrs, options );
+            existing.set( attrs, options );
+            if( sortable && !sort ) sort = existing.hasChanged( sortAttr );
+        }
+    } : function(){};
+
 
     // Turn bare objects into model references, and prevent invalid models
     // from being added.
     var previous = self.models,
         toAdd    = [];
 
-    _reallocate( self, models, function( source, _byCid ){
-        // If a duplicate is found, prevent it from being added and
-        // optionally merge it into the existing model.
-        var existing = self.get( source );
-        if( existing ){
-            if( merge && source !== existing ){
-                var attrs = source.attributes || source;
-                if( options.parse ) attrs = existing.parse( attrs, options );
-                existing.set( attrs, options );
-                if( sortable && !sort ) sort = existing.hasChanged( sortAttr );
-            }
-
-            if( !_byCid[ existing.cid ] ){
-                return existing;
-            }
+    _reallocate( self, models, function( source ){
+        var model = toModel( self, source, options );
+        if( model ){
+            addReference( self, model );
+            toAdd.push( model );
+            return model;
         }
-        else{
-            var model = toModel( self, source, options );
-            if( model ){
-                addReference( self, model );
-                toAdd.push( model );
-                return model;
-            }
-        }
-    } );
+    }, merge );
 
     if( sort || ( sortable && toAdd.length ) ){
         self.sort( { silent : true } );
@@ -136,18 +121,66 @@ function _garbageCollect( collection, previous, options ){
 }
 
 // reallocate model and index
-function _reallocate( self, source, getModel ){
-    var models = Array( source.length ),
-        _byId  = {};
+function _reallocate( self, source, create, merge ){
+    var models      = Array( source.length ),
+        _byId       = {},
+        _prevById   = self._byId,
+        idAttribute = self.model.prototype.idAttribute;
 
     for( var i = 0, j = 0; i < source.length; i++ ){
         var src = source[ i ];
-            var model = getModel( src, _byId );
-            // add to array and indexes...
+
+        if( src ){
+            var id    = src[ idAttribute ],
+                cid   = src.cid,
+                model = _byId[ id ] || _byId[ cid ];
+
             if( model ){
-                models[ j++ ] = model;
-                addIndex( _byId, model );
+                continue;
             }
+
+            model = _prevById[ id ] || _prevById[ cid ];
+
+            if( model ){
+                merge( src, model );
+            }
+            else{
+                model = create( src );
+            }
+        }
+        else{
+            model = create( src );
+        }
+
+        if( model ){
+            models[ j++ ] = model;
+            addIndex( _byId, model );
+        }
+    }
+
+    models.length = j;
+    self.models   = models;
+    self._byId    = _byId;
+}
+
+function _reallocateEmpty( self, source, options ){
+    var models      = Array( source.length ),
+        _byId       = {},
+        idAttribute = self.model.prototype.idAttribute;
+
+    for( var i = 0, j = 0; i < source.length; i++ ){
+        var src = source[ i ];
+
+        if( src && ( _byId[ src[ idAttribute ] ] || _byId[ src.cid ] ) ){
+            continue;
+        }
+
+        var model = toModel( self, src, options );
+        if( model ){
+            addReference( self, model );
+            models[ j++ ] = model;
+            addIndex( _byId, model );
+        }
     }
 
     models.length = j;

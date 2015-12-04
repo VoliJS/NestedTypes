@@ -55,8 +55,6 @@ exports.removeOne = function removeOne( collection, el, a_options ){
 exports.removeMany = function removeMany( collection, toRemove, a_options ){
     var options = new RemoveOptions( a_options );
 
-    var _byId = collection._byId;
-
     var removed = _removeFromIndex( collection, toRemove );
 
     _reallocate( collection, removed.length );

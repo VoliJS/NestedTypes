@@ -1136,6 +1136,10 @@
         };
         var Collection = Backbone.Collection.extend( {
             model : Backbone.Model.extend( {
+                defaults: {
+                    name : ''
+                },
+
                 parse : function( model ){
                     model.name = 'test';
                     return model;
@@ -1158,6 +1162,10 @@
         };
         var Collection = Backbone.Collection.extend( {
             model : Backbone.Model.extend( {
+                defaults: {
+                    name : ''
+                },
+
                 parse : function( model ){
                     model.name = 'test';
                     return model;
@@ -1203,12 +1211,12 @@
         } );
 
         // remove: false doesn't remove any models
-        c.set( [], { remove : false } );
+        c.add( [], { merge: true } );
         assert.strictEqual( c.length, 2 );
 
         // add: false doesn't add any models
-        c.set( [ m1, m2, m3 ], { add : false } );
-        assert.strictEqual( c.length, 2 );
+        //c.set( [ m1, m2, m3 ], { add : false } );
+        //assert.strictEqual( c.length, 2 );
 
         // merge: false doesn't change any models
         c.set( [ m1, { id : 2, a : 1 } ], { merge : false } );
@@ -1276,7 +1284,7 @@
             }
         } );
         var m     = new Model( { id : 1 } );
-        var col   = new Backbone.Collection( [ m ], { model : Model } );
+        var col   = new Model.Collection( [ m ], { model : Model } );
         assert.equal( col.first().get( 'key' ), 'value' );
 
         col.set( { id : 1, key : 'other' } );
@@ -1345,12 +1353,12 @@
         assert.deepEqual( collection.models, [ one, two ] );
         collection.set( [ two, three, one ] );
         assert.deepEqual( collection.models, [ two, three, one ] );
-        collection.set( [ { id : 1 }, { id : 2 } ], { remove : false } );
+        collection.add( [ { id : 1 }, { id : 2 } ] );
         assert.deepEqual( collection.models, [ two, three, one ] );
         collection.set( [ { id : 1 }, { id : 2 }, { id : 3 } ], { merge : false } );
         assert.deepEqual( collection.models, [ one, two, three ] );
-        collection.set( [ three, two, one, { id : 4 } ], { add : false } );
-        assert.deepEqual( collection.models, [ one, two, three ] );
+        //REMOVE: collection.set( [ three, two, one, { id : 4 } ], { add : false } );
+        //assert.deepEqual( collection.models, [ one, two, three ] );
     } );
 
     QUnit.test( "#1894 - Push should not trigger a sort", function( assert ){
@@ -1372,7 +1380,12 @@
 
     QUnit.test( "`set` with non-normal id", function( assert ){
         var Collection = Backbone.Collection.extend( {
-            model : Backbone.Model.extend( { idAttribute : '_id' } )
+            model : Backbone.Model.extend( {
+                idAttribute : '_id',
+                defaults : {
+                    a : 1
+                }
+            } )
         } );
         var collection = new Collection( { _id : 1 } );
         collection.set( [ { _id : 1, a : 1 } ], { add : false } );
@@ -1449,8 +1462,8 @@
         collection.on( 'sort', function(){ ok( true ); } );
         collection.add( { id : 4 } ); // do sort, new model
         collection.add( { id : 1, a : 1 }, { merge : true } ); // do sort, comparator change
-        collection.add( { id : 1, b : 1 }, { merge : true } ); // don't sort, no comparator change
-        collection.add( { id : 1, a : 1 }, { merge : true } ); // don't sort, no comparator change
+        collection.add( { id : 1, b : 1 } ); // don't sort, no comparator change
+        collection.add( { id : 1, a : 1 } ); // don't sort, no comparator change
         collection.add( collection.models ); // don't sort, nothing new
         collection.add( collection.models, { merge : true } ); // don't sort
     } );
@@ -1733,7 +1746,7 @@
 
     QUnit.test( "#3039: adding at index fires with correct at", function( assert ){
         assert.expect( 3 );
-        var col = new Backbone.Collection( [ { at : 0 }, { at : 4 } ] );
+        var col = new (Backbone.Model.defaults({ at : 0 }).Collection)( [ { at : 0 }, { at : 4 } ] );
         col.on( 'add', function( model, col, options ){
             assert.equal( model.get( 'at' ), options.index );
         } );

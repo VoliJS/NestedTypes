@@ -24,11 +24,7 @@ module.exports = {
 
     dispose : dispose,
 
-    notifyAdd : notifyAdd,
-
     toModel : toModel,
-
-    sortedIndex : sortedIndex,
 
     ModelEventsDispatcher : ModelEventsDispatcher
 };
@@ -87,16 +83,6 @@ function removeIndex( _byId, model ){
     }
 }
 
-function notifyAdd( self, models, options ){
-    var at = options.at;
-
-    for( var i = 0; i < models.length; i++ ){
-        var model = models[ i ];
-        if( at != null ) options.index = at + i;
-        trigger3( model, 'add', model, self, options );
-    }
-}
-
 function ModelOptions( options, collection ){
     this.parse      = options.parse;
     this.collection = collection;
@@ -117,20 +103,6 @@ function toModel( collection, attrs, a_options ){
     }
 
     return model;
-}
-
-function sortedIndex( array, obj, iteratee, context ){
-    if( typeof iteratee === 'function' && iteratee.length == 2 ){
-        var value = obj;
-        var low   = 0, high = array.length;
-        while( low < high ){
-            var mid = Math.floor( (low + high) / 2 );
-            if( iteratee.call( context, array[ mid ], value ) < 0 ) low = mid + 1;
-            else high = mid;
-        }
-        return low;
-    }
-    else return _.sortedIndex( array, obj, iteratee, context );
 }
 
 function ModelEventsDispatcher( model ){

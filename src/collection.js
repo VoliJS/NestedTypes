@@ -7,23 +7,20 @@ var Events   = Backbone.Events,
     trigger2 = Events.trigger2,
     trigger3 = Events.trigger3;
 
-var Commons = require( './collections/commons' ),
-    toModel = Commons.toModel,
-    dispose = Commons.dispose,
+var Commons               = require( './collections/commons' ),
+    toModel               = Commons.toModel,
+    dispose               = Commons.dispose,
     ModelEventsDispatcher = Commons.ModelEventsDispatcher;
 
-var Add     = require( './collections/add' ),
-    addOne  = Add.addOne,
-    addMany = Add.addMany,
-    AddOptions = Add.AddOptions;
+var Add          = require( './collections/add' ),
+    MergeOptions = Add.MergeOptions,
+    add          = Add.add,
+    set          = Add.set,
+    emptySet     = Add.emptySet;
 
 var Remove     = require( './collections/remove' ),
     removeOne  = Remove.removeOne,
     removeMany = Remove.removeMany;
-
-var Set          = require( './collections/set' ),
-    setMany      = Set.setMany,
-    emptySetMany = Set.emptySetMany;
 
 CollectionProto = Backbone.Collection.prototype;
 
@@ -86,7 +83,9 @@ function SilentOptions( a_options ){
 SilentOptions.prototype.silent = true;
 
 function CreateOptions( options, collection ){
-    AddOptions.call( this, options, collection );
+    MergeOptions.call( this, options, collection );
+    this.success = options.success;
+    this.error = options.error;
     this.wait = options && options.wait;
 }
 
@@ -179,37 +178,31 @@ module.exports = Backbone.Collection.extend( {
 
     set : method( function( models, options ){
         return this.length ?
-               setMany( this, models, options ) :
-               emptySetMany( this, models, options );
+               set( this, models, options ) :
+               emptySet( this, models, options );
     } ),
 
     reset : method( function( a_models, a_options ){
-        var options = a_options || {},
+        var options        = a_options || {},
             previousModels = dispose( this );
 
-        var models             = emptySetMany( this, a_models, new SilentOptions( options ) );
+        var models = emptySet( this, a_models, new SilentOptions( options ) );
 
         options.silent || trigger2( this, 'reset', this, _.defaults( { previousModels : previousModels }, options ) );
 
         return models;
     } ),
 
+    add : method( function( models, options ){
+        return this.length ?
+               add( this, models, options )
+            : emptySet( this, models, options );
+    } ),
+
     sort : transaction( CollectionProto.sort ),
 
 // Methods with singular fast-path
 //------------------------------------------------
-    add : transaction( function( a_models, a_options ){
-        var options = a_options || {};
-
-        if( a_models ){
-            return a_models instanceof Array ? (
-                this.length ?
-                addMany( this, a_models, options )
-                    : emptySetMany( this, a_models, options )
-            ) : addOne( this, a_models, options );
-        }
-    } ),
-
     // Remove a model, or a list of models from the set.
     remove : transaction( function( a_models, a_options ){
         var options = a_options || {};
@@ -226,11 +219,11 @@ module.exports = Backbone.Collection.extend( {
             model   = a_model;
 
         if( !(model = toModel( this, model, options )) ) return false;
-        if( !options.wait ) addOne( this, model, options );
+        if( !options.wait ) add( this, [ model ], options );
         var collection  = this;
         var success     = options.success;
         options.success = function( model, resp ){
-            if( options.wait ) addOne( collection, model, options );
+            if( options.wait ) add( collection, [ model ], options );
             if( success ) success( model, resp, options );
         };
 

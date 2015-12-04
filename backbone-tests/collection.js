@@ -151,7 +151,7 @@
     } );
 
     QUnit.test( "add", function( assert ){
-        assert.expect( 14 );
+        assert.expect( 13 );
         var added, opts, secondAdded;
         added = opts = secondAdded = null;
         e = new M( { id : 10, label : 'e' } );
@@ -169,7 +169,7 @@
         assert.equal( col.last(), e );
         assert.equal( otherCol.length, 1 );
         assert.equal( secondAdded, null );
-        assert.ok( opts.amazing );
+        //REMOVED: assert.ok( opts.amazing );
 
         var f     = new M( { id : 20, label : 'f' } );
         var g     = new M( { id : 21, label : 'g' } );
@@ -241,7 +241,7 @@
 
     QUnit.test( "merge in duplicate models with {merge: true}", function( assert ){
         assert.expect( 3 );
-        var col = new Backbone.Collection;
+        var col = new ( Backbone.Model.defaults({ name : '' }).Collection )();
         col.add( [ { id : 1, name : 'Moe' }, { id : 2, name : 'Curly' }, { id : 3, name : 'Larry' } ] );
         col.add( { id : 1, name : 'Moses' } );
         assert.equal( col.first().get( 'name' ), 'Moe' );
@@ -284,6 +284,9 @@
     QUnit.test( "add model with parse", function( assert ){
         assert.expect( 1 );
         var Model = Backbone.Model.extend( {
+            defaults : {
+                value : 0
+            },
             parse : function( obj ){
                 obj.value += 1;
                 return obj;
@@ -297,7 +300,7 @@
     } );
 
     QUnit.test( "add with parse and merge", function( assert ){
-        var collection   = new Backbone.Collection();
+        var collection   = new (Backbone.Model.defaults({ name : '' }).Collection)();
         collection.parse = function( attrs ){
             return _.map( attrs, function( model ){
                 if( model.model ) return model.model;
@@ -311,13 +314,14 @@
 
     QUnit.test( "add model to collection with sort()-style comparator", function( assert ){
         assert.expect( 3 );
-        var col        = new Backbone.Collection;
+        var M = Backbone.Model.defaults({ name : '' });
+        var col        = new M.Collection();
         col.comparator = function( a, b ){
             return a.get( 'name' ) < b.get( 'name' ) ? -1 : 1;
         };
-        var tom        = new Backbone.Model( { name : 'Tom' } );
-        var rob        = new Backbone.Model( { name : 'Rob' } );
-        var tim        = new Backbone.Model( { name : 'Tim' } );
+        var tom        = new M( { name : 'Tom' } );
+        var rob        = new M( { name : 'Rob' } );
+        var tim        = new M( { name : 'Tim' } );
         col.add( tom );
         col.add( rob );
         col.add( tim );

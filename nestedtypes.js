@@ -59,12 +59,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	var Model      = __webpack_require__( 1 ),
 	    Collection = __webpack_require__( 10 ),
-	    relations  = __webpack_require__( 16 ),
+	    relations  = __webpack_require__( 15 ),
 	    Backbone   = __webpack_require__( 2 ),
 	    _          = __webpack_require__( 5 ),
 	    attribute  = __webpack_require__( 9 );
 	
-	__webpack_require__( 17 );
+	__webpack_require__( 16 );
 	
 	Collection.subsetOf = relations.subsetOf;
 	Model.from          = relations.from;
@@ -72,7 +72,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	Model.Collection    = Collection;
 	
-	var Store = __webpack_require__( 18 );
+	var Store = __webpack_require__( 17 );
 	Object.defineProperty( exports, 'store', Store.globalProp );
 	
 	exports.store = new Store.Model();
@@ -3351,17 +3351,24 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	exports.AddOptions = AddOptions = function( a_options, collection ){
 	    var options = a_options || {};
+	
 	    this.silent = options.silent;
 	    this.parse  = options.parse;
-	    this.sort   = options.sort;
+	    this.merge  = options.merge;
 	
+	    // at option
 	    var at = options.at;
 	    if( at != null ){
+	        this.sort = false;
+	
 	        // if at is given, it overrides sorting option...
 	        at = +at;
 	        if( at < 0 ) at += collection.length + 1;
 	        if( at < 0 ) at = 0;
 	        if( at > collection.length ) at = collection.length;
+	    }
+	    else{
+	        this.sort = collection.comparator && options.sort !== false;
 	    }
 	
 	    this.at = at;
@@ -3370,13 +3377,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	AddOptions.prototype = {
 	    add    : true,
-	    remove : false,
-	    merge  : false
+	    remove : false
 	};
 	
 	// fast-path for singular add and remove...
 	exports.addOne = function addOne( collection, el, a_options ){
-	    var options = new AddOptions( a_options, collection );
+	    return addMany( collection, [ el ], a_options )[ 0 ];
+	
+	    /* var options = new AddOptions( a_options, collection );
 	
 	    var model = collection.get( el );
 	    if( model ){
@@ -3412,42 +3420,37 @@ return /******/ (function(modules) { // webpackBootstrap
 	        }
 	
 	        return model;
-	    }
+	    } */
 	};
 	
 	/**
 	 * update index and models array.
 	 */
-	exports.addMany = function addMany( self, models, a_options ){
-	    var options = new AddOptions( a_options, self ),
-	        notify  = !options.silent,
-	        added   = [];
+	exports.addMany = addMany = function addMany( collection, a_items, a_options ){
+	    var options = new AddOptions( a_options, collection ),
+	        items = options.parse ? collection.parse( a_items ) : a_items;
 	
-	    _append( self, models, function( source ){
-	        var model = toModel( self, source, options );
-	        if( model ){
-	            addReference( self, model );
-	            added.push( model );
-	            return model;
-	        }
-	    } );
+	    var _changed = collection._changed;
+	    collection._changed = false;
 	
-	    var at     = options.at,
-	        insert = at != null,
-	        sort   = self.comparator && added.length && options.sort !== false && !insert;
+	    var added = _append( collection, items, options ),
+	        changed = collection._changed || added.length,
+	        needSort = options.sort && changed;
 	
-	    if( insert ){
-	        _move( self.models, at, added );
+	    collection._changed = changed || _changed;
+	
+	    if( options.at != null ){
+	        _move( collection.models, options.at, added );
 	    }
-	    else if( sort ){
-	        self.sort( silence );
+	    else if( needSort ){
+	        collection.sort( silence );
 	    }
 	
-	    if( notify ){
-	        notifyAdd( self, added, options );
-	        sort && trigger2( self, 'sort', self, options );
+	    if( !options.silent ){
+	        notifyAdd( collection, added, options );
+	        needSort && trigger2( collection, 'sort', collection, options );
 	        if( added.length ){
-	            trigger2( self, 'update', self, options );
+	            trigger2( collection, 'update', collection, options );
 	        }
 	    }
 	
@@ -3455,21 +3458,37 @@ return /******/ (function(modules) { // webpackBootstrap
 	};
 	
 	// append data to model and index
-	function _append( self, source, getModel ){
-	    var models = self.models,
-	        _byId  = self._byId;
+	function _append( collection, a_items, a_options ){
+	    var models = collection.models,
+	        _byId  = collection._byId,
+	        merge = a_options.merge,
+	        parse = a_options.parse,
+	        idAttribute = collection.model.prototype.idAttribute,
+	        added = [];
 	
-	    for( var i = 0; i < source.length; i++ ){
-	        var src = source[ i ];
-	        if( !self.get( src ) ){
-	            var model = getModel( src, _byId );
-	            // add to array and indexes...
+	    for( var i = 0; i < a_items.length; i++ ){
+	        var item = a_items[ i ],
+	            model = item ? _byId[ item[ idAttribute ] ] || _byId[ item.cid ] : null;
+	
+	        if( model ){
+	            if( merge && item !== model ){
+	                var attrs = item.attributes || item;
+	                if( parse ) attrs = model.parse( attrs, a_options );
+	                model.set( attrs, a_options );
+	            }
+	        }
+	        else{
+	            model = toModel( collection, item, a_options );
 	            if( model ){
 	                models.push( model );
+	                addReference( collection, model );
 	                addIndex( _byId, model );
+	                added.push( model );
 	            }
 	        }
 	    }
+	
+	    return added;
 	}
 	
 	function _move( source, at, added ){
@@ -3661,7 +3680,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        models  = a_models;
 	
 	    var sort     = false,
-	        sortable = self.comparator && at == null && options.sort !== false,
+	        sortable = self.comparator && options.sort !== false,
 	        sortAttr = typeof self.comparator == 'string' ? self.comparator : null;
 	
 	    var merge = options.merge ? function( source, existing ){
@@ -3676,17 +3695,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	    // Turn bare objects into model references, and prevent invalid models
 	    // from being added.
-	    var previous = self.models,
-	        toAdd    = [];
+	    var previous = self.models;
 	
-	    _reallocate( self, models, function( source ){
-	        var model = toModel( self, source, options );
-	        if( model ){
-	            addReference( self, model );
-	            toAdd.push( model );
-	            return model;
-	        }
-	    }, merge );
+	    var toAdd = _reallocate( self, models, options, merge );
 	
 	    if( sort || ( sortable && toAdd.length ) ){
 	        self.sort( { silent : true } );
@@ -3727,46 +3738,47 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 	
 	// reallocate model and index
-	function _reallocate( self, source, create, merge ){
+	function _reallocate( self, source, merge, options ){
 	    var models      = Array( source.length ),
 	        _byId       = {},
 	        _prevById   = self._byId,
-	        idAttribute = self.model.prototype.idAttribute;
+	        idAttribute = self.model.prototype.idAttribute,
+	        toAdd = [];
 	
+	    // for each item in source set...
 	    for( var i = 0, j = 0; i < source.length; i++ ){
-	        var src = source[ i ];
+	        var item = source[ i ],
+	            model = null;
 	
-	        if( src ){
-	            var id    = src[ idAttribute ],
-	                cid   = src.cid,
-	                model = _byId[ id ] || _byId[ cid ];
+	        if( item ){
+	            var id    = item[ idAttribute ],
+	                cid   = item.cid;
 	
-	            if( model ){
-	                continue;
-	            }
+	            if( _byId[ id ] || _byId[ cid ] ) continue;
 	
 	            model = _prevById[ id ] || _prevById[ cid ];
-	
-	            if( model ){
-	                merge( src, model );
-	            }
-	            else{
-	                model = create( src );
-	            }
-	        }
-	        else{
-	            model = create( src );
 	        }
 	
 	        if( model ){
-	            models[ j++ ] = model;
-	            addIndex( _byId, model );
+	            merge( item, model );
 	        }
+	        else{
+	            model = toModel( self, item, options );
+	            if( !model ) continue;
+	
+	            addReference( self, model );
+	            toAdd.push( model );
+	        }
+	
+	        models[ j++ ] = model;
+	        addIndex( _byId, model );
 	    }
 	
 	    models.length = j;
 	    self.models   = models;
 	    self._byId    = _byId;
+	
+	    return toAdd;
 	}
 	
 	function _reallocateEmpty( self, source, options ){
@@ -3795,8 +3807,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 /***/ },
-/* 15 */,
-/* 16 */
+/* 15 */
 /***/ function(module, exports, __webpack_require__) {
 
 	// Nested Relations
@@ -4034,7 +4045,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 17 */
+/* 16 */
 /***/ function(module, exports, __webpack_require__) {
 
 	// Date.parse with progressive enhancement for ISO 8601 <https://github.com/csnover/js-iso8601>
@@ -4241,7 +4252,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 18 */
+/* 17 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var Backbone   = __webpack_require__( 2 ),

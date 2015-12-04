@@ -20,17 +20,25 @@ var Commons      = require( './commons' ),
 
 exports.AddOptions = AddOptions = function( a_options, collection ){
     var options = a_options || {};
+
     this.silent = options.silent;
     this.parse  = options.parse;
-    this.sort   = options.sort;
+    this.merge  = options.merge;
+    this.validate = options.validate;
 
+    // at option
     var at = options.at;
     if( at != null ){
+        this.sort = false;
+
         // if at is given, it overrides sorting option...
         at = +at;
         if( at < 0 ) at += collection.length + 1;
         if( at < 0 ) at = 0;
         if( at > collection.length ) at = collection.length;
+    }
+    else{
+        this.sort = collection.comparator && options.sort !== false;
     }
 
     this.at = at;
@@ -39,13 +47,14 @@ exports.AddOptions = AddOptions = function( a_options, collection ){
 
 AddOptions.prototype = {
     add    : true,
-    remove : false,
-    merge  : false
+    remove : false
 };
 
 // fast-path for singular add and remove...
 exports.addOne = function addOne( collection, el, a_options ){
-    var options = new AddOptions( a_options, collection );
+    return addMany( collection, [ el ], a_options )[ 0 ];
+
+    /* var options = new AddOptions( a_options, collection );
 
     var model = collection.get( el );
     if( model ){
@@ -81,42 +90,37 @@ exports.addOne = function addOne( collection, el, a_options ){
         }
 
         return model;
-    }
+    } */
 };
 
 /**
  * update index and models array.
  */
-exports.addMany = function addMany( self, models, a_options ){
-    var options = new AddOptions( a_options, self ),
-        notify  = !options.silent,
-        added   = [];
+exports.addMany = addMany = function addMany( collection, a_items, a_options ){
+    var options = new AddOptions( a_options, collection ),
+        items = options.parse ? collection.parse( a_items ) : a_items;
 
-    _append( self, models, function( source ){
-        var model = toModel( self, source, options );
-        if( model ){
-            addReference( self, model );
-            added.push( model );
-            return model;
-        }
-    } );
+    var _changed = collection._changed;
+    collection._changed = false;
 
-    var at     = options.at,
-        insert = at != null,
-        sort   = self.comparator && added.length && options.sort !== false && !insert;
+    var added = _append( collection, items, options ),
+        changed = collection._changed || added.length,
+        needSort = options.sort && changed;
 
-    if( insert ){
-        _move( self.models, at, added );
+    collection._changed = changed || _changed;
+
+    if( options.at != null ){
+        _move( collection.models, options.at, added );
     }
-    else if( sort ){
-        self.sort( silence );
+    else if( needSort ){
+        collection.sort( silence );
     }
 
-    if( notify ){
-        notifyAdd( self, added, options );
-        sort && trigger2( self, 'sort', self, options );
+    if( !options.silent ){
+        notifyAdd( collection, added, options );
+        needSort && trigger2( collection, 'sort', collection, options );
         if( added.length ){
-            trigger2( self, 'update', self, options );
+            trigger2( collection, 'update', collection, options );
         }
     }
 
@@ -124,21 +128,37 @@ exports.addMany = function addMany( self, models, a_options ){
 };
 
 // append data to model and index
-function _append( self, source, getModel ){
-    var models = self.models,
-        _byId  = self._byId;
+function _append( collection, a_items, a_options ){
+    var models = collection.models,
+        _byId  = collection._byId,
+        merge = a_options.merge,
+        parse = a_options.parse,
+        idAttribute = collection.model.prototype.idAttribute,
+        added = [];
 
-    for( var i = 0; i < source.length; i++ ){
-        var src = source[ i ];
-        if( !self.get( src ) ){
-            var model = getModel( src, _byId );
-            // add to array and indexes...
+    for( var i = 0; i < a_items.length; i++ ){
+        var item = a_items[ i ],
+            model = item ? _byId[ item[ idAttribute ] ] || _byId[ item.cid ] : null;
+
+        if( model ){
+            if( merge && item !== model ){
+                var attrs = item.attributes || item;
+                if( parse ) attrs = model.parse( attrs, a_options );
+                model.set( attrs, a_options );
+            }
+        }
+        else{
+            model = toModel( collection, item, a_options );
             if( model ){
                 models.push( model );
+                addReference( collection, model );
                 addIndex( _byId, model );
+                added.push( model );
             }
         }
     }
+
+    return added;
 }
 
 function _move( source, at, added ){

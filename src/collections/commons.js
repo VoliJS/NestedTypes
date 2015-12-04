@@ -100,6 +100,7 @@ function notifyAdd( self, models, options ){
 function ModelOptions( options, collection ){
     this.parse      = options.parse;
     this.collection = collection;
+    this.validate = options.validate;
 }
 
 // convert argument to model. Return false if fails.

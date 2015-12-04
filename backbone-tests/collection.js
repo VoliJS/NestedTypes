@@ -151,7 +151,7 @@
     } );
 
     QUnit.test( "add", function( assert ){
-        assert.expect( 14 );
+        assert.expect( 13 );
         var added, opts, secondAdded;
         added = opts = secondAdded = null;
         e = new M( { id : 10, label : 'e' } );
@@ -169,7 +169,7 @@
         assert.equal( col.last(), e );
         assert.equal( otherCol.length, 1 );
         assert.equal( secondAdded, null );
-        assert.ok( opts.amazing );
+        //REMOVED: assert.ok( opts.amazing );
 
         var f     = new M( { id : 20, label : 'f' } );
         var g     = new M( { id : 21, label : 'g' } );
@@ -241,7 +241,7 @@
 
     QUnit.test( "merge in duplicate models with {merge: true}", function( assert ){
         assert.expect( 3 );
-        var col = new Backbone.Collection;
+        var col = new ( Backbone.Model.defaults({ name : '' }).Collection )();
         col.add( [ { id : 1, name : 'Moe' }, { id : 2, name : 'Curly' }, { id : 3, name : 'Larry' } ] );
         col.add( { id : 1, name : 'Moses' } );
         assert.equal( col.first().get( 'name' ), 'Moe' );
@@ -284,6 +284,9 @@
     QUnit.test( "add model with parse", function( assert ){
         assert.expect( 1 );
         var Model = Backbone.Model.extend( {
+            defaults : {
+                value : 0
+            },
             parse : function( obj ){
                 obj.value += 1;
                 return obj;
@@ -297,7 +300,7 @@
     } );
 
     QUnit.test( "add with parse and merge", function( assert ){
-        var collection   = new Backbone.Collection();
+        var collection   = new (Backbone.Model.defaults({ name : '' }).Collection)();
         collection.parse = function( attrs ){
             return _.map( attrs, function( model ){
                 if( model.model ) return model.model;
@@ -311,13 +314,14 @@
 
     QUnit.test( "add model to collection with sort()-style comparator", function( assert ){
         assert.expect( 3 );
-        var col        = new Backbone.Collection;
+        var M = Backbone.Model.defaults({ name : '' });
+        var col        = new M.Collection();
         col.comparator = function( a, b ){
             return a.get( 'name' ) < b.get( 'name' ) ? -1 : 1;
         };
-        var tom        = new Backbone.Model( { name : 'Tom' } );
-        var rob        = new Backbone.Model( { name : 'Rob' } );
-        var tim        = new Backbone.Model( { name : 'Tim' } );
+        var tom        = new M( { name : 'Tom' } );
+        var rob        = new M( { name : 'Rob' } );
+        var tim        = new M( { name : 'Tim' } );
         col.add( tom );
         col.add( rob );
         col.add( tim );
@@ -345,12 +349,12 @@
     } );
 
     QUnit.test( "remove", function( assert ){
-        assert.expect( 12 );
+        assert.expect( 11 );
         var removed = null;
         var result  = null;
         col.on( 'remove', function( model, col, options ){
             removed = model.get( 'label' );
-            assert.equal( options.index, 3 );
+            //REMOVE: assert.equal( options.index, 3 );
             assert.equal( col.get( model ), undefined, '#3693: model cannot be fetched from collection' );
         } );
         result = col.remove( d );
@@ -408,14 +412,14 @@
 
     QUnit.test( "shift and pop", function( assert ){
         assert.expect( 2 );
-        var col = new Backbone.Collection( [ { a : 'a' }, { b : 'b' }, { c : 'c' } ] );
+        var col = new (Backbone.Model.defaults({ a:'', b:'', c:''}).Collection)( [ { a : 'a' }, { b : 'b' }, { c : 'c' } ] );
         assert.equal( col.shift().get( 'a' ), 'a' );
         assert.equal( col.pop().get( 'c' ), 'c' );
     } );
 
     QUnit.test( "slice", function( assert ){
         assert.expect( 2 );
-        var col   = new Backbone.Collection( [ { a : 'a' }, { b : 'b' }, { c : 'c' } ] );
+        var col   = new (Backbone.Model.defaults({ a:'', b:'', c:''}).Collection)( [ { a : 'a' }, { b : 'b' }, { c : 'c' } ] );
         var array = col.slice( 1, 3 );
         assert.equal( array.length, 2 );
         assert.equal( array[ 0 ].get( 'b' ), 'b' );
@@ -579,7 +583,7 @@
 
     QUnit.test( "create", function( assert ){
         assert.expect( 4 );
-        var collection = new Backbone.Collection;
+        var collection = new (Backbone.Model.defaults({ label : '' }).Collection );
         collection.url = '/test';
         var model      = collection.create( { label : 'f' }, { wait : true } );
         assert.equal( this.syncArgs.method, 'create' );
@@ -681,8 +685,9 @@
 
     QUnit.test( "where and findWhere", function( assert ){
         assert.expect( 8 );
-        var model = new Backbone.Model( { a : 1 } );
-        var coll  = new Backbone.Collection( [
+        var M = Backbone.Model.defaults( { a : 1, b : null } );
+        var model = new M( { a : 1, b : null } );
+        var coll  = new M.Collection( [
             model,
             { a : 1 },
             { a : 1, b : 2 },
@@ -733,8 +738,11 @@
 
     QUnit.test( "Underscore methods with object-style and property-style iteratee", function( assert ){
         assert.expect( 26 );
-        var model = new Backbone.Model( { a : 4, b : 1, e : 3 } );
-        var coll  = new Backbone.Collection( [
+
+        var M = Backbone.Model.defaults( { a : 1, b : undefined, e: undefined, c: undefined } );
+
+        var model = new M( { a : 4, b : 1, e : 3 } );
+        var coll  = new M.Collection( [
             { a : 1, b : 1 },
             { a : 2, b : 1, c : 1 },
             { a : 3, b : 1 },
@@ -801,7 +809,7 @@
     } );
 
     QUnit.test ( "reset with different values", function( assert ){
-        var col = new ( Backbone.Model.extend( {} ).Collection )( { id : 1 } );
+        var col = new ( Backbone.Model.defaults( { a : 0 } ).Collection )( { id : 1 } );
         col.reset( { id : 1, a : 1 } );
         assert.equal( col.get( 1 ).get( 'a' ), 1 );
     } );
@@ -1045,7 +1053,7 @@
 
     QUnit.test( "#1448 - add sorts collection after merge.", function( assert ){
         assert.expect( 1 );
-        var collection        = new Backbone.Collection( [
+        var collection        = new (Backbone.Model.defaults({ x : 0 }).Collection )( [
             { id : 1, x : 1 },
             { id : 2, x : 2 }
         ] );
@@ -1082,7 +1090,7 @@
     } );
 
     QUnit.test( "#1638 - `sort` during `add` triggers correctly.", function( assert ){
-        var collection        = new Backbone.Collection;
+        var collection        = new (Backbone.Model.defaults({ x : 0 }).Collection);
         collection.comparator = function( model ){ return model.get( 'x' ); };
         var added             = [];
         collection.on( 'add', function( model ){
@@ -1435,7 +1443,8 @@
     QUnit.test( "`add` only `sort`s when necessary", function( assert ){
         assert.expect( 2 );
         var collection = new (Backbone.Collection.extend( {
-            comparator : 'a'
+            comparator : 'a',
+            model : Backbone.Model.defaults({ a : 0, b : 0 })
         } ))( [ { id : 1 }, { id : 2 }, { id : 3 } ] );
         collection.on( 'sort', function(){ ok( true ); } );
         collection.add( { id : 4 } ); // do sort, new model
@@ -1449,6 +1458,7 @@
     QUnit.test( "`add` only `sort`s when necessary with comparator function", function( assert ){
         assert.expect( 3 );
         var collection = new (Backbone.Collection.extend( {
+            model : Backbone.Model.defaults({ a : 0, b : 0 }),
             comparator : function( a, b ){
                 return a.get( 'a' ) > b.get( 'a' ) ? 1 : (a.get( 'a' ) < b.get( 'a' ) ? -1 : 0);
             }

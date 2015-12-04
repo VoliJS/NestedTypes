@@ -196,7 +196,8 @@
 
     QUnit.test( "add multiple models", function( assert ){
         assert.expect( 6 );
-        var col = new Backbone.Collection( [ { at : 0 }, { at : 1 }, { at : 9 } ] );
+
+        var col = new ( Backbone.Model.defaults({ at : 0 }).Collection )( [ { at : 0 }, { at : 1 }, { at : 9 } ] );
         col.add( [ { at : 2 }, { at : 3 }, { at : 4 }, { at : 5 }, { at : 6 }, { at : 7 }, { at : 8 } ], { at : 2 } );
         for( var i = 0; i <= 5; i++ ){
             assert.equal( col.at( i ).get( 'at' ), i );

@@ -3473,8 +3473,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 	
 	function _move( source, at, added ){
-	    for( var j = source.length - 1, k = j - added.length; k >= at; k--, j-- ){
-	        source[ j ] = source[ k ];
+	    for( var j = source.length - 1, i = j - added.length; i >= at; i--, j-- ){
+	        source[ j ] = source[ i ];
 	    }
 	
 	    for( i = 0, j = at; i < added.length; i++, j++ ){

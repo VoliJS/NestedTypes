@@ -142,14 +142,12 @@ function _reallocate( self, source, getModel ){
 
     for( var i = 0, j = 0; i < source.length; i++ ){
         var src = source[ i ];
-        if( src ){
             var model = getModel( src, _byId );
             // add to array and indexes...
             if( model ){
                 models[ j++ ] = model;
                 addIndex( _byId, model );
             }
-        }
     }
 
     models.length = j;

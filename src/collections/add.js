@@ -130,7 +130,7 @@ function _append( self, source, getModel ){
 
     for( var i = 0; i < source.length; i++ ){
         var src = source[ i ];
-        if( src && !self.get( src ) ){
+        if( !self.get( src ) ){
             var model = getModel( src, _byId );
             // add to array and indexes...
             if( model ){

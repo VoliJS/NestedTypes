@@ -58,21 +58,12 @@ exports.setMany = function setMany( self, a_models, a_options ){
         sortable = self.comparator && options.sort !== false,
         sortAttr = typeof self.comparator == 'string' ? self.comparator : null;
 
-    var merge = options.merge ? function( source, existing ){
-        if( source !== existing ){
-            var attrs = source.attributes || source;
-            if( options.parse ) attrs = existing.parse( attrs, options );
-            existing.set( attrs, options );
-            if( sortable && !sort ) sort = existing.hasChanged( sortAttr );
-        }
-    } : function(){};
-
 
     // Turn bare objects into model references, and prevent invalid models
     // from being added.
     var previous = self.models;
 
-    var toAdd = _reallocate( self, models, options, merge );
+    var toAdd = _reallocate( self, models, options );
 
     if( sort || ( sortable && toAdd.length ) ){
         self.sort( { silent : true } );
@@ -113,7 +104,7 @@ function _garbageCollect( collection, previous, options ){
 }
 
 // reallocate model and index
-function _reallocate( self, source, merge, options ){
+function _reallocate( self, source, options ){
     var models      = Array( source.length ),
         _byId       = {},
         _prevById   = self._byId,
@@ -135,7 +126,11 @@ function _reallocate( self, source, merge, options ){
         }
 
         if( model ){
-            merge( item, model );
+            if( options.merge && item !== model ){
+                var attrs = item.attributes || item;
+                if( options.parse ) attrs = model.parse( attrs, options );
+                model.set( attrs, options );
+            }
         }
         else{
             model = toModel( self, item, options );

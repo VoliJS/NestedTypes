@@ -24,6 +24,7 @@ exports.AddOptions = AddOptions = function( a_options, collection ){
     this.silent = options.silent;
     this.parse  = options.parse;
     this.merge  = options.merge;
+    this.validate = options.validate;
 
     // at option
     var at = options.at;

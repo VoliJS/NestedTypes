@@ -184,12 +184,12 @@ module.exports = Backbone.Collection.extend( {
     } ),
 
     reset : method( function( a_models, a_options ){
-        var options = a_options || {};
+        var options = a_options || {},
+            previousModels = dispose( this );
 
-        options.previousModels = dispose( this );
         var models             = emptySetMany( this, a_models, new SilentOptions( options ) );
 
-        options.silent || trigger2( this, 'reset', this, options );
+        options.silent || trigger2( this, 'reset', this, _.defaults( { previousModels : previousModels }, options ) );
 
         return models;
     } ),

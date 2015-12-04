@@ -84,9 +84,11 @@ SilentOptions.prototype.silent = true;
 
 function CreateOptions( options, collection ){
     MergeOptions.call( this, options, collection );
-    this.success = options.success;
-    this.error = options.error;
-    this.wait = options && options.wait;
+    if( options ){
+        this.success = options.success;
+        this.error   = options.error;
+        this.wait    = options.wait;
+    }
 }
 
 module.exports = Backbone.Collection.extend( {

@@ -89,39 +89,39 @@ define( function( require, exports, module ){
         describe( 'Create performance', function(){
             var n, b;
 
-            describe( '1-attr model, 1M create', function(){
+            describe( '1-attr model, 50K new', function(){
                 it( 'Backbone', function(){
-                    for( var i = 0; i < 1000000; i++ ){
+                    for( var i = 0; i < 50000; i++ ){
                         b = new BSmall();
                     }
                 } );
 
                 it( 'Nested', function(){
-                    for( var i = 0; i < 1000000; i++ ){
+                    for( var i = 0; i < 50000; i++ ){
                         n = new NSmall();
                     }
                 } );
             } );
 
-            describe( '20-attrs model, 1M create', function(){
+            describe( '20-attrs model, 50K new', function(){
 
                 it( 'Backbone', function(){
-                    for( var i = 0; i < 1000000; i++ ){
+                    for( var i = 0; i < 50000; i++ ){
                         b = new BLarge();
                     }
                 } );
 
                 it( 'Nested', function(){
-                    for( var i = 0; i < 1000000; i++ ){
+                    for( var i = 0; i < 50000; i++ ){
                         n = new NLarge();
                     }
                 } );
             } );
 
-            describe( '1-attr model, 100K collection.create', function(){
+            describe( '1-attr model, 50K collection.create', function(){
                 it( 'Backbone', function(){
                     var c = new BSmallCollection();
-                    for( var i = 0; i < 100000; i++ ){
+                    for( var i = 0; i < 50000; i++ ){
                         c.create();
                     }
                 } );
@@ -129,16 +129,16 @@ define( function( require, exports, module ){
                 it( 'Nested', function(){
                     var c = new NSmall.Collection();
 
-                    for( var i = 0; i < 100000; i++ ){
+                    for( var i = 0; i < 50000; i++ ){
                         c.create();
                     }
                 } );
             } );
 
-            describe( '20-attr model, 100K collection.create', function(){
+            describe( '20-attr model, 50K collection.create', function(){
                 it( 'Backbone', function(){
                     var c = new BLargeCollection();
-                    for( var i = 0; i < 100000; i++ ){
+                    for( var i = 0; i < 50000; i++ ){
                         c.create();
                     }
                 } );
@@ -146,15 +146,15 @@ define( function( require, exports, module ){
                 it( 'Nested', function(){
                     var c = new NLarge.Collection();
 
-                    for( var i = 0; i < 100000; i++ ){
+                    for( var i = 0; i < 50000; i++ ){
                         c.create();
                     }
                 } );
             } );
 
-            describe( '1-attr model, 100K collection reset', function(){
+            describe( '1-attr model, 50K collection reset', function(){
                 var arr = [];
-                for( var i = 0; i < 100000; i++ ){
+                for( var i = 0; i < 50000; i++ ){
                     arr.push({ a1 : i });
                 }
 
@@ -169,9 +169,9 @@ define( function( require, exports, module ){
                 } );
             } );
 
-            describe( '20-attr model, 100K collection reset', function(){
+            describe( '20-attr model, 50K collection reset', function(){
                 var arr = [];
-                for( var i = 0; i < 100000; i++ ){
+                for( var i = 0; i < 50000; i++ ){
                     arr.push({ a1 : i, a2 : i, a3: i, a4 : i, a5 : i, a6 : i, a7 : i, a8: i, a9 : i, a10 : i});
                 }
 
@@ -186,9 +186,9 @@ define( function( require, exports, module ){
                 } );
             } );
 
-            describe( '1-attr model, 100K collection set/update', function(){
+            describe( '1-attr model, 50K collection set/update', function(){
                 var arr = [], update = [];
-                for( var i = 0; i < 100000; i++ ){
+                for( var i = 0; i < 50000; i++ ){
                     arr.push({ id: i, a1 : i });
                     update.push({ id: i, a1 : i + 1 });
                 }
@@ -207,9 +207,9 @@ define( function( require, exports, module ){
 
             } );
 
-            describe( '20-attr model, 100K collection set/update', function(){
+            describe( '20-attr model, 50K collection set/update', function(){
                 var arr = [], update = [];
-                for( var i = 0; i < 200000; i++ ){
+                for( var i = 0; i < 100000; i++ ){
                     arr.push({ id : i, a1 : i, a2 : i, a3: i, a4 : i, a5 : i, a6 : i, a7 : i, a8: i, a9 : i, a10 : i});
                     i++;
                     update.push({ id : i - 1, a1 : i, a2 : i, a3: i, a4 : i, a5 : i, a6 : i, a7 : i, a8: i, a9 : i, a10 : i});

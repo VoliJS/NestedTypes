@@ -1,15 +1,30 @@
-var Backbone = require( './backbone+' ),
-    Model    = require( './model' ),
-    Events   = Backbone.Events,
-    error    = require( './errors' ),
+var _        = require( 'underscore' ),
+    Backbone = require( './backbone+' ),
+    Model    = require( './model' );
+
+var Events   = Backbone.Events,
     trigger1 = Events.trigger1,
     trigger2 = Events.trigger2,
-    onAll    = Events.onAll,
     trigger3 = Events.trigger3;
-_            = require( 'underscore' );
 
-var CollectionProto = Backbone.Collection.prototype;
+var Commons               = require( './collections/commons' ),
+    toModel               = Commons.toModel,
+    dispose               = Commons.dispose,
+    ModelEventsDispatcher = Commons.ModelEventsDispatcher;
 
+var Add          = require( './collections/add' ),
+    MergeOptions = Add.MergeOptions,
+    add          = Add.add,
+    set          = Add.set,
+    emptySet     = Add.emptySet;
+
+var Remove     = require( './collections/remove' ),
+    removeOne  = Remove.removeOne,
+    removeMany = Remove.removeMany;
+
+CollectionProto = Backbone.Collection.prototype;
+
+// transactional wrapper for collections
 function transaction( func ){
     return function(){
         this.__changing++ || ( this._changed = false );
@@ -25,6 +40,30 @@ function transaction( func ){
     };
 }
 
+// wrapper for standard collections modification methods
+// wrap call in transaction and convert singular args
+function method( method ){
+    return function( a_models, a_options ){
+        this.__changing++ || ( this._changed = false );
+
+        var options = a_options || {},
+            models  = options.parse ? this.parse( a_models, options ) : a_models;
+
+        var res = models ? (
+            models instanceof Array ?
+            method.call( this, models, options )
+                : method.call( this, [ models ], options )[ 0 ]
+        ) : method.call( this, [], options );
+
+        if( !--this.__changing && this._changed ){
+            this._changeToken = {};
+            options.silent || trigger1( this, 'changes', this );
+        }
+
+        return res;
+    }
+}
+
 function handleChange(){
     if( this.__changing ){
         this._changed = true;
@@ -35,7 +74,22 @@ function handleChange(){
     }
 }
 
-var attrChangeRegexp = /^change:(\w+)$/;
+function SilentOptions( a_options ){
+    var options = a_options || {};
+    this.parse  = options.parse;
+    this.sort   = options.sort;
+}
+
+SilentOptions.prototype.silent = true;
+
+function CreateOptions( options, collection ){
+    MergeOptions.call( this, options, collection );
+    if( options ){
+        this.success = options.success;
+        this.error   = options.error;
+        this.wait    = options.wait;
+    }
+}
 
 module.exports = Backbone.Collection.extend( {
     triggerWhenChanged : 'changes',
@@ -47,23 +101,39 @@ module.exports = Backbone.Collection.extend( {
     _owner : null,
     _store : null,
 
-    __changing : 0,
-    _changed   : false,
+    __changing   : 0,
+    _changed     : false,
     _changeToken : {},
 
-    // ATTENTION: Overriden backbone logic with bug fixes
+    _dispatcher : null,
+    properties  : {
+        length : function(){
+            return this.models.length;
+        }
+    },
+
+    modelId : function( attrs ){
+        return attrs[ this.model.prototype.idAttribute || 'id' ];
+    },
+
     constructor : function( models, a_options ){
         var options = a_options || {};
-        if( options.model ) this.model = options.model;
-        if( options.comparator !== void 0 ) this.comparator = options.comparator;
-        this._reset();
 
-        this.__changing = 0;
-        this._changed   = false;
+        this.__changing   = 0;
+        this._changed     = false;
         this._changeToken = {};
+        this._owner       = this._store = null;
 
-        if( models ) this.reset( models, options );
+        this.model      = options.model || this.model;
+        this.comparator = options.comparator || this.comparator;
+
+        this.models = [];
+        this._byId  = {};
+
+        if( models ) this.reset( models, new SilentOptions( options ) );
+
         this.listenTo( this, this._listenToChanges, handleChange );
+
         this.initialize.apply( this, arguments );
     },
 
@@ -98,7 +168,6 @@ module.exports = Backbone.Collection.extend( {
         return next;
     },
 
-    // ATTENTION: Overriden backbone logic with bug fixes
     get : function( obj ){
         if( obj == null ){ return void 0; }
 
@@ -109,39 +178,54 @@ module.exports = Backbone.Collection.extend( {
         return this._byId[ obj ];
     },
 
-    set : transaction( function( models, options ){
-        if( models ){
-            if( typeof models !== 'object' || !( models instanceof Array || models instanceof Model ||
-                Object.getPrototypeOf( models ) === Object.prototype ) ){
-                error.wrongCollectionSetArg( this, models );
-            }
-        }
-
-        return this.length ? collectionSet( this, models, options ) : emptyCollectionSet( this, models, options );
+    set : method( function( models, options ){
+        return this.length ?
+               set( this, models, options ) :
+               emptySet( this, models, options );
     } ),
 
+    reset : method( function( a_models, a_options ){
+        var options        = a_options || {},
+            previousModels = dispose( this );
+
+        var models = emptySet( this, a_models, new SilentOptions( options ) );
+
+        options.silent || trigger2( this, 'reset', this, _.defaults( { previousModels : previousModels }, options ) );
+
+        return models;
+    } ),
+
+    add : method( function( models, options ){
+        return this.length ?
+               add( this, models, options )
+            : emptySet( this, models, options );
+    } ),
+
+    sort : transaction( CollectionProto.sort ),
+
+// Methods with singular fast-path
+//------------------------------------------------
     // Remove a model, or a list of models from the set.
-    remove: transaction( function(a_models, a_options) {
-        var singular = !( a_models && a_models instanceof Array ),
-            models = singular ? [ a_models ] : a_models.splice(),
-            options = a_options || {};
+    remove : transaction( function( a_models, a_options ){
+        var options = a_options || {};
 
-        var removed = _removeModels( this, models, options );
-
-        if (!options.silent && removed ) trigger2( this, 'update', this, options);
-        return singular ? models[0] : models;
-    }),
+        if( a_models ){
+            return a_models instanceof Array ?
+                   removeMany( this, a_models, options )
+                : removeOne( this, a_models, options );
+        }
+    } ),
 
     create : function( a_model, a_options ){
-        var options = {}, model = a_model;
-        fastCopy( options, a_options );
+        var options = new CreateOptions( a_options, this ),
+            model   = a_model;
 
-        if( !(model = _prepareModel( this, model, options )) ) return false;
-        if( !options.wait ) this.add( model, options );
+        if( !(model = toModel( this, model, options )) ) return false;
+        if( !options.wait ) add( this, [ model ], options );
         var collection  = this;
         var success     = options.success;
         options.success = function( model, resp ){
-            if( options.wait ) collection.add( model, options );
+            if( options.wait ) add( collection, [ model ], options );
             if( success ) success( model, resp, options );
         };
 
@@ -150,36 +234,16 @@ module.exports = Backbone.Collection.extend( {
     },
 
     _onModelEvent : function( event, model, collection, options ){
-        var attrChange = event.match( attrChangeRegexp );
-        if( attrChange ){
-            if( model && attrChange[ 1 ] === model.idAttribute ){
-                delete this._byId[ model.previous( model.idAttribute ) ];
-                if( model.id != null ) this._byId[ model.id ] = model;
-            }
+        // lazy initialize dispatcher...
+        var dispatcher = this._dispatcher || ( this.constructor.prototype._dispatcher = new ModelEventsDispatcher( this.model ) ),
+            handler    = dispatcher[ event ] || trigger3;
 
-            trigger3( this, event, model, collection, options );
-            return;
-        }
+        handler( this, event, model, collection, options );
+    },
 
-        switch( event ){
-            case 'add' :
-            case 'remove' :
-                if( collection === this ) trigger3( this, event, model, collection, options );
-                break;
-            case 'change' :
-            case 'sync' :
-            case 'invalid' :
-                trigger2( this, event, model, collection );
-                break;
-            case 'destroy' :
-                this.remove( model, options );
-                trigger3( this, event, model, collection, options );
-                break;
-
-            default:
-                this.trigger.apply( this, arguments );
-        }
-
+    at: function(index) {
+        if (index < 0) index += this.length;
+        return this.models[index];
     },
 
     deepClone : function(){ return this.clone( { deep : true } ); },
@@ -190,42 +254,12 @@ module.exports = Backbone.Collection.extend( {
                          return model.clone( options );
                      } ) : this.models;
 
-        return new this.constructor( models );
+        return new this.constructor( models, { model : this.model, comparator : this.comparator } );
     },
 
     transaction : function( func, self, args ){
         return transaction( func ).apply( self || this, args );
     },
-
-    add : function( models, a_options ){
-        var options = { merge : false, add : true, remove : false };
-        fastCopy( options, a_options );
-        return this.set( models, options );
-    },
-
-    reset : transaction( function( a_models, a_options ){
-        var options = a_options || {},
-            models = a_models,
-            previous = this.models;
-
-        for( var i = 0, l = previous.length; i < l; i++ ){
-            this._removeReference( previous[ i ], options );
-        }
-
-        options.previousModels = previous;
-
-        this._reset();
-
-        var newOptions = { silent : true };
-        fastCopy( newOptions, a_options );
-        models = this.set( models, newOptions );
-
-        options.silent || trigger2( this, 'reset', this, options );
-
-        return models;
-    } ),
-
-    sort  : transaction( CollectionProto.sort ),
 
     getModelIds : function(){ return _.pluck( this.models, 'id' ); },
 
@@ -248,218 +282,3 @@ module.exports = Backbone.Collection.extend( {
         return This;
     }
 } );
-
-function fastCopy( dest, source ){
-    if( source ){
-        for( var i in source ){
-            dest[ i ] = source[ i ];
-        }
-    }
-}
-
-// todo: Special case optimizations:
-// regular set as comes from fetch:
-// - [] -> [ a, b, ... ]
-//      When the set is initially empty, attrs, not models.
-// - [ a, b, ... ] -> [ a, b, ... ]
-//      Populated collection with a few changes, attrs, not models.
-
-function collectionSet( self, a_models, a_options ){
-    var options = { add : true, remove : true, merge : true },
-        models  = a_models;
-
-    fastCopy( options, a_options );
-
-    if( options.parse ) models = self.parse( models, options );
-    var singular    = !( models && models instanceof Array );
-    models          = singular ? (models ? [ models ] : []) : models.slice();
-    var i, l, id, model, attrs, existing, sort;
-    var at          = options.at;
-    var idAttribute = self.model.prototype.idAttribute || 'id';
-    var sortable    = self.comparator && (at == null) && options.sort !== false;
-    var sortAttr    = typeof self.comparator == 'string' ? self.comparator : null;
-    var toAdd       = [], toRemove = [], modelMap = {};
-    var add         = options.add, merge = options.merge, remove = options.remove;
-    var order       = !sortable && add && remove ? [] : false;
-
-// Turn bare objects into model references, and prevent invalid models
-// from being added.
-    for( i = 0, l = models.length; i < l; i++ ){
-        attrs = models[ i ] || {};
-        id = attrs instanceof Model ? ( model = attrs ) : attrs[ idAttribute ];
-
-        // If a duplicate is found, prevent it from being added and
-        // optionally merge it into the existing model.
-        if( existing = self.get( id ) ){
-            if( remove ) modelMap[ existing.cid ] = true;
-            if( merge ){
-                attrs = attrs === model ? model.attributes : attrs;
-                if( options.parse ) attrs = existing.parse( attrs, options );
-                existing.set( attrs, options );
-                if( sortable && !sort && existing.hasChanged( sortAttr ) ) sort = true;
-            }
-
-            models[ i ] = existing;
-
-            // If this is a new, valid model, push it to the `toAdd` list.
-        }
-        else if( add ){
-            model = models[ i ] = _prepareModel( self, attrs, options );
-            if( !model ) continue;
-            toAdd.push( model );
-            _addReference( self, model, options );
-        }
-
-        // Do not add multiple models with the same `id`.
-        model = existing || model;
-        if( order && (model.isNew() || !modelMap[ model.id ]) ) order.push( model );
-        modelMap[ model.id ] = true;
-    }
-
-// Remove nonexistent models if appropriate.
-    if( remove ){
-        for( i = 0, l = self.length; i < l; ++i ){
-            if( !modelMap[ (model = self.models[ i ]).cid ] ) toRemove.push( model );
-        }
-        if( toRemove.length ) _removeModels( self, toRemove, options );
-    }
-
-// See if sorting is needed, update `length` and splice in new models.
-    if( toAdd.length || (order && order.length) ){
-        if( sortable ) sort = true;
-        self.length += toAdd.length;
-        if( at != null ){
-            for( i = 0, l = toAdd.length; i < l; i++ ){
-                self.models.splice( at + i, 0, toAdd[ i ] );
-            }
-        }
-        else{
-            if( order ) self.models.length = 0;
-            var orderedModels = order || toAdd;
-            for( i = 0, l = orderedModels.length; i < l; i++ ){
-                self.models.push( orderedModels[ i ] );
-            }
-        }
-    }
-
-// Silently sort the collection if appropriate.
-    if( sort ) self.sort( { silent : true } );
-
-// Unless silenced, it's time to fire all appropriate add/sort events.
-    if( !options.silent ){
-        notifyAdd( self, models, options );
-        if( sort || (order && order.length) ) trigger2( self, 'sort', self, options );
-        if (toAdd.length || toRemove.length) trigger2( self, 'update', this, options);
-    }
-
-// Return the added (or merged) model (or models).
-    return singular ? models[ 0 ] : models;
-}
-
-function emptyCollectionSet( self, a_models, a_options ){
-    var options = {}, models  = a_models;
-    fastCopy( options, a_options );
-
-    if( options.parse ) models = self.parse( models, options );
-    var singular    = !( models && models instanceof Array );
-    models          = singular ? (models ? [ models ] : []) : models;
-    var sort;
-    var sortable    = self.comparator && options.sort !== false;
-    var order       = !sortable ? [] : false;
-
-// Turn bare objects into model references, and prevent invalid models
-// from being added.
-    models = prepareAndRef( self, models, options );
-
-// See if sorting is needed, update `length` and splice in new models.
-    if( models.length || order ){
-        if( sortable ) sort = true;
-        self.length = models.length;
-        self.models = models;
-    }
-
-// Silently sort the collection if appropriate.
-    if( sort ) self.sort( { silent : true } );
-
-// Unless silenced, it's time to fire all appropriate add/sort events.
-    if( models.length && !options.silent ){
-        notifyAdd( self, models, options );
-        if( sort || order ) trigger2( self, 'sort', self, options );
-        trigger2( self, 'update', self, options );
-    }
-
-// Return the added (or merged) model (or models).
-    return singular ? models[ 0 ] : models;
-}
-
-function prepareAndRef( self, models, options ){
-    var copy = new Array( models.length );
-
-    for( var i = 0; i < models.length; i++ ){
-        var model = copy[ i ] = _prepareModel( self, models[ i ] || {}, options );
-
-        if( model ){
-            _addReference( self, model, options );
-        }
-    }
-
-    return copy;
-}
-
-function notifyAdd( self, models, options ){
-    for( var model, i = 0, l = models.length; i < l; i++ ){
-        trigger3( model = models[ i ], 'add', model, self, options );
-    }
-}
-
-function _prepareModel( collection, attrs, a_options ){
-    if( attrs instanceof Model ) return attrs;
-
-    var options = {};
-    fastCopy( options, a_options );
-    options.collection = collection;
-
-    var model = new collection.model( attrs, options );
-
-    if( !model.validationError ) return model;
-
-    trigger3( collection, 'invalid', collection, model.validationError, options );
-
-    return false;
-}
-
-// Internal method to create a model's ties to a collection.
-function _addReference( self, model, options) {
-    self._byId[model.cid] = model;
-    if (model.id != null) self._byId[model.id] = model;
-    if (!model.collection) model.collection = self;
-
-    onAll( model, self._onModelEvent, self );
-}
-
-function _removeModels( self, toRemove, options ){
-    var origLength = self.length,
-        models = self.models,
-        _byId = self._byId;
-
-    for( var i = 0; i < toRemove.length; i++ ) {
-        var model = self.get( toRemove[ i ] );
-        if( model ){
-            delete _byId[ model.id ];
-            delete _byId[ model.cid ];
-
-            var index = self.indexOf( model );
-            models.splice( index, 1 );
-            self.length--;
-
-            if (!options.silent) {
-                options.index = index;
-                model.trigger('remove', model, self, options);
-            }
-
-            self._removeReference(model, options);
-        }
-    }
-
-    return origLength - self.length;
-}

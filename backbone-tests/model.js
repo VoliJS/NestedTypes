@@ -1,7 +1,15 @@
 (function() {
 
-  var proxy = Backbone.Model.extend();
+  var proxy = Backbone.Model.defaults({
+    id     : '1-the-tempest',
+    title  : "The Tempest",
+    author : "Bill Shakespeare",
+    audience : "",
+    length : 123
+  });
+
   var klass = Backbone.Collection.extend({
+    model : proxy,
     url : function() { return '/collection'; }
   });
   var doc, collection;
@@ -48,6 +56,9 @@
   QUnit.test("initialize with parsed attributes", function(assert) {
     assert.expect(1);
     var Model = Backbone.Model.extend({
+      defaults :{
+        value : 0
+      },
       parse: function(attrs) {
         attrs.value += 1;
         return attrs;
@@ -107,6 +118,9 @@
   QUnit.test("url when using urlRoot as a function to determine urlRoot at runtime", function(assert) {
     assert.expect(2);
     var Model = Backbone.Model.extend({
+      defaults : {
+        parent_id : String
+      },
       urlRoot: function() {
         return '/nested/' + this.get('parent_id') + '/collection';
       }
@@ -120,7 +134,7 @@
 
   QUnit.test("underscore methods", function(assert) {
     assert.expect(5);
-    var model = new Backbone.Model({ 'foo': 'a', 'bar': 'b', 'baz': 'c' });
+    var model = new (Backbone.Model.defaults({'foo': 'a', 'bar': 'b', 'baz': 'c'}))({ 'foo': 'a', 'bar': 'b', 'baz': 'c' });
     var model2 = model.clone();
     assert.deepEqual(model.keys(), ['foo', 'bar', 'baz']);
     assert.deepEqual(model.values(), ['a', 'b', 'c']);
@@ -130,13 +144,13 @@
   });
 
   QUnit.test("chain", function(assert) {
-    var model = new Backbone.Model({ a: 0, b: 1, c: 2 });
+    var model = new (Backbone.Model.defaults({ a: 0, b: 1, c: 2 }))();
     assert.deepEqual(model.chain().pick("a", "b", "c").values().compact().value(), [1, 2]);
   });
 
   QUnit.test("clone", function(assert) {
     assert.expect(10);
-    var a = new Backbone.Model({ 'foo': 1, 'bar': 2, 'baz': 3});
+    var a = new (Backbone.Model.defaults({ 'foo': 1, 'bar': 2, 'baz': 3}))();
     var b = a.clone();
     assert.equal(a.get('foo'), 1);
     assert.equal(a.get('bar'), 2);
@@ -148,8 +162,9 @@
     assert.equal(a.get('foo'), 100);
     assert.equal(b.get('foo'), 1, "Changing a parent attribute does not change the clone.");
 
-    var foo = new Backbone.Model({p: 1});
-    var bar = new Backbone.Model({p: 2});
+    var M = Backbone.Model.defaults({p: 1});
+    var foo = new M({p: 1});
+    var bar = new M({p: 2});
     bar.set(foo.clone().attributes, {unset: true});
     assert.equal(foo.get('p'), 1);
     assert.equal(bar.get('p'), undefined);
@@ -189,13 +204,22 @@
 
   QUnit.test("has", function(assert) {
     assert.expect(10);
-    var model = new Backbone.Model();
+    var model = new (Backbone.Model.defaults({
+      'x0': 0,
+      'x1': 0,
+      'true': false,
+      'false': false,
+      'empty': '',
+      'name': null,
+      'null': null,
+      'undefined': undefined
+    }))();
 
     assert.strictEqual(model.has('name'), false);
 
     model.set({
-      '0': 0,
-      '1': 1,
+      'x0': 0,
+      'x1': 1,
       'true': true,
       'false': false,
       'empty': '',
@@ -204,8 +228,8 @@
       'undefined': undefined
     });
 
-    assert.strictEqual(model.has('0'), true);
-    assert.strictEqual(model.has('1'), true);
+    assert.strictEqual(model.has('x0'), true);
+    assert.strictEqual(model.has('x1'), true);
     assert.strictEqual(model.has('true'), true);
     assert.strictEqual(model.has('false'), true);
     assert.strictEqual(model.has('empty'), true);
@@ -220,7 +244,7 @@
 
   QUnit.test("matches", function(assert) {
     assert.expect(4);
-    var model = new Backbone.Model();
+    var model = new ( Backbone.Model.defaults({'name': '', 'cool': false }) );
 
     assert.strictEqual(model.matches({'name': 'Jonas', 'cool': true}), false);
 
@@ -232,7 +256,7 @@
   });
 
   QUnit.test("matches with predicate", function(assert) {
-    var model = new Backbone.Model({a: 0});
+    var model = new ( Backbone.Model.defaults({a: 0, b: 0 }) );
 
     assert.strictEqual(model.matches(function(attr) {
       return attr.a > 1 && attr.b != null;
@@ -247,7 +271,7 @@
 
   QUnit.test("set and unset", function(assert) {
     assert.expect(8);
-    var a = new Backbone.Model({id: 'id', foo: 1, bar: 2, baz: 3});
+    var a = new ( Backbone.Model.defaults({id: 'id', foo: 1, bar: 2, baz: 3}) );
     var changeCount = 0;
     a.on("change:foo", function() { changeCount += 1; });
     a.set({'foo': 2});
@@ -300,7 +324,7 @@
 
   QUnit.test("set falsy values in the correct order", function(assert) {
     assert.expect(2);
-    var model = new Backbone.Model({result: 'result'});
+    var model = new ( Backbone.Model.defaults({result: false}) );
     model.on('change', function() {
       assert.equal(model.changed.result, void 0);
       assert.equal(model.previous('result'), false);
@@ -312,7 +336,7 @@
   });
 
   QUnit.test("nested set triggers with the correct options", function(assert) {
-    var model = new Backbone.Model();
+    var model = new ( Backbone.Model.defaults({ a : 0 }));
     var o1 = {};
     var o2 = {};
     var o3 = {};
@@ -335,7 +359,7 @@
     assert.expect(1);
     var i = 0;
     var counter = function(){ i++; };
-    var model = new Backbone.Model({a: 1});
+    var model = new ( Backbone.Model.defaults({a: 1}) );
     model.on("change:a", counter);
     model.set({a: 2});
     model.unset('a');
@@ -345,7 +369,7 @@
 
   QUnit.test("unset and changedAttributes", function(assert) {
     assert.expect(1);
-    var model = new Backbone.Model({a: 1});
+    var model = new ( Backbone.Model.defaults({a: 1}) );
     model.on('change', function() {
       assert.ok('a' in model.changedAttributes(), 'changedAttributes should contain unset properties');
     });
@@ -353,10 +377,10 @@
   });
 
   QUnit.test("using a non-default id attribute.", function(assert) {
-    assert.expect(5);
-    var MongoModel = Backbone.Model.extend({idAttribute : '_id'});
+    assert.expect(4);
+    var MongoModel = Backbone.Model.extend({idAttribute : '_id', defaults : { _id : '' }});
     var model = new MongoModel({id: 'eye-dee', _id: 25, title: 'Model'});
-    assert.equal(model.get('id'), 'eye-dee');
+    //assert.equal(model.get('id'), 'eye-dee');
     assert.equal(model.id, 25);
     assert.equal(model.isNew(), false);
     model.unset('_id');
@@ -367,7 +391,9 @@
   QUnit.test("setting an alternative cid prefix", function(assert) {
     assert.expect(4);
     var Model = Backbone.Model.extend({
-      cidPrefix: 'm'
+      cidPrefix: 'm',
+
+      defaults : { value : '' }
     });
     var model = new Model();
 
@@ -392,16 +418,16 @@
 
   QUnit.test("set an empty string", function(assert) {
     assert.expect(1);
-    var model = new Backbone.Model({name : "Model"});
+    var model = new ( Backbone.Model.defaults({name : "Model"}) );
     model.set({name : ''});
     assert.equal(model.get('name'), '');
   });
 
   QUnit.test("setting an object", function(assert) {
     assert.expect(1);
-    var model = new Backbone.Model({
+    var model = new ( Backbone.Model.defaults({
       custom: { foo: 1 }
-    });
+    }) );
     model.on('change', function() {
       assert.ok(1);
     });
@@ -416,7 +442,7 @@
   QUnit.test("clear", function(assert) {
     assert.expect(3);
     var changed;
-    var model = new Backbone.Model({id: 1, name : "Model"});
+    var model = new ( Backbone.Model.defaults({id: 1, name : "Model"}) );
     model.on("change:name", function(){ changed = true; });
     model.on("change", function() {
       var changedAttrs = model.changedAttributes();
@@ -460,7 +486,7 @@
       assert.ok(!model.hasChanged('age'), 'age did not');
       assert.ok(_.isEqual(model.changedAttributes(), {name : 'Rob'}), 'changedAttributes returns the changed attrs');
       assert.equal(model.previous('name'), 'Tim');
-      assert.ok(_.isEqual(model.previousAttributes(), {name : "Tim", age : 10}), 'previousAttributes is correct');
+      assert.ok(_.isEqual(model.previousAttributes(), {name : "Tim", age : 10, id : void 0}), 'previousAttributes is correct');
     });
     assert.equal(model.hasChanged(), false);
     assert.equal(model.hasChanged(undefined), false);
@@ -479,7 +505,7 @@
   QUnit.test("change with options", function(assert) {
     assert.expect(2);
     var value;
-    var model = new Backbone.Model({name: 'Rob'});
+    var model = new ( Backbone.Model.defaults({name: 'Rob'}) );
     model.on('change', function(model, options) {
       value = options.prefix + model.get('name');
     });
@@ -493,7 +519,7 @@
     assert.expect(1);
     var changed = 0;
     var attrs = {id: 1, label: 'c'};
-    var obj = new Backbone.Model(attrs);
+    var obj = new ( Backbone.Model.defaults(attrs) );
     obj.on('change', function() { changed += 1; });
     obj.set(attrs);
     assert.equal(changed, 0);

@@ -19,6 +19,8 @@ function cloneAttrs( attrSpecs, attrs, options ){
     return attrs;
 }
 
+var _cidCount = 1;
+
 var Model = BaseModel.extend( {
     triggerWhenChanged : 'change',
 
@@ -207,6 +209,8 @@ var Model = BaseModel.extend( {
         return model.set ? model.set( attr, value, options ) : model[ attr ] = value;
     },
 
+    cidPrefix : 'c',
+
     constructor : function( attributes, opts ){
         var attrSpecs = this.__attributes,
             attrs     = attributes || {},
@@ -216,7 +220,7 @@ var Model = BaseModel.extend( {
         this._changing   = this._pending = false;
         this._changeToken = {};
         this.attributes   = {};
-        this.cid          = _.uniqueId( 'c' );
+        this.cid          = this.cidPrefix + _cidCount++;
 
         if( options.collection ) this.collection = options.collection;
 
@@ -266,6 +270,34 @@ var Model = BaseModel.extend( {
         }
 
         return res;
+    },
+
+    keys : function(){
+        var _keys = this._keys,
+            keys = [];
+        for( var i = 0; i < _keys.length; i++ ){
+            var name = _keys[ i ];
+            this.attributes[ name ] === void 0 || keys.push( name );
+        }
+
+        return keys;
+    },
+
+    invert : function(){
+        return _.invert( _.pick( this, this.keys() ) );
+    },
+
+    omit : function(){
+        var obj = _.pick( this, this.keys() );
+        return _.omit( obj, arguments );
+    },
+
+    values : function(){
+        return _.map( this.keys(), function( x ){ return this[ x ]; }, this );
+    },
+
+    matches: function(attrs) {
+        return !!_.iteratee(attrs, this)(this);
     },
 
     parse  : function( resp ){ return this._parse( resp ); },
@@ -361,6 +393,7 @@ function createDefinition( protoProps, Base ){
 
     return _.extend( _.omit( protoProps, 'collection', 'attributes' ), {
         __attributes : new Attributes( allAttrSpecs ),
+        _keys        : _.keys( allAttrSpecs ),
         _parse       : createParse( allAttrSpecs, attrSpecs ) || Base.prototype._parse,
         defaults     : defaultsAsFunction || createDefaults( allAttrSpecs ),
         properties   : createAttrsNativeProps( protoProps.properties, attrSpecs ),

@@ -49,14 +49,17 @@ function setSingleAttr( model, key, value, attrSpec ){
 
     if( !changing ){
         model._previousAttributes = new model.Attributes( current );
-        if( model._changed ) model._changed = null;
     }
 
+    if( model._changed ) model._changed = null;
+
     var options   = {},
+        prevValue = current[ key ],
         val       = attrSpec.transform( value, options, model, key );
 
-    if( attrSpec.isChanged( current[ key ], val ) ){
-        current[ key ] = val;
+    current[ key ] = val;
+
+    if( attrSpec.isChanged( prevValue, val ) ){
         model._pending = options;
         trigger3( model, 'change:' + key, model, val, options );
     }
@@ -91,8 +94,9 @@ function transaction( a_fun, context, args ){
 
     if( notChanging ){
         this._previousAttributes = new this.Attributes( this.attributes );
-        if( this._changed ) this._changed = null;
     }
+
+    if( this._changed ) this._changed = null;
 
     this.__begin();
     var res = a_fun.apply( context || this, args );
@@ -137,8 +141,9 @@ function bbSetAttrs( model, attrs, opts ){
 
     if( !changing ){
         model._previousAttributes = new model.Attributes( current );
-        if( model._changed ) model._changed = null;
     }
+
+    if( model._changed ) model._changed = null;
 
     // For each `set` attribute, update or delete the current value.
     // Todo: optimize for complete attrs set. Iterate through attributes names array,
@@ -151,9 +156,10 @@ function bbSetAttrs( model, attrs, opts ){
             val       = unset ? undefined : attrs[ attr ];
 
         if( isChanged( current[ attr ], val ) ){
-            current[ attr ] = val;
             changes.push( attr );
         }
+
+        current[ attr ] = val;
     }
 
     // Trigger all relevant attribute changes.

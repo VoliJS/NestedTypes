@@ -889,7 +889,7 @@
 
   QUnit.test("hasChanged/set should use same comparison", function(assert) {
     assert.expect(2);
-    var changed = 0, model = new Backbone.Model({a: null});
+    var changed = 0, model = new ( Backbone.Model.defaults({a: null}) );
     model.on('change', function() {
       assert.ok(this.hasChanged('a'));
     })
@@ -902,7 +902,7 @@
 
   QUnit.test("#582, #425, change:attribute callbacks should fire after all changes have occurred", function(assert) {
     assert.expect(9);
-    var model = new Backbone.Model;
+    var model = new ( Backbone.Model.defaults({ a: '', b : '', c : '' }));
 
     var assertion = function() {
       assert.equal(model.get('a'), 'a');
@@ -926,7 +926,7 @@
 
   QUnit.test("set value regardless of equality/change", function(assert) {
     assert.expect(1);
-    var model = new Backbone.Model({x: []});
+    var model = new ( Backbone.Model.defaults({x: []}) );
     var a = [];
     model.set({x: a});
     assert.ok(model.get('x') === a);
@@ -934,7 +934,7 @@
 
   QUnit.test("set same value does not trigger change", function(assert) {
     assert.expect(0);
-    var model = new Backbone.Model({x: 1});
+    var model = new ( Backbone.Model.defaults({x: 1}) );
     model.on('change change:x', function() { assert.ok(false); });
     model.set({x: 1});
     model.set({x: 1});
@@ -942,14 +942,14 @@
 
   QUnit.test("unset does not fire a change for undefined attributes", function(assert) {
     assert.expect(0);
-    var model = new Backbone.Model({x: undefined});
+    var model = new ( Backbone.Model.defaults({x: undefined}) );
     model.on('change:x', function(){ assert.ok(false); });
     model.unset('x');
   });
 
   QUnit.test("set: undefined values", function(assert) {
     assert.expect(1);
-    var model = new Backbone.Model({x: undefined});
+    var model = new ( Backbone.Model.defaults({x: undefined}) );
     assert.ok('x' in model.attributes);
   });
 
@@ -970,7 +970,7 @@
 
   QUnit.test("hasChanged gets cleared on the following set", function(assert) {
     assert.expect(4);
-    var model = new Backbone.Model;
+    var model = new ( Backbone.Model.defaults({ x : 0 }) );
     model.set({x: 1});
     assert.ok(model.hasChanged());
     model.set({x: 1});
@@ -983,14 +983,14 @@
 
   QUnit.test("save with `wait` succeeds without `validate`", function(assert) {
     assert.expect(1);
-    var model = new Backbone.Model();
+    var model = new ( Backbone.Model.defaults({ x : 0 }) );
     model.url = '/test';
     model.save({x: 1}, {wait: true});
     assert.ok(this.syncArgs.model === model);
   });
 
   QUnit.test("save without `wait` doesn't set invalid attributes", function(assert) {
-    var model = new Backbone.Model();
+    var model = new ( Backbone.Model.defaults({ a : 0 }) );
     model.validate = function () { return 1; };
     model.save({a: 1});
     assert.equal(model.get('a'), void 0);
@@ -1005,26 +1005,18 @@
     assert.equal(times, 1);
   });
 
-  QUnit.test("`hasChanged` for falsey keys", function(assert) {
-    assert.expect(2);
-    var model = new Backbone.Model();
-    model.set({x: true}, {silent: true});
-    assert.ok(!model.hasChanged(0));
-    assert.ok(!model.hasChanged(''));
-  });
-
   QUnit.test("`previous` for falsey keys", function(assert) {
     assert.expect(2);
-    var model = new Backbone.Model({0: true, '': true});
-    model.set({0: false, '': false}, {silent: true});
-    assert.equal(model.previous(0), true);
-    assert.equal(model.previous(''), true);
+    var model = new ( Backbone.Model.defaults({ z0: true, z: true}) );
+    model.set({z0: false, z: false}, {silent: true});
+    assert.equal(model.previous( 'z0'), true);
+    assert.equal(model.previous('z'), true);
   });
 
   QUnit.test("`save` with `wait` sends correct attributes", function(assert) {
     assert.expect(5);
     var changed = 0;
-    var model = new Backbone.Model({x: 1, y: 2});
+    var model = new ( Backbone.Model.defaults({x: 1, y: 2}) );
     model.url = '/test';
     model.on('change:x', function() { changed++; });
     model.save({x: 3}, {wait: true});
@@ -1038,7 +1030,7 @@
 
   QUnit.test("a failed `save` with `wait` doesn't leave attributes behind", function(assert) {
     assert.expect(1);
-    var model = new Backbone.Model;
+    var model = new ( Backbone.Model.defaults({ x : 0 }) );
     model.url = '/test';
     model.save({x: 1}, {wait: true});
     assert.equal(model.get('x'), void 0);
@@ -1046,7 +1038,7 @@
 
   QUnit.test("#1030 - `save` with `wait` results in correct attributes if success is called during sync", function(assert) {
     assert.expect(2);
-    var model = new Backbone.Model({x: 1, y: 2});
+    var model = new ( Backbone.Model.defaults({x: 1, y: 2}) );
     model.sync = function(method, model, options) {
       options.success();
     };
@@ -1056,7 +1048,7 @@
   });
 
   QUnit.test("save with wait validates attributes", function(assert) {
-    var model = new Backbone.Model();
+    var model = new ( Backbone.Model.defaults({ x : 0 }) );
     model.url = '/test';
     model.validate = function() { assert.ok(true); };
     model.save({x: 1}, {wait: true});
@@ -1072,7 +1064,7 @@
   QUnit.test("nested `set` during `'change:attr'`", function(assert) {
     assert.expect(2);
     var events = [];
-    var model = new Backbone.Model();
+    var model = new ( Backbone.Model.defaults({ x : false, y: false, z : false }) );
     model.on('all', function(event) { events.push(event); });
     model.on('change', function() {
       model.set({z: true}, {silent:true});
@@ -1100,7 +1092,7 @@
   QUnit.test("nested `set` during `'change'`", function(assert) {
     assert.expect(6);
     var count = 0;
-    var model = new Backbone.Model();
+    var model = new ( Backbone.Model.defaults({ x : undefined, y : undefined, z : undefined }) );
     model.on('change', function() {
       switch(count++) {
         case 0:
@@ -1127,7 +1119,7 @@
   QUnit.test("nested `change` with silent", function(assert) {
     assert.expect(3);
     var count = 0;
-    var model = new Backbone.Model();
+    var model = new ( Backbone.Model.defaults({ x : undefined, y : undefined, z : undefined }) );
     model.on('change:y', function() { assert.ok(false); });
     model.on('change', function() {
       switch(count++) {

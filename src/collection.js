@@ -57,7 +57,7 @@ function method( method ){
 
         if( !--this.__changing && this._changed ){
             this._changeToken = {};
-            a_options.silent || trigger1( this, 'changes', this );
+            options.silent || trigger1( this, 'changes', this );
         }
 
         return res;

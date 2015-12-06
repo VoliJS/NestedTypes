@@ -1313,7 +1313,7 @@
   QUnit.test("#1664 - multiple silent changes nested inside a change event", function(assert) {
     assert.expect(2);
     var changes = [];
-    var model = new Backbone.Model();
+    var model = new (Backbone.Model.defaults({ a : '', b : 0, c : '' }) );
     model.on('change', function() {
       model.set({a:'c'}, {silent:true});
       model.set({b:2}, {silent:true});
@@ -1322,7 +1322,7 @@
     model.on('change:a change:b change:c', function(model, val) { changes.push(val); });
     model.set({a:'a', b:1, c:'item'});
     assert.deepEqual(changes, ['a',1,'item']);
-    assert.deepEqual(model.attributes, {a: 'c', b: 2});
+    assert.deepEqual(model.attributes, {a: 'c', b: 2, c : void 0, id : void 0  });
   });
 
   QUnit.test("#1791 - `attributes` is available for `parse`", function(assert) {

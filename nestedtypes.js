@@ -59,12 +59,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	var Model      = __webpack_require__( 1 ),
 	    Collection = __webpack_require__( 10 ),
-	    relations  = __webpack_require__( 15 ),
+	    relations  = __webpack_require__( 14 ),
 	    Backbone   = __webpack_require__( 2 ),
 	    _          = __webpack_require__( 5 ),
 	    attribute  = __webpack_require__( 9 );
 	
-	__webpack_require__( 16 );
+	__webpack_require__( 15 );
 	
 	Collection.subsetOf = relations.subsetOf;
 	Model.from          = relations.from;
@@ -72,7 +72,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	Model.Collection    = Collection;
 	
-	var Store = __webpack_require__( 17 );
+	var Store = __webpack_require__( 16 );
 	Object.defineProperty( exports, 'store', Store.globalProp );
 	
 	exports.store = new Store.Model();
@@ -3733,8 +3733,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 /***/ },
-/* 14 */,
-/* 15 */
+/* 14 */
 /***/ function(module, exports, __webpack_require__) {
 
 	// Nested Relations
@@ -3972,7 +3971,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 16 */
+/* 15 */
 /***/ function(module, exports, __webpack_require__) {
 
 	// Date.parse with progressive enhancement for ISO 8601 <https://github.com/csnover/js-iso8601>
@@ -4179,7 +4178,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 17 */
+/* 16 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var Backbone   = __webpack_require__( 2 ),

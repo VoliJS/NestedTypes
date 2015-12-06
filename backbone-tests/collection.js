@@ -1537,32 +1537,21 @@
     } );
 
     QUnit.test( "#2612 - nested `parse` works with `Collection#set`", function( assert ){
+        var Subitem = Backbone.Model.defaults({
+            subName : String
+        });
 
-        var Job = Backbone.Model.extend( {
-            constructor : function(){
-                this.items = new Items();
-                Backbone.Model.apply( this, arguments );
-            },
-            parse       : function( attrs ){
-                this.items.set( attrs.items, { parse : true } );
-                return _.omit( attrs, 'items' );
-            }
-        } );
+        var Item = Backbone.Model.defaults({
+            name : String,
+            subItems : Subitem.Collection
+        });
 
-        var Item = Backbone.Model.extend( {
-            constructor : function(){
-                this.subItems = new Backbone.Collection();
-                Backbone.Model.apply( this, arguments );
-            },
-            parse       : function( attrs ){
-                this.subItems.set( attrs.subItems, { parse : true } );
-                return _.omit( attrs, 'subItems' );
-            }
-        } );
+        var Job = Backbone.Model.defaults({
+            name : String,
+            items : Item.Collection
+        });
 
-        var Items = Backbone.Collection.extend( {
-            model : Item
-        } );
+        var Items = Item.Collection;
 
         var data = {
             name  : 'JobName',

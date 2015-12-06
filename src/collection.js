@@ -241,6 +241,11 @@ module.exports = Backbone.Collection.extend( {
         handler( this, event, model, collection, options );
     },
 
+    at: function(index) {
+        if (index < 0) index += this.length;
+        return this.models[index];
+    },
+
     deepClone : function(){ return this.clone( { deep : true } ); },
 
     clone : function( options ){

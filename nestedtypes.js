@@ -3573,7 +3573,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        merge       = a_options.merge,
 	        parse       = a_options.parse,
 	        idAttribute = collection.model.prototype.idAttribute,
-	        added       = [];
+	        prevLength = models.length;
 	
 	    for( var i = 0; i < a_items.length; i++ ){
 	        var item  = a_items[ i ],
@@ -3592,12 +3592,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	            models.push( model );
 	            addReference( collection, model );
 	            addIndex( _byId, model );
-	            added.push( model );
-	
 	        }
 	    }
 	
-	    return added;
+	    return models.slice( prevLength );
 	}
 	
 	function _move( source, at, added ){

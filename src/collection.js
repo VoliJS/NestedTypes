@@ -1,8 +1,8 @@
-var _        = require( 'underscore' ),
-    Backbone = require( './backbone+' ),
-    Model    = require( './model' ),
+var _               = require( 'underscore' ),
+    Backbone        = require( './backbone+' ),
+    Model           = require( './model' ),
     ValidationMixin = require( './validation' ),
-    RestMixin = require( './rest-mixin' ).Collection;
+    RestMixin       = require( './rest-mixin' ).Collection;
 
 var Events   = Backbone.Events,
     trigger1 = Events.trigger1,
@@ -87,9 +87,7 @@ SilentOptions.prototype.silent = true;
 function CreateOptions( options, collection ){
     MergeOptions.call( this, options, collection );
     if( options ){
-        this.success = options.success;
-        this.error   = options.error;
-        this.wait    = options.wait;
+        _.defaults( this, options );
     }
 }
 
@@ -127,7 +125,7 @@ module.exports = Backbone.Collection.extend( {
         }
     },
 
-    properties  : {
+    properties : {
         length : function(){
             return this.models.length;
         }
@@ -259,9 +257,9 @@ module.exports = Backbone.Collection.extend( {
         if( !options.wait ) add( this, [ model ], options );
         var collection  = this;
         var success     = options.success;
-        options.success = function( model, resp ){
-            if( options.wait ) add( collection, [ model ], options );
-            if( success ) success( model, resp, options );
+        options.success = function( model, resp, callbackOpts ){
+            if( options.wait ) add( collection, [ model ], callbackOpts );
+            if( success ) success.call( callbackOpts.context, model, resp, callbackOpts );
         };
 
         model.save( null, options );
@@ -276,9 +274,9 @@ module.exports = Backbone.Collection.extend( {
         handler( this, event, model, collection, options );
     },
 
-    at: function(index) {
-        if (index < 0) index += this.length;
-        return this.models[index];
+    at : function( index ){
+        if( index < 0 ) index += this.length;
+        return this.models[ index ];
     },
 
     deepClone : function(){ return this.clone( { deep : true } ); },

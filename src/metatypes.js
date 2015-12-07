@@ -70,6 +70,10 @@ attribute.Type.extend( {
                new Date( typeof value === 'string' ? parseDate( value ) : value )
     },
 
+    check : function( value ){
+        return _.isNaN( +value );
+    },
+
     toJSON : function( value ){ return value && value.toJSON(); },
 
     isChanged : function( a, b ){ return ( a && +a ) !== ( b && +b ); },

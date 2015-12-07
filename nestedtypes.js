@@ -58,13 +58,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	// =======================
 	
 	var Model      = __webpack_require__( 1 ),
-	    Collection = __webpack_require__( 10 ),
-	    relations  = __webpack_require__( 14 ),
+	    Collection = __webpack_require__( 11 ),
+	    relations  = __webpack_require__( 15 ),
 	    Backbone   = __webpack_require__( 2 ),
 	    _          = __webpack_require__( 5 ),
 	    attribute  = __webpack_require__( 9 );
 	
-	__webpack_require__( 15 );
+	__webpack_require__( 16 );
 	
 	Collection.subsetOf = relations.subsetOf;
 	Model.from          = relations.from;
@@ -72,7 +72,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	Model.Collection    = Collection;
 	
-	var Store = __webpack_require__( 16 );
+	var Store = __webpack_require__( 17 );
 	Object.defineProperty( exports, 'store', Store.globalProp );
 	
 	exports.store = new Store.Model();
@@ -130,6 +130,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    attrOptions = __webpack_require__( 9 ),
 	    error       = __webpack_require__( 8 ),
 	    _           = __webpack_require__( 5 ),
+	    ValidationMixin = __webpack_require__( 10 ),
 	    ModelProto  = BaseModel.prototype;
 	
 	var setSingleAttr  = modelSet.setSingleAttr,
@@ -137,8 +138,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	    applyTransform = modelSet.transform;
 	
 	// TODO: create loop unrolled function (or extract keys array to prototype)
-	function cloneAttrs( attrSpecs, attrs, options ){
-	    for( var name in attrs ){
+	function cloneAttrs( model, a_attrs, options ){
+	    var attrSpecs = model.__attributes,
+	        attrs = new model.Attributes( a_attrs ),
+	        _keys = model._keys;
+	
+	    for( var i = 0; i < _keys.length; i++ ){
+	        var name = _keys[ i ];
 	        attrs[ name ] = attrSpecs[ name ].clone( attrs[ name ], options );
 	    }
 	
@@ -147,7 +153,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	var _cidCount = 1;
 	
-	var Model = BaseModel.extend( {
+	var Model = BaseModel.extend({
+	    mixins : [ ValidationMixin ],
 	    triggerWhenChanged : 'change',
 	
 	    properties : {
@@ -188,6 +195,23 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	            return changed;
 	        }
+	    },
+	
+	    _validateNested : function( errors ){
+	        var _keys = this.keys(),
+	            length = 0;
+	
+	        for( var i = 0; i < _keys.length; i++ ){
+	            var attr  = _keys[ i ],
+	                error = this.__attributes[ attr ].validate( this, this.attributes[ attr ], attr );
+	
+	            if( error ){
+	                errors[ name ] = error;
+	                length++;
+	            }
+	        }
+	
+	        return length;
 	    },
 	
 	    getStore : function(){
@@ -360,7 +384,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        }
 	
 	        attrs = options.deep ?
-	                cloneAttrs( attrSpecs, new this.Attributes( attrs ), options ) :
+	                cloneAttrs( this, attrs, options ) :
 	                this.defaults( attrs, options );
 	
 	        // Execute attributes transform function instead of this.set
@@ -429,16 +453,21 @@ return /******/ (function(modules) { // webpackBootstrap
 	    parse  : function( resp ){ return this._parse( resp ); },
 	    _parse : _.identity,
 	
-	    isValid : function( options ){
-	        // todo: need to do something smart with validation logic
-	        // something declarative on attributes level, may be
-	        return ModelProto.isValid.call( this, options ) && _.every( this.attributes, function( attr ){
-	                if( attr && attr.isValid ){
-	                    return attr.isValid( options );
-	                }
+	    forEach : function( fun, context ){
+	        var attrNames = this._keys,
+	            attributes = this.attributes,
+	            __attributes = this.__attributes;
 	
-	                return attr instanceof Date ? !_.isNaN( attr.getTime() ) : !_.isNaN( attr );
-	            } );
+	        for( var i = 0; i < attrNames.length; i++ ){
+	            var name = attrNames[ i ];
+	
+	            if( context ){
+	                fun( attributes[ name ], name, __attributes[ name ] )
+	            }
+	            else{
+	                fun.call( context, attributes[ name ], name, __attributes[ name ] )
+	            }
+	        }
 	    },
 	
 	    _ : _ // add underscore to be accessible in templates
@@ -912,7 +941,29 @@ return /******/ (function(modules) { // webpackBootstrap
 	            return spec instanceof Function ? { get : spec } : spec;
 	        }
 	
-	        function define( protoProps, staticProps ){
+	        function attachMixins( protoProps ){
+	            var mixins = protoProps.mixins,
+	                merged = {}, properties = {};
+	
+	            for( var i = mixins.length -1; i >= 0; i-- ){
+	                var mixin = mixins[ i ];
+	                Object.assign( properties, mixin.properties );
+	                Object.assign( merged, mixin );
+	            }
+	
+	            Object.assign( merged, protoProps );
+	            Object.assign( properties, protoProps.properties );
+	
+	            merged.properties = properties;
+	            return merged;
+	        }
+	
+	        function define( a_protoProps, staticProps ){
+	            var protoProps = a_protoProps || {};
+	            if( protoProps.mixins ){
+	                protoProps = attachMixins( protoProps );
+	            }
+	
 	            Object.transform( this.prototype, protoProps, warnOnError, this );
 	            Object.transform( this, staticProps, warnOnError, this );
 	
@@ -2573,6 +2624,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	        return this;
 	    },
 	
+	    check : function( check, error ){
+	        this._options.check = check;
+	        if( error ){
+	            this._options._error = error;
+	        }
+	
+	    },
+	
 	    proxy : function( attrs ){
 	        this._options.proxy = attrs || true;
 	        return this;
@@ -2743,6 +2802,20 @@ return /******/ (function(modules) { // webpackBootstrap
 	        return value;
 	    },
 	
+	    check : function( value ){
+	        if( _.isNaN( value ) || value === Infinity || value === -Infinity ) return false;
+	
+	        if( value && value.isValid ) return value.isValid();
+	
+	        return true;
+	    },
+	
+	    validate : function( model, value, name ){
+	        if( !this.check.call( model, value, name ) ){
+	            return this._error || 'Invalid value';
+	        }
+	    },
+	
 	    toJSON : function( value, key ){
 	        return value && value.toJSON ? value.toJSON() : value;
 	    },
@@ -2908,29 +2981,77 @@ return /******/ (function(modules) { // webpackBootstrap
 
 /***/ },
 /* 10 */
+/***/ function(module, exports) {
+
+	module.exports = {
+	    properties : {
+	        validationError(){
+	            var errors = this._validationError || ( this._validationError = new ValidationError() );
+	            return errors.update( this );
+	        }
+	    },
+	
+	    _validationError : null,
+	
+	    validate : function(){},
+	
+	    _validateNested : function( errors ){
+	        return 0;
+	    },
+	
+	    isValid : function( key ){
+	        var error = this.validationError;
+	        return !error || ( key && !error.nested[ key ] );
+	    }
+	};
+	
+	function ValidationError(){
+	    this._changeToken = {};
+	    this.length       = 0;
+	    this.nested       = {};
+	    this.error        = null;
+	}
+	
+	ValidationError.prototype.update = function( obj ){
+	    if( this._changeToken !== obj._changeToken ){
+	        this.length = obj._validateNested( this.nested = {} );
+	
+	        if( this.error = obj.validate() ){
+	            this.length++;
+	        }
+	
+	        this._changeToken = obj._changeToken;
+	    }
+	
+	    return this.length ? this : null;
+	};
+
+/***/ },
+/* 11 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var _        = __webpack_require__( 5 ),
 	    Backbone = __webpack_require__( 2 ),
-	    Model    = __webpack_require__( 1 );
+	    Model    = __webpack_require__( 1 ),
+	    ValidationMixin = __webpack_require__( 10 );
 	
 	var Events   = Backbone.Events,
 	    trigger1 = Events.trigger1,
 	    trigger2 = Events.trigger2,
 	    trigger3 = Events.trigger3;
 	
-	var Commons               = __webpack_require__( 11 ),
+	var Commons               = __webpack_require__( 12 ),
 	    toModel               = Commons.toModel,
 	    dispose               = Commons.dispose,
 	    ModelEventsDispatcher = Commons.ModelEventsDispatcher;
 	
-	var Add          = __webpack_require__( 12 ),
+	var Add          = __webpack_require__( 13 ),
 	    MergeOptions = Add.MergeOptions,
 	    add          = Add.add,
 	    set          = Add.set,
 	    emptySet     = Add.emptySet;
 	
-	var Remove     = __webpack_require__( 13 ),
+	var Remove     = __webpack_require__( 14 ),
 	    removeOne  = Remove.removeOne,
 	    removeMany = Remove.removeMany;
 	
@@ -3004,6 +3125,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 	
 	module.exports = Backbone.Collection.extend( {
+	    mixins : [ ValidationMixin ],
+	
 	    triggerWhenChanged : 'changes',
 	    _listenToChanges   : 'update change reset',
 	    __class            : 'Collection',
@@ -3018,10 +3141,42 @@ return /******/ (function(modules) { // webpackBootstrap
 	    _changeToken : {},
 	
 	    _dispatcher : null,
+	
+	    // ES6 inspired Array methods:
+	    forEach : function( callback, context ){
+	        var models = this.models;
+	
+	        for( var i = 0; i < models.length; i++ ){
+	            var model = models[ i ];
+	
+	            if( context ){
+	                callback.call( context, model, model.cid );
+	            }
+	            else{
+	                callback( model, model.cid );
+	            }
+	        }
+	    },
+	
 	    properties  : {
 	        length : function(){
 	            return this.models.length;
 	        }
+	    },
+	
+	    _validateNested : function( errors ){
+	        var models = this.models,
+	            length = 0;
+	
+	        for( var i = 0; i < models.length; i++ ){
+	            var error = models[ i ].validationError;
+	            if( error ){
+	                errors[ name ] = error;
+	                length++;
+	            }
+	        }
+	
+	        return length;
 	    },
 	
 	    modelId : function( attrs ){
@@ -3196,7 +3351,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	} );
 
 /***/ },
-/* 11 */
+/* 12 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
@@ -3299,7 +3454,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    var model = new Model( attrs, new ModelOptions( a_options, collection ) );
 	
 	    if( model.validationError ){
-	        trigger3( collection, 'invalid', collection, model.validationError, options );
+	        trigger3( collection, 'invalid', collection, model.validationError, a_options );
 	        return false;
 	    }
 	
@@ -3338,7 +3493,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 /***/ },
-/* 12 */
+/* 13 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
@@ -3353,7 +3508,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    trigger2 = Events.trigger2,
 	    trigger3 = Events.trigger3;
 	
-	var Commons         = __webpack_require__( 11 ),
+	var Commons         = __webpack_require__( 12 ),
 	    addIndex        = Commons.addIndex,
 	    addReference    = Commons.addReference,
 	    removeReference = Commons.removeReference,
@@ -3617,7 +3772,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 /***/ },
-/* 13 */
+/* 14 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
@@ -3627,7 +3782,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	 *      - silent : Boolean = false
 	 */
 	
-	var Commons         = __webpack_require__( 11 ),
+	var Commons         = __webpack_require__( 12 ),
 	    removeIndex     = Commons.removeIndex,
 	    removeReference = Commons.removeReference;
 	
@@ -3733,7 +3888,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 /***/ },
-/* 14 */
+/* 15 */
 /***/ function(module, exports, __webpack_require__) {
 
 	// Nested Relations
@@ -3742,7 +3897,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	var bbVersion  = __webpack_require__( 2 ).VERSION,
 	    attribute  = __webpack_require__( 9 ),
 	    error      = __webpack_require__( 8 ),
-	    Collection = __webpack_require__( 10 ),
+	    Collection = __webpack_require__( 11 ),
 	    _          = __webpack_require__( 5 );
 	
 	function parseReference( collectionRef ){
@@ -3971,7 +4126,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 15 */
+/* 16 */
 /***/ function(module, exports, __webpack_require__) {
 
 	// Date.parse with progressive enhancement for ISO 8601 <https://github.com/csnover/js-iso8601>
@@ -3984,7 +4139,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    modelSet   = __webpack_require__( 7 ),
 	    Model      = __webpack_require__( 1 ),
 	    errors     = __webpack_require__( 8 ),
-	    Collection = __webpack_require__( 10 );
+	    Collection = __webpack_require__( 11 );
 	
 	// Constructors Attribute
 	// ----------------
@@ -4044,6 +4199,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	    cast : function( value ){
 	        return value == null || value instanceof Date ? value :
 	               new Date( typeof value === 'string' ? parseDate( value ) : value )
+	    },
+	
+	    check : function( value ){
+	        return _.isNaN( +value );
 	    },
 	
 	    toJSON : function( value ){ return value && value.toJSON(); },
@@ -4178,13 +4337,13 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 16 */
+/* 17 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var Backbone   = __webpack_require__( 2 ),
 	    $          = Backbone.$;
 	    Model      = __webpack_require__( 1 ),
-	    Collection = __webpack_require__( 10 ),
+	    Collection = __webpack_require__( 11 ),
 	    _          = __webpack_require__( 5 );
 	
 	var _store = null;

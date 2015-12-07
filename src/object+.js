@@ -126,7 +126,29 @@
             return spec instanceof Function ? { get : spec } : spec;
         }
 
-        function define( protoProps, staticProps ){
+        function attachMixins( protoProps ){
+            var mixins = protoProps.mixins,
+                merged = {}, properties = {};
+
+            for( var i = mixins.length -1; i >= 0; i-- ){
+                var mixin = mixins[ i ];
+                Object.assign( properties, mixin.properties );
+                Object.assign( merged, mixin );
+            }
+
+            Object.assign( merged, protoProps );
+            Object.assign( properties, protoProps.properties );
+
+            merged.properties = properties;
+            return merged;
+        }
+
+        function define( a_protoProps, staticProps ){
+            var protoProps = a_protoProps || {};
+            if( protoProps.mixins ){
+                protoProps = attachMixins( protoProps );
+            }
+
             Object.transform( this.prototype, protoProps, warnOnError, this );
             Object.transform( this, staticProps, warnOnError, this );
 

@@ -1,6 +1,7 @@
 var _        = require( 'underscore' ),
     Backbone = require( './backbone+' ),
-    Model    = require( './model' );
+    Model    = require( './model' ),
+    ValidationMixin = require( './validation' );
 
 var Events   = Backbone.Events,
     trigger1 = Events.trigger1,
@@ -92,6 +93,8 @@ function CreateOptions( options, collection ){
 }
 
 module.exports = Backbone.Collection.extend( {
+    mixins : [ ValidationMixin ],
+
     triggerWhenChanged : 'changes',
     _listenToChanges   : 'update change reset',
     __class            : 'Collection',
@@ -106,49 +109,42 @@ module.exports = Backbone.Collection.extend( {
     _changeToken : {},
 
     _dispatcher : null,
-    properties  : {
-        length : function(){
-            return this.models.length;
-        },
 
-        validationError : function(){
-            var errors = this._validationError;
+    // ES6 inspired Array methods:
+    forEach : function( callback, context ){
+        var models = this.models;
 
-            if( !errors || errors._token !== this._changeToken ){
-                errors = {};
+        for( var i = 0; i < models.length; i++ ){
+            var model = models[ i ];
 
-                var models = this.models, error, count = 0;
-
-                for( var i = 0; i < models.length; i++ ){
-                    var model = models[ i ];
-                    error = model.validationError;
-                    if( error ){
-                        errors[ model.cid ] = error;
-                        count++;
-                    }
-                }
-
-                error = this.validate();
-                if( error ){
-                    errors._all = error;
-                    count++;
-                }
-
-                errors._token = this._changeToken;
-                errors._count = count;
-                this._validationError = errors;
+            if( context ){
+                callback.call( context, model, model.cid );
             }
-
-            return errors._count ? errors : null;
+            else{
+                callback( model, model.cid );
+            }
         }
     },
 
-    _validationError : null,
-    validate : function(){},
+    properties  : {
+        length : function(){
+            return this.models.length;
+        }
+    },
 
-    isValid : function( attr ){
-        var error = this.validationError;
-        return !error || ( attr && !error[ attr ] );
+    _validateNested : function( errors ){
+        var models = this.models,
+            length = 0;
+
+        for( var i = 0; i < models.length; i++ ){
+            var error = models[ i ].validationError;
+            if( error ){
+                errors[ name ] = error;
+                length++;
+            }
+        }
+
+        return length;
     },
 
     modelId : function( attrs ){

@@ -98,7 +98,7 @@ function toModel( collection, attrs, a_options ){
     var model = new Model( attrs, new ModelOptions( a_options, collection ) );
 
     if( model.validationError ){
-        trigger3( collection, 'invalid', collection, model.validationError, options );
+        trigger3( collection, 'invalid', collection, model.validationError, a_options );
         return false;
     }
 

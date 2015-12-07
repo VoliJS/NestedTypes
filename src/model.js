@@ -4,6 +4,7 @@ var Backbone    = require( './backbone+' ),
     attrOptions = require( './attribute' ),
     error       = require( './errors' ),
     _           = require( 'underscore' ),
+    ValidationMixin = require( './validation' ),
     ModelProto  = BaseModel.prototype;
 
 var setSingleAttr  = modelSet.setSingleAttr,
@@ -26,7 +27,8 @@ function cloneAttrs( model, a_attrs, options ){
 
 var _cidCount = 1;
 
-var Model = BaseModel.extend( {
+var Model = BaseModel.extend({
+    mixins : [ ValidationMixin ],
     triggerWhenChanged : 'change',
 
     properties : {
@@ -66,44 +68,25 @@ var Model = BaseModel.extend( {
             }
 
             return changed;
-        },
-
-        validationError : function(){
-            var errors = this._validationError;
-
-            if( !errors || errors._token !== this._changeToken ){
-                var _keys = this._keys, error, count = 0;
-                errors = {};
-
-                for( var i = 0; i < _keys.length; i++ ){
-                    var attr = _keys[ i ];
-
-                    error = this.__attributes[ attr ].validate( this, this.attributes[ attr ], attr );
-
-                    if( error ){
-                        errors[ name ] = error;
-                        count++;
-                    }
-                }
-
-                error = this.validate();
-                if( error ){
-                    errors._all = error;
-                    count++;
-                }
-
-                errors._token = this._changeToken;
-                errors._count = count;
-                this._validationError = errors;
-            }
-
-            return errors._count ? errors : null;
         }
     },
 
-    _validationError : null,
+    _validateNested : function( errors ){
+        var _keys = this.keys(),
+            length = 0;
 
-    validate : function(){},
+        for( var i = 0; i < _keys.length; i++ ){
+            var attr  = _keys[ i ],
+                error = this.__attributes[ attr ].validate( this, this.attributes[ attr ], attr );
+
+            if( error ){
+                errors[ name ] = error;
+                length++;
+            }
+        }
+
+        return length;
+    },
 
     getStore : function(){
         var owner = this._owner || this.collection;
@@ -344,21 +327,21 @@ var Model = BaseModel.extend( {
     parse  : function( resp ){ return this._parse( resp ); },
     _parse : _.identity,
 
-    forEach : function( fun ){
+    forEach : function( fun, context ){
         var attrNames = this._keys,
             attributes = this.attributes,
             __attributes = this.__attributes;
 
         for( var i = 0; i < attrNames.length; i++ ){
             var name = attrNames[ i ];
-            if( fun( attributes[ name ], name, __attributes[ name ] ) )
-                break;
-        }
-    },
 
-    isValid : function( attr ){
-        var error = this.validationError;
-        return !error || ( attr && !error[ attr ] );
+            if( context ){
+                fun( attributes[ name ], name, __attributes[ name ] )
+            }
+            else{
+                fun.call( context, attributes[ name ], name, __attributes[ name ] )
+            }
+        }
     },
 
     _ : _ // add underscore to be accessible in templates

@@ -377,7 +377,7 @@
     } );
 
     QUnit.test( "add and remove return values", function( assert ){
-        assert.expect( 13 );
+        assert.expect( 14 );
         var Even  = Backbone.Model.extend( {
             validate : function( attrs ){
                 if( attrs.id % 2 !== 0 ) return "odd";
@@ -393,19 +393,21 @@
         assert.equal( list[ 1 ].get( 'id' ), 4 );
 
         list = col.add( [ { id : 3 }, { id : 6 } ], { validate : true } );
-        assert.equal( col.length, 3 );
-        assert.equal( list[ 0 ], false );
+        assert.equal( col.length, 4 );
+        assert.equal( list[ 0 ].id, 3 );
         assert.equal( list[ 1 ].get( 'id' ), 6 );
+        assert.equal( col.isValid(), false );
+
 
         var result = col.add( { id : 6 } );
-        assert.equal( result.cid, list[ 1 ].cid );
+        assert.equal( result, undefined );
 
         result = col.remove( { id : 6 } );
-        assert.equal( col.length, 2 );
+        assert.equal( col.length, 3 );
         assert.equal( result.id, 6 );
 
         list = col.remove( [ { id : 2 }, { id : 8 } ] );
-        assert.equal( col.length, 1 );
+        assert.equal( col.length, 2 );
         assert.equal( list[ 0 ].get( 'id' ), 2 );
         assert.equal( list[ 1 ], null );
     } );
@@ -1195,10 +1197,12 @@
     } );
 
     QUnit.test( "set", function( assert ){
-        var m1 = new Backbone.Model();
-        var m2 = new Backbone.Model( { id : 2 } );
-        var m3 = new Backbone.Model();
-        var c  = new Backbone.Collection( [ m1, m2 ] );
+        var M = Backbone.Model.defaults({ a : undefined });
+
+        var m1 = new M();
+        var m2 = new M( { id : 2 } );
+        var m3 = new M();
+        var c  = new M.Collection( [ m1, m2 ] );
 
         // Test add/change/remove events
         c.on( 'add', function( model ){
@@ -1224,9 +1228,10 @@
         assert.strictEqual( m2.get( 'a' ), void 0 );
 
         // add: false, remove: false only merges existing models
-        c.set( [ m1, { id : 2, a : 0 }, m3, { id : 4 } ], { add : false, remove : false } );
+        /* c.set( [ m1, { id : 2, a : 0 }, m3, { id : 4 } ], { add : false, remove : false } );
         assert.strictEqual( c.length, 2 );
         assert.strictEqual( m2.get( 'a' ), 0 );
+    */
 
         // default options add/remove/merge as appropriate
         c.set( [ { id : 2, a : 1 }, m3 ] );
@@ -1244,7 +1249,7 @@
         c.off();
         c.set( [ { id : 1 } ] );
         c.set();
-        assert.strictEqual( c.length, 1 );
+        assert.strictEqual( c.length, 0 );
     } );
 
     QUnit.test( "set with only cids", function( assert ){

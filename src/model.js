@@ -61,8 +61,42 @@ var Model = BaseModel.extend( {
             }
 
             return changed;
+        },
+
+        validationError : function(){
+            var errors = this._validationError;
+
+            if( !error || errors._token !== this._changeToken ){
+                var _keys = this._keys,
+                    errors = {}, error, count = 0;
+
+                for( var i = 0; i < _keys.length; i++ ){
+                    var attr = _keys[ i ];
+
+                    error = this.__attributes[ attr ].validate( this, this.attributes[ attr ], attr );
+
+                    if( error ){
+                        errors[ name ] = error;
+                        count++;
+                    }
+                }
+
+                error = this.validate();
+                if( error ){
+                    errors._all = error;
+                    count++;
+                }
+
+                errors._token = this._changeToken;
+                errors._count = count;
+                this._validationError = errors;
+            }
+
+            return errors._count ? errors : null;
         }
     },
+
+    _validationError : null,
 
     getStore : function(){
         var owner = this._owner || this.collection;
@@ -303,16 +337,21 @@ var Model = BaseModel.extend( {
     parse  : function( resp ){ return this._parse( resp ); },
     _parse : _.identity,
 
-    isValid : function( options ){
-        // todo: need to do something smart with validation logic
-        // something declarative on attributes level, may be
-        return ModelProto.isValid.call( this, options ) && _.every( this.attributes, function( attr ){
-                if( attr && attr.isValid ){
-                    return attr.isValid( options );
-                }
+    forEach : function( fun ){
+        var attrNames = this._keys,
+            attributes = this.attributes,
+            __attributes = this.__attributes;
 
-                return attr instanceof Date ? !_.isNaN( attr.getTime() ) : !_.isNaN( attr );
-            } );
+        for( var i = 0; i < attrNames.length; i++ ){
+            var name = attrNames[ i ];
+            if( fun( attributes[ name ], name, __attributes[ name ] ) )
+                break;
+        }
+    },
+
+    isValid : function( attr ){
+        var error = this.validationError;
+        return !error || ( attr && !error[ attr ] );
     },
 
     _ : _ // add underscore to be accessible in templates

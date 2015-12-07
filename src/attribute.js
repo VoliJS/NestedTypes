@@ -251,6 +251,20 @@ var Attribute = Object.extend( {
         return value;
     },
 
+    check : function( value ){
+        if( _.isNaN( +value ) || value === Infinity || value === -Infinity ) return false;
+
+        if( value && value.isValid ) return value.isValid();
+
+        return true;
+    },
+
+    validate : function( model, value, name ){
+        if( !this.check.call( model, value, name ) ){
+            return this._error || 'Invalid value';
+        }
+    },
+
     toJSON : function( value, key ){
         return value && value.toJSON ? value.toJSON() : value;
     },

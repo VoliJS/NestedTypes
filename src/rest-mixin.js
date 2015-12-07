@@ -48,7 +48,10 @@ exports.Model = {
             this.set( attrs, options );
         }
 
-        if( this._invalidate( options ) ) return false;
+        if( this._invalidate( options ) ){
+            if( attrs && wait ) this.set( attrs, options );
+            return false;
+        }
 
         // After a successful server-side save, the client is (optionally)
         // updated with the server-side state.

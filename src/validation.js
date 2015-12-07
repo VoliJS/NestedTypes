@@ -38,7 +38,7 @@ ValidationError.prototype.update = function( obj ){
     if( this._changeToken !== obj._changeToken ){
         this.length = obj._validateNested( this.nested = {} );
 
-        if( this.error = obj.validate() ){
+        if( this.error = obj.validate( obj ) ){
             this.length++;
         }
 

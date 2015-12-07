@@ -270,7 +270,7 @@
   });
 
   QUnit.test("set and unset", function(assert) {
-    assert.expect(8);
+    assert.expect(7);
     var a = new ( Backbone.Model.defaults({id: 'id', foo: 1, bar: 2, baz: 3}) );
     var changeCount = 0;
     a.on("change:foo", function() { changeCount += 1; });
@@ -297,8 +297,12 @@
   QUnit.test("#2030 - set with failed validate, followed by another set triggers change", function(assert) {
     var attr = 0, main = 0, error = 0;
     var Model = Backbone.Model.extend({
+      defaults : {
+        x : 0
+      },
+
       validate: function (attr) {
-        if (attr.x > 1) {
+        if (this.x > 1) {
           error++;
           return "this is an error";
         }
@@ -307,9 +311,11 @@
     var model = new Model({x:0});
     model.on('change:x', function () { attr++; });
     model.on('change', function () { main++; });
-    model.set({x:2}, {validate:true});
-    model.set({x:1}, {validate:true});
-    assert.deepEqual([attr, main, error], [1, 1, 1]);
+    model.set({x:2});
+    model.isValid();
+    model.set({x:1});
+    model.isValid();
+    assert.deepEqual([attr, main, error], [2, 2, 1]);
   });
 
   QUnit.test("set triggers changes in the correct order", function(assert) {
@@ -647,7 +653,7 @@
     assert.equal(this.syncArgs.options.attrs.D, 3);
     assert.equal(this.syncArgs.options.attrs.d, undefined);
     assert.equal(this.ajaxSettings.data, "{\"B\":1,\"D\":3}");
-    assert.deepEqual(doc.attributes, {b: 2, d: 4});
+    assert.deepEqual(doc.pick('b', 'd'), {b: 2, d: 4});
   });
 
   QUnit.test("save in positional style", function(assert) {
@@ -790,9 +796,9 @@
   });
 
   QUnit.test("validate on unset and clear", function(assert) {
-    assert.expect(6);
+    assert.expect(4);
     var error;
-    var model = new Backbone.Model({name: "One"});
+    var model = new ( Backbone.Model.defaults({name: "One"}) );
     model.validate = function(attrs) {
       if (!attrs.name) {
         error = true;
@@ -803,19 +809,15 @@
     assert.equal(model.get('name'), 'Two');
     assert.equal(error, undefined);
     model.unset('name', {validate: true});
+    model.isValid();
     assert.equal(error, true);
-    assert.equal(model.get('name'), 'Two');
-    model.clear({validate:true});
-    assert.equal(model.get('name'), 'Two');
-    delete model.validate;
-    model.clear();
-    assert.equal(model.get('name'), undefined);
+    assert.equal(model.get('name'), undefined );
   });
 
   QUnit.test("validate with error callback", function(assert) {
     assert.expect(8);
     var lastError, boundError;
-    var model = new Backbone.Model();
+    var model = new ( Backbone.Model.defaults( { a: 0, admin : '' }));
     model.validate = function(attrs) {
       if (this.admin) return "Can't change admin status.";
     };
@@ -828,9 +830,10 @@
     assert.equal(model.validationError, null);
     assert.equal(boundError, undefined);
     result = model.set({a: 200, admin: true}, {validate:true});
-    assert.equal(result, false);
-    assert.equal(model.get('a'), 100);
-    assert.equal(model.validationError, "Can't change admin status.");
+    assert.equal( model.isValid(), false);
+    assert.equal(model.get('a'), 200);
+    assert.equal(model.validationError.error, "Can't change admin status.");
+    model._invalidate( { validate : true } );
     assert.equal(boundError, true);
   });
 
@@ -993,7 +996,7 @@
     var model = new ( Backbone.Model.defaults({ a : 0 }) );
     model.validate = function () { return 1; };
     model.save({a: 1});
-    assert.equal(model.get('a'), void 0);
+    assert.equal(model.get('a'), 1 );
   });
 
   QUnit.test("save doesn't validate twice", function(assert) {
@@ -1033,7 +1036,7 @@
     var model = new ( Backbone.Model.defaults({ x : 0 }) );
     model.url = '/test';
     model.save({x: 1}, {wait: true});
-    assert.equal(model.get('x'), void 0);
+    assert.equal(model.get('x'), 0 );
   });
 
   QUnit.test("#1030 - `save` with `wait` results in correct attributes if success is called during sync", function(assert) {

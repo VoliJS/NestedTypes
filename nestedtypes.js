@@ -2728,7 +2728,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    if( this._changeToken !== obj._changeToken ){
 	        this.length = obj._validateNested( this.nested = {} );
 	
-	        if( this.error = obj.validate() ){
+	        if( this.error = obj.validate( obj ) ){
 	            this.length++;
 	        }
 	
@@ -2792,7 +2792,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	            this.set( attrs, options );
 	        }
 	
-	        if( this._invalidate( options ) ) return false;
+	        if( this._invalidate( options ) ){
+	            if( attrs && wait ) this.set( attrs, options );
+	            return false;
+	        }
 	
 	        // After a successful server-side save, the client is (optionally)
 	        // updated with the server-side state.

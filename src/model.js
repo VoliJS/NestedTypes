@@ -106,6 +106,8 @@ var Model = BaseModel.extend({
     _owner : null,
 
     __attributes : { id : attrOptions( { value : undefined } ).createAttribute( 'id' ) },
+    _keys : [ 'id' ],
+
     Attributes   : function( x ){ this.id = x.id; },
     __class      : 'Model',
 

@@ -254,9 +254,8 @@ module.exports = Backbone.Collection.extend( {
 
     create : function( a_model, a_options ){
         var options = new CreateOptions( a_options, this ),
-            model   = a_model;
+            model   = toModel( this, a_model, options );
 
-        if( !(model = toModel( this, model, options )) ) return false;
         if( !options.wait ) add( this, [ model ], options );
         var collection  = this;
         var success     = options.success;

@@ -17,6 +17,13 @@ module.exports = {
     isValid : function( key ){
         var error = this.validationError;
         return !error || ( key && !error.nested[ key ] );
+    },
+
+    _invalidate : function( options ){
+        if( options.validate && this.validationError ){
+            this.trigger( 'invalid', this, this.validationError, options );
+            return true;
+        }
     }
 };
 

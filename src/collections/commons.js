@@ -86,7 +86,6 @@ function removeIndex( _byId, model ){
 function ModelOptions( options, collection ){
     this.parse      = options.parse;
     this.collection = collection;
-    this.validate = options.validate;
 }
 
 // convert argument to model. Return false if fails.
@@ -95,14 +94,7 @@ function toModel( collection, attrs, a_options ){
     var Model = collection.model;
     if( attrs instanceof Model ) return attrs;
 
-    var model = new Model( attrs, new ModelOptions( a_options, collection ) );
-
-    if( model.validationError ){
-        trigger3( collection, 'invalid', collection, model.validationError, a_options );
-        return false;
-    }
-
-    return model;
+    return new Model( attrs, new ModelOptions( a_options, collection ) );
 }
 
 function ModelEventsDispatcher( model ){

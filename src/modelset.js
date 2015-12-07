@@ -124,11 +124,6 @@ function bbSetAttrs( model, attrs, opts ){
     'use strict';
     var options = opts || {};
 
-    // Run validation.
-    if( !model._validate( attrs, options ) ){
-        return false;
-    }
-
     // Extract attributes and options.
     var unset     = options.unset,
         silent    = options.silent,

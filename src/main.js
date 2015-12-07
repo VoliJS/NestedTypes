@@ -6,15 +6,18 @@ var Model      = require( './model' ),
     relations  = require( './relations' ),
     Backbone   = require( './backbone+' ),
     _          = require( 'underscore' ),
-    attribute  = require( './attribute' );
+    attribute  = require( './attribute' ),
+    Rest       = require( './rest-mixin' );
+
+Rest.$ = Backbone.$;
 
 require( './metatypes' );
 
 Collection.subsetOf = relations.subsetOf;
 Model.from          = relations.from;
-Model.take = Collection.take = relations.take;
+Model.take          = Collection.take = relations.take;
 
-Model.Collection    = Collection;
+Model.Collection = Collection;
 
 var Store = require( './store' );
 Object.defineProperty( exports, 'store', Store.globalProp );
@@ -48,18 +51,20 @@ _.extend( exports, Backbone, {
             return this.transaction( fun, this, arguments );
         }
     }
-});
-
-function linkToProp( name ){
-    return {
-        get : function(){ return Backbone[ name ]; },
-        set : function( value ){ Backbone[ name ] = value; }
-    }
-}
+} );
 
 // allow sync and jQuery override
 Object.defineProperties( exports, {
-    'sync' : linkToProp( 'sync' ),
-    '$'    : linkToProp( '$' ),
-    'ajax' : linkToProp( 'ajax' )
-});
+    'sync' : {
+        get : function(){ return Rest.sync; },
+        set : function( value ){ Rest.sync = value; }
+    },
+    'ajax' : {
+        get : function(){ return Rest.ajax; },
+        set : function( value ){ Rest.ajax = value; }
+    },
+    '$'    : {
+        get : function(){ return Backbone.$; },
+        set : function( value ){ Backbone.$ = Rest.$ = value; }
+    }
+} );

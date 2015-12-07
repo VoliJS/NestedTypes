@@ -5,6 +5,7 @@ var Backbone    = require( './backbone+' ),
     error       = require( './errors' ),
     _           = require( 'underscore' ),
     ValidationMixin = require( './validation' ),
+    RestMixin = require( './rest-mixin' ).Model,
     ModelProto  = BaseModel.prototype;
 
 var setSingleAttr  = modelSet.setSingleAttr,
@@ -28,7 +29,7 @@ function cloneAttrs( model, a_attrs, options ){
 var _cidCount = 1;
 
 var Model = BaseModel.extend({
-    mixins : [ ValidationMixin ],
+    mixins : [ ValidationMixin, RestMixin ],
     triggerWhenChanged : 'change',
 
     properties : {

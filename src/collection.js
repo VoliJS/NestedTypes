@@ -1,7 +1,8 @@
 var _        = require( 'underscore' ),
     Backbone = require( './backbone+' ),
     Model    = require( './model' ),
-    ValidationMixin = require( './validation' );
+    ValidationMixin = require( './validation' ),
+    RestMixin = require( './rest-mixin' ).Collection;
 
 var Events   = Backbone.Events,
     trigger1 = Events.trigger1,
@@ -93,7 +94,7 @@ function CreateOptions( options, collection ){
 }
 
 module.exports = Backbone.Collection.extend( {
-    mixins : [ ValidationMixin ],
+    mixins : [ ValidationMixin, RestMixin ],
 
     triggerWhenChanged : 'changes',
     _listenToChanges   : 'update change reset',

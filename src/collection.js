@@ -1,7 +1,7 @@
 var _               = require( 'underscore' ),
     Backbone        = require( './backbone+' ),
     Model           = require( './model' ),
-    ValidationMixin = require( './validation' ),
+    ValidationMixin = require( './validation-mixin' ),
     RestMixin       = require( './rest-mixin' ).Collection;
 
 var Events   = Backbone.Events,

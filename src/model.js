@@ -4,7 +4,7 @@ var Backbone    = require( './backbone+' ),
     attrOptions = require( './attribute' ),
     error       = require( './errors' ),
     _           = require( 'underscore' ),
-    ValidationMixin = require( './validation' ),
+    ValidationMixin = require( './validation-mixin' ),
     RestMixin = require( './rest-mixin' ).Model,
     ModelProto  = BaseModel.prototype;
 

@@ -1009,8 +1009,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	//     (c) 2010-2014 Jeremy Ashkenas, DocumentCloud and Investigative Reporters & Editors
 	//     Backbone may be freely distributed under the MIT license.
-	//     For all details and documentation:
-	//     http://backbonejs.org
 	
 	(function(root, factory) {
 	
@@ -2742,6 +2740,14 @@ return /******/ (function(modules) { // webpackBootstrap
 /* 11 */
 /***/ function(module, exports) {
 
+	/**
+	 * Backbone.js 1.2.3 REST implementation
+	 * (c) 2010-2015 Jeremy Ashkenas, DocumentCloud and Investigative Reporters & Editors
+	 * Backbone may be freely distributed under the MIT license.
+	 *
+	 * With validation patches - NestedTypes validation semantic is applied. (c) Vlad Balin, 2015.
+	 */
+	
 	exports.Model = {
 	    // Fetch the model from the server, merging the response with the model's
 	    // local attributes. Any changed attributes will trigger a "change" event.

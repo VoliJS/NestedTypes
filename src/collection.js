@@ -109,7 +109,46 @@ module.exports = Backbone.Collection.extend( {
     properties  : {
         length : function(){
             return this.models.length;
+        },
+
+        validationError : function(){
+            var errors = this._validationError;
+
+            if( !errors || errors._token !== this._changeToken ){
+                errors = {};
+
+                var models = this.models, error, count = 0;
+
+                for( var i = 0; i < models.length; i++ ){
+                    var model = models[ i ];
+                    error = model.validationError;
+                    if( error ){
+                        errors[ model.cid ] = error;
+                        count++;
+                    }
+                }
+
+                error = this.validate();
+                if( error ){
+                    errors._all = error;
+                    count++;
+                }
+
+                errors._token = this._changeToken;
+                errors._count = count;
+                this._validationError = errors;
+            }
+
+            return errors._count ? errors : null;
         }
+    },
+
+    _validationError : null,
+    validate : function(){},
+
+    isValid : function( attr ){
+        var error = this.validationError;
+        return !error || ( attr && !error[ attr ] );
     },
 
     modelId : function( attrs ){

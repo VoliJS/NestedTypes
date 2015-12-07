@@ -71,9 +71,9 @@ var Model = BaseModel.extend( {
         validationError : function(){
             var errors = this._validationError;
 
-            if( !error || errors._token !== this._changeToken ){
-                var _keys = this._keys,
-                    errors = {}, error, count = 0;
+            if( !errors || errors._token !== this._changeToken ){
+                var _keys = this._keys, error, count = 0;
+                errors = {};
 
                 for( var i = 0; i < _keys.length; i++ ){
                     var attr = _keys[ i ];

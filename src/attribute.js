@@ -81,6 +81,14 @@ var Options = Object.extend( {
         return this;
     },
 
+    check : function( check, error ){
+        this._options.check = check;
+        if( error ){
+            this._options._error = error;
+        }
+
+    },
+
     proxy : function( attrs ){
         this._options.proxy = attrs || true;
         return this;

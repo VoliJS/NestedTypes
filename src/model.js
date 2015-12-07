@@ -11,8 +11,13 @@ var setSingleAttr  = modelSet.setSingleAttr,
     applyTransform = modelSet.transform;
 
 // TODO: create loop unrolled function (or extract keys array to prototype)
-function cloneAttrs( attrSpecs, attrs, options ){
-    for( var name in attrs ){
+function cloneAttrs( model, a_attrs, options ){
+    var attrSpecs = model.__attributes,
+        attrs = new model.Attributes( a_attrs ),
+        _keys = model._keys;
+
+    for( var i = 0; i < _keys.length; i++ ){
+        var name = _keys[ i ];
         attrs[ name ] = attrSpecs[ name ].clone( attrs[ name ], options );
     }
 
@@ -97,6 +102,8 @@ var Model = BaseModel.extend( {
     },
 
     _validationError : null,
+
+    validate : function(){},
 
     getStore : function(){
         var owner = this._owner || this.collection;
@@ -268,7 +275,7 @@ var Model = BaseModel.extend( {
         }
 
         attrs = options.deep ?
-                cloneAttrs( attrSpecs, new this.Attributes( attrs ), options ) :
+                cloneAttrs( this, attrs, options ) :
                 this.defaults( attrs, options );
 
         // Execute attributes transform function instead of this.set

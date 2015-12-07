@@ -2706,7 +2706,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	    isValid : function( key ){
 	        var error = this.validationError;
-	        return !error || ( key && !error.nested[ key ] );
+	        return !error || ( Boolean( key ) && !error.nested[ key ] );
 	    },
 	
 	    _invalidate : function( options ){

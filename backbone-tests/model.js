@@ -539,9 +539,9 @@
 
   QUnit.test("validate after save", function(assert) {
     assert.expect(2);
-    var lastError, model = new Backbone.Model();
-    model.validate = function(attrs) {
-      if (attrs.admin) return "Can't change admin status.";
+    var lastError, model = new ( Backbone.Model.defaults({ admin : '' }) );
+    model.validate = function() {
+      if (this.admin) return "Can't change admin status.";
     };
     model.sync = function(method, model, options) {
       options.success.call(this, {admin: true});
@@ -551,8 +551,8 @@
     });
     model.save(null);
 
-    assert.equal(lastError, "Can't change admin status.");
-    assert.equal(model.validationError, "Can't change admin status.");
+    assert.equal(lastError.error, "Can't change admin status.");
+    assert.equal(model.validationError.error, "Can't change admin status.");
   });
 
   QUnit.test("save", function(assert) {
@@ -615,7 +615,7 @@
   QUnit.test("#3470 - save and fetch with parse false", function(assert) {
     assert.expect(2);
     var i = 0;
-    var model = new Backbone.Model();
+    var model = new ( Backbone.Model.defaults({ i : 0 } ));
     model.parse = function() {
       assert.ok(false);
     };
@@ -652,7 +652,7 @@
 
   QUnit.test("save in positional style", function(assert) {
     assert.expect(1);
-    var model = new Backbone.Model();
+    var model = new ( Backbone.Model.defaults({ title : ''}) );
     model.sync = function(method, model, options) {
       options.success();
     };
@@ -662,14 +662,14 @@
 
   QUnit.test("save with non-object success response", function(assert) {
     assert.expect(2);
-    var model = new Backbone.Model();
+    var model = new ( Backbone.Model.defaults({ testing : '' }) );
     model.sync = function(method, model, options) {
       options.success('', options);
       options.success(null, options);
     };
     model.save({testing:'empty'}, {
       success: function (model) {
-        assert.deepEqual(model.attributes, {testing:'empty'});
+        assert.deepEqual(model.attributes, {id : void 0, testing:'empty'});
       }
     });
   });
@@ -770,9 +770,9 @@
 
   QUnit.test("validate", function(assert) {
     var lastError;
-    var model = new Backbone.Model();
+    var model = new ( Backbone.Model.defaults({ a: 0, admin : false }));
     model.validate = function(attrs) {
-      if (attrs.admin != this.get('admin')) return "Can't change admin status.";
+      if (this.admin != this.previous('admin')) return "Can't change admin status.";
     };
     model.on('invalid', function(model, error) {
       lastError = error;
@@ -783,10 +783,10 @@
     assert.equal(lastError, undefined);
     result = model.set({admin: true});
     assert.equal(model.get('admin'), true);
-    result = model.set({a: 200, admin: false}, {validate:true});
-    assert.equal(lastError, "Can't change admin status.");
-    assert.equal(result, false);
-    assert.equal(model.get('a'), 100);
+    result = model.set({a: 200, admin: false});
+    assert.equal(model.validationError.error, "Can't change admin status.");
+    //assert.equal(result, false);
+    assert.equal(model.get('a'), 200);
   });
 
   QUnit.test("validate on unset and clear", function(assert) {
@@ -817,7 +817,7 @@
     var lastError, boundError;
     var model = new Backbone.Model();
     model.validate = function(attrs) {
-      if (attrs.admin) return "Can't change admin status.";
+      if (this.admin) return "Can't change admin status.";
     };
     model.on('invalid', function(model, error) {
       boundError = true;
@@ -1366,33 +1366,33 @@
   });
 
   QUnit.test("isValid", function(assert) {
-    var model = new Backbone.Model({valid: true});
-    model.validate = function(attrs) {
-      if (!attrs.valid) return "invalid";
+    var model = new ( Backbone.Model.defaults({valid: true}) );
+    model.validate = function() {
+      if (!this.valid) return "invalid";
     };
     assert.equal(model.isValid(), true);
-    assert.equal(model.set({valid: false}, {validate:true}), false);
-    assert.equal(model.isValid(), true);
+    model.set({valid: false});
+    assert.equal(model.isValid(), false);
     model.set({valid:false});
     assert.equal(model.isValid(), false);
-    assert.ok(!model.set('valid', false, {validate: true}));
+    //assert.ok(!model.set('valid', false, {validate: true}));
   });
 
   QUnit.test("#1179 - isValid returns true in the absence of validate.", function(assert) {
     assert.expect(1);
     var model = new Backbone.Model();
-    model.validate = null;
+    //model.validate = null;
     assert.ok(model.isValid());
   });
 
   QUnit.test("#1961 - Creating a model with {validate:true} will call validate and use the error callback", function(assert) {
     var Model = Backbone.Model.extend({
-      validate: function (attrs) {
-        if (attrs.id === 1) return "This shouldn't happen";
+      validate: function () {
+        if (this.id === 1) return "This shouldn't happen";
       }
     });
     var model = new Model({id: 1}, {validate: true});
-    assert.equal(model.validationError, "This shouldn't happen");
+    assert.equal(model.validationError.error , "This shouldn't happen");
   });
 
   QUnit.test("toJSON receives attrs during save(..., {wait: true})", function(assert) {

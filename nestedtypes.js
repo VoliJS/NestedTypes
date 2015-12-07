@@ -2628,9 +2628,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	    applyTransform( model, attrs, model.__attributes, options );
 	
-	    model.__commit( attrs, options );
-	
-	    return model;
+	    return model.__commit( attrs, options );
 	}
 	
 	// transform attributes hash
@@ -2673,8 +2671,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }
 	
 	    if( attrs ){
-	        bbSetAttrs( this, attrs, options );
+	        return bbSetAttrs( this, attrs, options );
 	    }
+
+		return this;
 	}
 
 /***/ },

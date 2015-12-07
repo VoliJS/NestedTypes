@@ -20,10 +20,9 @@ var Commons         = require( './commons' ),
 var MergeOptions = exports.MergeOptions = function( a_options, collection ){
     var options = a_options || {};
 
-    this.silent   = options.silent;
-    this.parse    = options.parse;
-    this.merge    = options.merge;
-    this.validate = options.validate;
+    this.silent = options.silent;
+    this.parse  = options.parse;
+    this.merge  = options.merge;
 
     // at option
     var at = options.at;
@@ -110,12 +109,12 @@ function _append( collection, a_items, a_options ){
         }
         else{
             model = toModel( collection, item, a_options );
-            if( model ){
-                models.push( model );
-                addReference( collection, model );
-                addIndex( _byId, model );
-                added.push( model );
-            }
+
+            models.push( model );
+            addReference( collection, model );
+            addIndex( _byId, model );
+            added.push( model );
+
         }
     }
 
@@ -166,11 +165,11 @@ function _reallocateEmpty( self, source, options ){
         }
 
         var model = toModel( self, src, options );
-        if( model ){
-            addReference( self, model );
-            models[ j++ ] = model;
-            addIndex( _byId, model );
-        }
+
+        addReference( self, model );
+        models[ j++ ] = model;
+        addIndex( _byId, model );
+
     }
 
     models.length = j;
@@ -256,8 +255,6 @@ function _reallocate( self, source, options ){
         }
         else{
             model = toModel( self, item, options );
-            if( !model ) continue;
-
             addReference( self, model );
             toAdd.push( model );
         }

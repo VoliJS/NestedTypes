@@ -81,6 +81,14 @@ var Options = Object.extend( {
         return this;
     },
 
+    check : function( check, error ){
+        this._options.check = check;
+        if( error ){
+            this._options._error = error;
+        }
+
+    },
+
     proxy : function( attrs ){
         this._options.proxy = attrs || true;
         return this;
@@ -249,6 +257,20 @@ var Attribute = Object.extend( {
         }
 
         return value;
+    },
+
+    check : function( value ){
+        if( _.isNaN( value ) || value === Infinity || value === -Infinity ) return false;
+
+        if( value && value.isValid ) return value.isValid();
+
+        return true;
+    },
+
+    validate : function( model, value, name ){
+        if( !this.check.call( model, value, name ) ){
+            return this._error || 'Invalid value';
+        }
     },
 
     toJSON : function( value, key ){

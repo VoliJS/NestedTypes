@@ -2,6 +2,7 @@ var Backbone   = require( './backbone+' ),
     $          = Backbone.$;
     Model      = require( './model' ),
     Collection = require( './collection' ),
+    RestMixin  = require( './rest-mixin' ),
     _          = require( 'underscore' );
 
 var _store = null;
@@ -10,7 +11,7 @@ var Store = exports.Model = Model.extend({
   // end store lookup sequence on this class
   getStore : function(){ return this; },
 
-  sync : function(){ return Backbone.sync.apply( Backbone, arguments ); },
+  sync : function(){ return RestMixin.sync.apply( Backbone, arguments ); },
   // delegate item lookup to owner, and to the global store if undefined
   get : function( name ){ return this[ name ] || ( this._owner && this._owner.get( name ) ) || _store[ name ]; }
 });

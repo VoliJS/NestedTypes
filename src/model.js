@@ -4,6 +4,8 @@ var Backbone    = require( './backbone+' ),
     attrOptions = require( './attribute' ),
     error       = require( './errors' ),
     _           = require( 'underscore' ),
+    ValidationMixin = require( './validation-mixin' ),
+    RestMixin = require( './rest-mixin' ).Model,
     ModelProto  = BaseModel.prototype;
 
 var setSingleAttr  = modelSet.setSingleAttr,
@@ -11,8 +13,13 @@ var setSingleAttr  = modelSet.setSingleAttr,
     applyTransform = modelSet.transform;
 
 // TODO: create loop unrolled function (or extract keys array to prototype)
-function cloneAttrs( attrSpecs, attrs, options ){
-    for( var name in attrs ){
+function cloneAttrs( model, a_attrs, options ){
+    var attrSpecs = model.__attributes,
+        attrs = new model.Attributes( a_attrs ),
+        _keys = model._keys;
+
+    for( var i = 0; i < _keys.length; i++ ){
+        var name = _keys[ i ];
         attrs[ name ] = attrSpecs[ name ].clone( attrs[ name ], options );
     }
 
@@ -21,7 +28,8 @@ function cloneAttrs( attrSpecs, attrs, options ){
 
 var _cidCount = 1;
 
-var Model = BaseModel.extend( {
+var Model = BaseModel.extend({
+    mixins : [ ValidationMixin, RestMixin ],
     triggerWhenChanged : 'change',
 
     properties : {
@@ -64,6 +72,23 @@ var Model = BaseModel.extend( {
         }
     },
 
+    _validateNested : function( errors ){
+        var _keys = this.keys(),
+            length = 0;
+
+        for( var i = 0; i < _keys.length; i++ ){
+            var attr  = _keys[ i ],
+                error = this.__attributes[ attr ].validate( this, this.attributes[ attr ], attr );
+
+            if( error ){
+                errors[ name ] = error;
+                length++;
+            }
+        }
+
+        return length;
+    },
+
     getStore : function(){
         var owner = this._owner || this.collection;
         return owner ? owner.getStore() : this._defaultStore;
@@ -81,6 +106,8 @@ var Model = BaseModel.extend( {
     _owner : null,
 
     __attributes : { id : attrOptions( { value : undefined } ).createAttribute( 'id' ) },
+    _keys : [ 'id' ],
+
     Attributes   : function( x ){ this.id = x.id; },
     __class      : 'Model',
 
@@ -234,7 +261,7 @@ var Model = BaseModel.extend( {
         }
 
         attrs = options.deep ?
-                cloneAttrs( attrSpecs, new this.Attributes( attrs ), options ) :
+                cloneAttrs( this, attrs, options ) :
                 this.defaults( attrs, options );
 
         // Execute attributes transform function instead of this.set
@@ -303,16 +330,21 @@ var Model = BaseModel.extend( {
     parse  : function( resp ){ return this._parse( resp ); },
     _parse : _.identity,
 
-    isValid : function( options ){
-        // todo: need to do something smart with validation logic
-        // something declarative on attributes level, may be
-        return ModelProto.isValid.call( this, options ) && _.every( this.attributes, function( attr ){
-                if( attr && attr.isValid ){
-                    return attr.isValid( options );
-                }
+    forEach : function( fun, context ){
+        var attrNames = this._keys,
+            attributes = this.attributes,
+            __attributes = this.__attributes;
 
-                return attr instanceof Date ? !_.isNaN( attr.getTime() ) : !_.isNaN( attr );
-            } );
+        for( var i = 0; i < attrNames.length; i++ ){
+            var name = attrNames[ i ];
+
+            if( context ){
+                fun( attributes[ name ], name, __attributes[ name ] )
+            }
+            else{
+                fun.call( context, attributes[ name ], name, __attributes[ name ] )
+            }
+        }
     },
 
     _ : _ // add underscore to be accessible in templates

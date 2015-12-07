@@ -1,6 +1,8 @@
-var _        = require( 'underscore' ),
-    Backbone = require( './backbone+' ),
-    Model    = require( './model' );
+var _               = require( 'underscore' ),
+    Backbone        = require( './backbone+' ),
+    Model           = require( './model' ),
+    ValidationMixin = require( './validation-mixin' ),
+    RestMixin       = require( './rest-mixin' ).Collection;
 
 var Events   = Backbone.Events,
     trigger1 = Events.trigger1,
@@ -85,13 +87,13 @@ SilentOptions.prototype.silent = true;
 function CreateOptions( options, collection ){
     MergeOptions.call( this, options, collection );
     if( options ){
-        this.success = options.success;
-        this.error   = options.error;
-        this.wait    = options.wait;
+        _.defaults( this, options );
     }
 }
 
 module.exports = Backbone.Collection.extend( {
+    mixins : [ ValidationMixin, RestMixin ],
+
     triggerWhenChanged : 'changes',
     _listenToChanges   : 'update change reset',
     __class            : 'Collection',
@@ -106,10 +108,42 @@ module.exports = Backbone.Collection.extend( {
     _changeToken : {},
 
     _dispatcher : null,
-    properties  : {
+
+    // ES6 inspired Array methods:
+    forEach : function( callback, context ){
+        var models = this.models;
+
+        for( var i = 0; i < models.length; i++ ){
+            var model = models[ i ];
+
+            if( context ){
+                callback.call( context, model, model.cid );
+            }
+            else{
+                callback( model, model.cid );
+            }
+        }
+    },
+
+    properties : {
         length : function(){
             return this.models.length;
         }
+    },
+
+    _validateNested : function( errors ){
+        var models = this.models,
+            length = 0;
+
+        for( var i = 0; i < models.length; i++ ){
+            var error = models[ i ].validationError;
+            if( error ){
+                errors[ name ] = error;
+                length++;
+            }
+        }
+
+        return length;
     },
 
     modelId : function( attrs ){
@@ -218,15 +252,14 @@ module.exports = Backbone.Collection.extend( {
 
     create : function( a_model, a_options ){
         var options = new CreateOptions( a_options, this ),
-            model   = a_model;
+            model   = toModel( this, a_model, options );
 
-        if( !(model = toModel( this, model, options )) ) return false;
         if( !options.wait ) add( this, [ model ], options );
         var collection  = this;
         var success     = options.success;
-        options.success = function( model, resp ){
-            if( options.wait ) add( collection, [ model ], options );
-            if( success ) success( model, resp, options );
+        options.success = function( model, resp, callbackOpts ){
+            if( options.wait ) add( collection, [ model ], callbackOpts );
+            if( success ) success.call( callbackOpts.context, model, resp, callbackOpts );
         };
 
         model.save( null, options );
@@ -241,9 +274,9 @@ module.exports = Backbone.Collection.extend( {
         handler( this, event, model, collection, options );
     },
 
-    at: function(index) {
-        if (index < 0) index += this.length;
-        return this.models[index];
+    at : function( index ){
+        if( index < 0 ) index += this.length;
+        return this.models[ index ];
     },
 
     deepClone : function(){ return this.clone( { deep : true } ); },

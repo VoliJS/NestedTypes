@@ -981,8 +981,9 @@
 
     QUnit.test( "#1355 - `options` is passed to success callbacks", function( assert ){
         assert.expect( 2 );
-        var m    = new Backbone.Model( { x : 1 } );
-        var col  = new Backbone.Collection();
+        var M = Backbone.Model.defaults( { x : 1 } );
+        var m    = new M( { x : 1 } );
+        var col  = new M.Collection();
         var opts = {
             opts    : true,
             success : function( collection, resp, options ){

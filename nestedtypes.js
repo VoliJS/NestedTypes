@@ -58,21 +58,24 @@ return /******/ (function(modules) { // webpackBootstrap
 	// =======================
 	
 	var Model      = __webpack_require__( 1 ),
-	    Collection = __webpack_require__( 10 ),
-	    relations  = __webpack_require__( 14 ),
+	    Collection = __webpack_require__( 12 ),
+	    relations  = __webpack_require__( 16 ),
 	    Backbone   = __webpack_require__( 2 ),
 	    _          = __webpack_require__( 5 ),
-	    attribute  = __webpack_require__( 9 );
+	    attribute  = __webpack_require__( 9 ),
+	    Rest       = __webpack_require__( 11 );
 	
-	__webpack_require__( 15 );
+	Rest.$ = Backbone.$;
+	
+	__webpack_require__( 17 );
 	
 	Collection.subsetOf = relations.subsetOf;
 	Model.from          = relations.from;
-	Model.take = Collection.take = relations.take;
+	Model.take          = Collection.take = relations.take;
 	
-	Model.Collection    = Collection;
+	Model.Collection = Collection;
 	
-	var Store = __webpack_require__( 16 );
+	var Store = __webpack_require__( 18 );
 	Object.defineProperty( exports, 'store', Store.globalProp );
 	
 	exports.store = new Store.Model();
@@ -104,21 +107,23 @@ return /******/ (function(modules) { // webpackBootstrap
 	            return this.transaction( fun, this, arguments );
 	        }
 	    }
-	});
-	
-	function linkToProp( name ){
-	    return {
-	        get : function(){ return Backbone[ name ]; },
-	        set : function( value ){ Backbone[ name ] = value; }
-	    }
-	}
+	} );
 	
 	// allow sync and jQuery override
 	Object.defineProperties( exports, {
-	    'sync' : linkToProp( 'sync' ),
-	    '$'    : linkToProp( '$' ),
-	    'ajax' : linkToProp( 'ajax' )
-	});
+	    'sync' : {
+	        get : function(){ return Rest.sync; },
+	        set : function( value ){ Rest.sync = value; }
+	    },
+	    'ajax' : {
+	        get : function(){ return Rest.ajax; },
+	        set : function( value ){ Rest.ajax = value; }
+	    },
+	    '$'    : {
+	        get : function(){ return Backbone.$; },
+	        set : function( value ){ Backbone.$ = Rest.$ = value; }
+	    }
+	} );
 
 /***/ },
 /* 1 */
@@ -130,6 +135,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	    attrOptions = __webpack_require__( 9 ),
 	    error       = __webpack_require__( 8 ),
 	    _           = __webpack_require__( 5 ),
+	    ValidationMixin = __webpack_require__( 10 ),
+	    RestMixin = __webpack_require__( 11 ).Model,
 	    ModelProto  = BaseModel.prototype;
 	
 	var setSingleAttr  = modelSet.setSingleAttr,
@@ -137,8 +144,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	    applyTransform = modelSet.transform;
 	
 	// TODO: create loop unrolled function (or extract keys array to prototype)
-	function cloneAttrs( attrSpecs, attrs, options ){
-	    for( var name in attrs ){
+	function cloneAttrs( model, a_attrs, options ){
+	    var attrSpecs = model.__attributes,
+	        attrs = new model.Attributes( a_attrs ),
+	        _keys = model._keys;
+	
+	    for( var i = 0; i < _keys.length; i++ ){
+	        var name = _keys[ i ];
 	        attrs[ name ] = attrSpecs[ name ].clone( attrs[ name ], options );
 	    }
 	
@@ -147,7 +159,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	var _cidCount = 1;
 	
-	var Model = BaseModel.extend( {
+	var Model = BaseModel.extend({
+	    mixins : [ ValidationMixin, RestMixin ],
 	    triggerWhenChanged : 'change',
 	
 	    properties : {
@@ -190,6 +203,23 @@ return /******/ (function(modules) { // webpackBootstrap
 	        }
 	    },
 	
+	    _validateNested : function( errors ){
+	        var _keys = this.keys(),
+	            length = 0;
+	
+	        for( var i = 0; i < _keys.length; i++ ){
+	            var attr  = _keys[ i ],
+	                error = this.__attributes[ attr ].validate( this, this.attributes[ attr ], attr );
+	
+	            if( error ){
+	                errors[ name ] = error;
+	                length++;
+	            }
+	        }
+	
+	        return length;
+	    },
+	
 	    getStore : function(){
 	        var owner = this._owner || this.collection;
 	        return owner ? owner.getStore() : this._defaultStore;
@@ -207,6 +237,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	    _owner : null,
 	
 	    __attributes : { id : attrOptions( { value : undefined } ).createAttribute( 'id' ) },
+	    _keys : [ 'id' ],
+	
 	    Attributes   : function( x ){ this.id = x.id; },
 	    __class      : 'Model',
 	
@@ -360,7 +392,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        }
 	
 	        attrs = options.deep ?
-	                cloneAttrs( attrSpecs, new this.Attributes( attrs ), options ) :
+	                cloneAttrs( this, attrs, options ) :
 	                this.defaults( attrs, options );
 	
 	        // Execute attributes transform function instead of this.set
@@ -429,16 +461,21 @@ return /******/ (function(modules) { // webpackBootstrap
 	    parse  : function( resp ){ return this._parse( resp ); },
 	    _parse : _.identity,
 	
-	    isValid : function( options ){
-	        // todo: need to do something smart with validation logic
-	        // something declarative on attributes level, may be
-	        return ModelProto.isValid.call( this, options ) && _.every( this.attributes, function( attr ){
-	                if( attr && attr.isValid ){
-	                    return attr.isValid( options );
-	                }
+	    forEach : function( fun, context ){
+	        var attrNames = this._keys,
+	            attributes = this.attributes,
+	            __attributes = this.__attributes;
 	
-	                return attr instanceof Date ? !_.isNaN( attr.getTime() ) : !_.isNaN( attr );
-	            } );
+	        for( var i = 0; i < attrNames.length; i++ ){
+	            var name = attrNames[ i ];
+	
+	            if( context ){
+	                fun( attributes[ name ], name, __attributes[ name ] )
+	            }
+	            else{
+	                fun.call( context, attributes[ name ], name, __attributes[ name ] )
+	            }
+	        }
 	    },
 	
 	    _ : _ // add underscore to be accessible in templates
@@ -912,7 +949,29 @@ return /******/ (function(modules) { // webpackBootstrap
 	            return spec instanceof Function ? { get : spec } : spec;
 	        }
 	
-	        function define( protoProps, staticProps ){
+	        function attachMixins( protoProps ){
+	            var mixins = protoProps.mixins,
+	                merged = {}, properties = {};
+	
+	            for( var i = mixins.length -1; i >= 0; i-- ){
+	                var mixin = mixins[ i ];
+	                Object.assign( properties, mixin.properties );
+	                Object.assign( merged, mixin );
+	            }
+	
+	            Object.assign( merged, protoProps );
+	            Object.assign( properties, protoProps.properties );
+	
+	            merged.properties = properties;
+	            return merged;
+	        }
+	
+	        function define( a_protoProps, staticProps ){
+	            var protoProps = a_protoProps || {};
+	            if( protoProps.mixins ){
+	                protoProps = attachMixins( protoProps );
+	            }
+	
 	            Object.transform( this.prototype, protoProps, warnOnError, this );
 	            Object.transform( this, staticProps, warnOnError, this );
 	
@@ -950,8 +1009,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	//     (c) 2010-2014 Jeremy Ashkenas, DocumentCloud and Investigative Reporters & Editors
 	//     Backbone may be freely distributed under the MIT license.
-	//     For all details and documentation:
-	//     http://backbonejs.org
 	
 	(function(root, factory) {
 	
@@ -984,9 +1041,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	  // Create local references to array methods we'll want to use later.
 	  var array = [];
-	  var push = array.push;
+	
 	  var slice = array.slice;
-	  var splice = array.splice;
 	
 	  // Current version of the library. Keep in sync with `package.json`.
 	  Backbone.VERSION = '1.1.2';
@@ -1199,12 +1255,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	  // Attach all inheritable methods to the Model prototype.
 	  _.extend(Model.prototype, Events, {
 	
-	    // A hash of attributes whose current and previous value differ.
-	    changed: null,
-	
-	    // The value returned during the last failed validation.
-	    validationError: null,
-	
 	    // The default name for the JSON `id` attribute is `"id"`. MongoDB and
 	    // CouchDB users may want to set this to `"_id"`.
 	    idAttribute: 'id',
@@ -1244,138 +1294,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	      return this._previousAttributes[attr];
 	    },
 	
-	    // Fetch the model from the server. If the server's representation of the
-	    // model differs from its current attributes, they will be overridden,
-	    // triggering a `"change"` event.
-	    fetch: function(options) {
-	      options = options ? _.clone(options) : {};
-	      if (options.parse === void 0) options.parse = true;
-	      var model = this;
-	      var success = options.success;
-	      options.success = function(resp) {
-	        if (!model.set(model.parse(resp, options), options)) return false;
-	        if (success) success(model, resp, options);
-	        model.trigger('sync', model, resp, options);
-	      };
-	      wrapError(this, options);
-	      return this.sync('read', this, options);
-	    },
-	
-	    // Set a hash of model attributes, and sync the model to the server.
-	    // If the server returns an attributes hash that differs, the model's
-	    // state will be `set` again.
-	    save: function(key, val, options) {
-	      var attrs, method, xhr, attributes = this.attributes;
-	
-	      // Handle both `"key", value` and `{key: value}` -style arguments.
-	      if (key == null || typeof key === 'object') {
-	        attrs = key;
-	        options = val;
-	      } else {
-	        (attrs = {})[key] = val;
-	      }
-	
-	      options = _.extend({validate: true}, options);
-	
-	      // If we're not waiting and attributes exist, save acts as
-	      // `set(attr).save(null, opts)` with validation. Otherwise, check if
-	      // the model will be valid when the attributes, if any, are set.
-	      if (attrs && !options.wait) {
-	        if (!this.set(attrs, options)) return false;
-	      } else {
-	        if (!this._validate(attrs, options)) return false;
-	      }
-	
-	      // Set temporary attributes if `{wait: true}`.
-	      if (attrs && options.wait) {
-	        this.attributes = _.extend({}, attributes, attrs);
-	      }
-	
-	      // After a successful server-side save, the client is (optionally)
-	      // updated with the server-side state.
-	      if (options.parse === void 0) options.parse = true;
-	      var model = this;
-	      var success = options.success;
-	      options.success = function(resp) {
-	        // Ensure attributes are restored during synchronous saves.
-	        model.attributes = attributes;
-	        var serverAttrs = model.parse(resp, options);
-	        if (options.wait) serverAttrs = _.extend(attrs || {}, serverAttrs);
-	        if (_.isObject(serverAttrs) && !model.set(serverAttrs, options)) {
-	          return false;
-	        }
-	        if (success) success(model, resp, options);
-	        model.trigger('sync', model, resp, options);
-	      };
-	      wrapError(this, options);
-	
-	      method = this.isNew() ? 'create' : (options.patch ? 'patch' : 'update');
-	      if (method === 'patch') options.attrs = attrs;
-	      xhr = this.sync(method, this, options);
-	
-	      // Restore attributes.
-	      if (attrs && options.wait) this.attributes = attributes;
-	
-	      return xhr;
-	    },
-	
-	    // Destroy this model on the server if it was already persisted.
-	    // Optimistically removes the model from its collection, if it has one.
-	    // If `wait: true` is passed, waits for the server to respond before removal.
-	    destroy: function(options) {
-	      options = options ? _.clone(options) : {};
-	      var model = this;
-	      var success = options.success;
-	
-	      var destroy = function() {
-	        model.trigger('destroy', model, model.collection, options);
-	      };
-	
-	      options.success = function(resp) {
-	        if (options.wait || model.isNew()) destroy();
-	        if (success) success(model, resp, options);
-	        if (!model.isNew()) model.trigger('sync', model, resp, options);
-	      };
-	
-	      if (this.isNew()) {
-	        options.success();
-	        return false;
-	      }
-	      wrapError(this, options);
-	
-	      var xhr = this.sync('delete', this, options);
-	      if (!options.wait) destroy();
-	      return xhr;
-	    },
-	
-	    // Default URL for the model's representation on the server -- if you're
-	    // using Backbone's restful methods, override this to change the endpoint
-	    // that will be called.
-	    url: function() {
-	      var base =
-	        _.result(this, 'urlRoot') ||
-	        _.result(this.collection, 'url') ||
-	        urlError();
-	      if (this.isNew()) return base;
-	      return base.replace(/([^\/])$/, '$1/') + encodeURIComponent(this.id);
-	    },
-	
 	    // A model is new if it has never been saved to the server, and lacks an id.
 	    isNew: function() {
 	      return !this.has(this.idAttribute);
-	    },
-	
-	    // Run validation against the next complete set of model attributes,
-	    // returning `true` if all is well. Otherwise, fire an `"invalid"` event.
-	    _validate: function(attrs, options) {
-	      if (!options.validate || !this.validate) return true;
-	      attrs = _.extend({}, this.attributes, attrs);
-	      var error = this.validationError = this.validate(attrs, options) || null;
-	      if (!error) return true;
-	      this.trigger('invalid', this, error, _.extend(options, {validationError: error}));
-	      return false;
 	    }
-	
 	  });
 	
 	  // Underscore methods that we want to implement on the Model.
@@ -1422,11 +1344,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	      return this.map(function(model){ return model.toJSON(options); });
 	    },
 	
-	    // Proxy `Backbone.sync` by default.
-	    sync: function() {
-	      return Backbone.sync.apply(this, arguments);
-	    },
-	
 	    // Add a model to the end of the collection.
 	    push: function(model, options) {
 	      return this.add(model, _.extend({at: this.length}, options));
@@ -1454,17 +1371,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	    // Slice out a sub-array of models from the collection.
 	    slice: function() {
 	      return slice.apply(this.models, arguments);
-	    },
-	
-	    // Get a model from the set by id.
-	    get: function(obj) {
-	      if (obj == null) return void 0;
-	      return this._byId[obj] || this._byId[obj.id] || this._byId[obj.cid];
-	    },
-	
-	    // Get the model at the given index.
-	    at: function(index) {
-	      return this.models[index];
 	    },
 	
 	    // Return models with matching attributes. Useful for simple cases of
@@ -1508,42 +1414,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	      return _.invoke(this.models, 'get', attr);
 	    },
 	
-	    // Fetch the default set of models for this collection, resetting the
-	    // collection when they arrive. If `reset: true` is passed, the response
-	    // data will be passed through the `reset` method instead of `set`.
-	    fetch: function(options) {
-	      options = options ? _.clone(options) : {};
-	      if (options.parse === void 0) options.parse = true;
-	      var success = options.success;
-	      var collection = this;
-	      options.success = function(resp) {
-	        var method = options.reset ? 'reset' : 'set';
-	        collection[method](resp, options);
-	        if (success) success(collection, resp, options);
-	        collection.trigger('sync', collection, resp, options);
-	      };
-	      wrapError(this, options);
-	      return this.sync('read', this, options);
-	    },
-	
 	    // **parse** converts a response into a list of models to be added to the
 	    // collection. The default implementation is just to pass it through.
 	    parse: function(resp, options) {
 	      return resp;
-	    },
-	
-	    // Private method to reset all internal state. Called when the collection
-	    // is first initialized or reset.
-	    _reset: function() {
-	      this.length = 0;
-	      this.models = [];
-	      this._byId  = {};
-	    },
-	
-	    // Internal method to sever a model's ties to a collection.
-	    _removeReference: function(model, options) {
-	      if (this === model.collection) delete model.collection;
-	      model.off('all', this._onModelEvent, this);
 	    }
 	  });
 	
@@ -1709,104 +1583,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }
 	
 	  });
-	
-	  // Backbone.sync
-	  // -------------
-	
-	  // Override this function to change the manner in which Backbone persists
-	  // models to the server. You will be passed the type of request, and the
-	  // model in question. By default, makes a RESTful Ajax request
-	  // to the model's `url()`. Some possible customizations could be:
-	  //
-	  // * Use `setTimeout` to batch rapid-fire updates into a single request.
-	  // * Send up the models as XML instead of JSON.
-	  // * Persist models via WebSockets instead of Ajax.
-	  //
-	  // Turn on `Backbone.emulateHTTP` in order to send `PUT` and `DELETE` requests
-	  // as `POST`, with a `_method` parameter containing the true HTTP method,
-	  // as well as all requests with the body as `application/x-www-form-urlencoded`
-	  // instead of `application/json` with the model in a param named `model`.
-	  // Useful when interfacing with server-side languages like **PHP** that make
-	  // it difficult to read the body of `PUT` requests.
-	  Backbone.sync = function(method, model, options) {
-	    var type = methodMap[method];
-	
-	    // Default options, unless specified.
-	    _.defaults(options || (options = {}), {
-	      emulateHTTP: Backbone.emulateHTTP,
-	      emulateJSON: Backbone.emulateJSON
-	    });
-	
-	    // Default JSON-request options.
-	    var params = {type: type, dataType: 'json'};
-	
-	    // Ensure that we have a URL.
-	    if (!options.url) {
-	      params.url = _.result(model, 'url') || urlError();
-	    }
-	
-	    // Ensure that we have the appropriate request data.
-	    if (options.data == null && model && (method === 'create' || method === 'update' || method === 'patch')) {
-	      params.contentType = 'application/json';
-	      params.data = JSON.stringify(options.attrs || model.toJSON(options));
-	    }
-	
-	    // For older servers, emulate JSON by encoding the request into an HTML-form.
-	    if (options.emulateJSON) {
-	      params.contentType = 'application/x-www-form-urlencoded';
-	      params.data = params.data ? {model: params.data} : {};
-	    }
-	
-	    // For older servers, emulate HTTP by mimicking the HTTP method with `_method`
-	    // And an `X-HTTP-Method-Override` header.
-	    if (options.emulateHTTP && (type === 'PUT' || type === 'DELETE' || type === 'PATCH')) {
-	      params.type = 'POST';
-	      if (options.emulateJSON) params.data._method = type;
-	      var beforeSend = options.beforeSend;
-	      options.beforeSend = function(xhr) {
-	        xhr.setRequestHeader('X-HTTP-Method-Override', type);
-	        if (beforeSend) return beforeSend.apply(this, arguments);
-	      };
-	    }
-	
-	    // Don't process data on a non-GET request.
-	    if (params.type !== 'GET' && !options.emulateJSON) {
-	      params.processData = false;
-	    }
-	
-	    // If we're sending a `PATCH` request, and we're in an old Internet Explorer
-	    // that still has ActiveX enabled by default, override jQuery to use that
-	    // for XHR instead. Remove this line when jQuery supports `PATCH` on IE8.
-	    if (params.type === 'PATCH' && noXhrPatch) {
-	      params.xhr = function() {
-	        return new ActiveXObject("Microsoft.XMLHTTP");
-	      };
-	    }
-	
-	    // Make the request, allowing the user to override any Ajax options.
-	    var xhr = options.xhr = Backbone.ajax(_.extend(params, options));
-	    model.trigger('request', model, xhr, options);
-	    return xhr;
-	  };
-	
-	  var noXhrPatch =
-	    typeof window !== 'undefined' && !!window.ActiveXObject &&
-	      !(window.XMLHttpRequest && (new XMLHttpRequest).dispatchEvent);
-	
-	  // Map from CRUD to HTTP for our default `Backbone.sync` implementation.
-	  var methodMap = {
-	    'create': 'POST',
-	    'update': 'PUT',
-	    'patch':  'PATCH',
-	    'delete': 'DELETE',
-	    'read':   'GET'
-	  };
-	
-	  // Set the default implementation of `Backbone.ajax` to proxy through to `$`.
-	  // Override this if you'd like to use a different library.
-	  Backbone.ajax = function() {
-	    return Backbone.$.ajax.apply(Backbone.$, arguments);
-	  };
 	
 	  // Backbone.Router
 	  // ---------------
@@ -2146,23 +1922,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	  // Create the default Backbone.history.
 	  Backbone.history = new History;
 	
-	  // Helpers
-	  // -------
-	
-	  // Throw an error when a URL is needed, and none is supplied.
-	  var urlError = function() {
-	    throw new Error('A "url" property or function must be specified');
-	  };
-	
-	  // Wrap an optional error callback with a fallback error event.
-	  var wrapError = function(model, options) {
-	    var error = options.error;
-	    options.error = function(resp) {
-	      if (error) error(model, resp, options);
-	      model.trigger('error', model, resp, options);
-	    };
-	  };
-	
 	  return Backbone;
 	
 	}));
@@ -2309,11 +2068,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	function bbSetAttrs( model, attrs, opts ){
 	    'use strict';
 	    var options = opts || {};
-	
-	    // Run validation.
-	    if( !model._validate( attrs, options ) ){
-	        return false;
-	    }
 	
 	    // Extract attributes and options.
 	    var unset     = options.unset,
@@ -2573,6 +2327,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	        return this;
 	    },
 	
+	    check : function( check, error ){
+	        this._options.check = check;
+	        if( error ){
+	            this._options._error = error;
+	        }
+	
+	    },
+	
 	    proxy : function( attrs ){
 	        this._options.proxy = attrs || true;
 	        return this;
@@ -2743,6 +2505,20 @@ return /******/ (function(modules) { // webpackBootstrap
 	        return value;
 	    },
 	
+	    check : function( value ){
+	        if( _.isNaN( value ) || value === Infinity || value === -Infinity ) return false;
+	
+	        if( value && value.isValid ) return value.isValid();
+	
+	        return true;
+	    },
+	
+	    validate : function( model, value, name ){
+	        if( !this.check.call( model, value, name ) ){
+	            return this._error || 'Invalid value';
+	        }
+	    },
+	
 	    toJSON : function( value, key ){
 	        return value && value.toJSON ? value.toJSON() : value;
 	    },
@@ -2908,29 +2684,366 @@ return /******/ (function(modules) { // webpackBootstrap
 
 /***/ },
 /* 10 */
+/***/ function(module, exports) {
+
+	module.exports = {
+	    properties : {
+	        validationError(){
+	            var errors = this._validationError || ( this._validationError = new ValidationError() );
+	            return errors.update( this );
+	        }
+	    },
+	
+	    _validationError : null,
+	
+	    validate : function(){},
+	
+	    _validateNested : function( errors ){
+	        return 0;
+	    },
+	
+	    isValid : function( key ){
+	        var error = this.validationError;
+	        return !error || ( Boolean( key ) && !error.nested[ key ] );
+	    },
+	
+	    _invalidate : function( options ){
+	        if( options.validate && this.validationError ){
+	            this.trigger( 'invalid', this, this.validationError, options );
+	            return true;
+	        }
+	    }
+	};
+	
+	function ValidationError(){
+	    this._changeToken = {};
+	    this.length       = 0;
+	    this.nested       = {};
+	    this.error        = null;
+	}
+	
+	ValidationError.prototype.update = function( obj ){
+	    if( this._changeToken !== obj._changeToken ){
+	        this.length = obj._validateNested( this.nested = {} );
+	
+	        if( this.error = obj.validate( obj ) ){
+	            this.length++;
+	        }
+	
+	        this._changeToken = obj._changeToken;
+	    }
+	
+	    return this.length ? this : null;
+	};
+
+/***/ },
+/* 11 */
+/***/ function(module, exports) {
+
+	/**
+	 * Backbone.js 1.2.3 REST implementation
+	 * (c) 2010-2015 Jeremy Ashkenas, DocumentCloud and Investigative Reporters & Editors
+	 * Backbone may be freely distributed under the MIT license.
+	 *
+	 * With validation patches - NestedTypes validation semantic is applied. (c) Vlad Balin, 2015.
+	 */
+	
+	exports.Model = {
+	    // Fetch the model from the server, merging the response with the model's
+	    // local attributes. Any changed attributes will trigger a "change" event.
+	    fetch : function( options ){
+	        options         = _.extend( { parse : true }, options );
+	        var model       = this;
+	        var success     = options.success;
+	        options.success = function( resp ){
+	            var serverAttrs = options.parse ? model.parse( resp, options ) : resp;
+	            model.set( serverAttrs, options );
+	            if( model._invalidate( options ) ) return false;
+	
+	            if( success ) success.call( options.context, model, resp, options );
+	            model.trigger( 'sync', model, resp, options );
+	        };
+	
+	        wrapError( this, options );
+	        return this.sync( 'read', this, options );
+	    },
+	
+	    // Proxy `Backbone.sync` by default -- but override this if you need
+	    // custom syncing semantics for *this* particular model.
+	    sync : function(){
+	        return exports.sync.apply( this, arguments );
+	    },
+	
+	    // Set a hash of model attributes, and sync the model to the server.
+	    // If the server returns an attributes hash that differs, the model's
+	    // state will be `set` again.
+	    save : function( key, val, options ){
+	        // Handle both `"key", value` and `{key: value}` -style arguments.
+	        var attrs;
+	        if( key == null || typeof key === 'object' ){
+	            attrs   = key;
+	            options = val;
+	        }
+	        else{
+	            (attrs = {})[ key ] = val;
+	        }
+	
+	        options  = _.extend( { validate : true, parse : true }, options );
+	        var wait = options.wait;
+	
+	        // If we're not waiting and attributes exist, save acts as
+	        // `set(attr).save(null, opts)` with validation. Otherwise, check if
+	        // the model will be valid when the attributes, if any, are set.
+	        if( attrs && !wait ){
+	            this.set( attrs, options );
+	        }
+	
+	        if( this._invalidate( options ) ){
+	            if( attrs && wait ) this.set( attrs, options );
+	            return false;
+	        }
+	
+	        // After a successful server-side save, the client is (optionally)
+	        // updated with the server-side state.
+	        var model       = this;
+	        var success     = options.success;
+	        var attributes  = this.attributes;
+	        options.success = function( resp ){
+	            // Ensure attributes are restored during synchronous saves.
+	            model.attributes = attributes;
+	            var serverAttrs  = options.parse ? model.parse( resp, options ) : resp;
+	            if( wait ) serverAttrs = _.extend( {}, attrs, serverAttrs );
+	
+	
+	            if( serverAttrs ){
+	                model.set( serverAttrs, options );
+	                if( model._invalidate( options ) ) return false;
+	            }
+	
+	            if( success ) success.call( options.context, model, resp, options );
+	            model.trigger( 'sync', model, resp, options );
+	        };
+	        wrapError( this, options );
+	
+	        // Set temporary attributes if `{wait: true}` to properly find new ids.
+	        if( attrs && wait ) this.attributes = _.extend( {}, attributes, attrs );
+	
+	        var method = this.isNew() ? 'create' : (options.patch ? 'patch' : 'update');
+	        if( method === 'patch' && !options.attrs ) options.attrs = attrs;
+	        var xhr = this.sync( method, this, options );
+	
+	        // Restore attributes.
+	        this.attributes = attributes;
+	
+	        return xhr;
+	    },
+	
+	    // Destroy this model on the server if it was already persisted.
+	    // Optimistically removes the model from its collection, if it has one.
+	    // If `wait: true` is passed, waits for the server to respond before removal.
+	    destroy : function( options ){
+	        options     = options ? _.clone( options ) : {};
+	        var model   = this;
+	        var success = options.success;
+	        var wait    = options.wait;
+	
+	        var destroy = function(){
+	            model.stopListening();
+	            model.trigger( 'destroy', model, model.collection, options );
+	        };
+	
+	        options.success = function( resp ){
+	            if( wait ) destroy();
+	            if( success ) success.call( options.context, model, resp, options );
+	            if( !model.isNew() ) model.trigger( 'sync', model, resp, options );
+	        };
+	
+	        var xhr = false;
+	        if( this.isNew() ){
+	            _.defer( options.success );
+	        }
+	        else{
+	            wrapError( this, options );
+	            xhr = this.sync( 'delete', this, options );
+	        }
+	        if( !wait ) destroy();
+	        return xhr;
+	    },
+	
+	    urlRoot : '',
+	
+	    // Default URL for the model's representation on the server -- if you're
+	    // using Backbone's restful methods, override this to change the endpoint
+	    // that will be called.
+	    url : function(){
+	        var base =
+	                _.result( this, 'urlRoot' ) ||
+	                _.result( this.collection, 'url' ) ||
+	                urlError();
+	        if( this.isNew() ) return base;
+	        var id = this.get( this.idAttribute );
+	        return base.replace( /[^\/]$/, '$&/' ) + encodeURIComponent( id );
+	    }
+	};
+	
+	exports.Collection = {
+	    url : '',
+	
+	    // Fetch the default set of models for this collection, resetting the
+	    // collection when they arrive. If `reset: true` is passed, the response
+	    // data will be passed through the `reset` method instead of `set`.
+	    fetch : function( options ){
+	        options         = _.extend( { parse : true }, options );
+	        var success     = options.success;
+	        var collection  = this;
+	        options.success = function( resp ){
+	            var method = options.reset ? 'reset' : 'set';
+	            collection[ method ]( resp, options );
+	            if( collection._invalidate( options ) ) return false;
+	
+	            if( success ) success.call( options.context, collection, resp, options );
+	            collection.trigger( 'sync', collection, resp, options );
+	        };
+	
+	        wrapError( this, options );
+	        return this.sync( 'read', this, options );
+	    },
+	
+	    // Proxy `Backbone.sync` by default -- but override this if you need
+	    // custom syncing semantics for *this* particular model.
+	    sync : function(){
+	        return exports.sync.apply( this, arguments );
+	    }
+	};
+	
+	// Throw an error when a URL is needed, and none is supplied.
+	function urlError(){
+	    throw new Error( 'A "url" property or function must be specified' );
+	}
+	
+	// Wrap an optional error callback with a fallback error event.
+	function wrapError( model, options ){
+	    var error     = options.error;
+	    options.error = function( resp ){
+	        if( error ) error.call( options.context, model, resp, options );
+	        model.trigger( 'error', model, resp, options );
+	    };
+	}
+	
+	// Backbone.sync
+	// -------------
+	
+	// Override this function to change the manner in which Backbone persists
+	// models to the server. You will be passed the type of request, and the
+	// model in question. By default, makes a RESTful Ajax request
+	// to the model's `url()`. Some possible customizations could be:
+	//
+	// * Use `setTimeout` to batch rapid-fire updates into a single request.
+	// * Send up the models as XML instead of JSON.
+	// * Persist models via WebSockets instead of Ajax.
+	//
+	// Turn on `Backbone.emulateHTTP` in order to send `PUT` and `DELETE` requests
+	// as `POST`, with a `_method` parameter containing the true HTTP method,
+	// as well as all requests with the body as `application/x-www-form-urlencoded`
+	// instead of `application/json` with the model in a param named `model`.
+	// Useful when interfacing with server-side languages like **PHP** that make
+	// it difficult to read the body of `PUT` requests.
+	exports.sync = function( method, model, options ){
+	    var type = methodMap[ method ];
+	
+	    // Default JSON-request options.
+	    var params = { type : type, dataType : 'json' };
+	
+	    // Ensure that we have a URL.
+	    if( !options.url ){
+	        params.url = _.result( model, 'url' ) || urlError();
+	    }
+	
+	    // Ensure that we have the appropriate request data.
+	    if( options.data == null && model && (method === 'create' || method === 'update' || method === 'patch') ){
+	        params.contentType = 'application/json';
+	        params.data        = JSON.stringify( options.attrs || model.toJSON( options ) );
+	    }
+	
+	    // For older servers, emulate JSON by encoding the request into an HTML-form.
+	    if( options.emulateJSON ){
+	        params.contentType = 'application/x-www-form-urlencoded';
+	        params.data        = params.data ? { model : params.data } : {};
+	    }
+	
+	    // For older servers, emulate HTTP by mimicking the HTTP method with `_method`
+	    // And an `X-HTTP-Method-Override` header.
+	    if( options.emulateHTTP && (type === 'PUT' || type === 'DELETE' || type === 'PATCH') ){
+	        params.type = 'POST';
+	        if( options.emulateJSON ) params.data._method = type;
+	        var beforeSend     = options.beforeSend;
+	        options.beforeSend = function( xhr ){
+	            xhr.setRequestHeader( 'X-HTTP-Method-Override', type );
+	            if( beforeSend ) return beforeSend.apply( this, arguments );
+	        };
+	    }
+	
+	    // Don't process data on a non-GET request.
+	    if( params.type !== 'GET' && !options.emulateJSON ){
+	        params.processData = false;
+	    }
+	
+	    // Pass along `textStatus` and `errorThrown` from jQuery.
+	    var error     = options.error;
+	    options.error = function( xhr, textStatus, errorThrown ){
+	        options.textStatus  = textStatus;
+	        options.errorThrown = errorThrown;
+	        if( error ) error.call( options.context, xhr, textStatus, errorThrown );
+	    };
+	
+	    // Make the request, allowing the user to override any Ajax options.
+	    var xhr = options.xhr = exports.ajax( _.extend( params, options ) );
+	    model.trigger( 'request', model, xhr, options );
+	    return xhr;
+	};
+	
+	// Map from CRUD to HTTP for our default `Backbone.sync` implementation.
+	var methodMap = {
+	    'create' : 'POST',
+	    'update' : 'PUT',
+	    'patch'  : 'PATCH',
+	    'delete' : 'DELETE',
+	    'read'   : 'GET'
+	};
+	
+	// Set the default implementation of `Backbone.ajax` to proxy through to `$`.
+	// Override this if you'd like to use a different library.
+	exports.ajax = function(){
+	    return exports.$.ajax.apply( exports.$, arguments );
+	};
+
+/***/ },
+/* 12 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var _        = __webpack_require__( 5 ),
-	    Backbone = __webpack_require__( 2 ),
-	    Model    = __webpack_require__( 1 );
+	var _               = __webpack_require__( 5 ),
+	    Backbone        = __webpack_require__( 2 ),
+	    Model           = __webpack_require__( 1 ),
+	    ValidationMixin = __webpack_require__( 10 ),
+	    RestMixin       = __webpack_require__( 11 ).Collection;
 	
 	var Events   = Backbone.Events,
 	    trigger1 = Events.trigger1,
 	    trigger2 = Events.trigger2,
 	    trigger3 = Events.trigger3;
 	
-	var Commons               = __webpack_require__( 11 ),
+	var Commons               = __webpack_require__( 13 ),
 	    toModel               = Commons.toModel,
 	    dispose               = Commons.dispose,
 	    ModelEventsDispatcher = Commons.ModelEventsDispatcher;
 	
-	var Add          = __webpack_require__( 12 ),
+	var Add          = __webpack_require__( 14 ),
 	    MergeOptions = Add.MergeOptions,
 	    add          = Add.add,
 	    set          = Add.set,
 	    emptySet     = Add.emptySet;
 	
-	var Remove     = __webpack_require__( 13 ),
+	var Remove     = __webpack_require__( 15 ),
 	    removeOne  = Remove.removeOne,
 	    removeMany = Remove.removeMany;
 	
@@ -2997,13 +3110,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	function CreateOptions( options, collection ){
 	    MergeOptions.call( this, options, collection );
 	    if( options ){
-	        this.success = options.success;
-	        this.error   = options.error;
-	        this.wait    = options.wait;
+	        _.defaults( this, options );
 	    }
 	}
 	
 	module.exports = Backbone.Collection.extend( {
+	    mixins : [ ValidationMixin, RestMixin ],
+	
 	    triggerWhenChanged : 'changes',
 	    _listenToChanges   : 'update change reset',
 	    __class            : 'Collection',
@@ -3018,10 +3131,42 @@ return /******/ (function(modules) { // webpackBootstrap
 	    _changeToken : {},
 	
 	    _dispatcher : null,
-	    properties  : {
+	
+	    // ES6 inspired Array methods:
+	    forEach : function( callback, context ){
+	        var models = this.models;
+	
+	        for( var i = 0; i < models.length; i++ ){
+	            var model = models[ i ];
+	
+	            if( context ){
+	                callback.call( context, model, model.cid );
+	            }
+	            else{
+	                callback( model, model.cid );
+	            }
+	        }
+	    },
+	
+	    properties : {
 	        length : function(){
 	            return this.models.length;
 	        }
+	    },
+	
+	    _validateNested : function( errors ){
+	        var models = this.models,
+	            length = 0;
+	
+	        for( var i = 0; i < models.length; i++ ){
+	            var error = models[ i ].validationError;
+	            if( error ){
+	                errors[ name ] = error;
+	                length++;
+	            }
+	        }
+	
+	        return length;
 	    },
 	
 	    modelId : function( attrs ){
@@ -3130,15 +3275,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	    create : function( a_model, a_options ){
 	        var options = new CreateOptions( a_options, this ),
-	            model   = a_model;
+	            model   = toModel( this, a_model, options );
 	
-	        if( !(model = toModel( this, model, options )) ) return false;
 	        if( !options.wait ) add( this, [ model ], options );
 	        var collection  = this;
 	        var success     = options.success;
-	        options.success = function( model, resp ){
-	            if( options.wait ) add( collection, [ model ], options );
-	            if( success ) success( model, resp, options );
+	        options.success = function( model, resp, callbackOpts ){
+	            if( options.wait ) add( collection, [ model ], callbackOpts );
+	            if( success ) success.call( callbackOpts.context, model, resp, callbackOpts );
 	        };
 	
 	        model.save( null, options );
@@ -3153,9 +3297,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	        handler( this, event, model, collection, options );
 	    },
 	
-	    at: function(index) {
-	        if (index < 0) index += this.length;
-	        return this.models[index];
+	    at : function( index ){
+	        if( index < 0 ) index += this.length;
+	        return this.models[ index ];
 	    },
 	
 	    deepClone : function(){ return this.clone( { deep : true } ); },
@@ -3196,7 +3340,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	} );
 
 /***/ },
-/* 11 */
+/* 13 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
@@ -3287,7 +3431,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	function ModelOptions( options, collection ){
 	    this.parse      = options.parse;
 	    this.collection = collection;
-	    this.validate = options.validate;
 	}
 	
 	// convert argument to model. Return false if fails.
@@ -3296,14 +3439,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    var Model = collection.model;
 	    if( attrs instanceof Model ) return attrs;
 	
-	    var model = new Model( attrs, new ModelOptions( a_options, collection ) );
-	
-	    if( model.validationError ){
-	        trigger3( collection, 'invalid', collection, model.validationError, options );
-	        return false;
-	    }
-	
-	    return model;
+	    return new Model( attrs, new ModelOptions( a_options, collection ) );
 	}
 	
 	function ModelEventsDispatcher( model ){
@@ -3338,7 +3474,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 /***/ },
-/* 12 */
+/* 14 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
@@ -3353,7 +3489,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    trigger2 = Events.trigger2,
 	    trigger3 = Events.trigger3;
 	
-	var Commons         = __webpack_require__( 11 ),
+	var Commons         = __webpack_require__( 13 ),
 	    addIndex        = Commons.addIndex,
 	    addReference    = Commons.addReference,
 	    removeReference = Commons.removeReference,
@@ -3363,10 +3499,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	var MergeOptions = exports.MergeOptions = function( a_options, collection ){
 	    var options = a_options || {};
 	
-	    this.silent   = options.silent;
-	    this.parse    = options.parse;
-	    this.merge    = options.merge;
-	    this.validate = options.validate;
+	    this.silent = options.silent;
+	    this.parse  = options.parse;
+	    this.merge  = options.merge;
 	
 	    // at option
 	    var at = options.at;
@@ -3453,12 +3588,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	        }
 	        else{
 	            model = toModel( collection, item, a_options );
-	            if( model ){
-	                models.push( model );
-	                addReference( collection, model );
-	                addIndex( _byId, model );
-	                added.push( model );
-	            }
+	
+	            models.push( model );
+	            addReference( collection, model );
+	            addIndex( _byId, model );
+	            added.push( model );
+	
 	        }
 	    }
 	
@@ -3509,11 +3644,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	        }
 	
 	        var model = toModel( self, src, options );
-	        if( model ){
-	            addReference( self, model );
-	            models[ j++ ] = model;
-	            addIndex( _byId, model );
-	        }
+	
+	        addReference( self, model );
+	        models[ j++ ] = model;
+	        addIndex( _byId, model );
+	
 	    }
 	
 	    models.length = j;
@@ -3599,8 +3734,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	        }
 	        else{
 	            model = toModel( self, item, options );
-	            if( !model ) continue;
-	
 	            addReference( self, model );
 	            toAdd.push( model );
 	        }
@@ -3617,7 +3750,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 /***/ },
-/* 13 */
+/* 15 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
@@ -3627,7 +3760,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	 *      - silent : Boolean = false
 	 */
 	
-	var Commons         = __webpack_require__( 11 ),
+	var Commons         = __webpack_require__( 13 ),
 	    removeIndex     = Commons.removeIndex,
 	    removeReference = Commons.removeReference;
 	
@@ -3733,7 +3866,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 /***/ },
-/* 14 */
+/* 16 */
 /***/ function(module, exports, __webpack_require__) {
 
 	// Nested Relations
@@ -3742,7 +3875,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	var bbVersion  = __webpack_require__( 2 ).VERSION,
 	    attribute  = __webpack_require__( 9 ),
 	    error      = __webpack_require__( 8 ),
-	    Collection = __webpack_require__( 10 ),
+	    Collection = __webpack_require__( 12 ),
 	    _          = __webpack_require__( 5 );
 	
 	function parseReference( collectionRef ){
@@ -3971,7 +4104,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 15 */
+/* 17 */
 /***/ function(module, exports, __webpack_require__) {
 
 	// Date.parse with progressive enhancement for ISO 8601 <https://github.com/csnover/js-iso8601>
@@ -3984,7 +4117,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    modelSet   = __webpack_require__( 7 ),
 	    Model      = __webpack_require__( 1 ),
 	    errors     = __webpack_require__( 8 ),
-	    Collection = __webpack_require__( 10 );
+	    Collection = __webpack_require__( 12 );
 	
 	// Constructors Attribute
 	// ----------------
@@ -4044,6 +4177,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	    cast : function( value ){
 	        return value == null || value instanceof Date ? value :
 	               new Date( typeof value === 'string' ? parseDate( value ) : value )
+	    },
+	
+	    check : function( value ){
+	        return _.isNaN( +value );
 	    },
 	
 	    toJSON : function( value ){ return value && value.toJSON(); },
@@ -4178,13 +4315,14 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 16 */
+/* 18 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var Backbone   = __webpack_require__( 2 ),
 	    $          = Backbone.$;
 	    Model      = __webpack_require__( 1 ),
-	    Collection = __webpack_require__( 10 ),
+	    Collection = __webpack_require__( 12 ),
+	    RestMixin  = __webpack_require__( 11 ),
 	    _          = __webpack_require__( 5 );
 	
 	var _store = null;
@@ -4193,7 +4331,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	  // end store lookup sequence on this class
 	  getStore : function(){ return this; },
 	
-	  sync : function(){ return Backbone.sync.apply( Backbone, arguments ); },
+	  sync : function(){ return RestMixin.sync.apply( Backbone, arguments ); },
 	  // delegate item lookup to owner, and to the global store if undefined
 	  get : function( name ){ return this[ name ] || ( this._owner && this._owner.get( name ) ) || _store[ name ]; }
 	});

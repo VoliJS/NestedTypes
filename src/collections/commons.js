@@ -94,7 +94,10 @@ function toModel( collection, attrs, a_options ){
     var Model = collection.model;
     if( attrs instanceof Model ) return attrs;
 
-    return new Model( attrs, new ModelOptions( a_options, collection ) );
+    var options = new ModelOptions( a_options, collection );
+
+    // Use abstract class factory if defined.
+    return Model.create ? Model.create( attrs, options ) : new Model( attrs, options );
 }
 
 function ModelEventsDispatcher( model ){

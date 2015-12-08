@@ -5,6 +5,8 @@
     title  : "The Tempest",
     author : "Bill Shakespeare",
     audience : "",
+    b : 0,
+    d : 0,
     length : 123
   });
 

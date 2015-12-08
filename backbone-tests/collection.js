@@ -1695,13 +1695,20 @@
     } );
 
     QUnit.test( 'Polymorphic models work with "simple" constructors', function( assert ){
-        var A          = Backbone.Model.extend();
-        var B          = Backbone.Model.extend();
-        var C          = Backbone.Collection.extend( {
-            model : function( attrs ){
+        var Abstract = Backbone.Model.extend({
+            defaults : {
+                type : ''
+            }
+        },{
+            create : function( attrs, options ){
                 return attrs.type === 'a' ? new A( attrs ) : new B( attrs );
             }
-        } );
+        });
+
+        var A          = Abstract.extend({});
+        var B          = Abstract.extend({});
+        var C          = Abstract.Collection;
+
         var collection = new C( [ { id : 1, type : 'a' }, { id : 2, type : 'b' } ] );
         assert.equal( collection.length, 2 );
         assert.ok( collection.at( 0 ) instanceof A );
@@ -1711,17 +1718,22 @@
     } );
 
     QUnit.test( 'Polymorphic models work with "advanced" constructors', function( assert ){
-        var A          = Backbone.Model.extend( { idAttribute : '_id' } );
-        var B          = Backbone.Model.extend( { idAttribute : '_id' } );
-        var C          = Backbone.Collection.extend( {
-            model : Backbone.Model.extend( {
-                constructor : function( attrs ){
-                    return attrs.type === 'a' ? new A( attrs ) : new B( attrs );
-                },
+        var Abstract = Backbone.Model.extend( {
+            defaults : {
+                type : ''
+            },
 
-                idAttribute : '_id'
-            } )
-        } );
+            idAttribute : '_id'
+        },{
+            create : function( attrs ){
+                return attrs.type === 'a' ? new A( attrs ) : new B( attrs );
+            }
+        });
+
+        var A          = Abstract.extend( { idAttribute : '_id' } );
+        var B          = Abstract.extend( { idAttribute : '_id' } );
+        var C          = Abstract.Collection;
+
         var collection = new C( [ { _id : 1, type : 'a' }, { _id : 2, type : 'b' } ] );
         assert.equal( collection.length, 2 );
         assert.ok( collection.at( 0 ) instanceof A );
@@ -1729,21 +1741,12 @@
         assert.ok( collection.at( 1 ) instanceof B );
         assert.equal( collection.at( 1 ), collection.get( 2 ) );
 
-        C          = Backbone.Collection.extend( {
-            model : function( attrs ){
-                return attrs.type === 'a' ? new A( attrs ) : new B( attrs );
-            },
-
-            modelId : function( attrs ){
-                return attrs.type + '-' + attrs.id;
-            }
-        } );
-        collection = new C( [ { id : 1, type : 'a' }, { id : 1, type : 'b' } ] );
-        assert.equal( collection.length, 2 );
+        collection = new C( [ { _id : 1, type : 'a' }, { _id : 1, type : 'b' } ] );
+        assert.equal( collection.length, 1 );
         assert.ok( collection.at( 0 ) instanceof A );
-        assert.equal( collection.at( 0 ), collection.get( 'a-1' ) );
-        assert.ok( collection.at( 1 ) instanceof B );
-        assert.equal( collection.at( 1 ), collection.get( 'b-1' ) );
+        assert.equal( collection.at( 0 ), collection.get( '1' ) );
+        assert.ok( !( B.create ) );
+        assert.ok( Abstract.create );
     } );
 
     QUnit.test( "#3039: adding at index fires with correct at", function( assert ){

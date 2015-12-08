@@ -962,11 +962,16 @@ return /******/ (function(modules) { // webpackBootstrap
 	            return Object.keys( allProps );
 	        }
 	
-	        function define( a_protoProps, staticProps ){
+	        function define( a_protoProps, a_staticProps ){
 	            var protoProps = a_protoProps || {};
+	                staticProps = a_staticProps || {};
+	
 	            if( protoProps.mixins ){
 	                protoProps = attachMixins( protoProps );
 	            }
+	
+	            // do not inherit abstract class factory!
+	            if( !staticProps.create ) staticProps.create = null;
 	
 	            Object.transform( this.prototype, protoProps, warnOnError, this );
 	            Object.transform( this, staticProps, warnOnError, this );
@@ -3492,7 +3497,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	    var Model = collection.model;
 	    if( attrs instanceof Model ) return attrs;
 	
-	    return new Model( attrs, new ModelOptions( a_options, collection ) );
+	    var options = new ModelOptions( a_options, collection );
+	
+	    // Use abstract class factory if defined.
+	    return Model.create ? Model.create( attrs, options ) : new Model( attrs, options );
 	}
 	
 	function ModelEventsDispatcher( model ){

@@ -971,9 +971,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	            Object.transform( this.prototype, protoProps, warnOnError, this );
 	            Object.transform( this, staticProps, warnOnError, this );
 	
-	            var propSpecs = {};
 	            protoProps && Object.defineProperties( this.prototype,
-	                Object.transform( propSpecs, protoProps.properties, preparePropSpec, this ) );
+	                Object.transform( {}, protoProps.properties, preparePropSpec, this ) );
 	
 	            this.prototype._propKeys = extractPropKeys( this.prototype );
 	
@@ -3279,7 +3278,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        this._owner       = this._store = null;
 	
 	        this.model      = options.model || this.model;
-	        this.comparator = options.comparator || this.comparator;
+	        if (options.comparator !== void 0) this.comparator = options.comparator;
 	
 	        this.models = [];
 	        this._byId  = {};
@@ -3348,6 +3347,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	        return models;
 	    } ),
+	
+	    // Add a model to the end of the collection.
+	    push: function(model, options) {
+	        return this.add(model, _.extend({ at: this.length }, options ));
+	    },
 	
 	    add : method( function( models, options ){
 	        return this.length ?

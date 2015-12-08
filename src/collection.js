@@ -147,7 +147,7 @@ module.exports = Backbone.Collection.extend( {
         this._owner       = this._store = null;
 
         this.model      = options.model || this.model;
-        this.comparator = options.comparator || this.comparator;
+        if (options.comparator !== void 0) this.comparator = options.comparator;
 
         this.models = [];
         this._byId  = {};
@@ -216,6 +216,11 @@ module.exports = Backbone.Collection.extend( {
 
         return models;
     } ),
+
+    // Add a model to the end of the collection.
+    push: function(model, options) {
+        return this.add(model, _.extend({ at: this.length }, options ));
+    },
 
     add : method( function( models, options ){
         return this.length ?

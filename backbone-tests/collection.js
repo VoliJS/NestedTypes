@@ -873,8 +873,11 @@
         var collection   = new Backbone.Collection;
         collection.url   = '/test';
         var Model        = Backbone.Model.extend( {
-            set : function( attrs ){
-                assert.equal( attrs.prop, 'value' );
+            defaults : {
+               prop : ''
+            },
+            initialize : function(){
+                assert.equal( this.prop, 'value' );
                 assert.equal( this.collection, collection );
                 return this;
             }
@@ -1079,7 +1082,8 @@
 
     QUnit.test( "#1655 - sortBy can be used with a string argument.", function( assert ){
         assert.expect( 1 );
-        var collection = new Backbone.Collection( [ { x : 3 }, { x : 1 }, { x : 2 } ] );
+        var M = Backbone.Model.defaults({ x : 0 });
+        var collection = new M.Collection( [ { x : 3 }, { x : 1 }, { x : 2 } ] );
         var values     = _.map( collection.sortBy( 'x' ), function( model ){
             return model.get( 'x' );
         } );
@@ -1384,7 +1388,7 @@
         var col    = new Backbone.Collection;
         var model1 = col.push( { id : 101 } );
         var model2 = col.push( { id : 101 } );
-        assert.ok( model2.cid == model1.cid );
+        assert.equal( model2, undefined );
     } );
 
     QUnit.test( "`set` with non-normal id", function( assert ){

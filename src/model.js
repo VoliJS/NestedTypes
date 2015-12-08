@@ -6,13 +6,13 @@ var Backbone    = require( './backbone+' ),
     _           = require( 'underscore' ),
     ValidationMixin = require( './validation-mixin' ),
     RestMixin = require( './rest-mixin' ).Model,
+    UnderscoreMixin = require( './underscore-mixin' ),
     ModelProto  = BaseModel.prototype;
 
 var setSingleAttr  = modelSet.setSingleAttr,
     setAttrs       = modelSet.setAttrs,
     applyTransform = modelSet.transform;
 
-// TODO: create loop unrolled function (or extract keys array to prototype)
 function cloneAttrs( model, a_attrs, options ){
     var attrSpecs = model.__attributes,
         attrs = new model.Attributes( a_attrs ),
@@ -29,10 +29,27 @@ function cloneAttrs( model, a_attrs, options ){
 var _cidCount = 1;
 
 var Model = BaseModel.extend({
-    mixins : [ ValidationMixin, RestMixin ],
+    mixins : [ ValidationMixin, RestMixin, UnderscoreMixin.Model ],
     triggerWhenChanged : 'change',
 
     properties : {
+        _clonedProps : {
+            enumerable : false,
+            get : function(){
+                var propKeys = this._propKeys,
+                    props = {};
+
+                for( var i = 0; i < propKeys.length; i++ ){
+                    var name = propKeys[ i ],
+                        value = this[ name ];
+
+                    value === void 0 || ( props[ name ] = value );
+                }
+
+                return props;
+            }
+        },
+
         id : {
             get : function(){
                 var name = this.idAttribute;
@@ -47,33 +64,36 @@ var Model = BaseModel.extend({
             }
         },
 
-        changed : function(){
-            var changed = this._changed;
+        changed : {
+            enumerable : false,
+            get : function(){
+                var changed = this._changed;
 
-            if( !changed ){
-                var last      = this.attributes,
-                    prev      = this._previousAttributes,
-                    attrSpecs = this.__attributes;
+                if( !changed ){
+                    var last      = this.attributes,
+                        prev      = this._previousAttributes,
+                        attrSpecs = this.__attributes;
 
-                changed = {};
+                    changed = {};
 
-                for( var name in attrSpecs ){
-                    var attrSpec = attrSpecs[ name ];
+                    for( var name in attrSpecs ){
+                        var attrSpec = attrSpecs[ name ];
 
-                    if( attrSpec.isChanged( last[ name ], prev[ name ] ) ){
-                        changed[ name ] = last[ name ];
+                        if( attrSpec.isChanged( last[ name ], prev[ name ] ) ){
+                            changed[ name ] = last[ name ];
+                        }
                     }
+
+                    this._changed = changed;
                 }
 
-                this._changed = changed;
+                return changed;
             }
-
-            return changed;
         }
     },
 
     _validateNested : function( errors ){
-        var _keys = this.keys(),
+        var _keys = this._keys,
             length = 0;
 
         for( var i = 0; i < _keys.length; i++ ){
@@ -299,53 +319,8 @@ var Model = BaseModel.extend({
         return res;
     },
 
-    keys : function(){
-        var _keys = this._keys,
-            keys = [];
-        for( var i = 0; i < _keys.length; i++ ){
-            var name = _keys[ i ];
-            this.attributes[ name ] === void 0 || keys.push( name );
-        }
-
-        return keys;
-    },
-
-    invert : function(){
-        return _.invert( _.pick( this, this.keys() ) );
-    },
-
-    omit : function(){
-        var obj = _.pick( this, this.keys() );
-        return _.omit( obj, arguments );
-    },
-
-    values : function(){
-        return _.map( this.keys(), function( x ){ return this[ x ]; }, this );
-    },
-
-    matches: function(attrs) {
-        return !!_.iteratee(attrs, this)(this);
-    },
-
     parse  : function( resp ){ return this._parse( resp ); },
     _parse : _.identity,
-
-    forEach : function( fun, context ){
-        var attrNames = this._keys,
-            attributes = this.attributes,
-            __attributes = this.__attributes;
-
-        for( var i = 0; i < attrNames.length; i++ ){
-            var name = attrNames[ i ];
-
-            if( context ){
-                fun( attributes[ name ], name, __attributes[ name ] )
-            }
-            else{
-                fun.call( context, attributes[ name ], name, __attributes[ name ] )
-            }
-        }
-    },
 
     _ : _ // add underscore to be accessible in templates
 }, {

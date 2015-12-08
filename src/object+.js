@@ -123,7 +123,13 @@
                 error.overrideMethodWithValue( this, name, prop );
             }
 
-            return spec instanceof Function ? { get : spec } : spec;
+            var prepared = spec instanceof Function ? { get : spec } : spec;
+
+            if( prepared.enumerable === void 0 ){
+                prepared.enumerable = true;
+            }
+
+            return prepared;
         }
 
         function attachMixins( protoProps ){
@@ -143,6 +149,21 @@
             return merged;
         }
 
+        function extractPropKeys( proto ){
+            var allProps = {};
+
+            // traverse prototype chain
+            for( var p = proto; p; p = Object.getPrototypeOf( p ) ){
+                Object.transform( allProps, p.properties, function( spec, name ){
+                    if( !allProps[ name ] && spec.enumerable ){
+                        return spec;
+                    }
+                });
+            }
+
+            return Object.keys( allProps );
+        }
+
         function define( a_protoProps, staticProps ){
             var protoProps = a_protoProps || {};
             if( protoProps.mixins ){
@@ -154,6 +175,8 @@
 
             protoProps && Object.defineProperties( this.prototype,
                 Object.transform( {}, protoProps.properties, preparePropSpec, this ) );
+
+            this.prototype._propKeys = extractPropKeys( this.prototype );
 
             return this;
         }

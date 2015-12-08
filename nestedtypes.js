@@ -58,8 +58,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	// =======================
 	
 	var Model      = __webpack_require__( 1 ),
-	    Collection = __webpack_require__( 12 ),
-	    relations  = __webpack_require__( 16 ),
+	    Collection = __webpack_require__( 13 ),
+	    relations  = __webpack_require__( 17 ),
 	    Backbone   = __webpack_require__( 2 ),
 	    _          = __webpack_require__( 5 ),
 	    attribute  = __webpack_require__( 9 ),
@@ -67,7 +67,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	Rest.$ = Backbone.$;
 	
-	__webpack_require__( 17 );
+	__webpack_require__( 18 );
 	
 	Collection.subsetOf = relations.subsetOf;
 	Model.from          = relations.from;
@@ -75,7 +75,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	Model.Collection = Collection;
 	
-	var Store = __webpack_require__( 18 );
+	var Store = __webpack_require__( 19 );
 	Object.defineProperty( exports, 'store', Store.globalProp );
 	
 	exports.store = new Store.Model();
@@ -137,13 +137,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	    _           = __webpack_require__( 5 ),
 	    ValidationMixin = __webpack_require__( 10 ),
 	    RestMixin = __webpack_require__( 11 ).Model,
+	    UnderscoreMixin = __webpack_require__( 12 ),
 	    ModelProto  = BaseModel.prototype;
 	
 	var setSingleAttr  = modelSet.setSingleAttr,
 	    setAttrs       = modelSet.setAttrs,
 	    applyTransform = modelSet.transform;
 	
-	// TODO: create loop unrolled function (or extract keys array to prototype)
 	function cloneAttrs( model, a_attrs, options ){
 	    var attrSpecs = model.__attributes,
 	        attrs = new model.Attributes( a_attrs ),
@@ -160,10 +160,27 @@ return /******/ (function(modules) { // webpackBootstrap
 	var _cidCount = 1;
 	
 	var Model = BaseModel.extend({
-	    mixins : [ ValidationMixin, RestMixin ],
+	    mixins : [ ValidationMixin, RestMixin, UnderscoreMixin.Model ],
 	    triggerWhenChanged : 'change',
 	
 	    properties : {
+	        _clonedProps : {
+	            enumerable : false,
+	            get : function(){
+	                var propKeys = this._propKeys,
+	                    props = {};
+	
+	                for( var i = 0; i < propKeys.length; i++ ){
+	                    var name = propKeys[ i ],
+	                        value = this[ name ];
+	
+	                    value === void 0 || ( props[ name ] = value );
+	                }
+	
+	                return props;
+	            }
+	        },
+	
 	        id : {
 	            get : function(){
 	                var name = this.idAttribute;
@@ -178,33 +195,36 @@ return /******/ (function(modules) { // webpackBootstrap
 	            }
 	        },
 	
-	        changed : function(){
-	            var changed = this._changed;
+	        changed : {
+	            enumerable : false,
+	            get : function(){
+	                var changed = this._changed;
 	
-	            if( !changed ){
-	                var last      = this.attributes,
-	                    prev      = this._previousAttributes,
-	                    attrSpecs = this.__attributes;
+	                if( !changed ){
+	                    var last      = this.attributes,
+	                        prev      = this._previousAttributes,
+	                        attrSpecs = this.__attributes;
 	
-	                changed = {};
+	                    changed = {};
 	
-	                for( var name in attrSpecs ){
-	                    var attrSpec = attrSpecs[ name ];
+	                    for( var name in attrSpecs ){
+	                        var attrSpec = attrSpecs[ name ];
 	
-	                    if( attrSpec.isChanged( last[ name ], prev[ name ] ) ){
-	                        changed[ name ] = last[ name ];
+	                        if( attrSpec.isChanged( last[ name ], prev[ name ] ) ){
+	                            changed[ name ] = last[ name ];
+	                        }
 	                    }
+	
+	                    this._changed = changed;
 	                }
 	
-	                this._changed = changed;
+	                return changed;
 	            }
-	
-	            return changed;
 	        }
 	    },
 	
 	    _validateNested : function( errors ){
-	        var _keys = this.keys(),
+	        var _keys = this._keys,
 	            length = 0;
 	
 	        for( var i = 0; i < _keys.length; i++ ){
@@ -430,53 +450,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	        return res;
 	    },
 	
-	    keys : function(){
-	        var _keys = this._keys,
-	            keys = [];
-	        for( var i = 0; i < _keys.length; i++ ){
-	            var name = _keys[ i ];
-	            this.attributes[ name ] === void 0 || keys.push( name );
-	        }
-	
-	        return keys;
-	    },
-	
-	    invert : function(){
-	        return _.invert( _.pick( this, this.keys() ) );
-	    },
-	
-	    omit : function(){
-	        var obj = _.pick( this, this.keys() );
-	        return _.omit( obj, arguments );
-	    },
-	
-	    values : function(){
-	        return _.map( this.keys(), function( x ){ return this[ x ]; }, this );
-	    },
-	
-	    matches: function(attrs) {
-	        return !!_.iteratee(attrs, this)(this);
-	    },
-	
 	    parse  : function( resp ){ return this._parse( resp ); },
 	    _parse : _.identity,
-	
-	    forEach : function( fun, context ){
-	        var attrNames = this._keys,
-	            attributes = this.attributes,
-	            __attributes = this.__attributes;
-	
-	        for( var i = 0; i < attrNames.length; i++ ){
-	            var name = attrNames[ i ];
-	
-	            if( context ){
-	                fun( attributes[ name ], name, __attributes[ name ] )
-	            }
-	            else{
-	                fun.call( context, attributes[ name ], name, __attributes[ name ] )
-	            }
-	        }
-	    },
 	
 	    _ : _ // add underscore to be accessible in templates
 	}, {
@@ -946,7 +921,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	                error.overrideMethodWithValue( this, name, prop );
 	            }
 	
-	            return spec instanceof Function ? { get : spec } : spec;
+	            var prepared = spec instanceof Function ? { get : spec } : spec;
+	
+	            if( prepared.enumerable === void 0 ){
+	                prepared.enumerable = true;
+	            }
+	
+	            return prepared;
 	        }
 	
 	        function attachMixins( protoProps ){
@@ -966,6 +947,21 @@ return /******/ (function(modules) { // webpackBootstrap
 	            return merged;
 	        }
 	
+	        function extractPropKeys( proto ){
+	            var allProps = {};
+	
+	            // traverse prototype chain
+	            for( var p = proto; p; p = Object.getPrototypeOf( p ) ){
+	                Object.transform( allProps, p.properties, function( spec, name ){
+	                    if( !allProps[ name ] && spec.enumerable ){
+	                        return spec;
+	                    }
+	                });
+	            }
+	
+	            return Object.keys( allProps );
+	        }
+	
 	        function define( a_protoProps, staticProps ){
 	            var protoProps = a_protoProps || {};
 	            if( protoProps.mixins ){
@@ -975,8 +971,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	            Object.transform( this.prototype, protoProps, warnOnError, this );
 	            Object.transform( this, staticProps, warnOnError, this );
 	
+	            var propSpecs = {};
 	            protoProps && Object.defineProperties( this.prototype,
-	                Object.transform( {}, protoProps.properties, preparePropSpec, this ) );
+	                Object.transform( propSpecs, protoProps.properties, preparePropSpec, this ) );
+	
+	            this.prototype._propKeys = extractPropKeys( this.prototype );
 	
 	            return this;
 	        }
@@ -2692,9 +2691,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	module.exports = {
 	    properties : {
-	        validationError(){
-	            var errors = this._validationError || ( this._validationError = new ValidationError() );
-	            return errors.update( this );
+	        validationError : {
+	            enumerable : false,
+	            get : function(){
+	                var errors = this._validationError || ( this._validationError = new ValidationError() );
+	                return errors.update( this );
+	            }
 	        }
 	    },
 	
@@ -3026,29 +3028,132 @@ return /******/ (function(modules) { // webpackBootstrap
 /* 12 */
 /***/ function(module, exports, __webpack_require__) {
 
+	var _ = __webpack_require__( 5 );
+	
+	var slice = Array.prototype.slice;
+	
+	exports.Model = {
+	    pick    : function(){ return _.pick( this, slice.call( arguments ) ); },
+	
+	    escape : function( attr ){
+	        return _.escape( this[ attr ] );
+	    },
+	
+	    matches : function( attrs ){
+	        return !!_.iteratee( attrs, this )( this );
+	    }
+	};
+	
+	addUnderscoreMethods( exports.Model, '_clonedProps', {
+	    keys: 1, values: 1, pairs: 1, invert: 1,
+	    omit: 0, chain: 1, isEmpty: 1
+	});
+	
+	( exports.Model, [ 'keys', 'values', 'pairs', 'invert', 'chain', 'isEmpty' ] );
+	
+	exports.Collection = {};
+	
+	addUnderscoreMethods( exports.Collection, 'models', {
+	    forEach  : 3, each : 3, map : 3, collect : 3, reduce : 4,
+	    foldl    : 4, inject : 4, reduceRight : 4, foldr : 4, find : 3, detect : 3, filter : 3,
+	    select   : 3, reject : 3, every : 3, all : 3, some : 3, any : 3, include : 3, includes : 3,
+	    contains : 3, invoke : 0, max : 3, min : 3, toArray : 1, size : 1, first : 3,
+	    head     : 3, take : 3, initial : 3, rest : 3, tail : 3, drop : 3, last : 3,
+	    without  : 0, difference : 0, indexOf : 3, shuffle : 1, lastIndexOf : 3,
+	    isEmpty  : 1, chain : 1, sample : 3, partition : 3, groupBy : 3, countBy : 3,
+	    sortBy   : 3, indexBy : 3
+	});
+	
+	
+	function addUnderscoreMethods(Mixin, attribute, methods ) {
+	    _.each(methods, function(length, method) {
+	        if (_[method]) Mixin[method] = addMethod(length, method, attribute);
+	    });
+	}
+	
+	// Proxy Backbone class methods to Underscore functions, wrapping the model's
+	// `attributes` object or collection's `models` array behind the scenes.
+	//
+	// collection.filter(function(model) { return model.get('age') > 10 });
+	// collection.each(this.addView);
+	//
+	// `Function#apply` can be slow so we use the method's arg count, if we know it.
+	function addMethod(length, method, attribute) {
+	    switch (length) {
+	        case 1: return function() {
+	            return _[method](this[attribute]);
+	        };
+	        case 2: return function(value) {
+	            return _[method](this[attribute], value);
+	        };
+	        case 3: return function(iteratee, context) {
+	            var value = this[ attribute ],
+	                callback = cb(iteratee, this);
+	
+	            return arguments.length > 1 ?
+	                   _[method]( value, callback, context)
+	                : _[method]( value, callback );
+	        };
+	        case 4: return function(iteratee, defaultVal, context) {
+	            var value = this[ attribute ],
+	                callback = cb(iteratee, this);
+	
+	            return arguments.length > 1 ?
+	                   _[method]( value, callback, defaultVal, context )
+	                : _[method](value, callback );
+	        };
+	        default: return function() {
+	            var args = slice.call(arguments);
+	            args.unshift(this[attribute]);
+	            return _[method].apply(_, args);
+	        };
+	    }
+	}
+	
+	// Support `collection.sortBy('attr')` and `collection.findWhere({id: 1})`.
+	function cb(iteratee, instance) {
+	    if (_.isFunction(iteratee)) return iteratee;
+	    if (_.isObject(iteratee) && !(iteratee instanceof instance.model )) return modelMatcher(iteratee);
+	    if (_.isString(iteratee)) return function(model) { return model.get(iteratee); };
+	    return iteratee;
+	}
+	
+	function modelMatcher(attrs) {
+	    var matcher = _.matches(attrs);
+	    return function(model) {
+	        return matcher(model.attributes);
+	    };
+	}
+
+
+/***/ },
+/* 13 */
+/***/ function(module, exports, __webpack_require__) {
+
 	var _               = __webpack_require__( 5 ),
 	    Backbone        = __webpack_require__( 2 ),
 	    Model           = __webpack_require__( 1 ),
 	    ValidationMixin = __webpack_require__( 10 ),
-	    RestMixin       = __webpack_require__( 11 ).Collection;
+	    RestMixin       = __webpack_require__( 11 ).Collection,
+	    UnderscoreMixin = __webpack_require__( 12 );
 	
 	var Events   = Backbone.Events,
 	    trigger1 = Events.trigger1,
 	    trigger2 = Events.trigger2,
 	    trigger3 = Events.trigger3;
 	
-	var Commons               = __webpack_require__( 13 ),
+	var Commons               = __webpack_require__( 14 ),
 	    toModel               = Commons.toModel,
 	    dispose               = Commons.dispose,
 	    ModelEventsDispatcher = Commons.ModelEventsDispatcher;
 	
-	var Add          = __webpack_require__( 14 ),
+	var Add          = __webpack_require__( 15 ),
 	    MergeOptions = Add.MergeOptions,
 	    add          = Add.add,
 	    set          = Add.set,
 	    emptySet     = Add.emptySet;
 	
-	var Remove     = __webpack_require__( 15 ),
+	var Remove     = __webpack_require__( 16 ),
 	    removeOne  = Remove.removeOne,
 	    removeMany = Remove.removeMany;
 	
@@ -3120,7 +3225,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 	
 	module.exports = Backbone.Collection.extend( {
-	    mixins : [ ValidationMixin, RestMixin ],
+	    mixins : [ ValidationMixin, RestMixin, UnderscoreMixin.Collection ],
 	
 	    triggerWhenChanged : 'changes',
 	    _listenToChanges   : 'update change reset',
@@ -3137,25 +3242,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	    _dispatcher : null,
 	
-	    // ES6 inspired Array methods:
-	    forEach : function( callback, context ){
-	        var models = this.models;
-	
-	        for( var i = 0; i < models.length; i++ ){
-	            var model = models[ i ];
-	
-	            if( context ){
-	                callback.call( context, model, model.cid );
-	            }
-	            else{
-	                callback( model, model.cid );
-	            }
-	        }
-	    },
-	
 	    properties : {
-	        length : function(){
-	            return this.models.length;
+	        length : {
+	            enumerable : false,
+	            get : function(){
+	                return this.models.length;
+	            }
 	        }
 	    },
 	
@@ -3346,7 +3438,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	} );
 
 /***/ },
-/* 13 */
+/* 14 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
@@ -3480,7 +3572,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 /***/ },
-/* 14 */
+/* 15 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
@@ -3495,7 +3587,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    trigger2 = Events.trigger2,
 	    trigger3 = Events.trigger3;
 	
-	var Commons         = __webpack_require__( 13 ),
+	var Commons         = __webpack_require__( 14 ),
 	    addIndex        = Commons.addIndex,
 	    addReference    = Commons.addReference,
 	    removeReference = Commons.removeReference,
@@ -3754,7 +3846,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 /***/ },
-/* 15 */
+/* 16 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
@@ -3764,7 +3856,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	 *      - silent : Boolean = false
 	 */
 	
-	var Commons         = __webpack_require__( 13 ),
+	var Commons         = __webpack_require__( 14 ),
 	    removeIndex     = Commons.removeIndex,
 	    removeReference = Commons.removeReference;
 	
@@ -3870,7 +3962,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 /***/ },
-/* 16 */
+/* 17 */
 /***/ function(module, exports, __webpack_require__) {
 
 	// Nested Relations
@@ -3879,7 +3971,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	var bbVersion  = __webpack_require__( 2 ).VERSION,
 	    attribute  = __webpack_require__( 9 ),
 	    error      = __webpack_require__( 8 ),
-	    Collection = __webpack_require__( 12 ),
+	    Collection = __webpack_require__( 13 ),
 	    _          = __webpack_require__( 5 );
 	
 	function parseReference( collectionRef ){
@@ -4108,7 +4200,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 17 */
+/* 18 */
 /***/ function(module, exports, __webpack_require__) {
 
 	// Date.parse with progressive enhancement for ISO 8601 <https://github.com/csnover/js-iso8601>
@@ -4121,7 +4213,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    modelSet   = __webpack_require__( 7 ),
 	    Model      = __webpack_require__( 1 ),
 	    errors     = __webpack_require__( 8 ),
-	    Collection = __webpack_require__( 12 );
+	    Collection = __webpack_require__( 13 );
 	
 	// Constructors Attribute
 	// ----------------
@@ -4319,13 +4411,13 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 18 */
+/* 19 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var Backbone   = __webpack_require__( 2 ),
 	    $          = Backbone.$;
 	    Model      = __webpack_require__( 1 ),
-	    Collection = __webpack_require__( 12 ),
+	    Collection = __webpack_require__( 13 ),
 	    RestMixin  = __webpack_require__( 11 ),
 	    _          = __webpack_require__( 5 );
 	

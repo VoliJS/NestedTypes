@@ -2,7 +2,8 @@ var _               = require( 'underscore' ),
     Backbone        = require( './backbone+' ),
     Model           = require( './model' ),
     ValidationMixin = require( './validation-mixin' ),
-    RestMixin       = require( './rest-mixin' ).Collection;
+    RestMixin       = require( './rest-mixin' ).Collection,
+    UnderscoreMixin = require( './underscore-mixin' );
 
 var Events   = Backbone.Events,
     trigger1 = Events.trigger1,
@@ -92,7 +93,7 @@ function CreateOptions( options, collection ){
 }
 
 module.exports = Backbone.Collection.extend( {
-    mixins : [ ValidationMixin, RestMixin ],
+    mixins : [ ValidationMixin, RestMixin, UnderscoreMixin.Collection ],
 
     triggerWhenChanged : 'changes',
     _listenToChanges   : 'update change reset',
@@ -109,25 +110,12 @@ module.exports = Backbone.Collection.extend( {
 
     _dispatcher : null,
 
-    // ES6 inspired Array methods:
-    forEach : function( callback, context ){
-        var models = this.models;
-
-        for( var i = 0; i < models.length; i++ ){
-            var model = models[ i ];
-
-            if( context ){
-                callback.call( context, model, model.cid );
-            }
-            else{
-                callback( model, model.cid );
-            }
-        }
-    },
-
     properties : {
-        length : function(){
-            return this.models.length;
+        length : {
+            enumerable : false,
+            get : function(){
+                return this.models.length;
+            }
         }
     },
 

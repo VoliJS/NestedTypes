@@ -4,9 +4,12 @@ var _ = require( 'underscore' );
 
 module.exports = {
     properties : {
-        validationError(){
-            var errors = this._validationError || ( this._validationError = new ValidationError() );
-            return errors.update( this );
+        validationError : {
+            enumerable : false,
+            get : function(){
+                var errors = this._validationError || ( this._validationError = new ValidationError() );
+                return errors.update( this );
+            }
         }
     },
 

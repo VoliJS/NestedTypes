@@ -682,8 +682,8 @@
 
     QUnit.test( "toJSON", function( assert ){
         assert.expect( 1 );
-        assert.equal( JSON.stringify( col ),
-            '[{"id":3,"label":"a"},{"id":2,"label":"b"},{"id":1,"label":"c"},{"id":0,"label":"d"}]' );
+        assert.deepEqual( JSON.parse( JSON.stringify( col ) ),
+            JSON.parse('[{"id":3,"label":"a"},{"id":2,"label":"b"},{"id":1,"label":"c"},{"id":0,"label":"d"}]' ) );
     } );
 
     QUnit.test( "where and findWhere", function( assert ){

@@ -250,6 +250,7 @@ module.exports = Backbone.Collection.extend( {
         }
     } ),
 
+    // TODO: move to REST mixin
     create : function( a_model, a_options ){
         var options = new CreateOptions( a_options, this ),
             model   = toModel( this, a_model, options );

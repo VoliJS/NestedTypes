@@ -565,6 +565,7 @@
         };
         collection.sync = function( method, model, options ){
             options.error.call( options.context );
+            return {};
         };
         collection.fetch( options );
     } );
@@ -595,7 +596,7 @@
     } );
 
     QUnit.test( "create with validate:true enforces validation", function( assert ){
-        assert.expect( 3 );
+        assert.expect( 2 );
         var ValidatingModel      = Backbone.Model.extend( {
             validate : function( attrs ){
                 return "fail";
@@ -606,10 +607,10 @@
         } );
         var col                  = new ValidatingCollection();
         col.on( 'invalid', function( collection, error, options ){
-            assert.equal( error, "fail" );
-            assert.equal( options.validationError, 'fail' );
+            assert.equal( error.error, "fail" );
+            assert.equal( options.validationError.error, 'fail' );
         } );
-        assert.equal( col.create( { "foo" : "bar" }, { validate : true } ), false );
+        col.create( { "foo" : "bar" }, { validate : true } );
     } );
 
     QUnit.test( "create will pass extra options to success callback", function( assert ){
@@ -664,7 +665,7 @@
         } );
         var col                  = new ValidatingCollection();
         var m                    = col.create( { "foo" : "bar" } );
-        assert.equal( m.validationError, 'fail' );
+        assert.equal( m.validationError.error, 'fail' );
         assert.equal( col.length, 1 );
     } );
 
@@ -910,7 +911,9 @@
 
             collection.add( [ { id : 1 }, { id : 2 }, { id : 3 }, { id : 4 }, { id : 5 }, { id : 6 } ],
                 { validate : true } );
-            assert.deepEqual( collection.pluck( "id" ), [ 1, 2, 4, 5, 6 ] );
+            assert.deepEqual( collection.pluck( "id" ), [ 1, 2, 3, 4, 5, 6 ] );
+
+            collection._invalidate( { validate : true } );
         } );
 
     QUnit.test( "Invalid models are discarded with validate:true.", function( assert ){
@@ -925,8 +928,8 @@
         model.trigger( 'test' );
         assert.ok( collection.get( model.cid ) );
         assert.ok( collection.get( 1 ) );
-        assert.ok( !collection.get( 2 ) );
-        assert.equal( collection.length, 1 );
+        assert.ok( !collection.get( 2 ).isValid() );
+        assert.equal( collection.length, 2 );
     } );
 
     QUnit.test( "multiple copies of the same model", function( assert ){

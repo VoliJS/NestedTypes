@@ -2684,8 +2684,12 @@ return /******/ (function(modules) { // webpackBootstrap
 
 /***/ },
 /* 10 */
-/***/ function(module, exports) {
+/***/ function(module, exports, __webpack_require__) {
 
+	'use strict';
+	
+	var _ = __webpack_require__( 5 );
+	
 	module.exports = {
 	    properties : {
 	        validationError(){
@@ -2708,8 +2712,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	    },
 	
 	    _invalidate : function( options ){
-	        if( options.validate && this.validationError ){
-	            this.trigger( 'invalid', this, this.validationError, options );
+	        var error;
+	        if( options.validate && ( error = this.validationError ) ){
+	            this.trigger( 'invalid', this, error, _.extend( { validationError : error }, options ) );
 	            return true;
 	        }
 	    }
@@ -3273,6 +3278,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        }
 	    } ),
 	
+	    // TODO: move to REST mixin
 	    create : function( a_model, a_options ){
 	        var options = new CreateOptions( a_options, this ),
 	            model   = toModel( this, a_model, options );

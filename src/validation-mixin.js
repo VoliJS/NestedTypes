@@ -1,3 +1,7 @@
+'use strict';
+
+var _ = require( 'underscore' );
+
 module.exports = {
     properties : {
         validationError(){
@@ -20,8 +24,9 @@ module.exports = {
     },
 
     _invalidate : function( options ){
-        if( options.validate && this.validationError ){
-            this.trigger( 'invalid', this, this.validationError, options );
+        var error;
+        if( options.validate && ( error = this.validationError ) ){
+            this.trigger( 'invalid', this, error, _.extend( { validationError : error }, options ) );
             return true;
         }
     }

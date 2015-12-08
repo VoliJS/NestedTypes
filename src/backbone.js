@@ -256,11 +256,6 @@
     // initialization logic.
     initialize: function(){},
 
-    // Get the HTML-escaped value of an attribute.
-    escape: function(attr) {
-      return _.escape(this.get(attr));
-    },
-
     // Returns `true` if the attribute contains a value that is not null
     // or undefined.
     has: function(attr) {
@@ -291,18 +286,6 @@
     isNew: function() {
       return !this.has(this.idAttribute);
     }
-  });
-
-  // Underscore methods that we want to implement on the Model.
-  var modelMethods = ['keys', 'values', 'pairs', 'invert', 'pick', 'omit', 'matches', 'chain' ];
-
-  // Mix in each Underscore method as a proxy to `Model#attributes`.
-  _.each(modelMethods, function(method) {
-    Model.prototype[method] = function() {
-      var args = slice.call(arguments);
-      args.unshift(this.attributes);
-      return _[method].apply(_, args);
-    };
   });
 
   // Backbone.Collection
@@ -412,38 +395,6 @@
     parse: function(resp, options) {
       return resp;
     }
-  });
-
-  // Underscore methods that we want to implement on the Collection.
-  // 90% of the core usefulness of Backbone Collections is actually implemented
-  // right here:
-  var methods = ['forEach', 'each', 'map', 'collect', 'reduce', 'foldl',
-    'inject', 'reduceRight', 'foldr', 'find', 'detect', 'filter', 'select',
-    'reject', 'every', 'all', 'some', 'any', 'include', 'includes', 'partition', 'contains', 'invoke',
-    'max', 'min', 'toArray', 'size', 'first', 'head', 'take', 'initial', 'rest',
-    'tail', 'drop', 'last', 'without', 'difference', 'indexOf', 'shuffle', 'findIndex', 'findLastIndex',
-    'lastIndexOf', 'isEmpty', 'chain', 'sample'];
-
-  // Mix in each Underscore method as a proxy to `Collection#models`.
-  _.each(methods, function(method) {
-    Collection.prototype[method] = function() {
-      var args = slice.call(arguments);
-      args.unshift(this.models);
-      return _[method].apply(_, args);
-    };
-  });
-
-  // Underscore methods that take a property name as an argument.
-  var attributeMethods = ['groupBy', 'countBy', 'sortBy', 'indexBy'];
-
-  // Use attributes instead of properties.
-  _.each(attributeMethods, function(method) {
-    Collection.prototype[method] = function(value, context) {
-      var iterator = _.isFunction(value) ? value : function(model) {
-        return model.get(value);
-      };
-      return _[method](this.models, iterator, context);
-    };
   });
 
   // Backbone.View

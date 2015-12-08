@@ -25,7 +25,7 @@ exports.Collection = {};
 
 addUnderscoreMethods( exports.Collection, 'models', {
     forEach  : 3, each : 3, map : 3, collect : 3, reduce : 4,
-    foldl    : 4, inject : 4, reduceRight : 4, foldr : 4, find : 3, detect : 3, filter : 3,
+    foldl    : 4, inject : 4, reduceRight : 4, foldr : 4, find : 3, findIndex : 3, findLastIndex : 3, detect : 3, filter : 3,
     select   : 3, reject : 3, every : 3, all : 3, some : 3, any : 3, include : 3, includes : 3,
     contains : 3, invoke : 0, max : 3, min : 3, toArray : 1, size : 1, first : 3,
     head     : 3, take : 3, initial : 3, rest : 3, tail : 3, drop : 3, last : 3,

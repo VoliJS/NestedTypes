@@ -528,7 +528,7 @@ function createDefaults( attrSpecs ){
     // Create model.defaults( attrs, options ) function
     // 'attrs' will override default values, options will be passed to nested backbone types
     return function( attrs ){
-        return attrs ? new AssignDefaults( attrs, this.__attributes ) : new CreateDefaults( this.__attributes );
+        return attrs ? new AssignDefaults( attrs || {}, this.__attributes ) : new CreateDefaults( this.__attributes );
     }
 }
 

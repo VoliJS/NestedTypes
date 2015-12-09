@@ -101,7 +101,7 @@ var Model = BaseModel.extend({
                 error = this.__attributes[ attr ].validate( this, this.attributes[ attr ], attr );
 
             if( error ){
-                errors[ name ] = error;
+                errors[ attr ] = error;
                 length++;
             }
         }

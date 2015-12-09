@@ -71,7 +71,7 @@ attribute.Type.extend( {
     },
 
     check : function( value ){
-        return _.isNaN( +value );
+        return !isNaN( +value );
     },
 
     toJSON : function( value ){ return value && value.toJSON(); },

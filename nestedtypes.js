@@ -237,7 +237,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                error = this.__attributes[ attr ].validate( this, this.attributes[ attr ], attr );
 	
 	            if( error ){
-	                errors[ name ] = error;
+	                errors[ attr ] = error;
 	                length++;
 	            }
 	        }
@@ -2628,7 +2628,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    },
 	
 	    check : function( value ){
-	        if( _.isNaN( value ) || value === Infinity || value === -Infinity ) return false;
+	        if( isNaN( value ) || value === Infinity || value === -Infinity ) return false;
 	
 	        if( value && value.isValid ) return value.isValid();
 	
@@ -4412,7 +4412,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    },
 	
 	    check : function( value ){
-	        return _.isNaN( +value );
+	        return !isNaN( +value );
 	    },
 	
 	    toJSON : function( value ){ return value && value.toJSON(); },

@@ -260,7 +260,7 @@ var Attribute = Object.extend( {
     },
 
     check : function( value ){
-        if( _.isNaN( value ) || value === Infinity || value === -Infinity ) return false;
+        if( isNaN( value ) || value === Infinity || value === -Infinity ) return false;
 
         if( value && value.isValid ) return value.isValid();
 

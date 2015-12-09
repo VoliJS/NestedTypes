@@ -192,6 +192,7 @@ var refsCollectionSpec = {
     },
 
     reset : function( models, upperOptions ){
+        // TODO: Remove this bullshit. No such options for `reset`
         var options = { merge : false };
 
         if( models ){

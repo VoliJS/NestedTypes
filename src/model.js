@@ -204,8 +204,27 @@ var Model = BaseModel.extend({
     // Model id and cid are allowed for collection elements.
     // If path is not exist, 'undefined' is returned.
     // model.deepGet( 'a.b.c123.x' )
-    deepGet : function( name ){
-        var path = name.split( '.' ), value = this;
+    deepGet : function( path ){
+        return this._deepGet( path.split( '.' ) );
+    },
+
+    deepInvalidate : function( name ){
+        var path = name.split( '.' ),
+            attr = path.pop(),
+            model = this._deepGet( path ),
+            error, value;
+
+        if( model ){
+            value = model.get ? model.get( attr ) : model[ attr ];
+            error = model.validationError;
+            if( error ) error = error.nested[ attr ];
+        }
+
+        return [ value, error ];
+    },
+
+    _deepGet : function( path ){
+        var value = this;
 
         for( var i = 0, l = path.length; value && i < l; i++ ){
             value = value.get ? value.get( path[ i ] ) : value[ path[ i ] ];

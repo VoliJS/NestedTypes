@@ -208,6 +208,11 @@ function wrapError( model, options ){
 // it difficult to read the body of `PUT` requests.
 exports.sync = function( method, model, options ){
     var type = methodMap[ method ];
+    // Default options, unless specified.
+    _.defaults(options || (options = {}), {
+      emulateHTTP: Backbone.emulateHTTP,
+      emulateJSON: Backbone.emulateJSON
+    });
 
     // Default JSON-request options.
     var params = { type : type, dataType : 'json' };

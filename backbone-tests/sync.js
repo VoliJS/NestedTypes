@@ -1,8 +1,17 @@
 (function() {
 
-  var Library = Backbone.Collection.extend({
-    url : function() { return '/library'; }
+  var Book = Backbone.Model.extend({
+    defaults : {
+        title  : "The Tempest",
+        author : "Bill Shakespeare",
+        length : 123
+    },
+
+    urlRoot : '/library'
   });
+
+  var Library = Book.Collection;
+
   var library;
 
   var attrs = {

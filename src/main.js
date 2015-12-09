@@ -63,6 +63,11 @@ Object.defineProperties( exports, {
         get : function(){ return Rest.ajax; },
         set : function( value ){ Rest.ajax = value; }
     },
+    'history' : {
+        get : function(){ return Backbone.history; },
+        set : function( value ){ Backbone.history = value; }
+    },
+
     '$'    : {
         get : function(){ return Backbone.$; },
         set : function( value ){ Backbone.$ = Rest.$ = value; }

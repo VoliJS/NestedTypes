@@ -262,7 +262,7 @@ module.exports = Backbone.Collection.extend( {
 
     _onModelEvent : function( event, model, collection, options ){
         // lazy initialize dispatcher...
-        var dispatcher = this._dispatcher || ( this.constructor.prototype._dispatcher = new ModelEventsDispatcher( this.model ) ),
+        var dispatcher = this._dispatcher || ( this._dispatcher = new ModelEventsDispatcher( this.model ) ),
             handler    = dispatcher[ event ] || trigger3;
 
         handler( this, event, model, collection, options );

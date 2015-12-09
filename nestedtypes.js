@@ -2628,7 +2628,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    },
 	
 	    check : function( value ){
-	        if( isNaN( value ) || value === Infinity || value === -Infinity ) return false;
+	        if( value !== value || value === Infinity || value === -Infinity ) return false;
 	
 	        if( value && value.isValid ) return value.isValid();
 	

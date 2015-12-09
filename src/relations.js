@@ -116,6 +116,18 @@ exports.from = function( masterCollection ){
 
 var CollectionProto = Collection.prototype;
 
+function adjustOptions( models, options ){
+    var adjust = { merge : false };
+
+    if( models ){
+        if( models instanceof Array && models.length && typeof models[ 0 ] !== 'object' ){
+            adjust.merge = adjust.parse = true;
+        }
+    }
+
+    return _.defaults( adjust, options );
+}
+
 var refsCollectionSpec = {
     _listenToChanges : 'update reset', // don't bubble changes from models
     __class          : 'Collection.SubsetOf',
@@ -179,29 +191,16 @@ var refsCollectionSpec = {
         this.set( [ model ] );
     },
 
-    set : function( models, upperOptions ){
-        var options = { merge : false };
-
-        if( models ){
-            if( models instanceof Array && models.length && typeof models[ 0 ] !== 'object' ){
-                options.merge = options.parse = true;
-            }
-        }
-
-        CollectionProto.set.call( this, models, _.defaults( options, upperOptions ) );
+    set : function( models, options ){
+        return CollectionProto.set.call( this, models, adjustOptions( models, options ) );
     },
 
-    reset : function( models, upperOptions ){
-        // TODO: Remove this bullshit. No such options for `reset`
-        var options = { merge : false };
+    add : function( models, options ){
+        return CollectionProto.add.call( this, models, adjustOptions( models, options ) );
+    },
 
-        if( models ){
-            if( models instanceof Array && models.length && typeof models[ 0 ] !== 'object' ){
-                options.merge = options.parse = true;
-            }
-        }
-
-        CollectionProto.reset.call( this, models, _.defaults( options, upperOptions ) );
+    reset : function( models, options ){
+        return CollectionProto.reset.call( this, models, adjustOptions( models, options ) );
     },
 
     resolve : function( collection ){

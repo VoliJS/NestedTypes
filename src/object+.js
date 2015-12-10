@@ -28,13 +28,47 @@
             var keysArray = Object.keys( Object( nextSource ) );
             for( var nextIndex = 0, len = keysArray.length; nextIndex < len; nextIndex++ ){
                 var nextKey = keysArray[ nextIndex ];
-                var desc = Object.getOwnPropertyDescriptor( nextSource, nextKey );
+                var desc    = Object.getOwnPropertyDescriptor( nextSource, nextKey );
                 if( desc !== void 0 && desc.enumerable ){
                     to[ nextKey ] = nextSource[ nextKey ];
                 }
             }
         }
         return to;
+    },
+
+    createForEach : function( attrSpecs ){
+        var statements = [ 'var v;' ];
+
+        for( var name in attrSpecs ){
+            statements.push( '(v=a.' + name + ')' + '===void 0||f(v,"' + name + '");' );
+        }
+
+        return new Function( 'a', 'f', statements.join( '' ) );
+    },
+
+    createCloneCtor : function ( attrSpecs ){
+        var statements = [];
+
+        for( var name in attrSpecs ){
+            statements.push( "this." + name + "=x." + name + ";" );
+        }
+
+        var CloneCtor = new Function( "x", statements.join( '' ) );
+        CloneCtor.prototype = Object.prototype;
+        return CloneCtor;
+    },
+
+    createTransformCtor : function ( attrSpecs ){
+        var statements = [ 'var v;' ];
+
+        for( var name in attrSpecs ){
+            statements.push( 'this.' + name + '=(v=a.' + name + ')' + '===void 0?void 0 :f(v,"' + name + '");' );
+        }
+
+        var TransformCtor = new Function( "a", 'f', statements.join( '' ) );
+        TransformCtor.prototype = Object.prototype;
+        return TransformCtor;
     },
 
     // Object.transform function, similar to _.mapObject
@@ -80,7 +114,7 @@
                 Child;
 
             if( typeof protoProps === 'function' ){
-                Child = protoProps;
+                Child      = protoProps;
                 protoProps = null;
             }
             else if( protoProps && protoProps.hasOwnProperty( 'constructor' ) ){
@@ -92,9 +126,9 @@
 
             Object.assign( Child, Parent );
 
-            Child.prototype = Object.create( Parent.prototype );
+            Child.prototype             = Object.create( Parent.prototype );
             Child.prototype.constructor = Child;
-            Child.__super__ = Parent.prototype;
+            Child.__super__             = Parent.prototype;
 
             protoProps && Child.define( protoProps, staticProps );
 
@@ -136,7 +170,7 @@
             var mixins = protoProps.mixins,
                 merged = {}, properties = {};
 
-            for( var i = mixins.length -1; i >= 0; i-- ){
+            for( var i = mixins.length - 1; i >= 0; i-- ){
                 var mixin = mixins[ i ];
                 Object.assign( properties, mixin.properties );
                 Object.assign( merged, mixin );
@@ -149,7 +183,7 @@
             return merged;
         }
 
-        function extractPropKeys( proto ){
+        function createForEachProp( proto ){
             var allProps = {};
 
             // traverse prototype chain
@@ -158,15 +192,15 @@
                     if( !allProps[ name ] && spec.enumerable ){
                         return spec;
                     }
-                });
+                } );
             }
 
-            return Object.keys( allProps );
+            return Object.createForEach( allProps );
         }
 
         function define( a_protoProps, a_staticProps ){
             var protoProps = a_protoProps || {};
-                staticProps = a_staticProps || {};
+            staticProps    = a_staticProps || {};
 
             if( protoProps.mixins ){
                 protoProps = attachMixins( protoProps );
@@ -181,7 +215,7 @@
             protoProps && Object.defineProperties( this.prototype,
                 Object.transform( {}, protoProps.properties, preparePropSpec, this ) );
 
-            this.prototype._propKeys = extractPropKeys( this.prototype );
+            this.prototype.forEachProp = createForEachProp( this.prototype );
 
             return this;
         }

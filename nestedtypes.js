@@ -150,14 +150,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	    applyTransform = modelSet.transform;
 	
 	function cloneAttrs( model, a_attrs, options ){
-	    var attrSpecs = model.__attributes,
-	        attrs = new model.Attributes( a_attrs ),
-	        _keys = model._keys;
+	    var attrs = new model.Attributes( a_attrs ),
+	        attrSpecs = this.__attributes;
 	
-	    for( var i = 0; i < _keys.length; i++ ){
-	        var name = _keys[ i ];
-	        attrs[ name ] = attrSpecs[ name ].clone( attrs[ name ], options );
-	    }
+	    model.forEachAttr( attrs, function( value, name ){
+	        attrs[ name ] = attrSpecs[ name ].clone( value, options );
+	    });
 	
 	    return attrs;
 	}
@@ -172,15 +170,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	        _clonedProps : {
 	            enumerable : false,
 	            get : function(){
-	                var propKeys = this._propKeys,
-	                    props = {};
+	                var props = {};
 	
-	                for( var i = 0; i < propKeys.length; i++ ){
-	                    var name = propKeys[ i ],
-	                        value = this[ name ];
-	
-	                    value === void 0 || ( props[ name ] = value );
-	                }
+	                this.forEachProp( this, function( value, name ){
+	                    props[ name ] = value;
+	                });
 	
 	                return props;
 	            }
@@ -207,18 +201,15 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	                if( !changed ){
 	                    var last      = this.attributes,
-	                        prev      = this._previousAttributes,
-	                        attrSpecs = this.__attributes;
+	                        prev      = this._previousAttributes;
 	
 	                    changed = {};
 	
-	                    for( var name in attrSpecs ){
-	                        var attrSpec = attrSpecs[ name ];
-	
+	                    this.forEachAttr( this.__attributes, function( attrSpec, name ){
 	                        if( attrSpec.isChanged( last[ name ], prev[ name ] ) ){
 	                            changed[ name ] = last[ name ];
 	                        }
-	                    }
+	                    });
 	
 	                    this._changed = changed;
 	                }
@@ -229,18 +220,17 @@ return /******/ (function(modules) { // webpackBootstrap
 	    },
 	
 	    _validateNested : function( errors ){
-	        var _keys = this._keys,
+	        var attrSpecs = this.__attributes,
 	            length = 0;
 	
-	        for( var i = 0; i < _keys.length; i++ ){
-	            var attr  = _keys[ i ],
-	                error = this.__attributes[ attr ].validate( this, this.attributes[ attr ], attr );
+	        this.forEachAttr( this.attributes, function( value, name ){
+	            var error = attrSpecs[ name ].validate( this, value, name );
 	
 	            if( error ){
-	                errors[ attr ] = error;
+	                errors[ name ] = error;
 	                length++;
 	            }
-	        }
+	        });
 	
 	        return length;
 	    },
@@ -262,7 +252,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	    _owner : null,
 	
 	    __attributes : { id : attrOptions( { value : undefined } ).createAttribute( 'id' ) },
-	    _keys : [ 'id' ],
 	
 	    Attributes   : function( x ){ this.id = x.id; },
 	    __class      : 'Model',
@@ -270,6 +259,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	    __duringSet  : 0,
 	    _changed     : null,
 	    _changeToken : {},
+	
+	    forEachAttr : function( obj, fun ){ this.id === void 0 || fun( this.id, 'id' ); },
 	
 	    defaults : function( attrs, options ){ return new this.Attributes( attrs ); },
 	
@@ -459,17 +450,18 @@ return /******/ (function(modules) { // webpackBootstrap
 	    // Support for nested models and objects.
 	    // Apply toJSON recursively to produce correct JSON.
 	    toJSON : function(){
-	        var res   = {},
-	            attrs = this.attributes, attrSpecs = this.__attributes;
+	        var self = this,
+	            res   = {},
+	            attrSpecs = this.__attributes;
 	
-	        for( var key in attrs ){
-	            var value  = attrs[ key ], attrSpec = attrSpecs[ key ],
+	        this.forEachAttr( this.attributes, function( value, key ){
+	            var attrSpec = attrSpecs[ key ],
 	                toJSON = attrSpec && attrSpec.toJSON;
 	
 	            if( toJSON ){
-	                res[ key ] = toJSON.call( this, value, key );
+	                res[ key ] = toJSON.call( self, value, key );
 	            }
-	        }
+	        });
 	
 	        return res;
 	    },
@@ -484,17 +476,21 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	    // extend Model and its Collection
 	    extend : function( protoProps, staticProps ){
-	        var ctor;
+	        var Child;
 	
 	        if( typeof protoProps === 'function' ){
-	            ctor       = protoProps;
-	            protoProps = void 0;
+	            Child = protoProps;
+	            protoProps = null;
+	        }
+	        else if( protoProps && protoProps.hasOwnProperty( 'constructor' ) ){
+	            Child = protoProps.constructor;
 	        }
 	        else{
-	            ctor = protoProps && protoProps.hasOwnProperty( 'constructor' ) && protoProps.constructor;
+	            var Parent = this;
+	            Child = function Model( attrs, options ){ return Parent.call( this, attrs, options ); };
 	        }
 	
-	        var This        = Object.extend.call( this, ctor );
+	        var This        = Object.extend.call( this, Child );
 	        This.Collection = this.Collection.extend();
 	        return protoProps ? This.define( protoProps, staticProps ) : This;
 	    },
@@ -551,11 +547,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }
 	
 	    var allAttrSpecs = _.defaults( {}, attrSpecs, baseAttrSpecs ),
-	        Attributes   = createCloneCtor( allAttrSpecs );
+	        Attributes   = Object.createCloneCtor( allAttrSpecs );
 	
 	    return _.extend( _.omit( protoProps, 'collection', 'attributes' ), {
 	        __attributes : new Attributes( allAttrSpecs ),
-	        _keys        : _.keys( allAttrSpecs ),
+	        forEachAttr  : Object.createForEach( allAttrSpecs ),
 	        _parse       : createParse( allAttrSpecs, attrSpecs ) || Base.prototype._parse,
 	        defaults     : defaultsAsFunction || createDefaults( allAttrSpecs ),
 	        properties   : createAttrsNativeProps( protoProps.properties, attrSpecs ),
@@ -583,22 +579,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	    statements.push( 'return r;' );
 	
 	    return create ? new Function( 'r', statements.join( '' ) ) : null;
-	}
-	
-	// Create constructor for efficient attributes clone operation.
-	function createCloneCtor( attrSpecs ){
-	    var statements = [];
-	
-	    for( var name in attrSpecs ){
-	        statements.push( "this." + name + "=x." + name + ";" );
-	    }
-	
-	    var Attributes = new Function( "x", statements.join( '' ) );
-	
-	    // attributes hash must look like vanilla object, otherwise Model.set will trigger an exception
-	    Attributes.prototype = Object.prototype;
-	
-	    return Attributes;
 	}
 	
 	// Check if value is valid JSON.
@@ -664,7 +644,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    // Create model.defaults( attrs, options ) function
 	    // 'attrs' will override default values, options will be passed to nested backbone types
 	    return function( attrs ){
-	        return attrs ? new AssignDefaults( attrs, this.__attributes ) : new CreateDefaults( this.__attributes );
+	        return attrs ? new AssignDefaults( attrs || {}, this.__attributes ) : new CreateDefaults( this.__attributes );
 	    }
 	}
 	
@@ -750,13 +730,47 @@ return /******/ (function(modules) { // webpackBootstrap
 	            var keysArray = Object.keys( Object( nextSource ) );
 	            for( var nextIndex = 0, len = keysArray.length; nextIndex < len; nextIndex++ ){
 	                var nextKey = keysArray[ nextIndex ];
-	                var desc = Object.getOwnPropertyDescriptor( nextSource, nextKey );
+	                var desc    = Object.getOwnPropertyDescriptor( nextSource, nextKey );
 	                if( desc !== void 0 && desc.enumerable ){
 	                    to[ nextKey ] = nextSource[ nextKey ];
 	                }
 	            }
 	        }
 	        return to;
+	    },
+	
+	    createForEach : function( attrSpecs ){
+	        var statements = [ 'var v;' ];
+	
+	        for( var name in attrSpecs ){
+	            statements.push( '(v=a.' + name + ')' + '===void 0||f(v,"' + name + '");' );
+	        }
+	
+	        return new Function( 'a', 'f', statements.join( '' ) );
+	    },
+	
+	    createCloneCtor : function ( attrSpecs ){
+	        var statements = [];
+	
+	        for( var name in attrSpecs ){
+	            statements.push( "this." + name + "=x." + name + ";" );
+	        }
+	
+	        var CloneCtor = new Function( "x", statements.join( '' ) );
+	        CloneCtor.prototype = Object.prototype;
+	        return CloneCtor;
+	    },
+	
+	    createTransformCtor : function ( attrSpecs ){
+	        var statements = [ 'var v;' ];
+	
+	        for( var name in attrSpecs ){
+	            statements.push( 'this.' + name + '=(v=a.' + name + ')' + '===void 0?void 0 :f(v,"' + name + '");' );
+	        }
+	
+	        var TransformCtor = new Function( "a", 'f', statements.join( '' ) );
+	        TransformCtor.prototype = Object.prototype;
+	        return TransformCtor;
 	    },
 	
 	    // Object.transform function, similar to _.mapObject
@@ -802,7 +816,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                Child;
 	
 	            if( typeof protoProps === 'function' ){
-	                Child = protoProps;
+	                Child      = protoProps;
 	                protoProps = null;
 	            }
 	            else if( protoProps && protoProps.hasOwnProperty( 'constructor' ) ){
@@ -814,9 +828,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	            Object.assign( Child, Parent );
 	
-	            Child.prototype = Object.create( Parent.prototype );
+	            Child.prototype             = Object.create( Parent.prototype );
 	            Child.prototype.constructor = Child;
-	            Child.__super__ = Parent.prototype;
+	            Child.__super__             = Parent.prototype;
 	
 	            protoProps && Child.define( protoProps, staticProps );
 	
@@ -858,7 +872,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            var mixins = protoProps.mixins,
 	                merged = {}, properties = {};
 	
-	            for( var i = mixins.length -1; i >= 0; i-- ){
+	            for( var i = mixins.length - 1; i >= 0; i-- ){
 	                var mixin = mixins[ i ];
 	                Object.assign( properties, mixin.properties );
 	                Object.assign( merged, mixin );
@@ -871,7 +885,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            return merged;
 	        }
 	
-	        function extractPropKeys( proto ){
+	        function createForEachProp( proto ){
 	            var allProps = {};
 	
 	            // traverse prototype chain
@@ -880,15 +894,15 @@ return /******/ (function(modules) { // webpackBootstrap
 	                    if( !allProps[ name ] && spec.enumerable ){
 	                        return spec;
 	                    }
-	                });
+	                } );
 	            }
 	
-	            return Object.keys( allProps );
+	            return Object.createForEach( allProps );
 	        }
 	
 	        function define( a_protoProps, a_staticProps ){
 	            var protoProps = a_protoProps || {};
-	                staticProps = a_staticProps || {};
+	            staticProps    = a_staticProps || {};
 	
 	            if( protoProps.mixins ){
 	                protoProps = attachMixins( protoProps );
@@ -903,7 +917,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            protoProps && Object.defineProperties( this.prototype,
 	                Object.transform( {}, protoProps.properties, preparePropSpec, this ) );
 	
-	            this.prototype._propKeys = extractPropKeys( this.prototype );
+	            this.prototype.forEachProp = createForEachProp( this.prototype );
 	
 	            return this;
 	        }

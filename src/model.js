@@ -14,14 +14,12 @@ var setSingleAttr  = modelSet.setSingleAttr,
     applyTransform = modelSet.transform;
 
 function cloneAttrs( model, a_attrs, options ){
-    var attrSpecs = model.__attributes,
-        attrs = new model.Attributes( a_attrs ),
-        _keys = model._keys;
+    var attrs = new model.Attributes( a_attrs ),
+        attrSpecs = this.__attributes;
 
-    for( var i = 0; i < _keys.length; i++ ){
-        var name = _keys[ i ];
-        attrs[ name ] = attrSpecs[ name ].clone( attrs[ name ], options );
-    }
+    model.forEachAttr( attrs, function( value, name ){
+        attrs[ name ] = attrSpecs[ name ].clone( value, options );
+    });
 
     return attrs;
 }
@@ -36,15 +34,11 @@ var Model = BaseModel.extend({
         _clonedProps : {
             enumerable : false,
             get : function(){
-                var propKeys = this._propKeys,
-                    props = {};
+                var props = {};
 
-                for( var i = 0; i < propKeys.length; i++ ){
-                    var name = propKeys[ i ],
-                        value = this[ name ];
-
-                    value === void 0 || ( props[ name ] = value );
-                }
+                this.forEachProp( this, function( value, name ){
+                    props[ name ] = value;
+                });
 
                 return props;
             }
@@ -71,18 +65,15 @@ var Model = BaseModel.extend({
 
                 if( !changed ){
                     var last      = this.attributes,
-                        prev      = this._previousAttributes,
-                        attrSpecs = this.__attributes;
+                        prev      = this._previousAttributes;
 
                     changed = {};
 
-                    for( var name in attrSpecs ){
-                        var attrSpec = attrSpecs[ name ];
-
+                    this.forEachAttr( this.__attributes, function( attrSpec, name ){
                         if( attrSpec.isChanged( last[ name ], prev[ name ] ) ){
                             changed[ name ] = last[ name ];
                         }
-                    }
+                    });
 
                     this._changed = changed;
                 }
@@ -93,18 +84,17 @@ var Model = BaseModel.extend({
     },
 
     _validateNested : function( errors ){
-        var _keys = this._keys,
+        var attrSpecs = this.__attributes,
             length = 0;
 
-        for( var i = 0; i < _keys.length; i++ ){
-            var attr  = _keys[ i ],
-                error = this.__attributes[ attr ].validate( this, this.attributes[ attr ], attr );
+        this.forEachAttr( this.attributes, function( value, name ){
+            var error = attrSpecs[ name ].validate( this, value, name );
 
             if( error ){
-                errors[ attr ] = error;
+                errors[ name ] = error;
                 length++;
             }
-        }
+        });
 
         return length;
     },
@@ -126,7 +116,6 @@ var Model = BaseModel.extend({
     _owner : null,
 
     __attributes : { id : attrOptions( { value : undefined } ).createAttribute( 'id' ) },
-    _keys : [ 'id' ],
 
     Attributes   : function( x ){ this.id = x.id; },
     __class      : 'Model',
@@ -134,6 +123,8 @@ var Model = BaseModel.extend({
     __duringSet  : 0,
     _changed     : null,
     _changeToken : {},
+
+    forEachAttr : function( obj, fun ){ this.id === void 0 || fun( this.id, 'id' ); },
 
     defaults : function( attrs, options ){ return new this.Attributes( attrs ); },
 
@@ -323,17 +314,18 @@ var Model = BaseModel.extend({
     // Support for nested models and objects.
     // Apply toJSON recursively to produce correct JSON.
     toJSON : function(){
-        var res   = {},
-            attrs = this.attributes, attrSpecs = this.__attributes;
+        var self = this,
+            res   = {},
+            attrSpecs = this.__attributes;
 
-        for( var key in attrs ){
-            var value  = attrs[ key ], attrSpec = attrSpecs[ key ],
+        this.forEachAttr( this.attributes, function( value, key ){
+            var attrSpec = attrSpecs[ key ],
                 toJSON = attrSpec && attrSpec.toJSON;
 
             if( toJSON ){
-                res[ key ] = toJSON.call( this, value, key );
+                res[ key ] = toJSON.call( self, value, key );
             }
-        }
+        });
 
         return res;
     },
@@ -348,17 +340,21 @@ var Model = BaseModel.extend({
 
     // extend Model and its Collection
     extend : function( protoProps, staticProps ){
-        var ctor;
+        var Child;
 
         if( typeof protoProps === 'function' ){
-            ctor       = protoProps;
-            protoProps = void 0;
+            Child = protoProps;
+            protoProps = null;
+        }
+        else if( protoProps && protoProps.hasOwnProperty( 'constructor' ) ){
+            Child = protoProps.constructor;
         }
         else{
-            ctor = protoProps && protoProps.hasOwnProperty( 'constructor' ) && protoProps.constructor;
+            var Parent = this;
+            Child = function Model( attrs, options ){ return Parent.call( this, attrs, options ); };
         }
 
-        var This        = Object.extend.call( this, ctor );
+        var This        = Object.extend.call( this, Child );
         This.Collection = this.Collection.extend();
         return protoProps ? This.define( protoProps, staticProps ) : This;
     },
@@ -415,11 +411,11 @@ function createDefinition( protoProps, Base ){
     }
 
     var allAttrSpecs = _.defaults( {}, attrSpecs, baseAttrSpecs ),
-        Attributes   = createCloneCtor( allAttrSpecs );
+        Attributes   = Object.createCloneCtor( allAttrSpecs );
 
     return _.extend( _.omit( protoProps, 'collection', 'attributes' ), {
         __attributes : new Attributes( allAttrSpecs ),
-        _keys        : _.keys( allAttrSpecs ),
+        forEachAttr  : Object.createForEach( allAttrSpecs ),
         _parse       : createParse( allAttrSpecs, attrSpecs ) || Base.prototype._parse,
         defaults     : defaultsAsFunction || createDefaults( allAttrSpecs ),
         properties   : createAttrsNativeProps( protoProps.properties, attrSpecs ),
@@ -447,22 +443,6 @@ function createParse( allAttrSpecs, attrSpecs ){
     statements.push( 'return r;' );
 
     return create ? new Function( 'r', statements.join( '' ) ) : null;
-}
-
-// Create constructor for efficient attributes clone operation.
-function createCloneCtor( attrSpecs ){
-    var statements = [];
-
-    for( var name in attrSpecs ){
-        statements.push( "this." + name + "=x." + name + ";" );
-    }
-
-    var Attributes = new Function( "x", statements.join( '' ) );
-
-    // attributes hash must look like vanilla object, otherwise Model.set will trigger an exception
-    Attributes.prototype = Object.prototype;
-
-    return Attributes;
 }
 
 // Check if value is valid JSON.

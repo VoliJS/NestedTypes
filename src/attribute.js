@@ -87,6 +87,7 @@ var Options = Object.extend( {
             this._options._error = error;
         }
 
+        return this;
     },
 
     proxy : function( attrs ){
@@ -259,17 +260,11 @@ var Attribute = Object.extend( {
         return value;
     },
 
-    check : function( value ){
-        if( value !== value || value === Infinity || value === -Infinity ) return false;
-
-        if( value && value.isValid ) return value.isValid();
-
-        return true;
-    },
+    _error : 'Custom check failed',
 
     validate : function( model, value, name ){
-        if( !this.check.call( model, value, name ) ){
-            return this._error || 'Invalid value';
+        if( this.check && !this.check.call( model, value, name ) ){
+            return this._error;
         }
     },
 

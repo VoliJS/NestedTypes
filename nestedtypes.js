@@ -2469,6 +2469,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            this._options._error = error;
 	        }
 	
+	        return this;
 	    },
 	
 	    proxy : function( attrs ){
@@ -2641,17 +2642,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	        return value;
 	    },
 	
-	    check : function( value ){
-	        if( value !== value || value === Infinity || value === -Infinity ) return false;
-	
-	        if( value && value.isValid ) return value.isValid();
-	
-	        return true;
-	    },
+	    _error : 'Custom check failed',
 	
 	    validate : function( model, value, name ){
-	        if( !this.check.call( model, value, name ) ){
-	            return this._error || 'Invalid value';
+	        if( this.check && !this.check.call( model, value, name ) ){
+	            return this._error;
 	        }
 	    },
 	
@@ -4418,8 +4413,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	               new Date( typeof value === 'string' ? parseDate( value ) : value )
 	    },
 	
-	    check : function( value ){
-	        return !isNaN( +value );
+	    validate : function( model, value, name ){
+	        if( isNaN( +value ) ) return 'Invalid Date';
+	
+	        if( this.check && !this.check.call( model, value, name ) ){
+	            return this._error;
+	        }
 	    },
 	
 	    toJSON : function( value ){ return value && value.toJSON(); },
@@ -4434,7 +4433,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	// -------------------------------------
 	Integer = function( x ){ return x ? Math.round( x ) : 0; };
 	
-	attribute.Type.extend( {
+	var PrimitiveType = attribute.Type.extend( {
 	    create : function(){ return this.type(); },
 	
 	    toJSON : function( value ){ return value; },
@@ -4443,7 +4442,19 @@ return /******/ (function(modules) { // webpackBootstrap
 	    isChanged : function( a, b ){ return a !== b; },
 	
 	    clone : function( value ){ return value; }
-	} ).attach( Number, Boolean, String, Integer );
+	} );
+	
+	PrimitiveType.attach( Boolean, String );
+	
+	PrimitiveType.extend({
+	    validate : function( model, value, name ){
+	        if( value !== value || value === Infinity || value === -Infinity ) return 'Invalid Number';
+	
+	        if( this.check && !this.check.call( model, value, name ) ){
+	            return this._error;
+	        }
+	    }
+	} ).attach( Integer, Number );
 	
 	// Array Type
 	// ---------------
@@ -4481,6 +4492,15 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	    isBackboneType : true,
 	    isModel        : true,
+	
+	    validate : function( model, value, name ){
+	        var error = value && value.validationError;
+	        if( error ) return error;
+	
+	        if( this.check && !this.check.call( model, value, name ) ){
+	            return this._error;
+	        }
+	    },
 	
 	    createPropertySpec : function(){
 	        // if there are nested changes detection enabled, disable optimized setter

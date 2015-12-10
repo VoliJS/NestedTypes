@@ -70,8 +70,12 @@ attribute.Type.extend( {
                new Date( typeof value === 'string' ? parseDate( value ) : value )
     },
 
-    check : function( value ){
-        return !isNaN( +value );
+    validate : function( model, value, name ){
+        if( isNaN( +value ) ) return 'Invalid Date';
+
+        if( this.check && !this.check.call( model, value, name ) ){
+            return this._error;
+        }
     },
 
     toJSON : function( value ){ return value && value.toJSON(); },
@@ -86,7 +90,7 @@ attribute.Type.extend( {
 // -------------------------------------
 Integer = function( x ){ return x ? Math.round( x ) : 0; };
 
-attribute.Type.extend( {
+var PrimitiveType = attribute.Type.extend( {
     create : function(){ return this.type(); },
 
     toJSON : function( value ){ return value; },
@@ -95,7 +99,19 @@ attribute.Type.extend( {
     isChanged : function( a, b ){ return a !== b; },
 
     clone : function( value ){ return value; }
-} ).attach( Number, Boolean, String, Integer );
+} );
+
+PrimitiveType.attach( Boolean, String );
+
+PrimitiveType.extend({
+    validate : function( model, value, name ){
+        if( value !== value || value === Infinity || value === -Infinity ) return 'Invalid Number';
+
+        if( this.check && !this.check.call( model, value, name ) ){
+            return this._error;
+        }
+    }
+} ).attach( Integer, Number );
 
 // Array Type
 // ---------------
@@ -133,6 +149,15 @@ attribute.Type.extend( {
 
     isBackboneType : true,
     isModel        : true,
+
+    validate : function( model, value, name ){
+        var error = value && value.validationError;
+        if( error ) return error;
+
+        if( this.check && !this.check.call( model, value, name ) ){
+            return this._error;
+        }
+    },
 
     createPropertySpec : function(){
         // if there are nested changes detection enabled, disable optimized setter

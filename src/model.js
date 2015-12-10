@@ -15,7 +15,7 @@ var setSingleAttr  = modelSet.setSingleAttr,
 
 function cloneAttrs( model, a_attrs, options ){
     var attrs = new model.Attributes( a_attrs ),
-        attrSpecs = this.__attributes;
+        attrSpecs = model.__attributes;
 
     model.forEachAttr( attrs, function( value, name ){
         attrs[ name ] = attrSpecs[ name ].clone( value, options );
@@ -500,7 +500,7 @@ function createDefaults( attrSpecs ){
         }
     } );
 
-    var CreateDefaults = new Function( 'i', assign_f.join( '' ) ),
+    var CreateDefaults = new Function( 'i', create_f.join( '' ) ),
         AssignDefaults = new Function( 'a', 'i', assign_f.join( '' ) );
 
     CreateDefaults.prototype = AssignDefaults.prototype = Object.prototype;

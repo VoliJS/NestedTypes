@@ -83,14 +83,7 @@ function addMethod(length, method, attribute) {
 // Support `collection.sortBy('attr')` and `collection.findWhere({id: 1})`.
 function cb(iteratee, instance) {
     if (_.isFunction(iteratee)) return iteratee;
-    if (_.isObject(iteratee) && !(iteratee instanceof instance.model )) return modelMatcher(iteratee);
+    if (_.isObject(iteratee) && !(iteratee instanceof instance.model )) return _.matches(iteratee);
     if (_.isString(iteratee)) return function(model) { return model.get(iteratee); };
     return iteratee;
-}
-
-function modelMatcher(attrs) {
-    var matcher = _.matches(attrs);
-    return function(model) {
-        return matcher(model.attributes);
-    };
 }

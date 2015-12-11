@@ -2464,10 +2464,22 @@ return /******/ (function(modules) { // webpackBootstrap
 	    },
 	
 	    check : function( check, error ){
-	        this._options.check = check;
-	        if( error ){
-	            this._options._error = error;
-	        }
+	        var prevValidate = this._options.validate;
+	
+	        var validate = prevValidate ? function( model, value, name ){
+	            var prevError = prevValidate( model, value, name );
+	            if( prevError ) return prevError;
+	
+	            if( !check.call( model, value, name ) ){
+	                return error || name + ' is not valid';
+	            }
+	        } : function( model, value, name ){
+	            if( !check.call( model, value, name ) ){
+	                return error || name + ' is not valid';
+	            }
+	        };
+	
+	        this._options.validate = validate;
 	
 	        return this;
 	    },
@@ -2642,13 +2654,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        return value;
 	    },
 	
-	    _error : 'Custom check failed',
-	
-	    validate : function( model, value, name ){
-	        if( this.check && !this.check.call( model, value, name ) ){
-	            return this._error;
-	        }
-	    },
+	    validate : function( model, value, name ){},
 	
 	    toJSON : function( value, key ){
 	        return value && value.toJSON ? value.toJSON() : value;
@@ -4415,10 +4421,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	    validate : function( model, value, name ){
 	        if( isNaN( +value ) ) return 'Invalid Date';
-	
-	        if( this.check && !this.check.call( model, value, name ) ){
-	            return this._error;
-	        }
 	    },
 	
 	    toJSON : function( value ){ return value && value.toJSON(); },
@@ -4448,11 +4450,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	PrimitiveType.extend({
 	    validate : function( model, value, name ){
-	        if( value !== value || value === Infinity || value === -Infinity ) return 'Invalid Number';
-	
-	        if( this.check && !this.check.call( model, value, name ) ){
-	            return this._error;
-	        }
+	        if( value !== value || value === Infinity || value === -Infinity ) return name + ' is invalid number';
 	    }
 	} ).attach( Integer, Number );
 	
@@ -4496,10 +4494,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	    validate : function( model, value, name ){
 	        var error = value && value.validationError;
 	        if( error ) return error;
-	
-	        if( this.check && !this.check.call( model, value, name ) ){
-	            return this._error;
-	        }
 	    },
 	
 	    createPropertySpec : function(){

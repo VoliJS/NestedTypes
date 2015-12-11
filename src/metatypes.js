@@ -72,10 +72,6 @@ attribute.Type.extend( {
 
     validate : function( model, value, name ){
         if( isNaN( +value ) ) return 'Invalid Date';
-
-        if( this.check && !this.check.call( model, value, name ) ){
-            return this._error;
-        }
     },
 
     toJSON : function( value ){ return value && value.toJSON(); },
@@ -105,11 +101,7 @@ PrimitiveType.attach( Boolean, String );
 
 PrimitiveType.extend({
     validate : function( model, value, name ){
-        if( value !== value || value === Infinity || value === -Infinity ) return 'Invalid Number';
-
-        if( this.check && !this.check.call( model, value, name ) ){
-            return this._error;
-        }
+        if( value !== value || value === Infinity || value === -Infinity ) return name + ' is invalid number';
     }
 } ).attach( Integer, Number );
 
@@ -153,10 +145,6 @@ attribute.Type.extend( {
     validate : function( model, value, name ){
         var error = value && value.validationError;
         if( error ) return error;
-
-        if( this.check && !this.check.call( model, value, name ) ){
-            return this._error;
-        }
     },
 
     createPropertySpec : function(){

@@ -82,10 +82,22 @@ var Options = Object.extend( {
     },
 
     check : function( check, error ){
-        this._options.check = check;
-        if( error ){
-            this._options._error = error;
-        }
+        var prevValidate = this._options.validate;
+
+        var validate = prevValidate ? function( model, value, name ){
+            var prevError = prevValidate( model, value, name );
+            if( prevError ) return prevError;
+
+            if( !check.call( model, value, name ) ){
+                return error || name + ' is not valid';
+            }
+        } : function( model, value, name ){
+            if( !check.call( model, value, name ) ){
+                return error || name + ' is not valid';
+            }
+        };
+
+        this._options.validate = validate;
 
         return this;
     },
@@ -260,13 +272,7 @@ var Attribute = Object.extend( {
         return value;
     },
 
-    _error : 'Custom check failed',
-
-    validate : function( model, value, name ){
-        if( this.check && !this.check.call( model, value, name ) ){
-            return this._error;
-        }
-    },
+    validate : function( model, value, name ){},
 
     toJSON : function( value, key ){
         return value && value.toJSON ? value.toJSON() : value;

@@ -27,7 +27,6 @@
         var compiled = createForEach( attrs );
 
         function Obj(){
-            this.a0 = 0;
             this.a1 = 0;
             this.a2 = 0;
             this.a3 = 0;
@@ -47,6 +46,7 @@
             this.a17 = 0;
             this.a18 = 0;
             this.a19 = 0;
+            this.a20 = 0;
         }
 
         var objAttrs = new Obj();
@@ -60,7 +60,7 @@
         function testCObj(){
             var count = 0;
 
-            compiled( objAttrs, function( val ){ count+= val });
+            compiled( { a1 : 1 }, function( val ){ count+= val });
         }
 
         function testLoop(){
@@ -99,24 +99,23 @@
                 fun();
             }
 
-            console.log( window.performance.now() - start );
+            document.write( window.performance.now() - start );
         }
 
-        console.log( "Hash loop:" );
+        document.write( "\nHash loop:\t" );
         measure( testHash, 1000000 );
 
-        console.log( "Class loop:" );
+        document.write( "\nClass loop:\t" );
         measure( testObj, 1000000 );
 
-        console.log( "Array loop:" );
+        document.write( "\nArray loop:\t" );
         measure( testLoop, 1000000 );
 
-        console.log( "Unrolled loop:" );
+        document.write( "\nUnrolled loop:\t" );
         measure( testC, 1000000 );
 
-        console.log( "Unrolled Obj loop:" );
+        document.write( "\nUnrolled Obj loop:\t" );
         measure( testCObj, 1000000 );
-
 
     </script>
 

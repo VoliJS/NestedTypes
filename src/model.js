@@ -85,10 +85,11 @@ var Model = BaseModel.extend({
 
     _validateNested : function( errors ){
         var attrSpecs = this.__attributes,
-            length = 0;
+            length = 0,
+            model = this;
 
         this.forEachAttr( this.attributes, function( value, name ){
-            var error = attrSpecs[ name ].validate( this, value, name );
+            var error = attrSpecs[ name ].validate( model, value, name );
 
             if( error ){
                 errors[ name ] = error;

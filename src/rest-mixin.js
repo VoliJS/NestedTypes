@@ -58,7 +58,7 @@ exports.Model = {
 
         if( this._invalidate( options ) ){
             if( attrs && wait ) this.set( attrs, options );
-            return false;
+            return exports.errorPromise( this.validationError );
         }
 
         // After a successful server-side save, the client is (optionally)
@@ -278,4 +278,10 @@ var methodMap = {
 // Override this if you'd like to use a different library.
 exports.ajax = function(){
     return exports.$.ajax.apply( exports.$, arguments );
+};
+
+exports.errorPromise = function( error ){
+    var x = exports.$.Deferred();
+    x.reject( error );
+    return x;
 };

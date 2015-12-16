@@ -53,22 +53,21 @@ _.extend( exports, Backbone, {
     }
 } );
 
+function linkProperty( Namespace, name ){
+    return {
+        get : function(){ return Namespace[ name ]; },
+        set : function( value ){ Namespace[ name ] = value; }
+    };
+}
+
 // allow sync and jQuery override
 Object.defineProperties( exports, {
-    'sync' : {
-        get : function(){ return Rest.sync; },
-        set : function( value ){ Rest.sync = value; }
-    },
-    'ajax' : {
-        get : function(){ return Rest.ajax; },
-        set : function( value ){ Rest.ajax = value; }
-    },
-    'history' : {
-        get : function(){ return Backbone.history; },
-        set : function( value ){ Backbone.history = value; }
-    },
+    'sync'         : linkProperty( Rest, 'sync' ),
+    'errorPromise' : linkProperty( Rest, 'errorPromise' ),
+    'ajax'         : linkProperty( Rest, 'ajax' ),
+    'history'      : linkProperty( Backbone, 'history' ),
 
-    '$'    : {
+    '$' : {
         get : function(){ return Backbone.$; },
         set : function( value ){ Backbone.$ = Rest.$ = value; }
     }

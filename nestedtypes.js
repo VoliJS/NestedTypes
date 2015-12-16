@@ -109,22 +109,21 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }
 	} );
 	
+	function linkProperty( Namespace, name ){
+	    return {
+	        get : function(){ return Namespace[ name ]; },
+	        set : function( value ){ Namespace[ name ] = value; }
+	    };
+	}
+	
 	// allow sync and jQuery override
 	Object.defineProperties( exports, {
-	    'sync' : {
-	        get : function(){ return Rest.sync; },
-	        set : function( value ){ Rest.sync = value; }
-	    },
-	    'ajax' : {
-	        get : function(){ return Rest.ajax; },
-	        set : function( value ){ Rest.ajax = value; }
-	    },
-	    'history' : {
-	        get : function(){ return Backbone.history; },
-	        set : function( value ){ Backbone.history = value; }
-	    },
+	    'sync'         : linkProperty( Rest, 'sync' ),
+	    'errorPromise' : linkProperty( Rest, 'errorPromise' ),
+	    'ajax'         : linkProperty( Rest, 'ajax' ),
+	    'history'      : linkProperty( Backbone, 'history' ),
 	
-	    '$'    : {
+	    '$' : {
 	        get : function(){ return Backbone.$; },
 	        set : function( value ){ Backbone.$ = Rest.$ = value; }
 	    }
@@ -221,10 +220,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	    _validateNested : function( errors ){
 	        var attrSpecs = this.__attributes,
-	            length = 0;
+	            length = 0,
+	            model = this;
 	
 	        this.forEachAttr( this.attributes, function( value, name ){
-	            var error = attrSpecs[ name ].validate( this, value, name );
+	            var error = attrSpecs[ name ].validate( model, value, name );
 	
 	            if( error ){
 	                errors[ name ] = error;
@@ -2945,7 +2945,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	        if( this._invalidate( options ) ){
 	            if( attrs && wait ) this.set( attrs, options );
-	            return false;
+	            return exports.errorPromise( this.validationError );
 	        }
 	
 	        // After a successful server-side save, the client is (optionally)
@@ -3165,6 +3165,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	// Override this if you'd like to use a different library.
 	exports.ajax = function(){
 	    return exports.$.ajax.apply( exports.$, arguments );
+	};
+	
+	exports.errorPromise = function( error ){
+	    var x = exports.$.Deferred();
+	    x.reject( error );
+	    return x;
 	};
 
 /***/ },

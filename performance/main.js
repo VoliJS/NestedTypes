@@ -36,7 +36,7 @@ define( function( require, exports, module ){
             }, {} );
         },
 
-        save(){}
+        save : function(){}
     });
 
     var BLarge = Backbone.Model.extend({
@@ -55,7 +55,7 @@ define( function( require, exports, module ){
             });
         },
 
-        save(){}
+        save : function(){}
     });
 
     var BLargeCollection = Backbone.Collection.extend({
@@ -68,7 +68,7 @@ define( function( require, exports, module ){
             a1 : 1
         },
 
-        save(){}
+        save : function(){}
     });
 
     var BSmall = Backbone.Model.extend({
@@ -76,7 +76,7 @@ define( function( require, exports, module ){
             a1 : 1
         },
 
-        save(){}
+        save : function(){}
     });
 
     var BSmallCollection = Backbone.Collection.extend({

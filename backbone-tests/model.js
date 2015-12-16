@@ -1264,7 +1264,10 @@
     var model = new Backbone.Model;
     model.validate = function(){ return 'invalid'; };
     model.sync = function(){ assert.ok(false); };
-    assert.strictEqual(model.save(), false);
+
+    model.save().fail( function( e ){
+        assert.strictEqual( e.error, 'invalid' );
+    });
   });
 
   QUnit.test("#1377 - Save without attrs triggers 'error'.", function(assert) {

@@ -16,7 +16,7 @@ var primitiveTypes = {
 
 // list of simple accessor methods available in options
 var availableOptions = [ 'triggerWhenChanged', 'changeEvents', 'parse', 'clone', 'toJSON', 'value', 'cast', 'create', 'name', 'value',
-                         'type' ];
+                         'type', 'validate' ];
 
 function parseReference( ref ){
     switch( typeof ref ){

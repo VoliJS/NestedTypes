@@ -2,6 +2,16 @@
  
 ## General Principles
 
+Models and collections are validated 
+
+validationError : {
+    error : <error object>,
+    length : <error's count>
+    _changeToken : <last evaluated
+}
+
+
+
 model.validationError = null | { _token, _count, _all, attr1, ... }
 // evaluated on first access and cached
 // uses change token to validate the cache 

@@ -77,7 +77,7 @@ exports.from = function( masterCollection ){
     var ModelRefAttribute = attribute.Type.extend( {
         toJSON : clone,
         clone  : clone,
-
+        validate : function( model, value, name ){},
         isChanged : function( a, b ){
             // refs are equal when their id is equal.
             var aId = a && typeof a == 'object' ? a.id : a,
@@ -223,7 +223,7 @@ exports.subsetOf = function( masterCollection ){
 
     return attribute( {
         type : SubsetOf,
-
+        validate : function( model, value, name ){},
         get : function( refs ){
             !refs || refs.resolvedWith || refs.resolve( getMaster.call( this ) );
             return refs;

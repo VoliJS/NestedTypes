@@ -133,47 +133,47 @@ return /******/ (function(modules) { // webpackBootstrap
 /* 1 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var Backbone    = __webpack_require__( 2 ),
-	    BaseModel   = Backbone.Model,
-	    modelSet    = __webpack_require__( 8 ),
-	    attrOptions = __webpack_require__( 10 ),
-	    error       = __webpack_require__( 9 ),
-	    _           = __webpack_require__( 5 ),
+	var Backbone        = __webpack_require__( 2 ),
+	    BaseModel       = Backbone.Model,
+	    modelSet        = __webpack_require__( 8 ),
+	    attrOptions     = __webpack_require__( 10 ),
+	    error           = __webpack_require__( 9 ),
+	    _               = __webpack_require__( 5 ),
 	    ValidationMixin = __webpack_require__( 11 ),
-	    RestMixin = __webpack_require__( 12 ).Model,
-	    UnderscoreMixin = __webpack_require__( 13 ),
-	    ModelProto  = BaseModel.prototype;
+	    RestMixin       = __webpack_require__( 12 ).Model,
+	    UnderscoreMixin = __webpack_require__( 13 );
 	
 	var setSingleAttr  = modelSet.setSingleAttr,
 	    setAttrs       = modelSet.setAttrs,
 	    applyTransform = modelSet.transform;
 	
-	function cloneAttrs( model, a_attrs, options ){
-	    var attrs = new model.Attributes( a_attrs ),
-	        attrSpecs = model.__attributes;
+	function deepCloneAttrs( model, a_attrs ){
+	    var attrs     = new model.Attributes( a_attrs ),
+	        attrSpecs = model.__attributes,
+	        options   = { deep : true };
 	
 	    model.forEachAttr( attrs, function( value, name ){
 	        attrs[ name ] = attrSpecs[ name ].clone( value, options );
-	    });
+	    } );
 	
 	    return attrs;
 	}
 	
 	var _cidCount = 1;
 	
-	var Model = BaseModel.extend({
-	    mixins : [ ValidationMixin, RestMixin, UnderscoreMixin.Model ],
+	var Model = BaseModel.extend( {
+	    mixins             : [ ValidationMixin, RestMixin, UnderscoreMixin.Model ],
 	    triggerWhenChanged : 'change',
 	
 	    properties : {
 	        _clonedProps : {
 	            enumerable : false,
-	            get : function(){
+	            get        : function(){
 	                var props = {};
 	
 	                this.forEachProp( this, function( value, name ){
 	                    props[ name ] = value;
-	                });
+	                } );
 	
 	                return props;
 	            }
@@ -195,12 +195,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	        changed : {
 	            enumerable : false,
-	            get : function(){
+	            get        : function(){
 	                var changed = this._changed;
 	
 	                if( !changed ){
-	                    var last      = this.attributes,
-	                        prev      = this._previousAttributes;
+	                    var last = this.attributes,
+	                        prev = this._previousAttributes;
 	
 	                    changed = {};
 	
@@ -208,7 +208,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                        if( attrSpec.isChanged( last[ name ], prev[ name ] ) ){
 	                            changed[ name ] = last[ name ];
 	                        }
-	                    });
+	                    } );
 	
 	                    this._changed = changed;
 	                }
@@ -220,8 +220,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	    _validateNested : function( errors ){
 	        var attrSpecs = this.__attributes,
-	            length = 0,
-	            model = this;
+	            length    = 0,
+	            model     = this;
 	
 	        this.forEachAttr( this.attributes, function( value, name ){
 	            var error = attrSpecs[ name ].validate( model, value, name );
@@ -230,7 +230,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                errors[ name ] = error;
 	                length++;
 	            }
-	        });
+	        } );
 	
 	        return length;
 	    },
@@ -253,8 +253,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	    __attributes : { id : attrOptions( { value : undefined } ).createAttribute( 'id' ) },
 	
-	    Attributes   : function( x ){ this.id = x.id; },
-	    __class      : 'Model',
+	    Attributes : function( x ){ this.id = x.id; },
+	    __class    : 'Model',
 	
 	    __duringSet  : 0,
 	    _changed     : null,
@@ -336,8 +336,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	    },
 	
 	    deepInvalidate : function( name ){
-	        var path = name.split( '.' ),
-	            attr = path.pop(),
+	        var path  = name.split( '.' ),
+	            attr  = path.pop(),
 	            model = this._deepGet( path ),
 	            error, value;
 	
@@ -415,10 +415,17 @@ return /******/ (function(modules) { // webpackBootstrap
 	        this.attributes   = {};
 	        this.cid          = this.cidPrefix + _cidCount++;
 	
-	        if( options.collection ) this.collection = options.collection;
-	
 	        if( options.parse ){
 	            attrs = this.parse( attrs, options ) || {};
+	        }
+	
+	        //  Make this.collection accessible in initialize
+	        if( options.collection ){
+	            this.collection = options.collection;
+	
+	            // do not pass it to nested objects.
+	            // No side effect here, options copied at the upper level in this case
+	            options.collection = null;
 	        }
 	
 	        if( typeof attrs !== 'object' || Object.getPrototypeOf( attrs ) !== Object.prototype ){
@@ -426,9 +433,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            attrs = {};
 	        }
 	
-	        attrs = options.deep ?
-	                cloneAttrs( this, attrs, options ) :
-	                this.defaults( attrs, options );
+	        attrs = options.deep ? deepCloneAttrs( this, attrs ) : this.defaults( attrs );
 	
 	        // Execute attributes transform function instead of this.set
 	        applyTransform( this, attrs, attrSpecs, options );
@@ -450,18 +455,18 @@ return /******/ (function(modules) { // webpackBootstrap
 	    // Support for nested models and objects.
 	    // Apply toJSON recursively to produce correct JSON.
 	    toJSON : function(){
-	        var self = this,
-	            res   = {},
+	        var self      = this,
+	            res       = {},
 	            attrSpecs = this.__attributes;
 	
 	        this.forEachAttr( this.attributes, function( value, key ){
 	            var attrSpec = attrSpecs[ key ],
-	                toJSON = attrSpec && attrSpec.toJSON;
+	                toJSON   = attrSpec && attrSpec.toJSON;
 	
 	            if( toJSON ){
 	                res[ key ] = toJSON.call( self, value, key );
 	            }
-	        });
+	        } );
 	
 	        return res;
 	    },
@@ -479,7 +484,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        var Child;
 	
 	        if( typeof protoProps === 'function' ){
-	            Child = protoProps;
+	            Child      = protoProps;
 	            protoProps = null;
 	        }
 	        else if( protoProps && protoProps.hasOwnProperty( 'constructor' ) ){
@@ -487,7 +492,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        }
 	        else{
 	            var Parent = this;
-	            Child = function Model( attrs, options ){ return Parent.call( this, attrs, options ); };
+	            Child      = function Model( attrs, options ){ return Parent.call( this, attrs, options ); };
 	        }
 	
 	        var This        = Object.extend.call( this, Child );

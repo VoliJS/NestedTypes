@@ -307,5 +307,10 @@ module.exports = Backbone.Collection.extend( {
         var This        = Backbone.Collection.extend.apply( this, arguments );
         This.__subsetOf = null;
         return This;
+    },
+
+    _extend : function(){
+        Object.extend._extend.call( this );
+        this.__subsetOf = null;
     }
 } );

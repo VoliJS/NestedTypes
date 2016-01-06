@@ -37,6 +37,19 @@
         return to;
     },
 
+    defaults : function( source ){
+        for( var i = 1; i < arguments.length; i++ ){
+            var options = arguments[ i ];
+            Object.transform( source, options, function( val, name ){
+                if( !( name in source ) ){
+                    return val;
+                }
+            });
+        }
+
+        return source;
+    },
+
     createForEach : function( attrSpecs ){
         var statements = [ 'var v;' ];
 
@@ -92,6 +105,43 @@
         return desc;
     },
 
+    createDecorator : function( transforms ){
+        function decorator( Class ){
+            if( typeof Class === 'function' ){
+                Class.prototype.constructor._extend.call( Class );
+            }
+            else{
+                var spec = Class;
+                return function( Class ){
+                    Class.prototype.constructor._extend.call( Class );
+                    Class.define( spec );
+                }
+            }
+        }
+
+        var methods = Object.transform( {}, transforms, function( fun ){
+            return function(){
+                var options = Object.assign( {}, this._options );
+                fun.call( options, arguments );
+
+                function define( Class ){
+                    Class.prototype.constructor._extend.call( Class );
+                    Class.define( options );
+                }
+
+                define._options = options;
+                Object.assign( define, methods );
+
+                return define;
+            }
+        });
+
+        decorator._options = {};
+        Object.assign( decorator, methods );
+
+        return decorator;
+    },
+
     // extend function in the fashion of Backbone, with extended features required by NestedTypes
     // - supports native properties definitions
     // - supports forward declarations
@@ -124,7 +174,7 @@
                 Child = function Constructor(){ return Parent.apply( this, arguments ); };
             }
 
-            Object.assign( Child, Parent );
+            Object.defaults( Child, Parent );
 
             Child.prototype             = Object.create( Parent.prototype );
             Child.prototype.constructor = Child;
@@ -133,6 +183,13 @@
             protoProps && Child.define( protoProps, staticProps );
 
             return Child;
+        }
+
+        function _extend(){
+            var Parent = this.prototype.constructor;
+            this.__super__ = Parent.prototype;
+
+            Object.defaults( this, Parent );
         }
 
         function warnOnError( value, name ){
@@ -226,9 +283,12 @@
 
                 Ctor.extend = extend;
                 Ctor.define = define;
+                Ctor._extend = _extend;
                 Ctor.prototype.initialize || ( Ctor.prototype.initialize = function(){} );
             }
         };
+
+        extend._extend = _extend;
 
         extend.attach( Class );
         extend.Class = Class;

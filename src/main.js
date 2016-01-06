@@ -50,7 +50,24 @@ _.extend( exports, Backbone, {
         return function(){
             return this.transaction( fun, this, arguments );
         }
-    }
+    },
+
+    define : Object.createDecorator( {
+        attributes : function( spec ){ this.defaults = spec; },
+        defaults   : function( spec ){ this.defaults = spec; },
+        mixins     : function(){
+            this.mixins = Array.prototype.slice.call( attributes );
+        },
+
+        triggerWhenChanged : function( spec ){ this.triggerWhenChanged = spec; },
+        cidPrefix          : function( spec ){ this.cidPrefix = spec; },
+
+        model      : function( spec ){ this.model = spec; },
+        comparator : function( spec ){ this.comparator = spec; },
+        url        : function( spec ){ this.url = spec; },
+        urlRoot    : function( spec ){ this.urlRoot = spec; },
+        collection : function( spec ){ this.collection = spec; }
+    } )
 } );
 
 function linkProperty( Namespace, name ){

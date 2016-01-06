@@ -365,6 +365,11 @@ var Model = BaseModel.extend( {
         return protoProps ? This.define( protoProps, staticProps ) : This;
     },
 
+    _extend : function(){
+        Object.extend._extend.call( this );
+        this.Collection = this.prototype.constructor.Collection.extend();
+    },
+
     // define Model and its Collection. All the magic starts here.
     define : function( protoProps, staticProps ){
         var Base = Object.getPrototypeOf( this.prototype ).constructor,

@@ -1,12 +1,5 @@
 import { define, Model, Store } from 'nestedtypes'
 
-@define({
-    attributes : {
-        name : String
-    }
-})
-class Location extends Model {}
-
 @define
 class User extends Model {}
 
@@ -43,11 +36,12 @@ class ConfigStore extends Store {}
     },
 
     props : {
-        a : Number
+        a : 25, // type inference, default value
+        b : Number, // = undefined
+        c : MyModel.has.changeEvents( true ) // = undefined, track changes
     },
 
     mixins : [ A, B ],
-
     autobind : 'name1 name2 name3'
 })
 class MyComponent extends Component{

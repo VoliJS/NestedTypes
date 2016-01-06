@@ -108,22 +108,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        }
 	    },
 	
-	    define : Object.createDecorator( {
-	        attributes : function( spec ){ this.defaults = spec; },
-	        defaults   : function( spec ){ this.defaults = spec; },
-	        mixins     : function(){
-	            this.mixins = Array.prototype.slice.call( attributes );
-	        },
-	
-	        triggerWhenChanged : function( spec ){ this.triggerWhenChanged = spec; },
-	        cidPrefix          : function( spec ){ this.cidPrefix = spec; },
-	
-	        model      : function( spec ){ this.model = spec; },
-	        comparator : function( spec ){ this.comparator = spec; },
-	        url        : function( spec ){ this.url = spec; },
-	        urlRoot    : function( spec ){ this.urlRoot = spec; },
-	        collection : function( spec ){ this.collection = spec; }
-	    } )
+	    define : Object.define
 	} );
 	
 	function linkProperty( Namespace, name ){
@@ -773,7 +758,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                if( !dest.hasOwnProperty( name ) ){
 	                    return val;
 	                }
-	            });
+	            } );
 	        }
 	
 	        return dest;
@@ -789,26 +774,26 @@ return /******/ (function(modules) { // webpackBootstrap
 	        return new Function( 'a', 'f', statements.join( '' ) );
 	    },
 	
-	    createCloneCtor : function ( attrSpecs ){
+	    createCloneCtor : function( attrSpecs ){
 	        var statements = [];
 	
 	        for( var name in attrSpecs ){
 	            statements.push( "this." + name + "=x." + name + ";" );
 	        }
 	
-	        var CloneCtor = new Function( "x", statements.join( '' ) );
+	        var CloneCtor       = new Function( "x", statements.join( '' ) );
 	        CloneCtor.prototype = Object.prototype;
 	        return CloneCtor;
 	    },
 	
-	    createTransformCtor : function ( attrSpecs ){
+	    createTransformCtor : function( attrSpecs ){
 	        var statements = [ 'var v;' ];
 	
 	        for( var name in attrSpecs ){
 	            statements.push( 'this.' + name + '=(v=a.' + name + ')' + '===void 0?void 0 :f(v,"' + name + '");' );
 	        }
 	
-	        var TransformCtor = new Function( "a", 'f', statements.join( '' ) );
+	        var TransformCtor       = new Function( "a", 'f', statements.join( '' ) );
 	        TransformCtor.prototype = Object.prototype;
 	        return TransformCtor;
 	    },
@@ -834,41 +819,17 @@ return /******/ (function(modules) { // webpackBootstrap
 	        return desc;
 	    },
 	
-	    createDecorator : function( transforms ){
-	        function decorator( Class ){
-	            if( typeof Class === 'function' ){
+	    define : function( Class ){
+	        if( typeof Class === 'function' ){
+	            Class.prototype.constructor._extend.call( Class );
+	        }
+	        else{
+	            var spec = Class;
+	            return function( Class ){
 	                Class.prototype.constructor._extend.call( Class );
-	            }
-	            else{
-	                var spec = Class;
-	                return function( Class ){
-	                    Class.prototype.constructor._extend.call( Class );
-	                    Class.define( spec );
-	                }
+	                Class.define( spec );
 	            }
 	        }
-	
-	        var methods = Object.transform( {}, transforms, function( fun ){
-	            return function(){
-	                var options = Object.assign( {}, this._options );
-	                fun.call( options, arguments );
-	
-	                function define( Class ){
-	                    Class.prototype.constructor._extend.call( Class );
-	                    Class.define( options );
-	                }
-	
-	                define._options = options;
-	                Object.assign( define, methods );
-	
-	                return define;
-	            }
-	        });
-	
-	        decorator._options = {};
-	        Object.assign( decorator, methods );
-	
-	        return decorator;
 	    },
 	
 	    // extend function in the fashion of Backbone, with extended features required by NestedTypes
@@ -915,7 +876,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        }
 	
 	        function _extend(){
-	            var Parent = this.prototype.constructor;
+	            var Parent     = this.prototype.constructor;
 	            this.__super__ = Parent.prototype;
 	
 	            Object.defaults( this, Parent );
@@ -953,7 +914,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        }
 	
 	        function attachMixins( protoProps ){
-	            var mixins = protoProps.mixins,
+	            var mixins                  = protoProps.mixins,
 	                merged = {}, properties = {};
 	
 	            for( var i = mixins.length - 1; i >= 0; i-- ){
@@ -1010,8 +971,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	            for( var i = 0; i < arguments.length; i++ ){
 	                var Ctor = arguments[ i ];
 	
-	                Ctor.extend = extend;
-	                Ctor.define = define;
+	                Ctor.extend  = extend;
+	                Ctor.define  = define;
 	                Ctor._extend = _extend;
 	                Ctor.prototype.initialize || ( Ctor.prototype.initialize = function(){} );
 	            }

@@ -44,7 +44,7 @@
                 if( !dest.hasOwnProperty( name ) ){
                     return val;
                 }
-            });
+            } );
         }
 
         return dest;
@@ -60,26 +60,26 @@
         return new Function( 'a', 'f', statements.join( '' ) );
     },
 
-    createCloneCtor : function ( attrSpecs ){
+    createCloneCtor : function( attrSpecs ){
         var statements = [];
 
         for( var name in attrSpecs ){
             statements.push( "this." + name + "=x." + name + ";" );
         }
 
-        var CloneCtor = new Function( "x", statements.join( '' ) );
+        var CloneCtor       = new Function( "x", statements.join( '' ) );
         CloneCtor.prototype = Object.prototype;
         return CloneCtor;
     },
 
-    createTransformCtor : function ( attrSpecs ){
+    createTransformCtor : function( attrSpecs ){
         var statements = [ 'var v;' ];
 
         for( var name in attrSpecs ){
             statements.push( 'this.' + name + '=(v=a.' + name + ')' + '===void 0?void 0 :f(v,"' + name + '");' );
         }
 
-        var TransformCtor = new Function( "a", 'f', statements.join( '' ) );
+        var TransformCtor       = new Function( "a", 'f', statements.join( '' ) );
         TransformCtor.prototype = Object.prototype;
         return TransformCtor;
     },
@@ -105,41 +105,17 @@
         return desc;
     },
 
-    createDecorator : function( transforms ){
-        function decorator( Class ){
-            if( typeof Class === 'function' ){
+    define : function( Class ){
+        if( typeof Class === 'function' ){
+            Class.prototype.constructor._extend.call( Class );
+        }
+        else{
+            var spec = Class;
+            return function( Class ){
                 Class.prototype.constructor._extend.call( Class );
-            }
-            else{
-                var spec = Class;
-                return function( Class ){
-                    Class.prototype.constructor._extend.call( Class );
-                    Class.define( spec );
-                }
+                Class.define( spec );
             }
         }
-
-        var methods = Object.transform( {}, transforms, function( fun ){
-            return function(){
-                var options = Object.assign( {}, this._options );
-                fun.call( options, arguments );
-
-                function define( Class ){
-                    Class.prototype.constructor._extend.call( Class );
-                    Class.define( options );
-                }
-
-                define._options = options;
-                Object.assign( define, methods );
-
-                return define;
-            }
-        });
-
-        decorator._options = {};
-        Object.assign( decorator, methods );
-
-        return decorator;
     },
 
     // extend function in the fashion of Backbone, with extended features required by NestedTypes
@@ -186,7 +162,7 @@
         }
 
         function _extend(){
-            var Parent = this.prototype.constructor;
+            var Parent     = this.prototype.constructor;
             this.__super__ = Parent.prototype;
 
             Object.defaults( this, Parent );
@@ -224,7 +200,7 @@
         }
 
         function attachMixins( protoProps ){
-            var mixins = protoProps.mixins,
+            var mixins                  = protoProps.mixins,
                 merged = {}, properties = {};
 
             for( var i = mixins.length - 1; i >= 0; i-- ){
@@ -281,8 +257,8 @@
             for( var i = 0; i < arguments.length; i++ ){
                 var Ctor = arguments[ i ];
 
-                Ctor.extend = extend;
-                Ctor.define = define;
+                Ctor.extend  = extend;
+                Ctor.define  = define;
                 Ctor._extend = _extend;
                 Ctor.prototype.initialize || ( Ctor.prototype.initialize = function(){} );
             }

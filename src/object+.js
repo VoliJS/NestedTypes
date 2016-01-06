@@ -37,17 +37,17 @@
         return to;
     },
 
-    defaults : function( source ){
+    defaults : function( dest ){
         for( var i = 1; i < arguments.length; i++ ){
             var options = arguments[ i ];
-            Object.transform( source, options, function( val, name ){
-                if( !( name in source ) ){
+            Object.transform( dest, options, function( val, name ){
+                if( !dest.hasOwnProperty( name ) ){
                     return val;
                 }
             });
         }
 
-        return source;
+        return dest;
     },
 
     createForEach : function( attrSpecs ){

@@ -4202,8 +4202,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	        validate : function( model, value, name ){},
 	        isChanged : function( a, b ){
 	            // refs are equal when their id is equal.
-	            var aId = a && typeof a == 'object' ? a.id : a,
-	                bId = b && typeof b == 'object' ? b.id : b;
+	            var aId = a && ( a.id == null ? a : a.id ),
+	                bId = b && ( b.id == null ? b : b.id );
 	
 	            return aId !== bId;
 	        },

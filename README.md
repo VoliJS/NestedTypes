@@ -6,18 +6,31 @@ develop: [![Develop Build Status](https://travis-ci.org/Volicon/backbone.nestedT
 
 ## Major changes in 1.3.x:
 
+- New JIT-optimized models and collections designed to be responsive while handling 10-50K elements (in average - 10 
+times faster than backbone on all operations).
+- Abstract models support for collections
+- Attribute-level validation
+- Mixins
+- version tokens for models and collections
+- Bug fixes
+- Experimental features:
+    - First-class hierarchical stores.
+
 ### Compatibility with Backbone
 
-This version introduce following changes:
+`NestedTypes` doesn't depend on backbone retains some reasonable level of API compatibility and intended to be used as drop-in Backbone
+replacement. Some changes to existing backbone models and collection code is required, due the fact that
+NestedTypes requires attributes to be declared in Model's `defaults`.
 
 - `Model`, `Collection`, and `extend` share no common code with Backbone.
-- `Events` and REST functionality (`sync`, `fetch`, `save`, and `destroy` methods) taken from Backbone 1.2. 
-- `Router` and `History` are taken from Backbone 1.2, while `View` is taken from Backbone 1.1.
+- `Events`, `Router`, `History`, and REST functionality (`sync`, `fetch`, `save`, and `destroy` methods) taken from Backbone 1.2. 
+- `View` is taken from Backbone 1.1.
 - `NestedTypes` is being tested against modified Backbone 1.2 unit tests.  
-- `NestedTypes` retains some reasonable level of API compatibility and intended to be used as drop-in Backbone
-   replacement. Some changes to existing backbone models and collection code is required, du.  
 
 Likely, it will continue to be so. 
+
+
+
 
 
 Browse complete documentation here: http://volicon.github.io/backbone.nestedTypes/

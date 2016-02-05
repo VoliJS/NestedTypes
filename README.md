@@ -3,36 +3,22 @@
 master: [![Master Build Status](https://travis-ci.org/Volicon/backbone.nestedTypes.svg?branch=master)](https://travis-ci.org/Volicon/backbone.nestedTypes)
 develop: [![Develop Build Status](https://travis-ci.org/Volicon/backbone.nestedTypes.svg?branch=develop)](https://travis-ci.org/Volicon/backbone.nestedTypes)
 
-Version 1.2.0 highlights:
 
-- React integration and data binding support. [npm install nestedreact](https://github.com/Volicon/react-backbone.glue/)
-- Fixed incompatibilities with backbone 1.2.x by removing backbone dependency, effective now and forever. Currently, stable backbone 1.1.2 is linked in.
-- npm package name is changed to just 'nestedtypes'. Thus, `npm install nestedtypes`.
-- Can be used as drop-in backbonejs replacement in your project.
-- Models has reference to the parent model through `this._owner`
-- When the same model is shared between tho other models, attempt to serialize the model which is not an owner will result in [Serialization Error] warning. In most of the cases, this warning is the sign of weird errors, because after loading data this shared models won't be shared any more.
-- Collections has new `changes` event, which can be used directly on collection instead of 'add remove change reset'. It's efficient, and fired only once during compound changes.
-- There are Collection.transaction( func ) method which can be used ad-hoc to group sequence of changes coming from inside of func to the single transaction, thus, firing just one 'changes' event. Helpful for reducing an amount of renders.
-- Every method declared on Collection can be turned to be transactional when its definition is wrapped in Nested.transaction.
-- Experimental features:
-    - lazily evaluated hard references `Model.take( ref )` and `Collection.take( ref )`. ref is the reference like in
-    - attribute proxies for mixing in attributes, `a : MyModel.proxy()`. `a` members will be directly accessible in owner model.
-- There are completely new mechancs of Stores, which will be documented later, and will allow us to refactor collections with mutual references which has to be requested together (such as users-roles-channelSets). It will be documented later.
+## Major changes in 1.3.x:
 
-Major change you need to do now:
-```javascript
-// Instead of...
-Nested.store = {
-    // attribute spec
-}
+### Compatibility with Backbone
 
-// ..you need write:
-Nested.store = new Nested.LazyStore.defaults({
-    // attribute spec
-});
-```
-Why? Because now Stores are first-class objects in the system, they can be created with `new`,  
-they supports hierarchical lookups, they may have different transports, and more. The more about it later.
+This version introduce following changes:
+
+- `Model`, `Collection`, and `extend` share no common code with Backbone.
+- `Events` and REST functionality (`sync`, `fetch`, `save`, and `destroy` methods) taken from Backbone 1.2. 
+- `Router` and `History` are taken from Backbone 1.2, while `View` is taken from Backbone 1.1.
+- `NestedTypes` is being tested against modified Backbone 1.2 unit tests.  
+- `NestedTypes` retains some reasonable level of API compatibility and intended to be used as drop-in Backbone
+   replacement. Some changes to existing backbone models and collection code is required, du.  
+
+Likely, it will continue to be so. 
+
 
 Browse complete documentation here: http://volicon.github.io/backbone.nestedTypes/
 

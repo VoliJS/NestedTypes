@@ -31,6 +31,8 @@ Role.define({
 class ConfigStore extends Store {}
 
 @define({
+    Model : Type,
+    // when state or Model is present, use
     state : {
         count : Number
     },
@@ -50,3 +52,5 @@ class MyComponent extends Component{
     }
 }
 
+// Try base class implementation, not mixin.
+// only thing needed to do is chaining calls with the base class ones.

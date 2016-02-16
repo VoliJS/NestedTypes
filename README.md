@@ -23,15 +23,17 @@ API docs available here: http://volicon.github.io/NestedTypes/ Examples are belo
 - Abstract models and collection support.
 - Declarative [attribute-level validation](http://slides.com/vladbalin/deck#/).
 - Mixins like in React's `createClass`.
+- First-class hierarchical stores.
 - Bug fixes
-- Experimental features:
-    - First-class hierarchical stores.
 - Core changes:
     - Version tokens for models and collections making possible precise and efficient cache invalidation. 
         It makes possible things like React's "pure render" optimization and lazy evaluation with memoization like in new validation.
     - Events, REST, underscore support, and validation is refactored to mixins.
     - Removed unused backbone code. Now NestedTypes contains backbone's shim with View, Router and History for backward compatibility purposes.
     - NestedTypes passes modified backbone 1.2 test suite.
+- Experimental features:
+    - attribute proxies (has.proxy)
+    - hardrefs (Model.take and Collection.take)
 
 ## Compatibility with Backbone
 

@@ -6,6 +6,8 @@ develop: [![Develop Build Status](https://travis-ci.org/Volicon/backbone.nestedT
 `NestedTypes` is the modern data framework, which is mostly backward compatible with backbone.js API and [can be used as 
 drop-in backbone replacement](/docs/BackboneTransitionGuide.md) with moderate source code refactoring.
 
+![Model.set performance](/docs/model.set.png)
+
 - It's [order of magnitude faster](http://slides.com/vladbalin/performance#/) than backbone, so your application becomes more responsive and you can handle collection which are 10 times larger than you have now.
 - It implements nested models and collections in the right way. During `fetch`, nested objects are updated in place, so it's safe to pass them by reference.
 - It supports both aggregation and relations by `id` without the need for external plugins.

@@ -124,12 +124,14 @@ old fashined manual definitions should work fine too.
 
 Collections will work mostly fine, however, polymorphic collections are supported differently.
 Thus `function` in `Collection.model` won't work. What you need to do is to remember,
-how would you do it in strictly typed OO language:
+how would you do it in strictly typed OO language. And create an abstract class with factory:
 - Make sure all of your models for this particular collection have common base class.
 - Put this base class in `Collection.model`
 - Make sure that base class has static `create( attrs, options )` method attached directly to its constructor.
 - In `create`, you have to redirect call to the proper model's `new Constructor`.
     Don't forget to pass both `attrs` and `options`.  
+
+After that, this abstract class can be used in both collections _and_ model attributes, and it will be serialized properly.  
 
 There are other incompatibilites, introduced mostly for performance reasons (NestedTypes
 collections are about 10 times faster than backbone's). For example:

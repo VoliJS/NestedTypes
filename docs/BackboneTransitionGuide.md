@@ -18,12 +18,12 @@ Reason is that in Backbone models treated like hash of values, which can be adde
 removed dynamically.
 And `defaults` is treated as initial state of this hash.
 
-In NestedTypes, model is class with typed attributes, in much the same as the class in 
+In NestedTypes, model is class with typed attributes, in much the same way as the class in 
 statically typed OO languages like Java or C#. And `defaults` treated as attribute 
 type specification. So... 
 
 - Every model attribute *must* be defined in `defaults`, or your model won't work.
-- You have create distinct model subclass for every different attributes set.  
+- You have to create distinct model subclass for every different attributes set.  
  
 In backbone, it's okay to use object in defaults only in case if attributes are primitive values.
 To pass object literals, arrays, and objects created with constructor, you need to use `function`:
@@ -108,6 +108,7 @@ even do it on attribute level), but most of the time it's not needed if server's
 API is the standard one.
 
 To sum up, what you need to do:
+
 1. Make sure you have separate model declared for every entity, and no models are used as hash.
 2. Describe model's attributes in defaults, removing `function` statement. 
 3. Carefully review your `parse` and `toJSON` logic, likely it just need to be removed.
@@ -151,8 +152,8 @@ NestedTypes differs aggregation from relation, and can handle both equally well.
 For aggregation, it's enough to type model or collection constructor in `defaults` spec.
 And that's all the story.
 
-What is most important, on the second `fetch` NestedTypes is smart enough to update your existing nested models and collection *in place*
-instead of creating new instances which all naive implementation does
+What is the most important, on the second `fetch` NestedTypes is smart enough to update your existing nested models and collection *in place*
+instead of creating new instances which all naive implementation do
 (so called "deep update" feature), because is quite hard to do (you have to override `set` to achieve it in backbone, not `parse`).
 
 For relations by `id`, you need to use `Model.from` and `Collection.subsetOf` metatypes. 

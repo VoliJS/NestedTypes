@@ -6,10 +6,10 @@ implementation of Model and Collections classes, it passes the most of modified 
  test suite.
  
 However, it differs some significant part so you will be required to introduce
-some small changes in your application.
-
-Procedure is not hard, and if you will go through it you'll be rewarded by ten times app 
+some small changes in your application. Procedure is not hard, and if you will go through it you'll be rewarded by ten times app 
 performance improvement, and significant reduction of your code base size.
+
+This document is about incompatibilities between backbone and NestedTypes, intended to help you in transition process.
 
 ## Model defaults
 
@@ -77,6 +77,7 @@ The general rule you need to know is the following one:
 ```javascript
 var NestedModel = Model.extend({
  defaults : {
+     x : Boolean, // type is explicitly specified, default value is false. 
      a : 1, // Number type inferred from primitive
      b : 'Hi', // String type inferred 
      c : [ 'Hello', 'World' ], // typeless attribute
@@ -141,7 +142,40 @@ separate highly optimized implementation for add, remove, and set.
 And there are some very pleasant new features you always wanted but afraid to ask for. For example,
 collections emit new `changes` event, which is being fired only once for any type of collection's change.
  Just like model's `change` event. But we're not here to talk about new features.
- 
+
+## Validation
+
+While validation API in NestedTypes is close to Backbone's one, it has different semantic due to the support for
+complex nested models and collections.
+
+Most important difference is that in backbone validation checks _model update_ and _prevents_ it from happening if it appears not to be valid.
+In NestedTypes, validation checks _model state_, and _never_ prevent changes to the model.
+
+The semantic of `model.validate()` method differs accordingly. In backbone validates model _update_ receiving attribute hash.
+In NestedTypes, it validates model itself, _when validation result is needed_.
+It receive model as first argument to help your existing validators a bit, and since in NestedTypes model expose 
+its attributes directly, it should be fine in most cases.  
+
+Second, in NestedTypes `model.validate()` is an optional global check for the model, and doesn't prevent recursive
+ validation checks for nested models and collections. NestedTypes supports attribute-level declarative validation
+ checks in attribute definitions, you are encouraged to use them instead of generic `validate()`.
+
+Also, there are default validation for typed attributes - `Invalid Date`, `NaN`, and `Infinity` cannot be serialized to
+    JSON thus considered as invalid attribute values by default.
+
+Next, it's important to understand _when_ validation is performed in NestedTypes:
+
+- `model.set` _ignores_ `validate` option, and never perform validation.
+- During `model.save()` by default as in backbone. When validation fails, it returns `model.validationError` wrapped in
+    the failed promise. In backbone, it returns `null` in this case. If you think it's not good - open an issue in tracker,
+     and we will discuss it.
+- On first call to `model.isValid()` or access of `model.validationError`. Validation is potentially expensive for 
+    complex models because it results in model tree traversal, thus it's performed 'lazily' and validation result
+    is cached across the model tree until the moment models will be actually changed.    
+
+You may find further details about new validation mechanics [in this presentation](http://slides.com/vladbalin/deck#/).
+It's designed to play well with React Link, but ignore that part if it's not relevant to you.
+
 ## Plugins for handling nested models and relations
 
 Things like `backbone-relational`, and so on.

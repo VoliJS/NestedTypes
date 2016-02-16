@@ -1,4 +1,4 @@
-# Backbone Transition Guide
+# Backbone to NestedTypes Transition Guide
 
 NestedTypes maintains high level of compatibility with Backbone 1.2 API,
 and designed to serve as drop-in backbone replacement. Being completely independent

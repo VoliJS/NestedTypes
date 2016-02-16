@@ -13,12 +13,40 @@ drop-in backbone replacement](/docs/BackboneTransitionGuide.md) with moderate so
 	    attributes are guaranteed to hold values of declared types whatever you do, making it impossible to break client-server protocol. 
 - At the moment of writing, it's an only model framework which supports React's [pure render optimization](https://github.com/Volicon/NestedReact/tree/develop#props-specs-and-pure-render-optimization). 
 
+API docs available here: http://volicon.github.io/NestedTypes/ Examples are below.
+
+## Major changes in 1.3.x:
+
+- [Huge performance improvements](http://slides.com/vladbalin/performance#/).
+- Abstract models and collection support.
+- Declarative [attribute-level validation](http://slides.com/vladbalin/deck#/).
+- Mixins like in React's `createClass`.
+- Bug fixes
+- Experimental features:
+    - First-class hierarchical stores.
+- Core changes:
+    - Version tokens for models and collections making possible precise and efficient cache invalidation. 
+        It makes possible things like React's "pure render" optimization and lazy evaluation with memoization like in new validation.
+    - Events, REST, underscore support, and validation is refactored to mixins.
+    - Removed unused backbone code. Now NestedTypes contains backbone's shim with View, Router and History for backward compatibility purposes.
+    - NestedTypes passes modified backbone 1.2 test suite.
+
+## Compatibility with Backbone
+
+`NestedTypes` doesn't depend on backbone while retaining some reasonable level of API compatibility and intended to be used as drop-in Backbone
+replacement. Some changes to existing backbone models and collection code is required, mostly due the fact that
+NestedTypes _requires_ attributes to be declared in Model's `defaults`.
+
+Please, consult with [Backbone Transition Guide](/docs/BackboneTransitionGuide.md) for more details on the topic.
+
 ## Example
 
 Central feature of NestedTypes is attribute type annotations, which makes you feel like you're working with strongly-typed language as Java or C#.
 Yet, these annotations are vanilla JavaScript, no transpiler step is required.
 
-To give you some feeling how expressive NestedTypes type system is, lets describe simple model layer for blogging.
+You can take a look at [TodoMVC example](https://github.com/gaperton/todomvc-nestedreact) written with NestedTypes and React as View layer.
+
+Meanwhile, to give you some feeling how expressive NestedTypes is, lets describe simple model layer for blogging.
 
 ```javascript
 import { Model, Store } from 'nestedtypes'
@@ -71,30 +99,6 @@ post.fetch().done( () => {
     console.log( post.comments.first().author.nickname ); // <- relations traversed as regular nested models and collections. 
 });
 ```
-
-## Compatibility with Backbone
-
-`NestedTypes` doesn't depend on backbone while retaining some reasonable level of API compatibility and intended to be used as drop-in Backbone
-replacement. Some changes to existing backbone models and collection code is required, due the fact that
-NestedTypes requires attributes to be declared in Model's `defaults`.
-
-Please, consult with [Backbone Transition Guide](/docs/BackboneTransitionGuide.md) for more details on the topic.
-
-## Major changes in 1.3.x:
-
-- [Huge performance improvements](http://slides.com/vladbalin/performance#/).
-- Abstract models and collection support.
-- Declarative [attribute-level validation](http://slides.com/vladbalin/deck#/).
-- Mixins like in React's `createClass`.
-- Bug fixes
-- Experimental features:
-    - First-class hierarchical stores.
-- Core changes:
-    - Version tokens for models and collections making possible precise and efficient cache invalidation. 
-        It makes possible things like React's "pure render" optimization and lazy evaluation with memoization like in new validation.
-    - Events, REST, underscore support, and validation is refactored to mixins.
-    - Removed unused backbone code. Now NestedTypes contains backbone's shim with View, Router and History for backward compatibility purposes.
-    - NestedTypes passes modified backbone 1.2 test suite.
 
 ## Installation & Requirements
 

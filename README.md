@@ -11,7 +11,7 @@ drop-in backbone replacement](/docs/BackboneTransitionGuide.md) with moderate so
 - It supports both aggregation and relations by `id` without the need for external plugins.
 - It's type-safe, providing the same contract for model attributes as statically typed language does for class members. Thus, 
 	    attributes are guaranteed to hold values of declared types whatever you do, making it impossible to break client-server protocol. 
-- At the moment of writing, it's an only model framework which supports React's pure render optimization.
+- At the moment of writing, it's an only model framework which supports React's [pure render optimization](https://github.com/Volicon/NestedReact/tree/develop#props-specs-and-pure-render-optimization). 
 
 ## Example
 

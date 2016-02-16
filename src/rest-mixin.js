@@ -29,7 +29,14 @@ exports.Model = {
     // Proxy `Backbone.sync` by default -- but override this if you need
     // custom syncing semantics for *this* particular model.
     sync : function(){
-        return exports.sync.apply( this, arguments );
+        // Abort and pending IO request. Just one is allowed at the time.
+        var _this = this;
+        if( _this._xhr ){
+            _this._xhr.abort();
+        }
+
+        return this._xhr = exports.sync.apply( this, arguments )
+            .always( function(){ _this.xhr = void 0; });
     },
 
     // Set a hash of model attributes, and sync the model to the server.

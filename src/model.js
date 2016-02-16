@@ -244,7 +244,7 @@ var Model = BaseModel.extend( {
 
                 if( attrSpecs ){
                     // If current object is model, create default attribute
-                    var newModel = attrSpecs[ current ].create( options );
+                    var newModel = attrSpecs[ current ].create( null, options );
 
                     // If created object is model, nullify attributes when requested
                     if( options && options.nullify && newModel.__attributes ){

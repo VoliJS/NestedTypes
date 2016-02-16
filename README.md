@@ -1,46 +1,13 @@
-# Getting Started
+# NestedTypes model framework
 
 master: [![Master Build Status](https://travis-ci.org/Volicon/backbone.nestedTypes.svg?branch=master)](https://travis-ci.org/Volicon/backbone.nestedTypes)
 develop: [![Develop Build Status](https://travis-ci.org/Volicon/backbone.nestedTypes.svg?branch=develop)](https://travis-ci.org/Volicon/backbone.nestedTypes)
 
+`NestedTypes` is the modern data framework, which is mostly backward compatible with backbone.js API and can be used as 
+drop-in backbonejs replacement with [moderate refactoring](/docs/BackboneTransitionGuide.md).
 
-## Major changes in 1.3.x:
-
-- New JIT-optimized models and collections designed to be responsive while handling 10-50K elements (in average - 10 
-times faster than backbone on all operations).
-- Abstract models support for collections
-- Attribute-level validation
-- Mixins
-- version tokens for models and collections
-- Bug fixes
-- Experimental features:
-    - First-class hierarchical stores.
-
-### Compatibility with Backbone
-
-`NestedTypes` doesn't depend on backbone retains some reasonable level of API compatibility and intended to be used as drop-in Backbone
-replacement. Some changes to existing backbone models and collection code is required, due the fact that
-NestedTypes requires attributes to be declared in Model's `defaults`.
-
-- `Model`, `Collection`, and `extend` share no common code with Backbone.
-- `Events`, `Router`, `History`, and REST functionality (`sync`, `fetch`, `save`, and `destroy` methods) taken from Backbone 1.2. 
-- `View` is taken from Backbone 1.1.
-- `NestedTypes` is being tested against modified Backbone 1.2 unit tests.  
-
-Likely, it will continue to be so. 
-
-
-
-
-
-Browse complete documentation here: http://volicon.github.io/backbone.nestedTypes/
-
-## What it is
-
-It's modern data framework, mostly backward compatible with backbone.js and can be used as drop-in backbonejs replacement.
-
-Compared to `backbonejs`, it's has order of magnitude faster model updates, and support all the features which could be found
-in state of the art model frameworks through lightweight and declarative attribute type annotations.
+Compared to `backbone`, it's [order of magnitude faster](http://slides.com/vladbalin/performance#/), and has out of the box
+support for all the features which could be found in backbone plugins like `backbone-relational`.
 
 ### Complex attribute types
 
@@ -106,6 +73,35 @@ NestedTypes uses attribute type information for sophisticated optimizations targ
 
 Compared to backbonejs, model updates are up to 40 times faster in Chrome/nodejs, and at least 4 times faster in other browsers.
 ![Backbone vs NestedTypes](docs/performance.jpg)
+
+
+
+
+## Major changes in 1.3.x:
+
+- [Huge performance improvements](http://slides.com/vladbalin/performance#/).
+- Abstract models and collection support.
+- Declarative [attribute-level validation](http://slides.com/vladbalin/deck#/).
+- Mixins like in React's `createClass`.
+- Bug fixes
+- Experimental features:
+    - First-class hierarchical stores.
+- Core changes:
+    - Version tokens for models and collections making possible precise and efficient cache invalidation. 
+        It makes possible things like React's "pure render" optimization and lazy evaluation with memoization like in new validation.
+    - Events, REST, underscore support, and validation is refactored to mixins.
+    - Removed unused backbone code. Now NestedTypes contains backbone's shim with View, Router and History for backward compatibility purposes.
+    - NestedTypes passes modified backbone 1.2 test suite.
+
+### Compatibility with Backbone
+
+`NestedTypes` doesn't depend on backbone while retaining some reasonable level of API compatibility and intended to be used as drop-in Backbone
+replacement. Some changes to existing backbone models and collection code is required, due the fact that
+NestedTypes requires attributes to be declared in Model's `defaults`.
+
+Please, consult with [Backbone Transition Guide](/docs/BackboneTransitionGuide.md) for more details on the topic.
+
+Browse complete documentation here: http://volicon.github.io/backbone.nestedTypes/
 
 ## Installation & Requirements
 > CommonJS (node.js, browserify):

@@ -379,7 +379,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	                if( attrSpecs ){
 	                    // If current object is model, create default attribute
-	                    var newModel = attrSpecs[ current ].create( options );
+	                    var newModel = attrSpecs[ current ].create( null, options );
 	
 	                    // If created object is model, nullify attributes when requested
 	                    if( options && options.nullify && newModel.__attributes ){
@@ -2921,7 +2921,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	    // Proxy `Backbone.sync` by default -- but override this if you need
 	    // custom syncing semantics for *this* particular model.
 	    sync : function(){
-	        return exports.sync.apply( this, arguments );
+	        // Abort and pending IO request. Just one is allowed at the time.
+	        var _this = this;
+	        if( _this._xhr ){
+	            _this._xhr.abort();
+	        }
+	
+	        return this._xhr = exports.sync.apply( this, arguments )
+	            .always( function(){ _this.xhr = void 0; });
 	    },
 	
 	    // Set a hash of model attributes, and sync the model to the server.
@@ -4487,7 +4494,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	    setSingleAttr = modelSet.setSingleAttr;
 	
 	attribute.Type.extend( {
-	    create : function( options ){ return new this.type( null, options ); },
+	    create : function( attrs, options ){
+	        var Type = this.type;
+	        return Type.create ? Type.create( attrs, options ) : new Type( attrs, options );
+	    },
 	    clone  : function( value, options ){ return value && value.clone( options ); },
 	    toJSON : function( value, name ){
 	      if( value && value._owner !== this ){
@@ -4542,7 +4552,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                value = existingModelOrCollection;
 	            }
 	            else{ // ...or create a new object, if it's not exist
-	                value = new this.type( value, options );
+	                value = this.create( value, options );
 	            }
 	        }
 	

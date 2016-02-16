@@ -127,7 +127,10 @@ var setAttrs      = modelSet.setAttrs,
     setSingleAttr = modelSet.setSingleAttr;
 
 attribute.Type.extend( {
-    create : function( options ){ return new this.type( null, options ); },
+    create : function( attrs, options ){
+        var Type = this.type;
+        return Type.create ? Type.create( attrs, options ) : new Type( attrs, options );
+    },
     clone  : function( value, options ){ return value && value.clone( options ); },
     toJSON : function( value, name ){
       if( value && value._owner !== this ){
@@ -182,7 +185,7 @@ attribute.Type.extend( {
                 value = existingModelOrCollection;
             }
             else{ // ...or create a new object, if it's not exist
-                value = new this.type( value, options );
+                value = this.create( value, options );
             }
         }
 

@@ -1,114 +1,112 @@
-# Getting Started
+# NestedTypes model framework
 
-master: [![Master Build Status](https://travis-ci.org/Volicon/NestedTypes.svg?branch=master)](https://travis-ci.org/Volicon/NestedTypes)
-develop: [![Develop Build Status](https://travis-ci.org/Volicon/NestedTypes.svg?branch=develop)](https://travis-ci.org/Volicon/NestedTypes)
+master: [![Master Build Status](https://travis-ci.org/Volicon/backbone.nestedTypes.svg?branch=master)](https://travis-ci.org/Volicon/backbone.nestedTypes)
+develop: [![Develop Build Status](https://travis-ci.org/Volicon/backbone.nestedTypes.svg?branch=develop)](https://travis-ci.org/Volicon/backbone.nestedTypes)
 
-Version 1.2.0 highlights:
+`NestedTypes` is the modern data framework, which is mostly backward compatible with backbone.js API and [can be used as 
+drop-in backbone replacement](/docs/BackboneTransitionGuide.md) with moderate source code refactoring.
 
-- React integration and data binding support. [npm install nestedreact](https://github.com/Volicon/NestedReact/)
-- Fixed incompatibilities with backbone 1.2.x by removing backbone dependency, effective now and forever. Currently, stable backbone 1.1.2 is linked in.
-- npm package name is changed to just 'nestedtypes'. Thus, `npm install nestedtypes`.
-- Can be used as drop-in backbonejs replacement in your project.
-- Models has reference to the parent model through `this._owner`
-- When the same model is shared between tho other models, attempt to serialize the model which is not an owner will result in [Serialization Error] warning. In most of the cases, this warning is the sign of weird errors, because after loading data this shared models won't be shared any more.
-- Collections has new `changes` event, which can be used directly on collection instead of 'add remove change reset'. It's efficient, and fired only once during compound changes.
-- There are Collection.transaction( func ) method which can be used ad-hoc to group sequence of changes coming from inside of func to the single transaction, thus, firing just one 'changes' event. Helpful for reducing an amount of renders.
-- Every method declared on Collection can be turned to be transactional when its definition is wrapped in Nested.transaction.
+![Model.set performance](/docs/Model.set.png)
+
+- It's [order of magnitude faster](http://slides.com/vladbalin/performance#/) than backbone, so your application becomes more responsive and you can handle collection which are 10 times larger than you have now.
+- It implements nested models and collections in the right way.
+    - It distinguish aggregation from relations by `id`, and supports first-class nested collections.
+    - During `fetch`, aggregated objects are updated _in place_, so it's safe to pass them around by reference.
+- It's type-safe, providing the same contract for model attributes as statically typed language does for class members. Thus, 
+	    attributes are guaranteed to hold values of declared types whatever you do, making it impossible to break client-server protocol. 
+- At the moment of writing, it's an only model framework which supports React's [pure render optimization](https://github.com/Volicon/NestedReact/tree/develop#props-specs-and-pure-render-optimization). 
+
+API docs available here: http://volicon.github.io/NestedTypes/ Examples are below.
+
+## Major changes in 1.3.x:
+
+- [Huge performance improvements](http://slides.com/vladbalin/performance#/).
+- Abstract models and collection support.
+- Declarative [attribute-level validation](http://slides.com/vladbalin/deck#/).
+- Mixins like in React's `createClass`.
+- First-class hierarchical stores.
+- Bug fixes
+- Core changes:
+    - Version tokens for models and collections making possible precise and efficient cache invalidation. 
+        It makes possible things like React's "pure render" optimization and lazy evaluation with memoization like in new validation.
+    - Events, REST, underscore support, and validation is refactored to mixins.
+    - Removed unused backbone code. Now NestedTypes contains backbone's shim with View, Router and History for backward compatibility purposes.
+    - NestedTypes passes modified backbone 1.2 test suite.
 - Experimental features:
-    - lazily evaluated hard references `Model.take( ref )` and `Collection.take( ref )`. ref is the reference like in
-    - attribute proxies for mixing in attributes, `a : MyModel.proxy()`. `a` members will be directly accessible in owner model.
-- There are completely new mechancs of Stores, which will be documented later, and will allow us to refactor collections with mutual references which has to be requested together (such as users-roles-channelSets). It will be documented later.
+    - attribute proxies (has.proxy)
+    - hardrefs (Model.take and Collection.take)
 
-Major change you need to do now:
-```javascript
-// Instead of...
-Nested.store = {
-    // attribute spec
-}
+## Compatibility with Backbone
 
-// ..you need write:
-Nested.store = new Nested.LazyStore.defaults({
-    // attribute spec
-});
-```
-Why? Because now Stores are first-class objects in the system, they can be created with `new`,  
-they supports hierarchical lookups, they may have different transports, and more. The more about it later.
+`NestedTypes` doesn't depend on backbone while retaining some reasonable level of API compatibility and intended to be used as drop-in Backbone
+replacement. Some changes to existing backbone models and collection code is required, mostly due the fact that
+NestedTypes _requires_ attributes to be declared in Model's `defaults`.
 
-Browse complete documentation here: http://volicon.github.io/NestedTypes/
+Please, consult with [Backbone Transition Guide](/docs/BackboneTransitionGuide.md) for more details on the topic.
 
-## What it is
+## Example
 
-It's modern data framework, mostly backward compatible with backbone.js and can be used as drop-in backbonejs replacement.
+Central feature of NestedTypes is attribute type annotations, which makes you feel like you're working with strongly-typed language as Java or C#.
+Yet, these annotations are vanilla JavaScript, no transpiler step is required.
 
-Compared to `backbonejs`, it's has order of magnitude faster model updates, and support all the features which could be found
-in state of the art model frameworks through lightweight and declarative attribute type annotations.
+You can take a look at [TodoMVC example](https://github.com/gaperton/todomvc-nestedreact) written with NestedTypes and React as View layer.
 
-### Complex attribute types
-
-* Cross-browser handling of Date attribute type.
-* Nested models and collections.
-* One-to-many and many-to-many model relationships.
-
-It's achieved using attribute type annotations, which feels in much like statically typed programming language. Yet, this annotations are vanilla JavaScript, no transpiler step is required.
+Meanwhile, to give you some feeling how expressive NestedTypes is, lets describe simple model layer for blogging.
 
 ```javascript
-var User = Nested.Model.extend({
+import { Model, Store } from 'nestedtypes'
+
+const User = Model.extend({
     urlRoot : '/api/users',
-
-    defaults : {
-        // Primitive types
-        login    : "", // String
-        email    : String.value( null ), // null, but String
-        loginCount : Number.has.toJSON( false ) // 0, not serialized
-        active   : Boolean.value( true ), // true
-
-        created  : Date, // new Date()
-
-        settings : Settings, // new Settings()
-
-        // collection of models, received as an array of model ids
-        roles    : Role.Collection.subsetOf( 'store.roles' ),
-        // reference to model, received as model id.
-        office   : Office.from( 'store.offices' )
+    
+    attributes : {
+        nickname  : String.has // empty string attribute
+                          .check( x => x, 'Nickname is required' ), // with simple validator 
+        email     : '',     // again empty string attribute
+        avatarUrl : String.value( null ) // string attribute initialized with null
     }
 });
 
-var collection = new User.Collection();
-collection.fetch().done( function(){
-    var user = collection.first();
-    console.log( user.name ); // native properties
-    console.log( user.office.name );
-    console.log( user.roles.first().name );
+// We need to put users in store to resolve relations by id...
+Nested.store = new ( LazyStore.extend({
+    attributes : {
+        users : User.Collection // <- collection is implicitly declared
+    }
+}) );
+
+const Comment = Model.extend(); // predefine Comment model...
+Comment.define({ ...because we gonna make recursive comments tree definition... 
+    attributes : { // ...right in the next line. Check it out.
+        replies : Comment.Collection, // here's plain aggregation. Serialized as nested JSON. 
+        time    : Date, // date attribute, defaults to new Date()
+        author  : User.from( '~users' ), // serialized as id, resolved with Nested.store.users
+        notify  : User.Collection.subsetOf( '~users' ), // array of ids, resolved with Nested.store.users
+        body    : String
+    }
+});
+
+// And we need something to complete our example
+const BlogPost = Model.extend({
+    urlRoot : '/api/posts',
+
+    attributes : {
+        created  : Date, // = new Date()
+        author   : User.from( '~users' ),
+        title    : String,
+        body     : '',     
+        comments : Comment.Collection
+    }
+});
+
+const post = new BlogPost({ id : 5 });
+post.fetch().done( () => {
+    console.log( post.user.nickname ); // <- direct model attribute's access 
+    console.log( post.comments.first().author.nickname ); // <- relations traversed as regular nested models and collections. 
 });
 ```
 
-### Safety
-
-NestedTypes check types on every model update and perform dynamic type casts to ensure that attributes will always hold values of proper type.
-
-As result, NestedTypes models are extremely reliable. It's impossible to break client-server protocol with inaccurate attribute assignment. If something will go really wrong, it will fix an error and warn you with a messages in the console.
-
-```javascript
-    user.login = 1;
-    console.assert( user.login === "1" );
-
-    user.active = undefined;
-    console.assert( user.active === false );
-
-    user.loginCount = "hjkhjkhfjkhjkfd";
-    console.assert( _.isNan( user.loginCount ) );
-
-    user.settings = { timeZone : 180 }; // same as user.settings.set({ timeZone : 180 })
-    console.assert( user.settings instanceof Settings );
-```
-
-### Performance
-NestedTypes uses attribute type information for sophisticated optimizations targeting modern JS JIT engines.
-
-Compared to backbonejs, model updates are up to 40 times faster in Chrome/nodejs, and at least 4 times faster in other browsers.
-![Backbone vs NestedTypes](docs/performance.jpg)
-
 ## Installation & Requirements
+
 > CommonJS (node.js, browserify):
 
 ```javascript
@@ -116,7 +114,7 @@ var Nested = require( 'nestedtypes' );
 ```
 
 > CommonJS/AMD (RequireJS).
-> 'backbone' and 'underscore' modules must be defined in config paths.
+> 'jquery' and 'underscore' modules must be defined in config paths.
 
 ```javascript
 require([ 'nestedtypes' ], function( Nested ){ ... });
@@ -142,7 +140,8 @@ of all browsers being used for accessing the web.
 
 NestedTypes itself is packaged as UMD (Universal Module Definition) module, and should load dependencies properly in any environment.
 
-NestedTypes requires `underscore` and `jquery` libraries. They either must be included globally with `<script>`tag or, if `CommonJS`/`AMD` loaders are used, be accessible by their standard module names.  
+NestedTypes requires `underscore` and `jquery` libraries. They either must be included globally with `<script>`tag or, if `CommonJS`/`AMD` loaders are used, be accessible by their standard module names.
+It's acceptable to use `lodash` as drop-in underscore replacement.
 
 ### bower
 

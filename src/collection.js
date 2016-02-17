@@ -1,20 +1,70 @@
-var Backbone = require( './backbone+' ),
-    Model    = require( './model' ),
-    error    = require( './errors' ),
-    _        = require( 'underscore' );
+var _               = require( 'underscore' ),
+    Backbone        = require( './backbone+' ),
+    Model           = require( './model' ),
+    ValidationMixin = require( './validation-mixin' ),
+    RestMixin       = require( './rest-mixin' ).Collection,
+    UnderscoreMixin = require( './underscore-mixin' );
 
-var CollectionProto = Backbone.Collection.prototype;
+var Events   = Backbone.Events,
+    trigger1 = Events.trigger1,
+    trigger2 = Events.trigger2,
+    trigger3 = Events.trigger3;
 
+var Commons               = require( './collections/commons' ),
+    toModel               = Commons.toModel,
+    dispose               = Commons.dispose,
+    ModelEventsDispatcher = Commons.ModelEventsDispatcher;
+
+var Add          = require( './collections/add' ),
+    MergeOptions = Add.MergeOptions,
+    add          = Add.add,
+    set          = Add.set,
+    emptySet     = Add.emptySet;
+
+var Remove     = require( './collections/remove' ),
+    removeOne  = Remove.removeOne,
+    removeMany = Remove.removeMany;
+
+CollectionProto = Backbone.Collection.prototype;
+
+// transactional wrapper for collections
 function transaction( func ){
     return function(){
         this.__changing++ || ( this._changed = false );
 
         var res = func.apply( this, arguments );
 
-        --this.__changing || ( this._changed && this.trigger( this.triggerWhenChanged, this ) );
+        if( !--this.__changing && this._changed ){
+            this._changeToken = {};
+            trigger1( this, 'changes', this );
+        }
 
         return res;
     };
+}
+
+// wrapper for standard collections modification methods
+// wrap call in transaction and convert singular args
+function method( method ){
+    return function( a_models, a_options ){
+        this.__changing++ || ( this._changed = false );
+
+        var options = a_options || {},
+            models  = options.parse ? this.parse( a_models, options ) : a_models;
+
+        var res = models ? (
+            models instanceof Array ?
+            method.call( this, models, options )
+                : method.call( this, [ models ], options )[ 0 ]
+        ) : method.call( this, [], options );
+
+        if( !--this.__changing && this._changed ){
+            this._changeToken = {};
+            options.silent || trigger1( this, 'changes', this );
+        }
+
+        return res;
+    }
 }
 
 function handleChange(){
@@ -22,13 +72,31 @@ function handleChange(){
         this._changed = true;
     }
     else{
-        this.trigger( this.triggerWhenChanged, this );
+        this._changeToken = {};
+        trigger1( this, 'changes', this );
+    }
+}
+
+function SilentOptions( a_options ){
+    var options = a_options || {};
+    this.parse  = options.parse;
+    this.sort   = options.sort;
+}
+
+SilentOptions.prototype.silent = true;
+
+function CreateOptions( options, collection ){
+    MergeOptions.call( this, options, collection );
+    if( options ){
+        _.defaults( this, options );
     }
 }
 
 module.exports = Backbone.Collection.extend( {
+    mixins : [ ValidationMixin, RestMixin, UnderscoreMixin.Collection ],
+
     triggerWhenChanged : 'changes',
-    _listenToChanges : Backbone.VERSION >= '1.2.0' ? 'update change reset' : 'add remove change reset',
+    _listenToChanges   : 'update change reset',
     __class            : 'Collection',
 
     model : Model,
@@ -36,21 +104,59 @@ module.exports = Backbone.Collection.extend( {
     _owner : null,
     _store : null,
 
-    __changing : 0,
-    _changed : false,
+    __changing   : 0,
+    _changed     : false,
+    _changeToken : {},
 
-    // ATTENTION: Overriden backbone logic with bug fixes
-    constructor : function( models, options ){
-        options || (options = {});
-        if (options.model) this.model = options.model;
+    _dispatcher : null,
+
+    properties : {
+        length : {
+            enumerable : false,
+            get : function(){
+                return this.models.length;
+            }
+        }
+    },
+
+    _validateNested : function( errors ){
+        var models = this.models,
+            length = 0;
+
+        for( var i = 0; i < models.length; i++ ){
+            var error = models[ i ].validationError;
+            if( error ){
+                errors[ name ] = error;
+                length++;
+            }
+        }
+
+        return length;
+    },
+
+    modelId : function( attrs ){
+        return attrs[ this.model.prototype.idAttribute || 'id' ];
+    },
+
+    constructor : function( models, a_options ){
+        var options = a_options || {};
+
+        this.__changing   = 0;
+        this._changed     = false;
+        this._changeToken = {};
+        this._owner       = this._store = null;
+
+        this.model      = options.model || this.model;
         if (options.comparator !== void 0) this.comparator = options.comparator;
-        this._reset();
 
-        this.__changing = 0;
-        this._changed = false;
-        if (models) this.reset( models, options );
+        this.models = [];
+        this._byId  = {};
+
+        if( models ) this.reset( models, new SilentOptions( options ) );
+
         this.listenTo( this, this._listenToChanges, handleChange );
-        this.initialize.apply(this, arguments);
+
+        this.initialize.apply( this, arguments );
     },
 
     getStore : function(){
@@ -58,7 +164,7 @@ module.exports = Backbone.Collection.extend( {
     },
 
     sync : function(){
-      return this.getStore().sync.apply( this, arguments );
+        return this.getStore().sync.apply( this, arguments );
     },
 
     isValid : function( options ){
@@ -84,7 +190,6 @@ module.exports = Backbone.Collection.extend( {
         return next;
     },
 
-	// ATTENTION: Overriden backbone logic with bug fixes
     get : function( obj ){
         if( obj == null ){ return void 0; }
 
@@ -95,6 +200,79 @@ module.exports = Backbone.Collection.extend( {
         return this._byId[ obj ];
     },
 
+    set : method( function( models, options ){
+        return this.length ?
+               set( this, models, options ) :
+               emptySet( this, models, options );
+    } ),
+
+    reset : method( function( a_models, a_options ){
+        var options        = a_options || {},
+            previousModels = dispose( this );
+
+        var models = emptySet( this, a_models, new SilentOptions( options ) );
+
+        options.silent || trigger2( this, 'reset', this, _.defaults( { previousModels : previousModels }, options ) );
+
+        return models;
+    } ),
+
+    // Add a model to the end of the collection.
+    push: function(model, options) {
+        return this.add(model, _.extend({ at: this.length }, options ));
+    },
+
+    add : method( function( models, options ){
+        return this.length ?
+               add( this, models, options )
+            : emptySet( this, models, options );
+    } ),
+
+    sort : transaction( CollectionProto.sort ),
+
+// Methods with singular fast-path
+//------------------------------------------------
+    // Remove a model, or a list of models from the set.
+    remove : transaction( function( a_models, a_options ){
+        var options = a_options || {};
+
+        if( a_models ){
+            return a_models instanceof Array ?
+                   removeMany( this, a_models, options )
+                : removeOne( this, a_models, options );
+        }
+    } ),
+
+    // TODO: move to REST mixin
+    create : function( a_model, a_options ){
+        var options = new CreateOptions( a_options, this ),
+            model   = toModel( this, a_model, options );
+
+        if( !options.wait ) add( this, [ model ], options );
+        var collection  = this;
+        var success     = options.success;
+        options.success = function( model, resp, callbackOpts ){
+            if( options.wait ) add( collection, [ model ], callbackOpts );
+            if( success ) success.call( callbackOpts.context, model, resp, callbackOpts );
+        };
+
+        model.save( null, options );
+        return model;
+    },
+
+    _onModelEvent : function( event, model, collection, options ){
+        // lazy initialize dispatcher...
+        var dispatcher = this._dispatcher || ( this._dispatcher = new ModelEventsDispatcher( this.model ) ),
+            handler    = dispatcher[ event ] || trigger3;
+
+        handler( this, event, model, collection, options );
+    },
+
+    at : function( index ){
+        if( index < 0 ) index += this.length;
+        return this.models[ index ];
+    },
+
     deepClone : function(){ return this.clone( { deep : true } ); },
 
     clone : function( options ){
@@ -103,34 +281,18 @@ module.exports = Backbone.Collection.extend( {
                          return model.clone( options );
                      } ) : this.models;
 
-        return new this.constructor( models );
+        return new this.constructor( models, { model : this.model, comparator : this.comparator } );
     },
-
-    set : transaction( function( models, options ){
-        if( models ){
-            if( typeof models !== 'object' || !( models instanceof Array || models instanceof Model ||
-                Object.getPrototypeOf( models ) === Object.prototype ) ){
-                error.wrongCollectionSetArg( this, models );
-            }
-        }
-
-        return CollectionProto.set.call( this, models, options );
-    } ),
 
     transaction : function( func, self, args ){
         return transaction( func ).apply( self || this, args );
     },
 
-    remove : transaction( CollectionProto.remove ),
-    add    : transaction( CollectionProto.add ),
-    reset  : transaction( CollectionProto.reset ),
-    sort   : transaction( CollectionProto.sort ),
-
     getModelIds : function(){ return _.pluck( this.models, 'id' ); },
 
     createSubset : function( models, options ){
         var SubsetOf = this.constructor.subsetOf( this ).createAttribute().type;
-        var subset = new SubsetOf( models, options );
+        var subset   = new SubsetOf( models, options );
         subset.resolve( this );
         return subset;
     }
@@ -142,7 +304,7 @@ module.exports = Backbone.Collection.extend( {
     },
     extend     : function(){
         // Need to subsetOf cache when extending the collection
-        var This = Backbone.Collection.extend.apply( this, arguments );
+        var This        = Backbone.Collection.extend.apply( this, arguments );
         This.__subsetOf = null;
         return This;
     }

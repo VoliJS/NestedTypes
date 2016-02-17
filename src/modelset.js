@@ -49,18 +49,17 @@ function setSingleAttr( model, key, value, attrSpec ){
 
     if( !changing ){
         model._previousAttributes = new model.Attributes( current );
-        model.changed             = {};
     }
 
-    var prev      = model._previousAttributes,
-        options   = {},
-        val       = attrSpec.transform( value, options, model, key ),
-        isChanged = attrSpec.isChanged;
+    if( model._changed ) model._changed = null;
 
-    isChanged( prev[ key ], val ) ? model.changed[ key ] = val : delete model.changed[ key ];
+    var options   = {},
+        prevValue = current[ key ],
+        val       = attrSpec.transform( value, options, model, key );
 
-    if( isChanged( current[ key ], val ) ){
-        current[ key ] = val;
+    current[ key ] = val;
+
+    if( attrSpec.isChanged( prevValue, val ) ){
         model._pending = options;
         trigger3( model, 'change:' + key, model, val, options );
     }
@@ -72,6 +71,7 @@ function setSingleAttr( model, key, value, attrSpec ){
     while( model._pending ){
         options        = model._pending;
         model._pending = false;
+        model._changeToken = {};
         trigger2( model, 'change', model, options );
     }
 
@@ -94,8 +94,9 @@ function transaction( a_fun, context, args ){
 
     if( notChanging ){
         this._previousAttributes = new this.Attributes( this.attributes );
-        this.changed             = {};
     }
+
+    if( this._changed ) this._changed = null;
 
     this.__begin();
     var res = a_fun.apply( context || this, args );
@@ -105,6 +106,7 @@ function transaction( a_fun, context, args ){
         while( this._pending ){
             options       = this._pending;
             this._pending = false;
+            this._changeToken = {};
             trigger2( this, 'change', this, options );
         }
 
@@ -122,11 +124,6 @@ function bbSetAttrs( model, attrs, opts ){
     'use strict';
     var options = opts || {};
 
-    // Run validation.
-    if( !model._validate( attrs, options ) ){
-        return false;
-    }
-
     // Extract attributes and options.
     var unset     = options.unset,
         silent    = options.silent,
@@ -139,29 +136,25 @@ function bbSetAttrs( model, attrs, opts ){
 
     if( !changing ){
         model._previousAttributes = new model.Attributes( current );
-        model.changed             = {};
     }
 
-    var prev = model._previousAttributes;
+    if( model._changed ) model._changed = null;
 
     // For each `set` attribute, update or delete the current value.
+    // Todo: optimize for complete attrs set. Iterate through attributes names array,
+    // or (may be better) create precompiled loop unrolled forEach, extracting specs
+    // and values.
+    // Beware of single attr update with options. Need deep refactoring to remove penalty.
     for( var attr in attrs ){
         var attrSpec  = attrSpecs[ attr ],
             isChanged = attrSpec ? attrSpec.isChanged : genericIsChanged,
-            val       = attrs[ attr ];
+            val       = unset ? undefined : attrs[ attr ];
 
         if( isChanged( current[ attr ], val ) ){
             changes.push( attr );
         }
 
-        if( isChanged( prev[ attr ], val ) ){
-            model.changed[ attr ] = val;
-        }
-        else{
-            delete model.changed[ attr ];
-        }
-
-        unset ? delete current[ attr ] : current[ attr ] = val;
+        current[ attr ] = val;
     }
 
     // Trigger all relevant attribute changes.
@@ -184,6 +177,7 @@ function bbSetAttrs( model, attrs, opts ){
         while( model._pending ){
             options        = model._pending;
             model._pending = false;
+            model._changeToken = {};
             trigger2( model, 'change', model, options );
         }
     }

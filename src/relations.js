@@ -77,11 +77,11 @@ exports.from = function( masterCollection ){
     var ModelRefAttribute = attribute.Type.extend( {
         toJSON : clone,
         clone  : clone,
-
+        validate : function( model, value, name ){},
         isChanged : function( a, b ){
             // refs are equal when their id is equal.
-            var aId = a && typeof a == 'object' ? a.id : a,
-                bId = b && typeof b == 'object' ? b.id : b;
+            var aId = a && ( a.id == null ? a : a.id ),
+                bId = b && ( b.id == null ? b : b.id );
 
             return aId !== bId;
         },
@@ -116,8 +116,20 @@ exports.from = function( masterCollection ){
 
 var CollectionProto = Collection.prototype;
 
+function adjustOptions( models, options ){
+    var adjust = { merge : false };
+
+    if( models ){
+        if( models instanceof Array && models.length && typeof models[ 0 ] !== 'object' ){
+            adjust.merge = adjust.parse = true;
+        }
+    }
+
+    return _.defaults( adjust, options );
+}
+
 var refsCollectionSpec = {
-    _listenToChanges : bbVersion >= '1.2.0' ? 'update reset' : 'add remove reset', // don't bubble changes from models
+    _listenToChanges : 'update reset', // don't bubble changes from models
     __class          : 'Collection.SubsetOf',
 
     resolvedWith : null,
@@ -179,16 +191,16 @@ var refsCollectionSpec = {
         this.set( [ model ] );
     },
 
-    set : function( models, upperOptions ){
-        var options = { merge : false };
+    set : function( models, options ){
+        return CollectionProto.set.call( this, models, adjustOptions( models, options ) );
+    },
 
-        if( models ){
-            if( models instanceof Array && models.length && typeof models[ 0 ] !== 'object' ){
-                options.merge = options.parse = true;
-            }
-        }
+    add : function( models, options ){
+        return CollectionProto.add.call( this, models, adjustOptions( models, options ) );
+    },
 
-        CollectionProto.set.call( this, models, _.defaults( options, upperOptions ) );
+    reset : function( models, options ){
+        return CollectionProto.reset.call( this, models, adjustOptions( models, options ) );
     },
 
     resolve : function( collection ){
@@ -211,7 +223,7 @@ exports.subsetOf = function( masterCollection ){
 
     return attribute( {
         type : SubsetOf,
-
+        validate : function( model, value, name ){},
         get : function( refs ){
             !refs || refs.resolvedWith || refs.resolve( getMaster.call( this ) );
             return refs;

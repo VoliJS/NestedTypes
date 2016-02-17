@@ -70,6 +70,10 @@ attribute.Type.extend( {
                new Date( typeof value === 'string' ? parseDate( value ) : value )
     },
 
+    validate : function( model, value, name ){
+        if( isNaN( +value ) ) return 'Invalid Date';
+    },
+
     toJSON : function( value ){ return value && value.toJSON(); },
 
     isChanged : function( a, b ){ return ( a && +a ) !== ( b && +b ); },
@@ -82,7 +86,7 @@ attribute.Type.extend( {
 // -------------------------------------
 Integer = function( x ){ return x ? Math.round( x ) : 0; };
 
-attribute.Type.extend( {
+var PrimitiveType = attribute.Type.extend( {
     create : function(){ return this.type(); },
 
     toJSON : function( value ){ return value; },
@@ -91,7 +95,15 @@ attribute.Type.extend( {
     isChanged : function( a, b ){ return a !== b; },
 
     clone : function( value ){ return value; }
-} ).attach( Number, Boolean, String, Integer );
+} );
+
+PrimitiveType.attach( Boolean, String );
+
+PrimitiveType.extend({
+    validate : function( model, value, name ){
+        if( value !== value || value === Infinity || value === -Infinity ) return name + ' is invalid number';
+    }
+} ).attach( Integer, Number );
 
 // Array Type
 // ---------------
@@ -115,7 +127,10 @@ var setAttrs      = modelSet.setAttrs,
     setSingleAttr = modelSet.setSingleAttr;
 
 attribute.Type.extend( {
-    create : function( options ){ return new this.type( null, options ); },
+    create : function( attrs, options ){
+        var Type = this.type;
+        return Type.create ? Type.create( attrs, options ) : new Type( attrs, options );
+    },
     clone  : function( value, options ){ return value && value.clone( options ); },
     toJSON : function( value, name ){
       if( value && value._owner !== this ){
@@ -129,6 +144,11 @@ attribute.Type.extend( {
 
     isBackboneType : true,
     isModel        : true,
+
+    validate : function( model, value, name ){
+        var error = value && value.validationError;
+        if( error ) return error;
+    },
 
     createPropertySpec : function(){
         // if there are nested changes detection enabled, disable optimized setter
@@ -165,7 +185,7 @@ attribute.Type.extend( {
                 value = existingModelOrCollection;
             }
             else{ // ...or create a new object, if it's not exist
-                value = new this.type( value, options );
+                value = this.create( value, options );
             }
         }
 

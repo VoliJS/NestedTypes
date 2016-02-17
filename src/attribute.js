@@ -16,7 +16,7 @@ var primitiveTypes = {
 
 // list of simple accessor methods available in options
 var availableOptions = [ 'triggerWhenChanged', 'changeEvents', 'parse', 'clone', 'toJSON', 'value', 'cast', 'create', 'name', 'value',
-                         'type' ];
+                         'type', 'validate' ];
 
 function parseReference( ref ){
     switch( typeof ref ){
@@ -81,6 +81,27 @@ var Options = Object.extend( {
         return this;
     },
 
+    check : function( check, error ){
+        var prevValidate = this._options.validate;
+
+        var validate = prevValidate ? function( model, value, name ){
+            var prevError = prevValidate( model, value, name );
+            if( prevError ) return prevError;
+
+            if( !check.call( model, value, name ) ){
+                return error || name + ' is not valid';
+            }
+        } : function( model, value, name ){
+            if( !check.call( model, value, name ) ){
+                return error || name + ' is not valid';
+            }
+        };
+
+        this._options.validate = validate;
+
+        return this;
+    },
+
     proxy : function( attrs ){
         this._options.proxy = attrs || true;
         return this;
@@ -122,6 +143,7 @@ var Options = Object.extend( {
 
         if( options.changeEvents ) options.triggerWhenChanged = options.changeEvents;
 
+        //TODO: It looks like a bug. Remove.
         if( options.proxy && typeof options.proxy === 'string' && !options.triggerWhenChanged ){
             options.triggerWhenChanged = options.proxy
                                                 .split( ' ' )
@@ -250,6 +272,8 @@ var Attribute = Object.extend( {
         return value;
     },
 
+    validate : function( model, value, name ){},
+
     toJSON : function( value, key ){
         return value && value.toJSON ? value.toJSON() : value;
     },
@@ -290,6 +314,7 @@ var Attribute = Object.extend( {
                     spec[ name ] = proxyFunction( this.name, name );
                 }
                 // ...or create native property, if it's the property.
+                // TODO: Looks like extra check. Need to remove. Everything should be proxied.
                 else if( prop.get ){
                     Object.defineProperty( spec, name, proxyProperty( this.name, name ) );
                 }

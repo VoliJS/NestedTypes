@@ -1,9 +1,9 @@
 # NestedTypes model framework
 
-master: [![Master Build Status](https://travis-ci.org/Volicon/backbone.nestedTypes.svg?branch=master)](https://travis-ci.org/Volicon/backbone.nestedTypes)
-develop: [![Develop Build Status](https://travis-ci.org/Volicon/backbone.nestedTypes.svg?branch=develop)](https://travis-ci.org/Volicon/backbone.nestedTypes)
+master: [![Master Build Status](https://travis-ci.org/Volicon/NestedTypes.svg?branch=master)](https://travis-ci.org/Volicon/NestedTypes)
+develop: [![Develop Build Status](https://travis-ci.org/Volicon/NestedTypes.svg?branch=develop)](https://travis-ci.org/Volicon/NestedTypes)
 
-`NestedTypes` is the modern data framework, which is mostly backward compatible with backbone.js API and [can be used as 
+`NestedTypes` is the high-performance model framework, which is mostly backward compatible with backbone.js API and [can be used as 
 drop-in backbone replacement](/docs/BackboneTransitionGuide.md) with moderate source code refactoring.
 
 ![Model.set performance](/docs/Model.set.png)
@@ -14,7 +14,7 @@ drop-in backbone replacement](/docs/BackboneTransitionGuide.md) with moderate so
     - During `fetch`, aggregated objects are updated _in place_, so it's safe to pass them around by reference.
 - It's type-safe, providing the same contract for model attributes as statically typed language does for class members. Thus, 
 	    attributes are guaranteed to hold values of declared types whatever you do, making it impossible to break client-server protocol. 
-- At the moment of writing, it's an only model framework which supports React's [pure render optimization](https://github.com/Volicon/NestedReact/tree/develop#props-specs-and-pure-render-optimization). 
+- At the moment of writing, it's an only model framework which supports React's [pure render optimization](https://github.com/Volicon/NestedReact/#props-specs-and-pure-render-optimization). 
 
 API docs available here: http://volicon.github.io/NestedTypes/ Examples are below.
 

@@ -9,8 +9,9 @@ drop-in backbone replacement](/docs/BackboneTransitionGuide.md) with moderate so
 ![Model.set performance](/docs/Model.set.png)
 
 - It's [order of magnitude faster](http://slides.com/vladbalin/performance#/) than backbone, so your application becomes more responsive and you can handle collection which are 10 times larger than you have now.
-- It implements nested models and collections in the right way. During `fetch`, nested objects are updated in place, so it's safe to pass them by reference.
-- It supports both aggregation and relations by `id` without the need for external plugins.
+- It implements nested models and collections in the right way.
+    - It distinguish aggregation from relations by `id`, and supports first-class nested collections.
+    - During `fetch`, aggregated objects are updated _in place_, so it's safe to pass them around by reference.
 - It's type-safe, providing the same contract for model attributes as statically typed language does for class members. Thus, 
 	    attributes are guaranteed to hold values of declared types whatever you do, making it impossible to break client-server protocol. 
 - At the moment of writing, it's an only model framework which supports React's [pure render optimization](https://github.com/Volicon/NestedReact/tree/develop#props-specs-and-pure-render-optimization). 

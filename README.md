@@ -14,7 +14,7 @@ drop-in backbone replacement](/docs/BackboneTransitionGuide.md) with moderate so
     - During `fetch`, aggregated objects are updated _in place_, so it's safe to pass them around by reference.
 - It's type-safe, providing the same contract for model attributes as statically typed language does for class members. Thus, 
 	    attributes are guaranteed to hold values of declared types whatever you do, making it impossible to break client-server protocol. 
-- At the moment of writing, it's an only model framework which supports React's [pure render optimization](https://github.com/Volicon/NestedReact/#props-specs-and-pure-render-optimization). 
+- At the moment of writing, it's an only model framework which is designed to [play well with React](https://github.com/Volicon/NestedReact) and supports [pure render optimization](https://github.com/Volicon/NestedReact/#props-specs-and-pure-render-optimization). 
 
 API docs available here: http://volicon.github.io/NestedTypes/ Examples are below.
 

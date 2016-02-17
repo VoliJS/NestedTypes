@@ -28,7 +28,7 @@ API docs available here: http://volicon.github.io/NestedTypes/ Examples are belo
 - Bug fixes
 - Core changes:
     - Version tokens for models and collections making possible precise and efficient cache invalidation. 
-        It makes possible things like React's "pure render" optimization and lazy evaluation with memoization like in new validation.
+        It makes possible things like React's "pure render" and lazy evaluation with caching like in new validation.
     - Events, REST, underscore support, and validation is refactored to mixins.
     - Removed unused backbone code. Now NestedTypes contains backbone's shim with View, Router and History for backward compatibility purposes.
     - *NestedTypes passes modified backbone 1.2 test suite*.

@@ -70,7 +70,7 @@ Now JSON looks okay, and we face the second problem. How would we want it to app
 
 ### Handling to-many relationships
 
-I would say, it would be ideal if the user of the data layer _wouldn't notice_ this thing at all. 
+I would say, it would be an ideal case if the user of the data layer _wouldn't notice_ this complexity at all. 
 If it will look for us like full collection of roles, _and_ as nested collections of roles in every user model (but 
 roles in this nested collection will be actually the references to shared objects in full collection of roles), it would
 be just fine.
@@ -173,9 +173,7 @@ const UsersDirectory = Model.extend({
   initialize(){
      this.listenTo( this.roles, 'remove', role => {
         this.users.transaction( () => {
-            this.users.each( user => {
-                user.roles.remove( role );                     
-            });
+            this.users.each( user => user.roles.remove( role ) );
         });
      });
   }

@@ -3,7 +3,7 @@
 ## To-many relationships
 ### The problem
 
-When you building complex data layer, sooner or later you will need cross-reference objects by id. Lets consider
+When you building complex data layer, sooner or later you will need to cross-reference objects by id. Lets consider
 users and roles as an example. For the purpose of the example we assume (and in many real cases its true),
 that users and models related to each other as many-to-many.
 

@@ -7,8 +7,7 @@ When you building complex data layer, sooner or later you will need cross-refere
 users and roles as an example. For the purpose of the example we assume (and in many real cases its true),
 that users and models related to each other as many-to-many.
 
-Two questions arise - how will we send these data in JSON, and how would we ideally want them to appear in UI. Lets start
-with JSON for the users. Obvious solution would be the one as follows:
+Two questions arise - how will we send these data in JSON, and how would we ideally want them to appear in our models layer. Lets start with JSON for the users. Obvious solution would be the one as follows:
 
 ```javascript
 const users = [{

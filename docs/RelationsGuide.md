@@ -172,7 +172,7 @@ const UsersDirectory = Model.extend({
   
   initialize(){
      this.listenTo( this.roles, 'remove', role => {
-        this.users.transaction( () => {
+        this.users.transaction( () => { // 'users' will trigger single 'changes' event for bulk operation
             this.users.each( user => user.roles.remove( role ) );
         });
      });

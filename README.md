@@ -24,7 +24,7 @@ API docs available here: http://volicon.github.io/NestedTypes/ Examples are belo
 - Abstract models and collection support (will be documented soon, some info is [here](/docs/BackboneTransitionGuide.md#collections)).
 - Declarative [attribute-level validation](http://slides.com/vladbalin/deck#/).
 - Mixins like in React's `createClass` (will be documented, but it will just work as you expect).
-- First-class hierarchical stores (very cool, but here's the spearate manual needed, which is tbd).
+- [First-class hierarchical stores](/docs/RelationsGuide.md).
 - Bug fixes
 - Core changes:
     - Version tokens for models and collections making possible precise and efficient cache invalidation. 

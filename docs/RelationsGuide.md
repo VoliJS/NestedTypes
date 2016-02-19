@@ -376,7 +376,7 @@ Assuming that we will have just one instance of this widget on the screen, it's 
 	window.onunload = () => this.model.save();
 ```
 
-That's really quick and very dirty example, but I think you got the general idea.
+That's really quick and very dirty example (describen trick with local storage is really okay for the top level View only), but I think you got the general idea.
 
 ### For the React guys...
 

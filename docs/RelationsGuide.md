@@ -56,7 +56,7 @@ becomes 'users directory object'.
             "roles" : [ 1, 2 ]
         },
         {
-            "id" : 2,
+            "id" : 2,inter
             "login" : "Avraham"
             "roles" : [ 1, 2 ]
         }, ...
@@ -297,7 +297,7 @@ Suppose that we have a list of items in collection, which we need to display. An
 
 It could be done with DOM manipulation, and we can rely on the DOM as the primary source of information about selection. Which is extrimely bad practice. In case of any UI framework the code will be much cleaner if we would keep information about selection (and other information which is required to render the widget) as a part of the separately managed UI _state_. And here the situation our models and relations comes to help.
 
-First idea which comes to the mind is to add 'selected' attribute to the item's model. And again, it is bad idea no matter which framework you're using. In this case we mix UI state with our data layer. Server and other part of our application have no interested in selection made in particular UI widget, so we need to keep it separate from the `items` collection.
+First idea which comes to the mind is to add 'selected' attribute to the item's model. And again, it is bad idea no matter which framework you're using. In this case we would mix UI state with our data layer. Server and other part of our application have no interest in selection made in particular UI widget, so we need to keep it separate from the `items` collection.
 
 Thus, we introduce collection of selected items, which is, obviously, the subset of items collection, and put it along with items we wanna render:
 
@@ -312,9 +312,24 @@ const State = Model.extend({
 
 Here, since master collection's path is taken relative to `this`, it will be `this.items`. And this spec gives reader quite precise information about the purpose of this `selected`.
 
-Then we can just subscribe for the changes of this model and update our UI on every change. Thanks to `NestedTypes` deep changes detection feature, whenever we will receive items from the server or anything will be changed deep inside of the models for any reason, our UI will be in sync.
+Then we can just subscribe for the changes of this model and update our UI on every change. Thanks to `NestedTypes` deep changes detection feature, whenever we will receive items from the server or anything will be changed deep inside of the models for any reason, our UI will be in sync. In case of Backbone View, it will look like this:
+
+```javascript
+initialize : function( options ){
+	this.model = new State( options );
+	this.listenTo( this.model, 'change', this.render );
+}
+```
 
 So, instead of DOM manipulation, now it's enough to add or remove corresponding item in `selected` collection in our click event handler. It has `toggle` method for that purpose, like `selected.toggle( modelOrId )`. And since `selected` collections knows which subset it is, it can easily handle `toggle` with model id taken from the DOM as an argument.
+
+```javascript
+onClick : function( e ){
+	const id = $( e.target ).attr( 'model-id' );
+	this.model.selected.toggle( id ); // will trigger state model change, which will trigger UI update
+}
+```
+
 
 > If just one item may be selected at a time, it will obviously be `Model.from( 'items' )` instead of `Collection.subsetOf`.
 
@@ -322,7 +337,7 @@ So, instead of DOM manipulation, now it's enough to add or remove corresponding 
 
 Now let's suppose that we need to preserve our selection in local storage when browser is refreshed.
 
-First idea is to take some Backbone plugin for working with `localStorage`, and try it on our model. As usual. Bad idea. This time - because it could be done trivially without plugins. Thanks to powerful `NestedTypes` serialization facilities, it's just enough to convert our State model to JSON and save it as one piece.
+First idea is to take some Backbone plugin for working with `localStorage`, and try it on our model. As usual. Bad idea. This time - because it could be done trivially without plugins. Thanks to powerful `NestedTypes` serialization facilities, it's enough to convert our State model to JSON and save it as one piece.
 
 Lets do something quick and dirty to illustrate an idea. First, we need to teach our model to save to and be loaded from local storage. We suspect it won't be the single case, so we create the base class for that.
 

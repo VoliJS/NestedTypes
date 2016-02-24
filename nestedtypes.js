@@ -3410,9 +3410,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	            length = 0;
 	
 	        for( var i = 0; i < models.length; i++ ){
-	            var error = models[ i ].validationError;
+	            var model = models[ i ],
+	                error = model.validationError;
+	
 	            if( error ){
-	                errors[ name ] = error;
+	                errors[ model.cid ] = error;
 	                length++;
 	            }
 	        }
@@ -4259,7 +4261,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	var refsCollectionSpec = {
 	    _listenToChanges : 'update reset', // don't bubble changes from models
-	    __class          : 'Collection.SubsetOf',
+	    __class          : 'Collection.subsetOf',
 	
 	    resolvedWith : null,
 	    refs         : null,

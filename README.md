@@ -124,7 +124,6 @@ require([ 'nestedtypes' ], function( Nested ){ ... });
 
 ```html
 <script src="underscore.js" type="text/javascript"></script>
-<script src="backbone.js" type="text/javascript"></script>
 <script src="nestedtypes.js" type="text/javascript"></script>
 <script> var Model = Nested.Model; ... </script>
 ```

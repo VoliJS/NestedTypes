@@ -200,19 +200,12 @@ var Model = BaseModel.extend( {
         return this._deepGet( path.split( '.' ) );
     },
 
-    deepInvalidate : function( name ){
+    deepValidationError : function( name ){
         var path  = name.split( '.' ),
             attr  = path.pop(),
-            model = this._deepGet( path ),
-            error, value;
+            model = this._deepGet( path ) || null;
 
-        if( model ){
-            value = model.get ? model.get( attr ) : model[ attr ];
-            error = model.validationError;
-            if( error ) error = error.nested[ attr ];
-        }
-
-        return [ value, error ];
+        return model && model.getValidationError( attr );
     },
 
     _deepGet : function( path ){

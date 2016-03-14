@@ -21,9 +21,18 @@ module.exports = {
         return 0;
     },
 
-    isValid : function( key ){
+    getValidationError : function( key ){
         var error = this.validationError;
-        return !error || ( Boolean( key ) && !error.nested[ key ] );
+        return ( key ? error && error.nested[ key ] : error ) || null;
+    },
+
+    /**
+     * Extended Backbone API
+     * @param {string} key - nested object key
+     * @returns {boolean}
+     */
+    isValid : function( key ){
+        return !this.getValidationError( key );
     },
 
     _invalidate : function( options ){

@@ -124,9 +124,11 @@ module.exports = Backbone.Collection.extend( {
             length = 0;
 
         for( var i = 0; i < models.length; i++ ){
-            var error = models[ i ].validationError;
+            var model = models[ i ],
+                error = model.validationError;
+
             if( error ){
-                errors[ name ] = error;
+                errors[ model.cid ] = error;
                 length++;
             }
         }

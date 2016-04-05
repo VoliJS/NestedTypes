@@ -1,9 +1,9 @@
 # NestedTypes model framework
 
-master: [![Master Build Status](https://travis-ci.org/Volicon/backbone.nestedTypes.svg?branch=master)](https://travis-ci.org/Volicon/backbone.nestedTypes)
-develop: [![Develop Build Status](https://travis-ci.org/Volicon/backbone.nestedTypes.svg?branch=develop)](https://travis-ci.org/Volicon/backbone.nestedTypes)
+master: [![Master Build Status](https://travis-ci.org/Volicon/NestedTypes.svg?branch=master)](https://travis-ci.org/Volicon/NestedTypes)
+develop: [![Develop Build Status](https://travis-ci.org/Volicon/NestedTypes.svg?branch=develop)](https://travis-ci.org/Volicon/NestedTypes)
 
-`NestedTypes` is the modern data framework, which is mostly backward compatible with backbone.js API and [can be used as 
+`NestedTypes` is the high-performance model framework, which is mostly backward compatible with backbone.js API and [can be used as 
 drop-in backbone replacement](/docs/BackboneTransitionGuide.md) with moderate source code refactoring.
 
 ![Model.set performance](/docs/Model.set.png)
@@ -14,25 +14,25 @@ drop-in backbone replacement](/docs/BackboneTransitionGuide.md) with moderate so
     - During `fetch`, aggregated objects are updated _in place_, so it's safe to pass them around by reference.
 - It's type-safe, providing the same contract for model attributes as statically typed language does for class members. Thus, 
 	    attributes are guaranteed to hold values of declared types whatever you do, making it impossible to break client-server protocol. 
-- At the moment of writing, it's an only model framework which supports React's [pure render optimization](https://github.com/Volicon/NestedReact/tree/develop#props-specs-and-pure-render-optimization). 
+- At the moment of writing, it's an only model framework which is designed to [play well with React](https://github.com/Volicon/NestedReact) and supports [pure render optimization](https://github.com/Volicon/NestedReact/#props-specs-and-pure-render-optimization). 
 
 API docs available here: http://volicon.github.io/NestedTypes/ Examples are below.
 
 ## Major changes in 1.3.x:
 
 - [Huge performance improvements](http://slides.com/vladbalin/performance#/).
-- Abstract models and collection support.
+- Abstract models and collection support (will be documented soon, some info is [here](/docs/BackboneTransitionGuide.md#collections)).
 - Declarative [attribute-level validation](http://slides.com/vladbalin/deck#/).
-- Mixins like in React's `createClass`.
-- First-class hierarchical stores.
+- Mixins like in React's `createClass` (will be documented, but it will just work as you expect).
+- [First-class hierarchical stores](/docs/RelationsGuide.md).
 - Bug fixes
 - Core changes:
     - Version tokens for models and collections making possible precise and efficient cache invalidation. 
-        It makes possible things like React's "pure render" optimization and lazy evaluation with memoization like in new validation.
+        It makes possible things like React's "pure render" and lazy evaluation with caching like in new validation.
     - Events, REST, underscore support, and validation is refactored to mixins.
     - Removed unused backbone code. Now NestedTypes contains backbone's shim with View, Router and History for backward compatibility purposes.
-    - NestedTypes passes modified backbone 1.2 test suite.
-- Experimental features:
+    - *NestedTypes passes modified backbone 1.2 test suite*.
+- Experimental features (may be documented or removed later):
     - attribute proxies (has.proxy)
     - hardrefs (Model.take and Collection.take)
 
@@ -75,7 +75,7 @@ Nested.store = new ( LazyStore.extend({
 }) );
 
 const Comment = Model.extend(); // predefine Comment model...
-Comment.define({ ...because we gonna make recursive comments tree definition... 
+Comment.define({ //...because we gonna make recursive comments tree definition... 
     attributes : { // ...right in the next line. Check it out.
         replies : Comment.Collection, // here's plain aggregation. Serialized as nested JSON. 
         time    : Date, // date attribute, defaults to new Date()
@@ -124,7 +124,6 @@ require([ 'nestedtypes' ], function( Nested ){ ... });
 
 ```html
 <script src="underscore.js" type="text/javascript"></script>
-<script src="backbone.js" type="text/javascript"></script>
 <script src="nestedtypes.js" type="text/javascript"></script>
 <script> var Model = Nested.Model; ... </script>
 ```

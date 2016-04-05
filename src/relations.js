@@ -130,7 +130,7 @@ function adjustOptions( models, options ){
 
 var refsCollectionSpec = {
     _listenToChanges : 'update reset', // don't bubble changes from models
-    __class          : 'Collection.SubsetOf',
+    __class          : 'Collection.subsetOf',
 
     resolvedWith : null,
     refs         : null,

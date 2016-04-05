@@ -335,19 +335,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	        return this._deepGet( path.split( '.' ) );
 	    },
 	
-	    deepInvalidate : function( name ){
+	    deepValidationError : function( name ){
 	        var path  = name.split( '.' ),
 	            attr  = path.pop(),
-	            model = this._deepGet( path ),
-	            error, value;
+	            model = this._deepGet( path ) || null;
 	
-	        if( model ){
-	            value = model.get ? model.get( attr ) : model[ attr ];
-	            error = model.validationError;
-	            if( error ) error = error.nested[ attr ];
-	        }
-	
-	        return [ value, error ];
+	        return model && model.getValidationError( attr );
 	    },
 	
 	    _deepGet : function( path ){
@@ -2851,9 +2844,18 @@ return /******/ (function(modules) { // webpackBootstrap
 	        return 0;
 	    },
 	
-	    isValid : function( key ){
+	    getValidationError : function( key ){
 	        var error = this.validationError;
-	        return !error || ( Boolean( key ) && !error.nested[ key ] );
+	        return ( key ? error && error.nested[ key ] : error ) || null;
+	    },
+	
+	    /**
+	     * Extended Backbone API
+	     * @param {string} key - nested object key
+	     * @returns {boolean}
+	     */
+	    isValid : function( key ){
+	        return !this.getValidationError( key );
 	    },
 	
 	    _invalidate : function( options ){
@@ -3410,9 +3412,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	            length = 0;
 	
 	        for( var i = 0; i < models.length; i++ ){
-	            var error = models[ i ].validationError;
+	            var model = models[ i ],
+	                error = model.validationError;
+	
 	            if( error ){
-	                errors[ name ] = error;
+	                errors[ model.cid ] = error;
 	                length++;
 	            }
 	        }
@@ -4259,7 +4263,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	var refsCollectionSpec = {
 	    _listenToChanges : 'update reset', // don't bubble changes from models
-	    __class          : 'Collection.SubsetOf',
+	    __class          : 'Collection.subsetOf',
 	
 	    resolvedWith : null,
 	    refs         : null,

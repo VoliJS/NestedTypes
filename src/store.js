@@ -31,9 +31,11 @@ var RestStore = exports.Lazy = Store.extend( {
             var fetch = element.fetch;
 
             if( fetch ){
-                element.fetch = function(){
-                    self._resolved[ name ] = true;
-                    return fetch.apply( this, arguments );
+                element.fetch = function() {
+                    if ( !self._resolved[ name ] || self._resolved[ name ] === false) {
+                        self._resolved[name] = fetch.apply(this, arguments).always(function () {self._resolved[name] = true});
+                    }
+                    return self._resolved[ name ];
                 }
             }
 
@@ -86,9 +88,10 @@ var RestStore = exports.Lazy = Store.extend( {
         _.each( spec, function( Type, name ){
             Type.options && ( spec[name] = Type.options( {
                 get : function( value ){
-                    if( !this._resolved[name] ){
-                        value.fetch && value.fetch();
-                        this._resolved[name] = true;
+                    var self = this;
+
+                    if( !this._resolved[name] || this._resolved[name] !== true ) {
+                        this._resolved[name] = value.fetch ? value.fetch().always(function () {self._resolved[name] = true}) : true;
                     }
 
                     return value;

@@ -32,10 +32,7 @@ var RestStore = exports.Lazy = Store.extend( {
 
             if( fetch ){
                 element.fetch = function() {
-                    if ( !self._resolved[ name ] || self._resolved[ name ] === false) {
-                        self._resolved[name] = fetch.apply(this, arguments).always(function () {self._resolved[name] = true});
-                    }
-                    return self._resolved[ name ];
+                    return self._resolved[ name ] = fetch.apply( this, arguments );
                 }
             }
 
@@ -54,6 +51,21 @@ var RestStore = exports.Lazy = Store.extend( {
         _.each( objsToFetch, function( name ){
             var attr = this.attributes[name];
             attr && attr.fetch && xhr.push( attr.fetch() );
+        }, this );
+
+        return $ && $.when && $.when.apply( Backbone.$, xhr );
+    },
+
+    // fetch specified items, or all items if called without arguments.
+    // returns first jquery promise.
+    fetchOnce : function(){
+        var xhr         = [],
+            self        = this,
+            objsToFetch = arguments.length ? arguments : _.keys( this.attributes );
+
+        _.each( objsToFetch, function( name ){
+            var attr = this.attributes[ name ];
+            self._resolved[ name ] || attr && attr.fetch && xhr.push( attr.fetch() );
         }, this );
 
         return $ && $.when && $.when.apply( Backbone.$, xhr );
@@ -88,10 +100,8 @@ var RestStore = exports.Lazy = Store.extend( {
         _.each( spec, function( Type, name ){
             Type.options && ( spec[name] = Type.options( {
                 get : function( value ){
-                    var self = this;
-
-                    if( !this._resolved[name] || this._resolved[name] !== true ) {
-                        this._resolved[name] = value.fetch ? value.fetch().always(function () {self._resolved[name] = true}) : true;
+                    if( !this._resolved[name] ) {
+                        value.fetch && value.fetch();
                     }
 
                     return value;

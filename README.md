@@ -18,6 +18,8 @@ drop-in backbone replacement](/docs/BackboneTransitionGuide.md) with moderate so
 
 API docs available here: http://volicon.github.io/NestedTypes/ Examples are below.
 
+> Announment. Version 2.0 is on the way. It will be faster, and built around the new transactional core rewritten with TypeScript. And it will also become simpler and hackable.
+
 ## Major changes in 1.3.x:
 
 - [Huge performance improvements](http://slides.com/vladbalin/performance#/).

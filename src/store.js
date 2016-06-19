@@ -31,9 +31,8 @@ var RestStore = exports.Lazy = Store.extend( {
             var fetch = element.fetch;
 
             if( fetch ){
-                element.fetch = function(){
-                    self._resolved[ name ] = true;
-                    return fetch.apply( this, arguments );
+                element.fetch = function() {
+                    return self._resolved[ name ] = fetch.apply( this, arguments );
                 }
             }
 
@@ -52,6 +51,21 @@ var RestStore = exports.Lazy = Store.extend( {
         _.each( objsToFetch, function( name ){
             var attr = this.attributes[name];
             attr && attr.fetch && xhr.push( attr.fetch() );
+        }, this );
+
+        return $ && $.when && $.when.apply( Backbone.$, xhr );
+    },
+
+    // fetch specified items, or all items if called without arguments.
+    // returns first jquery promise.
+    fetchOnce : function(){
+        var xhr         = [],
+            self        = this,
+            objsToFetch = arguments.length ? arguments : _.keys( this.attributes );
+
+        _.each( objsToFetch, function( name ){
+            var attr = self.attributes[ name ];
+            self._resolved[ name ] || attr && attr.fetch && xhr.push( attr.fetch() );
         }, this );
 
         return $ && $.when && $.when.apply( Backbone.$, xhr );
@@ -86,9 +100,8 @@ var RestStore = exports.Lazy = Store.extend( {
         _.each( spec, function( Type, name ){
             Type.options && ( spec[name] = Type.options( {
                 get : function( value ){
-                    if( !this._resolved[name] ){
+                    if( !this._resolved[name] ) {
                         value.fetch && value.fetch();
-                        this._resolved[name] = true;
                     }
 
                     return value;

@@ -64,7 +64,7 @@ var RestStore = exports.Lazy = Store.extend( {
             objsToFetch = arguments.length ? arguments : _.keys( this.attributes );
 
         _.each( objsToFetch, function( name ){
-            var attr = this.attributes[ name ];
+            var attr = self.attributes[ name ];
             self._resolved[ name ] || attr && attr.fetch && xhr.push( attr.fetch() );
         }, this );
 

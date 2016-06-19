@@ -4663,7 +4663,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	        _.each( objsToFetch, function( name ){
 	            var attr = self.attributes[ name ];
-	            self._resolved[ name ] || attr && attr.fetch && xhr.push( attr.fetch() );
+	            xhr.push( self._resolved[ name ] || attr && attr.fetch && attr.fetch());
 	        }, this );
 	
 	        return $ && $.when && $.when.apply( Backbone.$, xhr );

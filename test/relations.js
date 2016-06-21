@@ -1,6 +1,11 @@
     var Nested = require( '../nestedtypes' ),
         sinon = require( 'sinon' ),
-        expect = require( 'chai' ).expect;
+        chai = require( 'chai'),
+        as_promised = require("chai-as-promised");
+
+    chai.use( as_promised );
+
+    expect = chai.expect;
 
     describe( 'One-to-many and many-to-many relations', function(){
         var Something = Nested.Model.extend({
@@ -183,6 +188,10 @@
                     }], { parse : true });
 
                     this.trigger( 'sync', this );
+
+                    return new Promise(function( resolve, reject ) {
+                        resolve('loaded');
+                    });
                 }
             }
         });
@@ -206,6 +215,9 @@
                     }], { parse : true });
 
                     this.trigger( 'sync', this );
+                    return new Promise(function( resolve, reject ) {
+                        resolve('loaded');
+                    });
                 }
             }
         });
@@ -221,20 +233,25 @@
 
         it( 'fetch everything when called without arguments', function(){
             Nested.store.fetch();
-            expect( Nested.store._resolved.users ).to.be.true;
-            expect( Nested.store._resolved.roles ).to.be.true;
+
+            Nested.store._resolved.users.should.eventually.equal('loaded');
+            Nested.store._resolved.roles.should.eventually.equal('loaded');
         });
 
         it( 'can be prefetched', function(){
             Nested.store.users.fetch();
-            expect( Nested.store._resolved.users ).to.be.true;
-            expect( Nested.store.users.length ).to.equal( 2 );
+
+            Nested.store._resolved.users.should.be.fulfilled.then(function () {
+                Nested.store.users.length.should.equal( 2 );
+            });
         });
 
         it( 'fetched of the first attributes access', function(){
             var role = Nested.store.users.first().roles.first();
-            expect( role.name ).to.equal( 'Administrators' );
-            expect( Nested.store._resolved.roles ).to.be.true;
+
+            Nested.store._resolved.roles.should.be.fulfilled.then(function () {
+                role.name.should.equal( 'Administrators' );
+            });
         });
 
         it( 'individual elements can be cleaned up ', function(){

@@ -234,23 +234,23 @@
         it( 'fetch everything when called without arguments', function(){
             Nested.store.fetch();
 
-            Nested.store._resolved.users.should.eventually.equal('loaded');
-            Nested.store._resolved.roles.should.eventually.equal('loaded');
+            expect( Nested.store._resolved.users ).to.eventually.equal('loaded');
+            expect( Nested.store._resolved.roles ).to.eventually.equal('loaded');
         });
 
         it( 'can be prefetched', function(){
             Nested.store.users.fetch();
 
-            Nested.store._resolved.users.should.be.fulfilled.then(function () {
-                Nested.store.users.length.should.equal( 2 );
+            expect( Nested.store._resolved.users ).to.be.fulfilled.then(function () {
+                expect( Nested.store.users.length ).to.equal( 2 );
             });
         });
 
         it( 'fetched of the first attributes access', function(){
             var role = Nested.store.users.first().roles.first();
 
-            Nested.store._resolved.roles.should.be.fulfilled.then(function () {
-                role.name.should.equal( 'Administrators' );
+            expect( Nested.store._resolved.roles ).to.be.fulfilled.then(function () {
+                expect( role.name ).to.equal( 'Administrators' );
             });
         });
 

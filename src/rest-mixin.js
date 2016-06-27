@@ -23,12 +23,14 @@ exports.Model = {
         };
 
         wrapError( this, options );
-        return this.sync( 'read', this, options );
+        return _sync( 'read', this, options );
     },
 
     // Proxy `Backbone.sync` by default -- but override this if you need
     // custom syncing semantics for *this* particular model.
-    sync : sync,
+    sync : function(){
+        return exports.sync.apply( this, arguments );
+    },
 
     // Set a hash of model attributes, and sync the model to the server.
     // If the server returns an attributes hash that differs, the model's
@@ -86,7 +88,7 @@ exports.Model = {
 
         var method = this.isNew() ? 'create' : (options.patch ? 'patch' : 'update');
         if( method === 'patch' && !options.attrs ) options.attrs = attrs;
-        var xhr = this.sync( method, this, options );
+        var xhr = _sync( method, this, options );
 
         // Restore attributes.
         this.attributes = attributes;
@@ -120,7 +122,7 @@ exports.Model = {
         }
         else{
             wrapError( this, options );
-            xhr = this.sync( 'delete', this, options );
+            xhr = _sync( 'delete', this, options );
         }
         if( !wait ) destroy();
         return xhr;
@@ -149,7 +151,6 @@ exports.Collection = {
     // collection when they arrive. If `reset: true` is passed, the response
     // data will be passed through the `reset` method instead of `set`.
     fetch : function( options ){
-
         options         = _.extend( { parse : true }, options );
         var success     = options.success;
         var collection  = this;
@@ -163,22 +164,21 @@ exports.Collection = {
         };
 
         wrapError( this, options );
-        return this.sync( 'read', this, options );
+        return _sync( 'read', this, options );
     },
 
     // Proxy `Backbone.sync` by default -- but override this if you need
     // custom syncing semantics for *this* particular model.
-    sync : sync
+    sync : function(){
+        return exports.sync.apply( this, arguments );
+    }
 };
 
-function sync(){
+function _sync( method, _this, options ){
     // Abort and pending IO request. Just one is allowed at the time.
-    var _this = this;
-    if( _this._xhr ){
-        _this._xhr.abort();
-    }
+    _this._xhr && _this._xhr.abort();
 
-    return this._xhr = exports.sync.apply( this, arguments )
+    return this._xhr = _this.sync( method, this, options )
         .always( function(){ _this.xhr = void 0; });
 }
 

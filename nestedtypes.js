@@ -3072,7 +3072,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    // Abort and pending IO request. Just one is allowed at the time.
 	    _this._xhr && _this._xhr.abort();
 	
-	    return this._xhr = _this.sync( method, _this, options )
+	    return _this._xhr = _this.sync( method, _this, options )
 	        .always( function(){ _this.xhr = void 0; });
 	}
 	

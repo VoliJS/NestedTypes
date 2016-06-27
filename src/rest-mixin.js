@@ -28,16 +28,7 @@ exports.Model = {
 
     // Proxy `Backbone.sync` by default -- but override this if you need
     // custom syncing semantics for *this* particular model.
-    sync : function(){
-        // Abort and pending IO request. Just one is allowed at the time.
-        var _this = this;
-        if( _this._xhr ){
-            _this._xhr.abort();
-        }
-
-        return this._xhr = exports.sync.apply( this, arguments )
-            .always( function(){ _this.xhr = void 0; });
-    },
+    sync : sync,
 
     // Set a hash of model attributes, and sync the model to the server.
     // If the server returns an attributes hash that differs, the model's
@@ -158,6 +149,7 @@ exports.Collection = {
     // collection when they arrive. If `reset: true` is passed, the response
     // data will be passed through the `reset` method instead of `set`.
     fetch : function( options ){
+
         options         = _.extend( { parse : true }, options );
         var success     = options.success;
         var collection  = this;
@@ -176,10 +168,19 @@ exports.Collection = {
 
     // Proxy `Backbone.sync` by default -- but override this if you need
     // custom syncing semantics for *this* particular model.
-    sync : function(){
-        return exports.sync.apply( this, arguments );
-    }
+    sync : sync
 };
+
+function sync(){
+    // Abort and pending IO request. Just one is allowed at the time.
+    var _this = this;
+    if( _this._xhr ){
+        _this._xhr.abort();
+    }
+
+    return this._xhr = exports.sync.apply( this, arguments )
+        .always( function(){ _this.xhr = void 0; });
+}
 
 // Throw an error when a URL is needed, and none is supplied.
 function urlError(){

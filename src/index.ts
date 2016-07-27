@@ -1,0 +1,1 @@
+export * from 'type-r/src/index'

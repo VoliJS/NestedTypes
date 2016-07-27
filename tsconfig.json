@@ -1,0 +1,15 @@
+{
+  "compilerOptions": {
+    "target": "es5",
+    "module":"commonjs",
+    "moduleResolution": "node",
+    "sourceMap": true,
+    "outDir": "./dist",
+    "noImplicitAny": false,
+    "removeComments":true,
+    "experimentalDecorators": true
+  },
+  "files":[
+    "./src/index.ts"
+  ]
+}

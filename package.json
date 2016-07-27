@@ -28,6 +28,10 @@
     "requirejs": "^2.1.20",
     "sinon": "*",
     "sinon-chai": "*",
+    "source-map-loader": "^0.1.5",
+    "ts-loader": "^0.8.2",
+    "type-r": "^0.1.0",
+    "typescript": "^1.8.10",
     "uglify-js": "*",
     "webpack": "^1.12.2"
   },

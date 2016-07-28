@@ -241,7 +241,7 @@ define( function( require, exports, module ){
             var list = [];
 
             for( var i = 0; i < width; i++ ){
-                list.push( createTree( depth ) );
+                list.push( createTree( depth, i ) );
             }
 
             return list;

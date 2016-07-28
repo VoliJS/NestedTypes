@@ -1,12 +1,11 @@
 /**
  * Prepare backbone View, Router, History, and Events.  
  */
-import { Events, Mixable, mixin, extendable, assign } from 'type-r/src/object-plus'
-import BackboneShim = require( './backbone' );
-import Collection from './collection'
-import Model from './model'
-import { Store } from 'type-r'
-import { RestModel, RestCollection } from './rest'
+import { Events, Mixable, mixins, extendable, assign } from 'type-r/src/object-plus'
+import { Model, Collection } from 'type-r/src'
+import BackboneShim = require( './backbone.js' );
+import { RestCollection, RestModel } from './rest'
+import { Store } from 'type-r/src'
 
 const Nested : any = {};
 export default Nested;
@@ -14,7 +13,6 @@ export default Nested;
 assign( Nested, BackboneShim, Events, {
     Backbone  : BackboneShim,
     Class     : Mixable,
-    error     : require( './errors' ),
     attribute : attribute,
     options   : attribute,
 
@@ -44,7 +42,7 @@ assign( Nested, BackboneShim, Events, {
 
 Nested.Events = Events;
 
-Mixable.mixin( Events );
+Mixable.mixins( Events );
 Mixable.mixTo( Nested.View, Nested.Router, Nested.History );
 
 /**

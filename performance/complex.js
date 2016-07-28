@@ -1,9 +1,13 @@
 define( function( require, exports, module ){
     var Nested   = require( '../nestedtypes' ),
         Model = Nested.Model;
+
     /********************
      * Model definitions
      */
+    if( Nested.tools ){
+        Nested.tools.log.level = 1;
+    }
 
     describe( 'Collections of flat models', function(){
         this.timeout( 100000 );
@@ -400,15 +404,34 @@ define( function( require, exports, module ){
         store.encoders = dummies;
         store.roles = dummies;
 
+        var _users = [];
+
+        for( var i = 0; i < 10000; i++ ){
+            _users.push({
+                active : 1,
+                created_at : "2015-11-18T16:57:10+00:00",
+                created_by : null,
+                default : 1,
+                domain_id : 0,
+                email : "observer-import-system@volicon.com",
+                fname : "api_import_user",
+                lname : "api_import_user",
+                roles:["5"],
+                updated_at:"2015-11-18T16:57:10+00:00",
+                user_id: i,
+                user_type:3,
+                user_types:["3"],
+                username : "api_import_user"
+            });
+        }
+
+        var usersJSONtext = JSON.stringify( _users );
+        _users = null;
+        
         var usersJSON;
 
         beforeEach( function(){
-            usersJSON = [], user = new User();
-
-            for( var i = 0; i < 10000; i++ ){
-                user.id = i;
-                usersJSON.push( user.toJSON() );
-            }
+            usersJSON = JSON.parse( usersJSONtext );
         });
 
         var collection;

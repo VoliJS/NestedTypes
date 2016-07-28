@@ -5,25 +5,14 @@ var Backbone   = require( './backbone+' ),
     RestMixin  = require( './rest-mixin' ),
     _          = require( 'underscore' );
 
-var _store = null;
+export class RestStore extends Store{
+    _resolved  : {}
 
-var Store = exports.Model = Model.extend({
-  // end store lookup sequence on this class
-  getStore : function(){ return this; },
-
-  sync : function(){ return RestMixin.sync.apply( Backbone, arguments ); },
-  // delegate item lookup to owner, and to the global store if undefined
-  get : function( name ){ return this[ name ] || ( this._owner && this._owner.get( name ) ) || _store[ name ]; }
-});
-
-var RestStore = exports.Lazy = Store.extend( {
-    _resolved  : {},
-
-    initialize   : function(){
+    initialize(){
         this._resolved = {};
         var self = this;
 
-        _.each( this.attributes, function( element, name ){
+        this.each( this.attributes, ( element, name ) => {
             if( !element ) return;
 
             element.store = this;
@@ -39,42 +28,42 @@ var RestStore = exports.Lazy = Store.extend( {
             if( element instanceof Collection && element.length ){
                 this._resolved[name] = true;
             }
-        }, this );
-    },
+        });
+    }
 
     // fetch specified items, or all items if called without arguments.
     // returns jquery promise
-    fetch : function(){
+    fetch(){
         var xhr         = [],
-            objsToFetch = arguments.length ? arguments : _.keys( this.attributes );
+            objsToFetch = arguments.length ? arguments : this.keys();
 
-        _.each( objsToFetch, function( name ){
+        for( let name of objsToFetch ){
             var attr = this.attributes[name];
             attr && attr.fetch && xhr.push( attr.fetch() );
-        }, this );
+        }
 
         return $ && $.when && $.when.apply( Backbone.$, xhr );
-    },
+    }
 
     // fetch specified items, or all items if called without arguments.
     // returns first jquery promise.
-    fetchOnce : function(){
+    fetchOnce(){
         var xhr         = [],
             self        = this,
-            objsToFetch = arguments.length ? arguments : _.keys( this.attributes );
+            objsToFetch = arguments.length ? arguments : this.keys();
 
-        _.each( objsToFetch, function( name ){
+        for( let name of objsToFetch ){
             var attr = self.attributes[ name ];
             xhr.push( self._resolved[ name ] || attr && attr.fetch && attr.fetch());
-        }, this );
+        }
 
         return $ && $.when && $.when.apply( Backbone.$, xhr );
-    },
+    }
 
-    clear : function(){
-        var objsToClear = arguments.length ? arguments : _.keys( this.attributes );
+    clear(){
+        var objsToClear = arguments.length ? arguments : this.keys();
 
-        _.each( objsToClear, function( name ){
+        for( let name of objsToClear ){
             var element = this.attributes[ name ];
 
             if( element instanceof Collection ){
@@ -88,12 +77,12 @@ var RestStore = exports.Lazy = Store.extend( {
             }
 
             this._resolved[ name ] = false;
-        }, this );
+        }
 
         return this;
     }
-}, {
-    extend : function( props, staticProps ){
+
+    static extend( props, staticProps ){
         var spec = props.defaults || props.attributes;
 
         // add automatic fetching on first element's access
@@ -116,19 +105,5 @@ var RestStore = exports.Lazy = Store.extend( {
 
         return Model.extend.call( this, props, staticProps )
     }
-});
-
-// Exports native property spec for model store
-exports.globalProp = {
-    get : function(){ return _store; },
-
-    set : function( store ){
-        if( _store ){
-          _store.stopListening();
-          delete _store.get;
-        }
-
-        Collection.prototype._defaultStore = Model.prototype._defaultStore = _store = store;
-        _store.get = Model.prototype.get;
-    }
-}
+} 
+    

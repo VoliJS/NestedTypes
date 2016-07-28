@@ -216,6 +216,8 @@
     }
   });
 
+  Backbone.Events = {};
+
   // Backbone.View
   // -------------
 

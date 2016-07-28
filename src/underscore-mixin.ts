@@ -1,29 +1,29 @@
-var _ = require( 'underscore' );
+import _ = require( 'underscore' );
 
 var slice = Array.prototype.slice;
 
-exports.Model = {
-    pick    : function(){ return _.pick( this, slice.call( arguments ) ); },
+export const UnderscoreModel = {
+    pick( ...args : any[] ){
+        return _.pick( this, args );
+    },
 
-    escape : function( attr ){
+    escape( attr ){
         return _.escape( this[ attr ] );
     },
 
-    matches : function( attrs ){
+    matches( attrs ){
         return !!_.iteratee( attrs, this )( this );
     }
 };
 
-addUnderscoreMethods( exports.Model, '_clonedProps', {
-    keys: 1, values: 1, pairs: 1, invert: 1,
+addUnderscoreMethods( UnderscoreModel, 'attributes', {
+    pairs: 1, invert: 1,
     omit: 0, chain: 1, isEmpty: 1
 });
 
-( exports.Model, [ 'keys', 'values', 'pairs', 'invert', 'chain', 'isEmpty' ] );
+export const UnderscoreCollection = {};
 
-exports.Collection = {};
-
-addUnderscoreMethods( exports.Collection, 'models', {
+addUnderscoreMethods( UnderscoreCollection, 'models', {
     forEach  : 3, each : 3, map : 3, collect : 3, reduce : 4,
     foldl    : 4, inject : 4, reduceRight : 4, foldr : 4, find : 3, findIndex : 3, findLastIndex : 3, detect : 3, filter : 3,
     select   : 3, reject : 3, every : 3, all : 3, some : 3, any : 3, include : 3, includes : 3,
@@ -82,8 +82,12 @@ function addMethod(length, method, attribute) {
 
 // Support `collection.sortBy('attr')` and `collection.findWhere({id: 1})`.
 function cb(iteratee, instance) {
-    if (_.isFunction(iteratee)) return iteratee;
-    if (_.isObject(iteratee) && !(iteratee instanceof instance.model )) return _.matches(iteratee);
-    if (_.isString(iteratee)) return function(model) { return model.get(iteratee); };
+    switch( typeof iteratee ){
+        case 'function' : return iteratee;
+        case 'string' : return model => model.get( iteratee );
+        case 'object' :
+            if( !(iteratee instanceof instance.model )) return _.matches( iteratee ); 
+    }
+
     return iteratee;
 }

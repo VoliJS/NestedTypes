@@ -1,18 +1,19 @@
-var Backbone   = require( './backbone+' ),
-    $          = Backbone.$;
-    Model      = require( './model' ),
-    Collection = require( './collection' ),
-    RestMixin  = require( './rest-mixin' ),
-    _          = require( 'underscore' );
+import * as Backbone from './backbone'
+import * as _ from 'underscore'
+import { Store } from 'type-r/src'
 
-export class RestStore extends Store{
+import { RestModel, RestCollection } from './rest'
+
+const { $ } = Backbone;
+
+export default class RestStore extends Store {
     _resolved  : {}
 
     initialize(){
         this._resolved = {};
         var self = this;
 
-        this.each( this.attributes, ( element, name ) => {
+        this.each( ( element, name ) => {
             if( !element ) return;
 
             element.store = this;
@@ -25,7 +26,7 @@ export class RestStore extends Store{
                 }
             }
 
-            if( element instanceof Collection && element.length ){
+            if( element instanceof RestCollection && element.length ){
                 this._resolved[name] = true;
             }
         });
@@ -33,9 +34,9 @@ export class RestStore extends Store{
 
     // fetch specified items, or all items if called without arguments.
     // returns jquery promise
-    fetch(){
+    fetch( ...args : string[] ) : {} {
         var xhr         = [],
-            objsToFetch = arguments.length ? arguments : this.keys();
+            objsToFetch = args.length ? args : this.keys();
 
         for( let name of objsToFetch ){
             var attr = this.attributes[name];
@@ -47,10 +48,10 @@ export class RestStore extends Store{
 
     // fetch specified items, or all items if called without arguments.
     // returns first jquery promise.
-    fetchOnce(){
+    fetchOnce( ...args : string[] ) : {} {
         var xhr         = [],
             self        = this,
-            objsToFetch = arguments.length ? arguments : this.keys();
+            objsToFetch = args.length ? args : this.keys();
 
         for( let name of objsToFetch ){
             var attr = self.attributes[ name ];
@@ -60,19 +61,19 @@ export class RestStore extends Store{
         return $ && $.when && $.when.apply( Backbone.$, xhr );
     }
 
-    clear(){
-        var objsToClear = arguments.length ? arguments : this.keys();
+    clear( ...args : string[] ) : {} {
+        var objsToClear = args.length ? args : this.keys();
 
         for( let name of objsToClear ){
             var element = this.attributes[ name ];
 
-            if( element instanceof Collection ){
+            if( element instanceof RestCollection ){
                 element.reset();
             }
             else if( element instanceof Store ){
                 element.clear();
             }
-            else if( element instanceof Model ){
+            else if( element instanceof RestModel ){
                 element.set( element.defaults() )
             }
 
@@ -103,7 +104,7 @@ export class RestStore extends Store{
             } ) );
         } );
 
-        return Model.extend.call( this, props, staticProps )
+        return RestModel.extend.call( this, props, staticProps );
     }
 } 
     

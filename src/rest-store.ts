@@ -1,18 +1,16 @@
 import * as Backbone from './backbone'
 import * as _ from 'underscore'
-import { Store } from 'type-r/src'
+import { define, Store } from 'type-r/src'
 
 import { RestModel, RestCollection } from './rest'
 
 const { $ } = Backbone;
 
+@define({})
 export default class RestStore extends Store {
-    _resolved  : {}
+    _resolved  : {} = {}
 
     initialize(){
-        this._resolved = {};
-        var self = this;
-
         this.each( ( element, name ) => {
             if( !element ) return;
 
@@ -21,6 +19,7 @@ export default class RestStore extends Store {
             var fetch = element.fetch;
 
             if( fetch ){
+                const self = this;
                 element.fetch = function() {
                     return self._resolved[ name ] = fetch.apply( this, arguments );
                 }
@@ -83,28 +82,28 @@ export default class RestStore extends Store {
         return this;
     }
 
-    static extend( props, staticProps ){
-        var spec = props.defaults || props.attributes;
+    static define( props, staticProps ){
+        var attributes = props.defaults || props.attributes;
 
         // add automatic fetching on first element's access
-        _.each( spec, function( Type, name ){
-            Type.options && ( spec[name] = Type.options( {
-                get : function( value ){
-                    if( !this._resolved[name] ) {
-                        value.fetch && value.fetch();
-                    }
+        _.each( attributes, ( Type : Function, name ) => {
+            if( Type.has ){
+                attributes[name] = Type.has
+                    .get( function( value ){
+                        if( !this._resolved[name] ) {
+                            value.fetch && value.fetch();
+                        }
 
-                    return value;
-                },
+                        return value;
+                    })
+                    .set( function( value ){
+                        value.length || ( this._resolved[name] = false );
+                        return value;
+                    })
+            }  
+        });
 
-                set : function( value ){
-                    value.length || ( this._resolved[name] = false );
-                    return value;
-                }
-            } ) );
-        } );
-
-        return RestModel.extend.call( this, props, staticProps );
+        return RestModel.define.call( this, props, staticProps );
     }
 } 
     

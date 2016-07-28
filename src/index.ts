@@ -13,6 +13,9 @@ import RestStore from './rest-store'
 Nested.Mixable.mixins( Nested.Events );
 Nested.Mixable.mixTo( Backbone.View, Backbone.Router, Backbone.History );
 
+Nested.Model.mixins( UnderscoreModel );
+Nested.Collection.mixins( UnderscoreCollection );
+
 const { assign } = Nested.tools;
 
 assign( Nested, Backbone, {

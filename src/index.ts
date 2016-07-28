@@ -3,9 +3,10 @@
  */
 import { Events, Mixable, mixins, extendable, assign } from 'type-r/src/object-plus'
 import { Model, Collection } from 'type-r/src'
-import BackboneShim = require( './backbone.js' );
+import BackboneShim = require( './backbone' );
 import { RestCollection, RestModel } from './rest'
 import { Store } from 'type-r/src'
+import { UnderscoreModel, UnderscoreCollection } from './underscore-mixin'
 
 const Nested : any = {};
 export default Nested;

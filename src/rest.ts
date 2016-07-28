@@ -1,8 +1,7 @@
 import { sync, errorPromise, urlError, SyncOptions, LazyValue } from './sync'
 
-import _ = require( 'underscore' );
-import BackboneShim = require( './backbone' );
-const Backbone : any = BackboneShim;
+import * as _ from 'underscore'
+import * as Backbone from './backbone'
 
 import { define, Model, Collection, tools } from 'type-r/src'
 const { defaults } = tools;

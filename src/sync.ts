@@ -5,12 +5,8 @@
  *
  * With validation patches - NestedTypes validation semantic is applied. (c) Vlad Balin, 2015.
  */
-
-import * as _ from 'underscore';
-
-import * as BackboneShim from './backbone'
-
-const Backbone : any = BackboneShim;
+import * as _ from 'underscore'
+import * as Backbone from './backbone'
 
 import { tools } from 'type-r/src'
 const { defaults } = tools;

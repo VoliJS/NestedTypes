@@ -172,7 +172,7 @@
         var User = Nested.Model.extend({
             defaults : {
                 name : '',
-                roles : Nested.Collection.subsetOf( 'store.roles' )
+                roles : Nested.Collection.subsetOf( '~roles' )
             },
 
             collection : {
@@ -199,7 +199,7 @@
         var Role = Nested.Model.extend({
             defaults : {
                 name : '',
-                users : Nested.Collection.subsetOf( 'store.users' )
+                users : Nested.Collection.subsetOf( '~users' )
             },
 
             collection : {

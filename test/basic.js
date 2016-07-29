@@ -158,7 +158,7 @@
 
             it( 'is automatically defined for every model', function(){
                 var c = new M.Collection();
-                expect( c.url ).to.eql( M.prototype.urlRoot );
+                expect( c.url() ).to.eql( M.prototype.urlRoot );
                 expect( c.model ).to.eql( M );
             });
 
@@ -178,7 +178,7 @@
                 var c = new B.Collection();
                 expect( c.c ).to.eql( 'c' );
                 expect( c.b ).to.eql( 'b' );
-                expect( c.url ).to.eql( '/myroot' );
+                expect( c.url() ).to.eql( '/myroot' );
             });
 
         });

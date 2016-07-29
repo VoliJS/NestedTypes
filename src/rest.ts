@@ -13,7 +13,6 @@ interface RestOptions extends SyncOptions {
 }
 
 @define({
-    url : '',
     itemEvents : {
         destroy( model ){ this.remove( model ); }
     } 

@@ -20,7 +20,7 @@ const { assign } = Nested.tools;
 
 assign( Nested, Backbone, {
     Backbone  : Backbone,
-    Class     : Nested.Mixable,
+    Class     : Nested.Messenger,
     Model     : RestModel,
     Collection : RestCollection,
     LazyStore  : RestStore,

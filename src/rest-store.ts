@@ -97,7 +97,11 @@ export default class RestStore extends Store {
                         return value;
                     })
                     .set( function( value ){
-                        value.length || ( this._resolved[name] = false );
+                        if( !value.length ){
+                            const resolved = this._resolved || ( this._resolved = {} ); 
+                            resolved[name] = false;
+                        }
+                        
                         return value;
                     })
             }  

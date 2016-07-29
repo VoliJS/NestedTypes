@@ -56,8 +56,6 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	"use strict";
 	var Nested = __webpack_require__(1);
-	Object.defineProperty(exports, "__esModule", { value: true });
-	exports.default = Nested;
 	var Backbone = __webpack_require__(28);
 	var rest_1 = __webpack_require__(31);
 	var src_1 = __webpack_require__(1);
@@ -72,8 +70,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	assign(Nested, Backbone, {
 	    Backbone: Backbone,
 	    Class: Nested.Mixable,
-	    RestModel: rest_1.RestModel,
-	    RestCollection: rest_1.RestCollection,
+	    Model: rest_1.RestModel,
+	    Collection: rest_1.RestCollection,
 	    LazyStore: rest_store_1.default,
 	    defaults: function (x) {
 	        return Nested.Model.defaults(x);
@@ -96,6 +94,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        set: function (value) { Namespace[name] = value; }
 	    };
 	}
+	module.exports = Nested;
 
 
 /***/ },

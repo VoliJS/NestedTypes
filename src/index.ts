@@ -2,7 +2,7 @@
  * Prepare backbone View, Router, History, and Events.  
  */
 import * as Nested from 'type-r/src'
-export default Nested;
+export = Nested;
 import * as Backbone from './backbone'
 import { RestCollection, RestModel } from './rest'
 import { Store } from 'type-r/src'
@@ -21,8 +21,8 @@ const { assign } = Nested.tools;
 assign( Nested, Backbone, {
     Backbone  : Backbone,
     Class     : Nested.Mixable,
-    RestModel  : RestModel,
-    RestCollection : RestCollection,
+    Model     : RestModel,
+    Collection : RestCollection,
     LazyStore  : RestStore,
 
     defaults( x ){

@@ -26,14 +26,14 @@
     obj.trigger('a');
     assert.equal(obj.counter, 1);
 
-    obj.trigger('a b');
+    obj.trigger('b').trigger( 'b' );
     assert.equal(obj.counter, 3);
 
     obj.trigger('c');
     assert.equal(obj.counter, 4);
 
     obj.off('a c');
-    obj.trigger('a b c');
+    obj.trigger('a').trigger('b').trigger( 'c' );
     assert.equal(obj.counter, 5);
   });
 
@@ -54,7 +54,7 @@
     obj.trigger('a');
     assert.equal(obj.counter, 1);
 
-    obj.trigger('a b');
+    obj.trigger('a').trigger('b');
     assert.equal(obj.counter, 3);
 
     obj.trigger('c');
@@ -64,7 +64,7 @@
       a: increment,
       c: increment
     }, obj);
-    obj.trigger('a b c');
+    obj.trigger('a').trigger('b').trigger('c');
     assert.equal(obj.counter, 5);
   });
 
@@ -83,7 +83,7 @@
     obj.trigger('a');
     assert.equal(obj.counter, 1);
 
-    obj.trigger('a b');
+    obj.trigger('a').trigger('b');
     assert.equal(obj.counter, 3);
 
     obj.trigger('c');
@@ -92,7 +92,7 @@
     obj.off({
       'a c': increment
     });
-    obj.trigger('a b c');
+    obj.trigger('a').trigger('b').trigger('c');
     assert.equal(obj.counter, 5);
   });
 
@@ -136,9 +136,9 @@
     a.listenTo(b, {event2: cb});
     b.on('event2', cb);
     a.stopListening(b, {event2: cb});
-    b.trigger('event event2');
+    b.trigger('event').trigger('event2');
     a.stopListening();
-    b.trigger('event event2');
+    b.trigger('event').trigger('event2');
   });
 
   QUnit.test("stopListening with omitted args", function(assert) {
@@ -150,7 +150,7 @@
     b.on('event', cb);
     a.listenTo(b, 'event2', cb);
     a.stopListening(null, {event: cb});
-    b.trigger('event event2');
+    b.trigger('event').trigger('event2');
     b.off();
     a.listenTo(b, 'event event2', cb);
     a.stopListening(null, 'event');
@@ -355,7 +355,7 @@
       if (event == 'a') a = true;
       if (event == 'b') b = true;
     })
-    .trigger('a b');
+    .trigger('a').trigger('b');
     assert.ok(a);
     assert.ok(b);
     assert.equal(obj.counter, 2);
@@ -446,7 +446,9 @@
   QUnit.test("callback list is not altered during trigger", function(assert) {
     assert.expect(2);
     var counter = 0, obj = _.extend({}, Backbone.Events);
-    var incr = function(){ counter++; };
+    var incr = function(){
+      counter++;
+    };
     var incrOn = function(){ obj.on('event all', incr); };
     var incrOff = function(){ obj.off('event all', incr); };
 
@@ -465,7 +467,7 @@
     obj.on('x', function() {
       obj.on('y', incr).on('all', incr);
     })
-    .trigger('x y');
+    .trigger('x').trigger('y');
     assert.strictEqual(counter, 2);
   });
 
@@ -488,7 +490,7 @@
     obj.on('x y all', function() { assert.ok(true); });
     obj.on('x y all', function() { assert.ok(false); }, obj);
     obj.off(null, null, obj);
-    obj.trigger('x y');
+    obj.trigger('x').trigger('y');
   });
 
   QUnit.test("remove all events for a specific callback", function(assert) {
@@ -499,7 +501,7 @@
     obj.on('x y all', success);
     obj.on('x y all', fail);
     obj.off(null, fail);
-    obj.trigger('x y');
+    obj.trigger('x').trigger('y');
   });
 
   QUnit.test("#1310 - off does not skip consecutive events", function(assert) {
@@ -577,13 +579,13 @@
     obj.trigger('a');
     assert.equal(obj.counter, 1);
 
-    obj.trigger('a b');
+    obj.trigger('a').trigger('b');
     assert.equal(obj.counter, 2);
 
     obj.trigger('c');
     assert.equal(obj.counter, 3);
 
-    obj.trigger('a b c');
+    obj.trigger('a').trigger('b').trigger('c');
     assert.equal(obj.counter, 3);
   });
 
@@ -614,7 +616,7 @@
     assert.expect(2);
     var obj = _.extend({}, Backbone.Events);
     obj.once('x y', function() { assert.ok(true); });
-    obj.trigger('x y');
+    obj.trigger('x').trigger('y');
   });
 
   QUnit.test("Off during iteration with once.", function(assert) {

@@ -35,7 +35,7 @@ module.exports = {
      module: {
         loaders: [
             {
-                test: /\.tsx?$/,
+                test: /\.[tj]sx?$/,
                 /*exclude: /(node_modules|bower_components)/,*/
                 loader: 'ts'
             }

@@ -55,51 +55,39 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
-	var object_plus_1 = __webpack_require__(1);
-	var src_1 = __webpack_require__(6);
-	var BackboneShim = __webpack_require__(28);
-	var rest_1 = __webpack_require__(31);
-	var src_2 = __webpack_require__(6);
-	var Nested = {};
+	var Nested = __webpack_require__(1);
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.default = Nested;
-	object_plus_1.assign(Nested, BackboneShim, object_plus_1.Events, {
-	    Backbone: BackboneShim,
-	    Class: object_plus_1.Mixable,
-	    attribute: attribute,
-	    options: attribute,
-	    value: function (value) {
-	        return attribute({ value: value });
-	    },
-	    parseReference: relations.parseReference,
-	    Collection: src_1.Collection,
-	    Model: src_1.Model,
+	var Backbone = __webpack_require__(28);
+	var rest_1 = __webpack_require__(31);
+	var src_1 = __webpack_require__(1);
+	var Sync = __webpack_require__(32);
+	var underscore_mixin_1 = __webpack_require__(33);
+	var rest_store_1 = __webpack_require__(34);
+	Nested.Mixable.mixins(Nested.Events);
+	Nested.Mixable.mixTo(Backbone.View, Backbone.Router, Backbone.History);
+	Nested.Model.mixins(underscore_mixin_1.UnderscoreModel);
+	Nested.Collection.mixins(underscore_mixin_1.UnderscoreCollection);
+	var assign = Nested.tools.assign;
+	assign(Nested, Backbone, {
+	    Backbone: Backbone,
+	    Class: Nested.Mixable,
 	    RestModel: rest_1.RestModel,
 	    RestCollection: rest_1.RestCollection,
-	    Store: src_2.Store,
-	    LazyStore: src_2.Store.Lazy,
+	    LazyStore: rest_store_1.default,
 	    defaults: function (x) {
-	        return src_1.Model.defaults(x);
-	    },
-	    transaction: function (fun) {
-	        return function () {
-	            return this.transaction(fun, this, arguments);
-	        };
+	        return Nested.Model.defaults(x);
 	    }
 	});
-	Nested.Events = object_plus_1.Events;
-	object_plus_1.Mixable.mixins(object_plus_1.Events);
-	object_plus_1.Mixable.mixTo(Nested.View, Nested.Router, Nested.History);
-	Nested.Class = object_plus_1.Mixable;
 	Object.defineProperties(Nested, {
-	    'sync': linkProperty(Rest, 'sync'),
-	    'errorPromise': linkProperty(Rest, 'errorPromise'),
-	    'ajax': linkProperty(Rest, 'ajax'),
-	    'history': linkProperty(BackboneShim, 'history'),
-	    'store': linkProperty(src_2.Store, 'global'),
+	    'sync': linkProperty(Sync, 'sync'),
+	    'errorPromise': linkProperty(Sync, 'errorPromise'),
+	    'ajax': linkProperty(Sync, 'ajax'),
+	    'history': linkProperty(Backbone, 'history'),
+	    'store': linkProperty(src_1.Store, 'global'),
 	    '$': {
-	        get: function () { return BackboneShim.$; },
-	        set: function (value) { BackboneShim.$ = Rest.$ = value; }
+	        get: function () { return Backbone.$; },
+	        set: function (value) { Backbone.$ = Sync.$ = value; }
 	    }
 	});
 	function linkProperty(Namespace, name) {
@@ -119,12 +107,55 @@ return /******/ (function(modules) { // webpackBootstrap
 	    for (var p in m) if (!exports.hasOwnProperty(p)) exports[p] = m[p];
 	}
 	__export(__webpack_require__(2));
-	__export(__webpack_require__(3));
-	__export(__webpack_require__(4));
+	__export(__webpack_require__(7));
+	__export(__webpack_require__(22));
+	__export(__webpack_require__(11));
+	var _1 = __webpack_require__(2);
+	exports.on = _1.Events.on, exports.off = _1.Events.off, exports.trigger = _1.Events.trigger, exports.once = _1.Events.once, exports.listenTo = _1.Events.listenTo, exports.stopListening = _1.Events.stopListening, exports.listenToOnce = _1.Events.listenToOnce;
+	var record_2 = __webpack_require__(11);
+	exports.Model = record_2.Record;
+	var _2 = __webpack_require__(2);
+	exports.Class = _2.Mixable;
+	var record_3 = __webpack_require__(11);
+	function value(x) {
+	    return new record_3.ChainableAttributeSpec({ value: x });
+	}
+	exports.value = value;
+	function transaction(method) {
+	    return function () {
+	        var _this = this;
+	        var args = [];
+	        for (var _i = 0; _i < arguments.length; _i++) {
+	            args[_i - 0] = arguments[_i];
+	        }
+	        var result;
+	        this.transaction(function () {
+	            result = method.apply(_this, args);
+	        });
+	        return result;
+	    };
+	}
+	exports.transaction = transaction;
 
 
 /***/ },
 /* 2 */
+/***/ function(module, exports, __webpack_require__) {
+
+	"use strict";
+	function __export(m) {
+	    for (var p in m) if (!exports.hasOwnProperty(p)) exports[p] = m[p];
+	}
+	var tools = __webpack_require__(3);
+	exports.tools = tools;
+	__export(__webpack_require__(4));
+	__export(__webpack_require__(5));
+	var eventsApi = __webpack_require__(6);
+	exports.eventsApi = eventsApi;
+
+
+/***/ },
+/* 3 */
 /***/ function(module, exports) {
 
 	"use strict";
@@ -269,33 +300,36 @@ return /******/ (function(modules) { // webpackBootstrap
 	    return dest;
 	}
 	exports.fastDefaults = fastDefaults;
-	function forAllArgs(fun) {
-	    return function (dest) {
-	        var sources = [];
-	        for (var _i = 1; _i < arguments.length; _i++) {
-	            sources[_i - 1] = arguments[_i];
-	        }
-	        for (var i = 0; i < sources.length; i++) {
-	            var source = sources[i];
-	            source && fun(dest, source);
-	        }
-	        return dest;
-	    };
-	}
-	exports.assign = forAllArgs(function (dest, source) {
+	function assign(dest, source) {
 	    for (var name in source) {
 	        if (source.hasOwnProperty(name)) {
 	            dest[name] = source[name];
 	        }
 	    }
-	});
-	exports.defaults = forAllArgs(function (dest, source) {
+	    if (arguments.length > 2) {
+	        for (var i = 2; i < arguments.length; i++) {
+	            var other = arguments[i];
+	            other && assign(dest, other);
+	        }
+	    }
+	    return dest;
+	}
+	exports.assign = assign;
+	function defaults(dest, source) {
 	    for (var name in source) {
 	        if (source.hasOwnProperty(name) && dest[name] === void 0) {
 	            dest[name] = source[name];
 	        }
 	    }
-	});
+	    if (arguments.length > 2) {
+	        for (var i = 2; i < arguments.length; i++) {
+	            var other = arguments[i];
+	            other && defaults(dest, other);
+	        }
+	    }
+	    return dest;
+	}
+	exports.defaults = defaults;
 	function keys(o) {
 	    return o ? Object.keys(o) : [];
 	}
@@ -394,7 +428,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 3 */
+/* 4 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -403,7 +437,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    function __() { this.constructor = d; }
 	    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
 	};
-	var tools_1 = __webpack_require__(2);
+	var tools_1 = __webpack_require__(3);
 	var Mixable = (function () {
 	    function Mixable() {
 	    }
@@ -589,7 +623,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 4 */
+/* 5 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -599,14 +633,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
 	    return c > 3 && r && Object.defineProperty(target, key, r), r;
 	};
-	var Mixins = __webpack_require__(3);
-	var Tools = __webpack_require__(2);
-	var EventMaps = __webpack_require__(5);
-	var eventmaps_1 = __webpack_require__(5);
-	exports.EventMap = eventmaps_1.EventMap;
-	var mixins = Mixins.mixins, define = Mixins.define, extendable = Mixins.extendable;
-	var omit = Tools.omit, once = Tools.once, isEmpty = Tools.isEmpty, keys = Tools.keys;
-	var EventHandler = EventMaps.EventHandler, trigger0 = EventMaps.trigger0, trigger1 = EventMaps.trigger1, trigger2 = EventMaps.trigger2, trigger3 = EventMaps.trigger3;
+	var Mixins = __webpack_require__(4);
+	var tools = __webpack_require__(3);
+	var _eventsApi = __webpack_require__(6);
+	var events_api_1 = __webpack_require__(6);
+	exports.EventMap = events_api_1.EventMap;
+	var mixins = Mixins.mixins, define = Mixins.define, extendable = Mixins.extendable, omit = tools.omit, once = tools.once, isEmpty = tools.isEmpty, keys = tools.keys, EventHandler = _eventsApi.EventHandler, trigger0 = _eventsApi.trigger0, trigger1 = _eventsApi.trigger1, trigger2 = _eventsApi.trigger2, trigger3 = _eventsApi.trigger3;
 	var eventSplitter = /\s+/;
 	var _idCount = 0;
 	function uniqueId() {
@@ -615,14 +647,16 @@ return /******/ (function(modules) { // webpackBootstrap
 	var Messenger = (function () {
 	    function Messenger(cid) {
 	        this._events = void 0;
-	        this.cid = this.cidPrefix + cid;
+	        this._listeners = void 0;
+	        this._listeningTo = void 0;
+	        this.cid = cid || uniqueId();
 	    }
 	    Messenger.define = function (protoProps, staticProps) {
 	        var spec = omit(protoProps || {}, 'localEvents');
 	        if (protoProps) {
 	            var localEvents = protoProps.localEvents, _localEvents = protoProps._localEvents;
 	            if (localEvents || _localEvents) {
-	                var eventsMap = new eventmaps_1.EventMap(this.prototype._localEvents);
+	                var eventsMap = new events_api_1.EventMap(this.prototype._localEvents);
 	                localEvents && eventsMap.addEventsMap(localEvents);
 	                _localEvents && eventsMap.merge(_localEvents);
 	                spec._localEvents = eventsMap;
@@ -708,23 +742,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	        this.stopListening();
 	        this.off();
 	    };
-	    Messenger.trigger0 = EventMaps.trigger0;
-	    Messenger.trigger1 = EventMaps.trigger1;
-	    Messenger.trigger2 = EventMaps.trigger2;
-	    Messenger.trigger3 = EventMaps.trigger3;
-	    Messenger.on = EventMaps.on;
-	    Messenger.off = EventMaps.off;
 	    Messenger = __decorate([
-	        define({
-	            cidPrefix: 'l'
-	        }),
 	        extendable
 	    ], Messenger);
 	    return Messenger;
 	}());
 	exports.Messenger = Messenger;
 	var slice = Array.prototype.slice;
-	exports.Events = Messenger.prototype;
+	exports.Events = omit(Messenger.prototype, 'constructor');
 	function eventsApi(iteratee, events, name, callback, opts) {
 	    var i = 0, names;
 	    if (name && typeof name === 'object') {
@@ -845,7 +870,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 5 */
+/* 6 */
 /***/ function(module, exports) {
 
 	"use strict";
@@ -1077,72 +1102,580 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 6 */
+/* 7 */
+/***/ function(module, exports, __webpack_require__) {
+
+	"use strict";
+	var __extends = (this && this.__extends) || function (d, b) {
+	    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
+	    function __() { this.constructor = d; }
+	    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+	};
+	var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+	    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+	    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+	    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+	    return c > 3 && r && Object.defineProperty(target, key, r), r;
+	};
+	var object_plus_1 = __webpack_require__(2);
+	var transactions_1 = __webpack_require__(8);
+	var record_1 = __webpack_require__(11);
+	var commons_1 = __webpack_require__(18);
+	var add_1 = __webpack_require__(19);
+	var set_1 = __webpack_require__(20);
+	var remove_1 = __webpack_require__(21);
+	var trigger2 = object_plus_1.eventsApi.trigger2, begin = transactions_1.transactionApi.begin, commit = transactions_1.transactionApi.commit, markAsDirty = transactions_1.transactionApi.markAsDirty, omit = object_plus_1.tools.omit, log = object_plus_1.tools.log, assign = object_plus_1.tools.assign, defaults = object_plus_1.tools.defaults;
+	var _count = 0;
+	var silentOptions = { silent: true };
+	var Collection = (function (_super) {
+	    __extends(Collection, _super);
+	    function Collection(records, options) {
+	        if (options === void 0) { options = {}; }
+	        _super.call(this, _count++);
+	        this.models = [];
+	        this._byId = {};
+	        this.model = options.model || this.model;
+	        this.idAttribute = this.model.prototype.idAttribute;
+	        if (options.comparator !== void 0) {
+	            this.comparator = options.comparator;
+	        }
+	        if (records) {
+	            var elements = toElements(this, records, options);
+	            set_1.emptySetTransaction(this, elements, options, true);
+	        }
+	        this.initialize.apply(this, arguments);
+	        if (this._localEvents)
+	            this._localEvents.subscribe(this, this);
+	    }
+	    Collection.prototype.createSubset = function (models, options) {
+	        var SubsetOf = this.constructor.subsetOf(this).options.type;
+	        var subset = new SubsetOf(models, options);
+	        subset.resolve(this);
+	        return subset;
+	    };
+	    Collection.predefine = function () {
+	        this._SubsetOf = null;
+	        transactions_1.Transactional.predefine();
+	        return this;
+	    };
+	    Collection.define = function (protoProps, staticProps) {
+	        var spec = omit(protoProps, 'itemEvents', 'localEvents');
+	        if (protoProps.itemEvents) {
+	            var eventsMap = new object_plus_1.EventMap(this.prototype._itemEvents);
+	            eventsMap.addEventsMap(protoProps.itemEvents);
+	            spec._itemEvents = eventsMap;
+	        }
+	        return transactions_1.Transactional.define.call(this, spec, staticProps);
+	    };
+	    Object.defineProperty(Collection.prototype, "comparator", {
+	        get: function () { return this._comparator; },
+	        set: function (x) {
+	            var _this = this;
+	            var compare;
+	            switch (typeof x) {
+	                case 'string':
+	                    this._comparator = function (a, b) {
+	                        var aa = a[x], bb = b[x];
+	                        if (aa === bb)
+	                            return 0;
+	                        return aa < bb ? -1 : +1;
+	                    };
+	                    break;
+	                case 'function':
+	                    if (x.length === 1) {
+	                        this._comparator = function (a, b) {
+	                            var aa = x.call(_this, a), bb = x.call(_this, b);
+	                            if (aa === bb)
+	                                return 0;
+	                            return aa < bb ? -1 : +1;
+	                        };
+	                    }
+	                    else {
+	                        this._comparator = function (a, b) { return x.call(_this, a, b); };
+	                    }
+	                    break;
+	                default:
+	                    this._comparator = null;
+	            }
+	        },
+	        enumerable: true,
+	        configurable: true
+	    });
+	    Collection.prototype.getStore = function () {
+	        return this._store || (this._store = this._owner ? this._owner.getStore() : this._defaultStore);
+	    };
+	    Collection.prototype._onChildrenChange = function (record, options) {
+	        if (options === void 0) { options = {}; }
+	        var isRoot = begin(this), idAttribute = this.idAttribute;
+	        if (record.hasChanged(idAttribute)) {
+	            var _byId = this._byId;
+	            delete _byId[record.previous(idAttribute)];
+	            var id = record.id;
+	            id == null || (_byId[id] = record);
+	        }
+	        if (markAsDirty(this, options)) {
+	            trigger2(this, 'change', record, options);
+	        }
+	        isRoot && commit(this);
+	    };
+	    Collection.prototype.get = function (objOrId) {
+	        if (objOrId == null)
+	            return;
+	        if (typeof objOrId === 'object') {
+	            var id = objOrId[this.idAttribute];
+	            return (id !== void 0 && this._byId[id]) || this._byId[objOrId.cid];
+	        }
+	        else {
+	            return this._byId[objOrId];
+	        }
+	    };
+	    Collection.prototype.each = function (iteratee, context) {
+	        var fun = arguments.length === 2 ? function (v, k) { return iteratee.call(context, v, k); } : iteratee, models = this.models;
+	        for (var i = 0; i < models.length; i++) {
+	            fun(models[i], i);
+	        }
+	    };
+	    Collection.prototype._validateNested = function (errors) {
+	        var count = 0;
+	        this.each(function (record) {
+	            var error = record.validationError;
+	            if (error) {
+	                errors[record.cid] = error;
+	                count++;
+	            }
+	        });
+	        return count;
+	    };
+	    Collection.prototype.initialize = function () { };
+	    Object.defineProperty(Collection.prototype, "length", {
+	        get: function () { return this.models.length; },
+	        enumerable: true,
+	        configurable: true
+	    });
+	    Collection.prototype.first = function () { return this.models[0]; };
+	    Collection.prototype.last = function () { return this.models[this.models.length - 1]; };
+	    Collection.prototype.at = function (a_index) {
+	        var index = a_index < 0 ? a_index + this.models.length : a_index;
+	        return this.models[index];
+	    };
+	    Collection.prototype.clone = function (owner) {
+	        var models = this.map(function (model) { return model.clone(); });
+	        return new this.constructor(models, { model: this.model, comparator: this.comparator }, owner);
+	    };
+	    Collection.prototype.toJSON = function () {
+	        return this.models.map(function (model) { return model.toJSON(); });
+	    };
+	    Collection.prototype.set = function (elements, options) {
+	        if (elements === void 0) { elements = []; }
+	        if (options === void 0) { options = {}; }
+	        if (options.add !== void 0) {
+	            log.error("Collection.set doesn't support 'add' option, behaving as if options.add === true.");
+	        }
+	        if (options.reset) {
+	            this.reset(elements, options);
+	        }
+	        else {
+	            var transaction = this._createTransaction(elements, options);
+	            transaction && transaction.commit();
+	        }
+	        return this;
+	    };
+	    Collection.prototype.reset = function (a_elements, options) {
+	        if (options === void 0) { options = {}; }
+	        var previousModels = commons_1.dispose(this);
+	        if (a_elements) {
+	            set_1.emptySetTransaction(this, toElements(this, a_elements, options), options, true);
+	        }
+	        options.silent || trigger2(this, 'reset', this, defaults({ previousModels: previousModels }, options));
+	        return this.models;
+	    };
+	    Collection.prototype.add = function (a_elements, options) {
+	        if (options === void 0) { options = {}; }
+	        var elements = toElements(this, a_elements, options), transaction = this.models.length ?
+	            add_1.addTransaction(this, elements, options) :
+	            set_1.emptySetTransaction(this, elements, options);
+	        if (transaction) {
+	            transaction.commit();
+	            return transaction.added;
+	        }
+	    };
+	    Collection.prototype.remove = function (recordsOrIds, options) {
+	        if (options === void 0) { options = {}; }
+	        if (recordsOrIds) {
+	            return Array.isArray(recordsOrIds) ?
+	                remove_1.removeMany(this, recordsOrIds, options) :
+	                remove_1.removeOne(this, recordsOrIds, options);
+	        }
+	        return [];
+	    };
+	    Collection.prototype._createTransaction = function (a_elements, options) {
+	        if (options === void 0) { options = {}; }
+	        var elements = toElements(this, a_elements, options);
+	        if (this.models.length) {
+	            return options.remove === false ?
+	                add_1.addTransaction(this, elements, options) :
+	                set_1.setTransaction(this, elements, options);
+	        }
+	        else {
+	            return set_1.emptySetTransaction(this, elements, options);
+	        }
+	    };
+	    Collection.prototype.pluck = function (key) {
+	        return this.models.map(function (model) { return model[key]; });
+	    };
+	    Collection.prototype.sort = function (options) {
+	        if (options === void 0) { options = {}; }
+	        if (commons_1.sortElements(this, options)) {
+	            var isRoot = begin(this);
+	            if (markAsDirty(this, options)) {
+	                trigger2(this, 'sort', this, options);
+	            }
+	            isRoot && commit(this);
+	        }
+	        return this;
+	    };
+	    Collection.prototype.push = function (model, options) {
+	        return this.add(model, assign({ at: this.length }, options));
+	    };
+	    Collection.prototype.pop = function (options) {
+	        var model = this.at(this.length - 1);
+	        this.remove(model, options);
+	        return model;
+	    };
+	    Collection.prototype.unshift = function (model, options) {
+	        return this.add(model, assign({ at: 0 }, options));
+	    };
+	    Collection.prototype.shift = function (options) {
+	        var model = this.at(0);
+	        this.remove(model, options);
+	        return model;
+	    };
+	    Collection.prototype.slice = function () {
+	        return slice.apply(this.models, arguments);
+	    };
+	    Collection.prototype.indexOf = function (modelOrId) {
+	        var record = this.get(modelOrId);
+	        return this.models.indexOf(record);
+	    };
+	    Collection.prototype.modelId = function (attrs) {
+	        return attrs[this.model.prototype.idAttribute];
+	    };
+	    Collection.prototype.toggle = function (model, a_next) {
+	        var prev = Boolean(this.get(model)), next = a_next === void 0 ? !prev : Boolean(a_next);
+	        if (prev !== next) {
+	            if (prev) {
+	                this.remove(model);
+	            }
+	            else {
+	                this.add(model);
+	            }
+	        }
+	        return next;
+	    };
+	    Collection._attribute = record_1.TransactionalType;
+	    Collection = __decorate([
+	        object_plus_1.define({
+	            cidPrefix: 'c',
+	            model: record_1.Record,
+	            _changeEventName: 'changes'
+	        })
+	    ], Collection);
+	    return Collection;
+	}(transactions_1.Transactional));
+	exports.Collection = Collection;
+	function toElements(collection, elements, options) {
+	    var parsed = options.parse ? collection.parse(elements) : elements;
+	    return Array.isArray(parsed) ? parsed : [parsed];
+	}
+	var slice = Array.prototype.slice;
+	record_1.Record.Collection = Collection;
+
+
+/***/ },
+/* 8 */
+/***/ function(module, exports, __webpack_require__) {
+
+	"use strict";
+	var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+	    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+	    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+	    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+	    return c > 3 && r && Object.defineProperty(target, key, r), r;
+	};
+	var object_plus_1 = __webpack_require__(2);
+	var validation_1 = __webpack_require__(9);
+	var traversable_1 = __webpack_require__(10);
+	var assign = object_plus_1.tools.assign, trigger2 = object_plus_1.eventsApi.trigger2, trigger3 = object_plus_1.eventsApi.trigger3;
+	var Transactional = (function () {
+	    function Transactional(cid, owner, ownerKey) {
+	        this._events = void 0;
+	        this._changeToken = {};
+	        this._transaction = false;
+	        this._isDirty = null;
+	        this._validationError = void 0;
+	        this.cid = this.cidPrefix + cid;
+	        this._owner = owner;
+	        this._ownerKey = ownerKey;
+	    }
+	    Transactional.prototype.dispose = function () { };
+	    Transactional.prototype.transaction = function (fun, options) {
+	        if (options === void 0) { options = {}; }
+	        var isRoot = exports.transactionApi.begin(this);
+	        fun.call(this, this);
+	        isRoot && exports.transactionApi.commit(this);
+	    };
+	    Transactional.prototype.updateEach = function (iteratee, options) {
+	        var isRoot = exports.transactionApi.begin(this);
+	        this.each(iteratee);
+	        isRoot && exports.transactionApi.commit(this);
+	    };
+	    Transactional.prototype.set = function (values, options) {
+	        if (values) {
+	            var transaction = this._createTransaction(values, options);
+	            transaction && transaction.commit();
+	        }
+	        return this;
+	    };
+	    Transactional.prototype.parse = function (data) { return data; };
+	    Transactional.prototype.deepGet = function (reference) {
+	        return traversable_1.resolveReference(this, reference, function (object, key) { return object.get(key); });
+	    };
+	    Transactional.prototype.getOwner = function () {
+	        return this._owner;
+	    };
+	    Transactional.prototype.getStore = function () {
+	        var _owner = this._owner;
+	        return _owner ? _owner.getStore() : this._defaultStore;
+	    };
+	    Transactional.prototype.map = function (iteratee, context) {
+	        var arr = [], fun = arguments.length === 2 ? function (v, k) { return iteratee.call(context, v, k); } : iteratee;
+	        this.each(function (val, key) {
+	            var result = fun(val, key);
+	            if (result !== void 0)
+	                arr.push(result);
+	        });
+	        return arr;
+	    };
+	    Transactional.prototype.mapObject = function (iteratee, context) {
+	        var obj = {}, fun = arguments.length === 2 ? function (v, k) { return iteratee.call(context, v, k); } : iteratee;
+	        this.each(function (val, key) {
+	            var result = iteratee(val, key);
+	            if (result !== void 0)
+	                obj[key] = result;
+	        });
+	        return obj;
+	    };
+	    Transactional.prototype.keys = function () {
+	        return this.map(function (value, key) {
+	            if (value !== void 0)
+	                return key;
+	        });
+	    };
+	    Transactional.prototype.values = function () {
+	        return this.map(function (value) { return value; });
+	    };
+	    Object.defineProperty(Transactional.prototype, "validationError", {
+	        get: function () {
+	            var error = this._validationError || (this._validationError = new validation_1.ValidationError(this));
+	            return error.length ? error : null;
+	        },
+	        enumerable: true,
+	        configurable: true
+	    });
+	    Transactional.prototype._invalidate = function (options) {
+	        var error;
+	        if (options.validate && (error = this.validationError)) {
+	            this.trigger('invalid', this, error, assign({ validationError: error }, options));
+	            return true;
+	        }
+	    };
+	    Transactional.prototype.validate = function (obj) { };
+	    Transactional.prototype.getValidationError = function (key) {
+	        var error = this.validationError;
+	        return (key ? error && error.nested[key] : error) || null;
+	    };
+	    Transactional.prototype.deepValidationError = function (reference) {
+	        return traversable_1.resolveReference(this, reference, function (object, key) { return object.getValidationError(key); });
+	    };
+	    Transactional.prototype.eachValidationError = function (iteratee) {
+	        var validationError = this.validationError;
+	        validationError && validationError.eachError(iteratee, this);
+	    };
+	    Transactional.prototype.isValid = function (key) {
+	        return !this.getValidationError(key);
+	    };
+	    Transactional = __decorate([
+	        object_plus_1.mixins(object_plus_1.Messenger),
+	        object_plus_1.extendable
+	    ], Transactional);
+	    return Transactional;
+	}());
+	exports.Transactional = Transactional;
+	Transactional.prototype.dispose = object_plus_1.Messenger.prototype.dispose;
+	exports.transactionApi = {
+	    begin: function (object) {
+	        return object._transaction ? false : (object._transaction = true);
+	    },
+	    markAsDirty: function (object, options) {
+	        var dirty = !options.silent;
+	        if (dirty)
+	            object._isDirty = options;
+	        object._changeToken = {};
+	        object._validationError = void 0;
+	        return dirty;
+	    },
+	    commit: function (object, isNested) {
+	        var originalOptions = object._isDirty;
+	        if (originalOptions) {
+	            while (object._isDirty) {
+	                var options = object._isDirty;
+	                object._isDirty = null;
+	                trigger2(object, object._changeEventName, object, options);
+	            }
+	            object._transaction = false;
+	            var _owner = object._owner;
+	            if (_owner && !isNested) {
+	                _owner._onChildrenChange(object, originalOptions);
+	            }
+	        }
+	        else {
+	            object._isDirty = null;
+	            object._transaction = false;
+	        }
+	    },
+	    aquire: function (owner, child, key) {
+	        if (!child._owner) {
+	            child._owner = owner;
+	            child._ownerKey = key;
+	            return true;
+	        }
+	        return false;
+	    },
+	    free: function (owner, child) {
+	        if (owner === child._owner) {
+	            child._owner = void 0;
+	            child._ownerKey = void 0;
+	        }
+	    }
+	};
+
+
+/***/ },
+/* 9 */
+/***/ function(module, exports) {
+
+	"use strict";
+	var ValidationError = (function () {
+	    function ValidationError(obj) {
+	        this.length = obj._validateNested(this.nested = {});
+	        if (this.error = obj.validate(obj)) {
+	            this.length++;
+	        }
+	    }
+	    ValidationError.prototype.each = function (iteratee) {
+	        var _a = this, error = _a.error, nested = _a.nested;
+	        if (error)
+	            iteratee(error, null);
+	        for (var key in nested) {
+	            iteratee(nested[key], key);
+	        }
+	    };
+	    ValidationError.prototype.eachError = function (iteratee, object) {
+	        this.each(function (value, key) {
+	            if (value instanceof ValidationError) {
+	                value._traverse(iteratee, object.get(key));
+	            }
+	            else {
+	                iteratee(value, key, object);
+	            }
+	        });
+	    };
+	    return ValidationError;
+	}());
+	exports.ValidationError = ValidationError;
+
+
+/***/ },
+/* 10 */
+/***/ function(module, exports) {
+
+	"use strict";
+	var referenceMask = /\~|\^|([^.]+)/g;
+	var CompiledReference = (function () {
+	    function CompiledReference(reference, splitTail) {
+	        if (splitTail === void 0) { splitTail = false; }
+	        var path = reference
+	            .match(referenceMask)
+	            .map(function (key) { return key === '~' ? 'getStore()' : (key === '^' ? 'getOwner()' : key); });
+	        this.tail = splitTail && path.pop();
+	        this.local = !path.length;
+	        path.unshift('self');
+	        this.resolve = new Function('self', "return " + path.join('.') + ";");
+	    }
+	    return CompiledReference;
+	}());
+	exports.CompiledReference = CompiledReference;
+	function resolveReference(root, reference, action) {
+	    var path = reference.match(referenceMask), skip = path.length - 1;
+	    var self = root;
+	    for (var i = 0; i < skip; i++) {
+	        var key = path[i];
+	        switch (key) {
+	            case '~':
+	                self = self.getStore();
+	                break;
+	            case '^':
+	                self = self.getOwner();
+	                break;
+	            default: self = self.get(key);
+	        }
+	        if (!self)
+	            return;
+	    }
+	    action(self, path[skip]);
+	    return self;
+	}
+	exports.resolveReference = resolveReference;
+	function referenceToObject(reference, value) {
+	    var path = reference.split('.'), root = {}, last = path.length - 1;
+	    var current = root;
+	    for (var i = 0; i < last; i++) {
+	        current = current[path[i]] = {};
+	    }
+	    current[path[last]] = value;
+	    return root;
+	}
+	exports.referenceToObject = referenceToObject;
+
+
+/***/ },
+/* 11 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
 	function __export(m) {
 	    for (var p in m) if (!exports.hasOwnProperty(p)) exports[p] = m[p];
 	}
-	var tools = __webpack_require__(1);
-	exports.tools = tools;
-	var record_1 = __webpack_require__(7);
-	var record_2 = __webpack_require__(7);
-	exports.Model = record_2.Record;
-	var events_1 = __webpack_require__(4);
-	exports.on = events_1.Events.on, exports.off = events_1.Events.off, exports.trigger = events_1.Events.trigger, exports.once = events_1.Events.once, exports.listenTo = events_1.Events.listenTo, exports.stopListening = events_1.Events.stopListening, exports.listenToOnce = events_1.Events.listenToOnce;
-	var collection_1 = __webpack_require__(17);
-	exports.Collection = collection_1.Collection;
-	__export(__webpack_require__(3));
-	__export(__webpack_require__(4));
-	var mixins_2 = __webpack_require__(3);
-	exports.Class = mixins_2.Mixable;
-	var relations_1 = __webpack_require__(22);
-	exports.Store = relations_1.Store;
-	function value(x) {
-	    return new record_1.ChainableAttributeSpec({ value: x });
-	}
-	exports.value = value;
-	function transaction(method) {
-	    return function () {
-	        var _this = this;
-	        var args = [];
-	        for (var _i = 0; _i < arguments.length; _i++) {
-	            args[_i - 0] = arguments[_i];
-	        }
-	        var result;
-	        this.transaction(function () {
-	            result = method.apply(_this, args);
-	        });
-	        return result;
-	    };
-	}
-	exports.transaction = transaction;
-
-
-/***/ },
-/* 7 */
-/***/ function(module, exports, __webpack_require__) {
-
-	"use strict";
-	var transaction_1 = __webpack_require__(8);
+	var transaction_1 = __webpack_require__(12);
 	exports.Record = transaction_1.Record;
-	var object_plus_1 = __webpack_require__(1);
-	var define_1 = __webpack_require__(12);
-	var typespec_1 = __webpack_require__(14);
+	var object_plus_1 = __webpack_require__(2);
+	var define_1 = __webpack_require__(13);
+	var typespec_1 = __webpack_require__(15);
 	exports.ChainableAttributeSpec = typespec_1.ChainableAttributeSpec;
-	var nestedTypes_1 = __webpack_require__(15);
+	var nestedTypes_1 = __webpack_require__(16);
 	exports.TransactionalType = nestedTypes_1.TransactionalType;
-	__webpack_require__(16);
+	__webpack_require__(17);
+	__export(__webpack_require__(14));
+	var assign = object_plus_1.tools.assign, defaults = object_plus_1.tools.defaults, omit = object_plus_1.tools.omit, getBaseClass = object_plus_1.tools.getBaseClass;
 	transaction_1.Record.define = function (protoProps, staticProps) {
-	    var BaseConstructor = object_plus_1.getBaseClass(this), baseProto = BaseConstructor.prototype;
+	    var BaseConstructor = getBaseClass(this), baseProto = BaseConstructor.prototype;
 	    if (protoProps) {
 	        var definition = define_1.compile(getAttributes(protoProps), baseProto._attributes);
 	        if (protoProps.properties === false) {
 	            definition.properties = {};
 	        }
-	        object_plus_1.assign(definition.properties, protoProps.properties || {});
-	        object_plus_1.defaults(definition, object_plus_1.omit(protoProps, 'attributes', 'collection'));
+	        assign(definition.properties, protoProps.properties || {});
+	        defaults(definition, omit(protoProps, 'attributes', 'collection'));
 	        object_plus_1.Mixable.define.call(this, definition, staticProps);
 	        defineCollection.call(this, protoProps && protoProps.collection);
 	    }
@@ -1150,7 +1683,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	};
 	transaction_1.Record.predefine = function () {
 	    object_plus_1.Mixable.predefine.call(this);
-	    this.Collection = object_plus_1.getBaseClass(this).Collection.extend();
+	    this.Collection = getBaseClass(this).Collection.extend();
 	    this.Collection.prototype.model = this;
 	    return this;
 	};
@@ -1164,7 +1697,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    return definition;
 	}
 	function defineCollection(collection) {
-	    var BaseCollection = object_plus_1.getBaseClass(this).Collection;
+	    var BaseCollection = getBaseClass(this).Collection;
 	    var CollectionConstructor;
 	    if (typeof collection === 'function') {
 	        CollectionConstructor = collection;
@@ -1180,7 +1713,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 8 */
+/* 12 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -1195,9 +1728,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
 	    return c > 3 && r && Object.defineProperty(target, key, r), r;
 	};
-	var object_plus_1 = __webpack_require__(1);
-	var transactions_1 = __webpack_require__(9);
-	var trigger3 = transactions_1.Transactional.trigger3;
+	var object_plus_1 = __webpack_require__(2);
+	var transactions_1 = __webpack_require__(8);
+	var trigger3 = object_plus_1.eventsApi.trigger3, assign = object_plus_1.tools.assign, isEmpty = object_plus_1.tools.isEmpty, log = object_plus_1.tools.log, free = transactions_1.transactionApi.free, aquire = transactions_1.transactionApi.aquire, commit = transactions_1.transactionApi.commit, _begin = transactions_1.transactionApi.begin, _markAsDirty = transactions_1.transactionApi.markAsDirty;
 	var _cidCounter = 0;
 	var Record = (function (_super) {
 	    __extends(Record, _super);
@@ -1245,7 +1778,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    });
 	    Record.prototype.changedAttributes = function (diff) {
 	        if (!diff)
-	            return this.hasChanged() ? object_plus_1.assign({}, this.changed) : false;
+	            return this.hasChanged() ? assign({}, this.changed) : false;
 	        var val, changed = false, old = this._transaction ? this._previousAttributes : this.attributes, attrSpecs = this._attributes;
 	        for (var attr in diff) {
 	            if (!attrSpecs[attr].isChanged(old[attr], (val = diff[attr])))
@@ -1260,7 +1793,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            return false;
 	        return key ?
 	            this._attributes[key].isChanged(this.attributes[key], _previousAttributes[key]) :
-	            !object_plus_1.isEmpty(this.changed);
+	            !isEmpty(this.changed);
 	    };
 	    Record.prototype.previous = function (key) {
 	        if (key) {
@@ -1305,7 +1838,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                iteratee(attrs[name_1], name_1, spec);
 	            }
 	            else {
-	                object_plus_1.log.warn('[Unknown Attribute]', this, 'Unknown record attribute "' + name_1 + '" is ignored:', attrs);
+	                log.warn('[Unknown Attribute]', this, 'Unknown record attribute "' + name_1 + '" is ignored:', attrs);
 	            }
 	        }
 	    };
@@ -1373,7 +1906,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        if (options === void 0) { options = {}; }
 	        var isRoot = begin(this);
 	        fun.call(this, this);
-	        isRoot && transactions_1.commit(this);
+	        isRoot && commit(this);
 	    };
 	    Record.prototype._createTransaction = function (a_values, options) {
 	        var _this = this;
@@ -1399,12 +1932,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	            });
 	        }
 	        else {
-	            object_plus_1.log.error('[Type Error]', this, 'Record update rejected (', values, '). Incompatible type.');
+	            log.error('[Type Error]', this, 'Record update rejected (', values, '). Incompatible type.');
 	        }
 	        if ((nested.length || changes.length) && markAsDirty(this, options)) {
 	            return new RecordTransaction(this, isRoot, nested, changes);
 	        }
-	        isRoot && transactions_1.commit(this);
+	        isRoot && commit(this);
 	    };
 	    Record.prototype._onChildrenChange = function (child, options) {
 	        this.forceAttributeChange(child._ownerKey, options);
@@ -1415,7 +1948,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        if (markAsDirty(this, options)) {
 	            trigger3(this, 'change:' + key, this, this.attributes[key], options);
 	        }
-	        isRoot && transactions_1.commit(this);
+	        isRoot && commit(this);
 	    };
 	    Object.defineProperty(Record.prototype, "collection", {
 	        get: function () {
@@ -1436,6 +1969,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    Record = __decorate([
 	        object_plus_1.define({
 	            cidPrefix: 'm',
+	            _changeEventName: 'change',
 	            idAttribute: 'id',
 	            _keys: ['id']
 	        })
@@ -1445,7 +1979,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	exports.Record = Record;
 	;
 	function begin(record) {
-	    if (transactions_1.begin(record)) {
+	    if (_begin(record)) {
 	        record._previousAttributes = new record.Attributes(record.attributes);
 	        record._changedAttributes = null;
 	        return true;
@@ -1456,7 +1990,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    if (record._changedAttributes) {
 	        record._changedAttributes = null;
 	    }
-	    return transactions_1.markAsDirty(record, options);
+	    return _markAsDirty(record, options);
 	}
 	function cloneAttributes(record, a_attributes) {
 	    var attributes = new record.Attributes(a_attributes);
@@ -1484,7 +2018,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            trigger3(record, 'change:' + name, record, next, options);
 	        }
 	    }
-	    isRoot && transactions_1.commit(record);
+	    isRoot && commit(record);
 	}
 	exports.setAttribute = setAttribute;
 	var RecordTransaction = (function () {
@@ -1505,290 +2039,27 @@ return /******/ (function(modules) { // webpackBootstrap
 	            var key = changes_1[_b];
 	            trigger3(object, 'change:' + key, object, attributes[key], _isDirty);
 	        }
-	        this.isRoot && transactions_1.commit(object, isNested);
+	        this.isRoot && commit(object, isNested);
 	    };
 	    return RecordTransaction;
 	}());
 
 
 /***/ },
-/* 9 */
+/* 13 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
-	var __extends = (this && this.__extends) || function (d, b) {
-	    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
-	    function __() { this.constructor = d; }
-	    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
-	};
-	var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
-	    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
-	    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
-	    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
-	    return c > 3 && r && Object.defineProperty(target, key, r), r;
-	};
-	var object_plus_1 = __webpack_require__(1);
-	var validation_1 = __webpack_require__(10);
-	var traversable_1 = __webpack_require__(11);
-	var trigger2 = object_plus_1.Messenger.trigger2, trigger3 = object_plus_1.Messenger.trigger3;
-	var Transactional = (function (_super) {
-	    __extends(Transactional, _super);
-	    function Transactional(cid, owner, ownerKey) {
-	        _super.call(this, cid);
-	        this._changeToken = {};
-	        this._transaction = false;
-	        this._isDirty = null;
-	        this._validationError = void 0;
-	        this._owner = owner;
-	        this._ownerKey = ownerKey;
-	    }
-	    Transactional.prototype.transaction = function (fun, options) {
-	        if (options === void 0) { options = {}; }
-	        var isRoot = begin(this);
-	        fun.call(this, this);
-	        isRoot && commit(this);
-	    };
-	    Transactional.prototype.updateEach = function (iteratee, options) {
-	        var isRoot = begin(this);
-	        this.each(iteratee);
-	        isRoot && commit(this);
-	    };
-	    Transactional.prototype.set = function (values, options) {
-	        if (values) {
-	            var transaction = this._createTransaction(values, options);
-	            transaction && transaction.commit();
-	        }
-	        return this;
-	    };
-	    Transactional.prototype.parse = function (data) { return data; };
-	    Transactional.prototype.deepGet = function (reference) {
-	        return traversable_1.resolveReference(this, reference, function (object, key) { return object.get(key); });
-	    };
-	    Transactional.prototype.getOwner = function () {
-	        return this._owner;
-	    };
-	    Transactional.prototype.getStore = function () {
-	        var _owner = this._owner;
-	        return _owner ? _owner.getStore() : this._defaultStore;
-	    };
-	    Transactional.prototype.map = function (iteratee, context) {
-	        var arr = [], fun = arguments.length === 2 ? function (v, k) { return iteratee.call(context, v, k); } : iteratee;
-	        this.each(function (val, key) {
-	            var result = fun(val, key);
-	            if (result !== void 0)
-	                arr.push(result);
-	        });
-	        return arr;
-	    };
-	    Transactional.prototype.mapObject = function (iteratee, context) {
-	        var obj = {}, fun = arguments.length === 2 ? function (v, k) { return iteratee.call(context, v, k); } : iteratee;
-	        this.each(function (val, key) {
-	            var result = iteratee(val, key);
-	            if (result !== void 0)
-	                obj[key] = result;
-	        });
-	        return obj;
-	    };
-	    Transactional.prototype.keys = function () {
-	        return this.map(function (value, key) {
-	            if (value !== void 0)
-	                return key;
-	        });
-	    };
-	    Transactional.prototype.values = function () {
-	        return this.map(function (value) { return value; });
-	    };
-	    Object.defineProperty(Transactional.prototype, "validationError", {
-	        get: function () {
-	            var error = this._validationError || (this._validationError = new validation_1.ValidationError(this));
-	            return error.length ? error : null;
-	        },
-	        enumerable: true,
-	        configurable: true
-	    });
-	    Transactional.prototype._invalidate = function (options) {
-	        var error;
-	        if (options.validate && (error = this.validationError)) {
-	            this.trigger('invalid', this, error, object_plus_1.assign({ validationError: error }, options));
-	            return true;
-	        }
-	    };
-	    Transactional.prototype.validate = function (obj) { };
-	    Transactional.prototype.getValidationError = function (key) {
-	        var error = this.validationError;
-	        return (key ? error && error.nested[key] : error) || null;
-	    };
-	    Transactional.prototype.deepValidationError = function (reference) {
-	        return traversable_1.resolveReference(this, reference, function (object, key) { return object.getValidationError(key); });
-	    };
-	    Transactional.prototype.eachValidationError = function (iteratee) {
-	        var validationError = this.validationError;
-	        validationError && validationError.eachError(iteratee, this);
-	    };
-	    Transactional.prototype.isValid = function (key) {
-	        return !this.getValidationError(key);
-	    };
-	    Transactional = __decorate([
-	        object_plus_1.define({
-	            _changeEventName: 'change'
-	        })
-	    ], Transactional);
-	    return Transactional;
-	}(object_plus_1.Messenger));
-	exports.Transactional = Transactional;
-	function begin(object) {
-	    return object._transaction ? false : (object._transaction = true);
-	}
-	exports.begin = begin;
-	function markAsDirty(object, options) {
-	    var dirty = !options.silent;
-	    if (dirty)
-	        object._isDirty = options;
-	    object._changeToken = {};
-	    object._validationError = void 0;
-	    return dirty;
-	}
-	exports.markAsDirty = markAsDirty;
-	function commit(object, isNested) {
-	    var originalOptions = object._isDirty;
-	    if (originalOptions) {
-	        while (object._isDirty) {
-	            var options = object._isDirty;
-	            object._isDirty = null;
-	            trigger2(object, object._changeEventName, object, options);
-	        }
-	        object._transaction = false;
-	        var _owner = object._owner;
-	        if (_owner && !isNested) {
-	            _owner._onChildrenChange(object, originalOptions);
-	        }
-	    }
-	    else {
-	        object._isDirty = null;
-	        object._transaction = false;
-	    }
-	}
-	exports.commit = commit;
-	function aquire(owner, child, key) {
-	    if (!child._owner) {
-	        child._owner = owner;
-	        child._ownerKey = key;
-	        return true;
-	    }
-	    return false;
-	}
-	exports.aquire = aquire;
-	function free(owner, child) {
-	    if (owner === child._owner) {
-	        child._owner = void 0;
-	        child._ownerKey = void 0;
-	    }
-	}
-	exports.free = free;
-
-
-/***/ },
-/* 10 */
-/***/ function(module, exports) {
-
-	"use strict";
-	var ValidationError = (function () {
-	    function ValidationError(obj) {
-	        this.length = obj._validateNested(this.nested = {});
-	        if (this.error = obj.validate(obj)) {
-	            this.length++;
-	        }
-	    }
-	    ValidationError.prototype.each = function (iteratee) {
-	        var _a = this, error = _a.error, nested = _a.nested;
-	        if (error)
-	            iteratee(error, null);
-	        for (var key in nested) {
-	            iteratee(nested[key], key);
-	        }
-	    };
-	    ValidationError.prototype.eachError = function (iteratee, object) {
-	        this.each(function (value, key) {
-	            if (value instanceof ValidationError) {
-	                value._traverse(iteratee, object.get(key));
-	            }
-	            else {
-	                iteratee(value, key, object);
-	            }
-	        });
-	    };
-	    return ValidationError;
-	}());
-	exports.ValidationError = ValidationError;
-
-
-/***/ },
-/* 11 */
-/***/ function(module, exports) {
-
-	"use strict";
-	var referenceMask = /\~|\^|([^.]+)/g;
-	var CompiledReference = (function () {
-	    function CompiledReference(reference, splitTail) {
-	        if (splitTail === void 0) { splitTail = false; }
-	        var path = reference
-	            .match(referenceMask)
-	            .map(function (key) { return key === '~' ? 'getStore()' : (key === '^' ? 'getOwner()' : key); });
-	        this.tail = splitTail && path.pop();
-	        this.local = !path.length;
-	        path.unshift('self');
-	        this.resolve = new Function('self', "return " + path.join('.') + ";");
-	    }
-	    return CompiledReference;
-	}());
-	exports.CompiledReference = CompiledReference;
-	function resolveReference(root, reference, action) {
-	    var path = reference.match(referenceMask), skip = path.length - 1;
-	    var self = root;
-	    for (var i = 0; i < skip; i++) {
-	        var key = path[i];
-	        switch (key) {
-	            case '~':
-	                self = self.getStore();
-	                break;
-	            case '^':
-	                self = self.getOwner();
-	                break;
-	            default: self = self.get(key);
-	        }
-	        if (!self)
-	            return;
-	    }
-	    action(self, path[skip]);
-	    return self;
-	}
-	exports.resolveReference = resolveReference;
-	function referenceToObject(reference, value) {
-	    var path = reference.split('.'), root = {}, last = path.length - 1;
-	    var current = root;
-	    for (var i = 0; i < last; i++) {
-	        current = current[path[i]] = {};
-	    }
-	    current[path[last]] = value;
-	    return root;
-	}
-	exports.referenceToObject = referenceToObject;
-
-
-/***/ },
-/* 12 */
-/***/ function(module, exports, __webpack_require__) {
-
-	"use strict";
-	var attribute_1 = __webpack_require__(13);
-	var object_plus_1 = __webpack_require__(1);
-	var typespec_1 = __webpack_require__(14);
-	var traversable_1 = __webpack_require__(11);
+	var attribute_1 = __webpack_require__(14);
+	var object_plus_1 = __webpack_require__(2);
+	var typespec_1 = __webpack_require__(15);
+	var traversable_1 = __webpack_require__(10);
+	var defaults = object_plus_1.tools.defaults, isValidJSON = object_plus_1.tools.isValidJSON, transform = object_plus_1.tools.transform, log = object_plus_1.tools.log, EventMap = object_plus_1.eventsApi.EventMap;
 	function compile(rawSpecs, baseAttributes) {
-	    var myAttributes = object_plus_1.transform({}, rawSpecs, createAttribute), allAttributes = object_plus_1.defaults({}, myAttributes, baseAttributes), Attributes = createCloneCtor(allAttributes), mixin = {
+	    var myAttributes = transform({}, rawSpecs, createAttribute), allAttributes = defaults({}, myAttributes, baseAttributes), Attributes = createCloneCtor(allAttributes), mixin = {
 	        Attributes: Attributes,
 	        _attributes: new Attributes(allAttributes),
-	        properties: object_plus_1.transform({}, myAttributes, function (x) { return x.createPropertyDescriptor(); }),
+	        properties: transform({}, myAttributes, function (x) { return x.createPropertyDescriptor(); }),
 	        defaults: createDefaults(allAttributes),
 	        _toJSON: createToJSON(allAttributes),
 	        _localEvents: createEventMap(myAttributes),
@@ -1798,7 +2069,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    if (_parse) {
 	        mixin._parse = _parse;
 	    }
-	    if (!object_plus_1.log.level) {
+	    if (!log.level) {
 	        mixin.forEachAttr = createForEach(allAttributes);
 	    }
 	    return mixin;
@@ -1812,7 +2083,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    for (var key in attrSpecs) {
 	        var attribute = attrSpecs[key], _onChange = attribute.options._onChange;
 	        if (_onChange) {
-	            events || (events = new object_plus_1.EventMap());
+	            events || (events = new EventMap());
 	            events.addEvent('change:' + key, typeof _onChange === 'string' ?
 	                createWatcherFromRef(_onChange, key) :
 	                wrapWatcher(_onChange, key));
@@ -1865,7 +2136,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            appendExpr(name_3, "i." + name_3 + ".create()");
 	        }
 	        else {
-	            if (object_plus_1.isValidJSON(value)) {
+	            if (isValidJSON(value)) {
 	                appendExpr(name_3, JSON.stringify(value));
 	            }
 	            else if (value === void 0) {
@@ -1912,12 +2183,13 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 13 */
+/* 14 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
-	var transaction_1 = __webpack_require__(8);
-	var object_plus_1 = __webpack_require__(1);
+	var transaction_1 = __webpack_require__(12);
+	var object_plus_1 = __webpack_require__(2);
+	var notEqual = object_plus_1.tools.notEqual, assign = object_plus_1.tools.assign;
 	var GenericAttribute = (function () {
 	    function GenericAttribute(name, options) {
 	        this.name = name;
@@ -1953,7 +2225,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    GenericAttribute.prototype.transform = function (value, options, prev, model) { return value; };
 	    GenericAttribute.prototype.convert = function (value, options, model) { return value; };
 	    GenericAttribute.prototype.isChanged = function (a, b) {
-	        return object_plus_1.notEqual(a, b);
+	        return notEqual(a, b);
 	    };
 	    GenericAttribute.prototype.handleChange = function (next, prev, model) { };
 	    GenericAttribute.prototype.create = function () { return new this.type(); };
@@ -2021,17 +2293,18 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 14 */
+/* 15 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
-	var transactions_1 = __webpack_require__(9);
-	var object_plus_1 = __webpack_require__(1);
+	var transactions_1 = __webpack_require__(8);
+	var object_plus_1 = __webpack_require__(2);
+	var assign = object_plus_1.tools.assign;
 	var ChainableAttributeSpec = (function () {
 	    function ChainableAttributeSpec(options) {
 	        if (options === void 0) { options = {}; }
 	        this.options = { getHooks: [], transforms: [], changeHandlers: [] };
-	        object_plus_1.assign(this.options, options);
+	        assign(this.options, options);
 	    }
 	    ChainableAttributeSpec.prototype.check = function (check, error) {
 	        function validate(model, value, name) {
@@ -2140,7 +2413,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 15 */
+/* 16 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -2149,10 +2422,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	    function __() { this.constructor = d; }
 	    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
 	};
-	var transaction_1 = __webpack_require__(8);
-	var attribute_1 = __webpack_require__(13);
-	var transactions_1 = __webpack_require__(9);
-	var object_plus_1 = __webpack_require__(1);
+	var transaction_1 = __webpack_require__(12);
+	var attribute_1 = __webpack_require__(14);
+	var transactions_1 = __webpack_require__(8);
+	var object_plus_1 = __webpack_require__(2);
+	var free = transactions_1.transactionApi.free, aquire = transactions_1.transactionApi.aquire;
 	var TransactionalType = (function (_super) {
 	    __extends(TransactionalType, _super);
 	    function TransactionalType() {
@@ -2176,9 +2450,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	        options.changeHandlers.unshift(this._handleChange);
 	    };
 	    TransactionalType.prototype._handleChange = function (next, prev, record) {
-	        prev && transactions_1.free(record, prev);
-	        if (next && !transactions_1.aquire(record, next, this.name)) {
-	            object_plus_1.log.error('[Aggregation error] Assigned value already has an owner. Use shared attribute type.');
+	        prev && free(record, prev);
+	        if (next && !aquire(record, next, this.name)) {
+	            object_plus_1.tools.log.error('[Aggregation error] Assigned value already has an owner. Use shared attribute type.');
 	        }
 	    };
 	    return TransactionalType;
@@ -2188,7 +2462,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 16 */
+/* 17 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -2197,8 +2471,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	    function __() { this.constructor = d; }
 	    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
 	};
-	var attribute_1 = __webpack_require__(13);
-	var object_plus_1 = __webpack_require__(1);
+	var attribute_1 = __webpack_require__(14);
+	var object_plus_1 = __webpack_require__(2);
+	var parseDate = object_plus_1.tools.parseDate;
 	var ConstructorType = (function (_super) {
 	    __extends(ConstructorType, _super);
 	    function ConstructorType() {
@@ -2220,7 +2495,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        _super.apply(this, arguments);
 	    }
 	    DateType.prototype.convert = function (value) {
-	        return typeof value === 'string' ? new Date(object_plus_1.parseDate(value)) : (value == null || value instanceof Date ? value : new Date(value));
+	        return typeof value === 'string' ? new Date(parseDate(value)) : (value == null || value instanceof Date ? value : new Date(value));
 	    };
 	    DateType.prototype.validate = function (model, value, name) {
 	        if (isNaN(+value))
@@ -2282,302 +2557,13 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 17 */
-/***/ function(module, exports, __webpack_require__) {
-
-	"use strict";
-	var __extends = (this && this.__extends) || function (d, b) {
-	    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
-	    function __() { this.constructor = d; }
-	    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
-	};
-	var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
-	    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
-	    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
-	    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
-	    return c > 3 && r && Object.defineProperty(target, key, r), r;
-	};
-	var object_plus_1 = __webpack_require__(1);
-	var transactions_1 = __webpack_require__(9);
-	var record_1 = __webpack_require__(7);
-	var commons_1 = __webpack_require__(18);
-	var add_1 = __webpack_require__(19);
-	var set_1 = __webpack_require__(20);
-	var remove_1 = __webpack_require__(21);
-	var trigger2 = transactions_1.Transactional.trigger2;
-	var _count = 0;
-	var silentOptions = { silent: true };
-	var Collection = (function (_super) {
-	    __extends(Collection, _super);
-	    function Collection(records, options) {
-	        if (options === void 0) { options = {}; }
-	        _super.call(this, _count++);
-	        this.models = [];
-	        this._byId = {};
-	        this.model = options.model || this.model;
-	        this.idAttribute = this.model.prototype.idAttribute;
-	        if (options.comparator !== void 0) {
-	            this.comparator = options.comparator;
-	        }
-	        if (records) {
-	            var elements = toElements(this, records, options);
-	            set_1.emptySetTransaction(this, elements, options, true);
-	        }
-	        this.initialize.apply(this, arguments);
-	        if (this._localEvents)
-	            this._localEvents.subscribe(this, this);
-	    }
-	    Collection.prototype.createSubset = function (models, options) {
-	        var SubsetOf = this.constructor.subsetOf(this).options.type;
-	        var subset = new SubsetOf(models, options);
-	        subset.resolve(this);
-	        return subset;
-	    };
-	    Collection.predefine = function () {
-	        this._SubsetOf = null;
-	        transactions_1.Transactional.predefine();
-	        return this;
-	    };
-	    Collection.define = function (protoProps, staticProps) {
-	        var spec = object_plus_1.omit(protoProps, 'elementsEvents', 'localEvents');
-	        if (protoProps.elementsEvents) {
-	            var eventsMap = new object_plus_1.EventMap(this.prototype._elementsEvents);
-	            eventsMap.addEventsMap(protoProps.elementsEvents);
-	            spec._elementsEvents = eventsMap;
-	        }
-	        return transactions_1.Transactional.define.call(this, spec, staticProps);
-	    };
-	    Object.defineProperty(Collection.prototype, "comparator", {
-	        get: function () { return this._comparator; },
-	        set: function (x) {
-	            var _this = this;
-	            var compare;
-	            switch (typeof x) {
-	                case 'string':
-	                    this._comparator = function (a, b) {
-	                        var aa = a[x], bb = b[x];
-	                        if (aa === bb)
-	                            return 0;
-	                        return aa < bb ? -1 : +1;
-	                    };
-	                    break;
-	                case 'function':
-	                    if (x.length === 1) {
-	                        this._comparator = function (a, b) {
-	                            var aa = x.call(_this, a), bb = x.call(_this, b);
-	                            if (aa === bb)
-	                                return 0;
-	                            return aa < bb ? -1 : +1;
-	                        };
-	                    }
-	                    else {
-	                        this._comparator = function (a, b) { return x.call(_this, a, b); };
-	                    }
-	                    break;
-	                default:
-	                    this._comparator = null;
-	            }
-	        },
-	        enumerable: true,
-	        configurable: true
-	    });
-	    Collection.prototype.getStore = function () {
-	        return this._store || (this._store = this._owner ? this._owner.getStore() : this._defaultStore);
-	    };
-	    Collection.prototype._onChildrenChange = function (record, options) {
-	        if (options === void 0) { options = {}; }
-	        var isRoot = transactions_1.begin(this), idAttribute = this.idAttribute;
-	        if (record.hasChanged(idAttribute)) {
-	            var _byId = this._byId;
-	            delete _byId[record.previous(idAttribute)];
-	            var id = record.id;
-	            id == null || (_byId[id] = record);
-	        }
-	        if (transactions_1.markAsDirty(this, options)) {
-	            trigger2(this, 'change', record, options);
-	        }
-	        isRoot && transactions_1.commit(this);
-	    };
-	    Collection.prototype.get = function (objOrId) {
-	        if (objOrId == null)
-	            return;
-	        if (typeof objOrId === 'object') {
-	            var id = objOrId[this.idAttribute];
-	            return (id !== void 0 && this._byId[id]) || this._byId[objOrId.cid];
-	        }
-	        else {
-	            return this._byId[objOrId];
-	        }
-	    };
-	    Collection.prototype.each = function (iteratee, context) {
-	        var fun = arguments.length === 2 ? function (v, k) { return iteratee.call(context, v, k); } : iteratee, models = this.models;
-	        for (var i = 0; i < models.length; i++) {
-	            fun(models[i], i);
-	        }
-	    };
-	    Collection.prototype._validateNested = function (errors) {
-	        var count = 0;
-	        this.each(function (record) {
-	            var error = record.validationError;
-	            if (error) {
-	                errors[record.cid] = error;
-	                count++;
-	            }
-	        });
-	        return count;
-	    };
-	    Collection.prototype.initialize = function () { };
-	    Object.defineProperty(Collection.prototype, "length", {
-	        get: function () { return this.models.length; },
-	        enumerable: true,
-	        configurable: true
-	    });
-	    Collection.prototype.first = function () { return this.models[0]; };
-	    Collection.prototype.last = function () { return this.models[this.models.length - 1]; };
-	    Collection.prototype.at = function (a_index) {
-	        var index = a_index < 0 ? a_index + this.models.length : a_index;
-	        return this.models[index];
-	    };
-	    Collection.prototype.clone = function (owner) {
-	        var models = this.map(function (model) { return model.clone(); });
-	        return new this.constructor(models, { model: this.model, comparator: this.comparator }, owner);
-	    };
-	    Collection.prototype.toJSON = function () {
-	        return this.models.map(function (model) { return model.toJSON(); });
-	    };
-	    Collection.prototype.set = function (elements, options) {
-	        if (elements === void 0) { elements = []; }
-	        if (options === void 0) { options = {}; }
-	        if (options.add !== void 0) {
-	            object_plus_1.log.error("Collection.set doesn't support 'add' option, behaving as if options.add === true.");
-	        }
-	        if (options.reset) {
-	            this.reset(elements, options);
-	        }
-	        else {
-	            var transaction = this._createTransaction(elements, options);
-	            transaction && transaction.commit();
-	        }
-	        return this;
-	    };
-	    Collection.prototype.reset = function (a_elements, options) {
-	        if (options === void 0) { options = {}; }
-	        var previousModels = commons_1.dispose(this);
-	        if (a_elements) {
-	            set_1.emptySetTransaction(this, toElements(this, a_elements, options), options, true);
-	        }
-	        options.silent || trigger2(this, 'reset', this, object_plus_1.defaults({ previousModels: previousModels }, options));
-	        return this.models;
-	    };
-	    Collection.prototype.add = function (a_elements, options) {
-	        if (options === void 0) { options = {}; }
-	        var elements = toElements(this, a_elements, options), transaction = this.models.length ?
-	            add_1.addTransaction(this, elements, options) :
-	            set_1.emptySetTransaction(this, elements, options);
-	        if (transaction) {
-	            transaction.commit();
-	            return transaction.added;
-	        }
-	    };
-	    Collection.prototype.remove = function (recordsOrIds, options) {
-	        if (options === void 0) { options = {}; }
-	        if (recordsOrIds) {
-	            return Array.isArray(recordsOrIds) ?
-	                remove_1.removeMany(this, recordsOrIds, options) :
-	                remove_1.removeOne(this, recordsOrIds, options);
-	        }
-	        return [];
-	    };
-	    Collection.prototype._createTransaction = function (a_elements, options) {
-	        if (options === void 0) { options = {}; }
-	        var elements = toElements(this, a_elements, options);
-	        if (this.models.length) {
-	            return options.remove === false ?
-	                add_1.addTransaction(this, elements, options) :
-	                set_1.setTransaction(this, elements, options);
-	        }
-	        else {
-	            return set_1.emptySetTransaction(this, elements, options);
-	        }
-	    };
-	    Collection.prototype.pluck = function (key) {
-	        return this.models.map(function (model) { return model[key]; });
-	    };
-	    Collection.prototype.sort = function (options) {
-	        if (options === void 0) { options = {}; }
-	        if (commons_1.sortElements(this, options)) {
-	            var isRoot = transactions_1.begin(this);
-	            if (transactions_1.markAsDirty(this, options)) {
-	                trigger2(this, 'sort', this, options);
-	            }
-	            isRoot && transactions_1.commit(this);
-	        }
-	        return this;
-	    };
-	    Collection.prototype.push = function (model, options) {
-	        return this.add(model, object_plus_1.assign({ at: this.length }, options));
-	    };
-	    Collection.prototype.pop = function (options) {
-	        var model = this.at(this.length - 1);
-	        this.remove(model, options);
-	        return model;
-	    };
-	    Collection.prototype.unshift = function (model, options) {
-	        return this.add(model, object_plus_1.assign({ at: 0 }, options));
-	    };
-	    Collection.prototype.shift = function (options) {
-	        var model = this.at(0);
-	        this.remove(model, options);
-	        return model;
-	    };
-	    Collection.prototype.slice = function () {
-	        return slice.apply(this.models, arguments);
-	    };
-	    Collection.prototype.indexOf = function (modelOrId) {
-	        var record = this.get(modelOrId);
-	        return this.models.indexOf(record);
-	    };
-	    Collection.prototype.modelId = function (attrs) {
-	        return attrs[this.model.prototype.idAttribute];
-	    };
-	    Collection.prototype.toggle = function (model, a_next) {
-	        var prev = Boolean(this.get(model)), next = a_next === void 0 ? !prev : Boolean(a_next);
-	        if (prev !== next) {
-	            if (prev) {
-	                this.remove(model);
-	            }
-	            else {
-	                this.add(model);
-	            }
-	        }
-	        return next;
-	    };
-	    Collection._attribute = record_1.TransactionalType;
-	    Collection = __decorate([
-	        object_plus_1.define({
-	            cidPrefix: 'c',
-	            model: record_1.Record,
-	            _changeEventName: 'changes'
-	        })
-	    ], Collection);
-	    return Collection;
-	}(transactions_1.Transactional));
-	exports.Collection = Collection;
-	function toElements(collection, elements, options) {
-	    var parsed = options.parse ? collection.parse(elements) : elements;
-	    return Array.isArray(parsed) ? parsed : [parsed];
-	}
-	var slice = Array.prototype.slice;
-	record_1.Record.Collection = Collection;
-
-
-/***/ },
 /* 18 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
-	var transactions_1 = __webpack_require__(9);
-	var trigger2 = transactions_1.Transactional.trigger2, trigger3 = transactions_1.Transactional.trigger3;
+	var transactions_1 = __webpack_require__(8);
+	var object_plus_1 = __webpack_require__(2);
+	var EventMap = object_plus_1.eventsApi.EventMap, trigger2 = object_plus_1.eventsApi.trigger2, trigger3 = object_plus_1.eventsApi.trigger3, commit = transactions_1.transactionApi.commit, markAsDirty = transactions_1.transactionApi.markAsDirty, _aquire = transactions_1.transactionApi.aquire, _free = transactions_1.transactionApi.free;
 	function dispose(collection) {
 	    var models = collection.models;
 	    collection.models = [];
@@ -2587,15 +2573,15 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 	exports.dispose = dispose;
 	function aquire(owner, child) {
-	    transactions_1.aquire(owner, child);
-	    var _elementsEvents = owner._elementsEvents;
-	    _elementsEvents && _elementsEvents.subscribe(owner, child);
+	    _aquire(owner, child);
+	    var _itemEvents = owner._itemEvents;
+	    _itemEvents && _itemEvents.subscribe(owner, child);
 	}
 	exports.aquire = aquire;
 	function free(owner, child) {
-	    transactions_1.free(owner, child);
-	    var _elementsEvents = owner._elementsEvents;
-	    _elementsEvents && _elementsEvents.unsubscribe(owner, child);
+	    _free(owner, child);
+	    var _itemEvents = owner._itemEvents;
+	    _itemEvents && _itemEvents.unsubscribe(owner, child);
 	}
 	exports.free = free;
 	function freeAll(collection, children) {
@@ -2678,7 +2664,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        if (added.length || removed.length) {
 	            trigger2(object, 'update', object, _isDirty);
 	        }
-	        this.isRoot && transactions_1.commit(object, isNested);
+	        this.isRoot && commit(object, isNested);
 	    };
 	    return CollectionTransaction;
 	}());
@@ -2690,18 +2676,19 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
-	var transactions_1 = __webpack_require__(9);
+	var transactions_1 = __webpack_require__(8);
 	var commons_1 = __webpack_require__(18);
+	var begin = transactions_1.transactionApi.begin, commit = transactions_1.transactionApi.commit, markAsDirty = transactions_1.transactionApi.markAsDirty;
 	function addTransaction(collection, items, options) {
-	    var isRoot = transactions_1.begin(collection), nested = [];
+	    var isRoot = begin(collection), nested = [];
 	    var added = appendElements(collection, items, nested, options);
 	    if (added.length || nested.length) {
 	        var needSort = sortOrMoveElements(collection, added, options);
-	        if (transactions_1.markAsDirty(collection, options)) {
+	        if (markAsDirty(collection, options)) {
 	            return new commons_1.CollectionTransaction(collection, isRoot, added, [], nested, needSort);
 	        }
 	    }
-	    isRoot && transactions_1.commit(collection);
+	    isRoot && commit(collection);
 	}
 	exports.addTransaction = addTransaction;
 	;
@@ -2757,34 +2744,35 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
-	var transactions_1 = __webpack_require__(9);
+	var transactions_1 = __webpack_require__(8);
 	var commons_1 = __webpack_require__(18);
+	var begin = transactions_1.transactionApi.begin, commit = transactions_1.transactionApi.commit, markAsDirty = transactions_1.transactionApi.markAsDirty;
 	var silentOptions = { silent: true };
 	function emptySetTransaction(collection, items, options, silent) {
-	    var isRoot = transactions_1.begin(collection);
+	    var isRoot = begin(collection);
 	    var added = _reallocateEmpty(collection, items, options);
 	    if (added.length) {
 	        var needSort = commons_1.sortElements(collection, options);
-	        if (transactions_1.markAsDirty(collection, silent ? silentOptions : options)) {
+	        if (markAsDirty(collection, silent ? silentOptions : options)) {
 	            return new commons_1.CollectionTransaction(collection, isRoot, added.slice(), [], [], needSort);
 	        }
 	    }
-	    isRoot && transactions_1.commit(collection);
+	    isRoot && commit(collection);
 	}
 	exports.emptySetTransaction = emptySetTransaction;
 	;
 	function setTransaction(collection, items, options) {
-	    var isRoot = transactions_1.begin(collection), nested = [];
+	    var isRoot = begin(collection), nested = [];
 	    var previous = collection.models, added = _reallocate(collection, items, nested, options);
 	    var reusedCount = collection.models.length - added.length, removed = reusedCount < previous.length ? (reusedCount ? _garbageCollect(collection, previous) :
 	        commons_1.freeAll(collection, previous)) : [];
 	    var addedOrChanged = nested.length || added.length, sorted = (addedOrChanged && commons_1.sortElements(collection, options)) || added.length || options.sorted;
 	    if (addedOrChanged || removed.length || sorted) {
-	        if (transactions_1.markAsDirty(collection, options)) {
+	        if (markAsDirty(collection, options)) {
 	            return new commons_1.CollectionTransaction(collection, isRoot, added, removed, nested, sorted);
 	        }
 	    }
-	    isRoot && transactions_1.commit(collection);
+	    isRoot && commit(collection);
 	}
 	exports.setTransaction = setTransaction;
 	;
@@ -2857,23 +2845,23 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	"use strict";
 	var commons_1 = __webpack_require__(18);
-	var object_plus_1 = __webpack_require__(1);
-	var transactions_1 = __webpack_require__(9);
-	var trigger2 = object_plus_1.Messenger.trigger2, trigger3 = object_plus_1.Messenger.trigger3;
+	var object_plus_1 = __webpack_require__(2);
+	var transactions_1 = __webpack_require__(8);
+	var trigger2 = object_plus_1.eventsApi.trigger2, trigger3 = object_plus_1.eventsApi.trigger3, markAsDirty = transactions_1.transactionApi.markAsDirty, begin = transactions_1.transactionApi.begin, commit = transactions_1.transactionApi.commit;
 	function removeOne(collection, el, options) {
 	    var model = collection.get(el);
 	    if (model) {
-	        var isRoot = transactions_1.begin(collection), models = collection.models;
+	        var isRoot = begin(collection), models = collection.models;
 	        models.splice(models.indexOf(model), 1);
 	        commons_1.removeIndex(collection._byId, model);
-	        var notify = transactions_1.markAsDirty(collection, options);
+	        var notify = markAsDirty(collection, options);
 	        if (notify) {
 	            trigger3(model, 'remove', model, collection, options);
 	            trigger3(collection, 'remove', model, collection, options);
 	        }
 	        commons_1.free(collection, model);
 	        notify && trigger2(collection, 'update', collection, options);
-	        isRoot && transactions_1.commit(collection);
+	        isRoot && commit(collection);
 	        return model;
 	    }
 	}
@@ -2882,14 +2870,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	function removeMany(collection, toRemove, options) {
 	    var removed = _removeFromIndex(collection, toRemove);
 	    if (removed.length) {
-	        var isRoot = transactions_1.begin(collection);
+	        var isRoot = begin(collection);
 	        _reallocate(collection, removed.length);
-	        if (transactions_1.markAsDirty(collection, options)) {
+	        if (markAsDirty(collection, options)) {
 	            var transaction = new commons_1.CollectionTransaction(collection, isRoot, [], removed, [], false);
 	            transaction.commit();
 	        }
 	        else {
-	            isRoot && transactions_1.commit(collection);
+	            isRoot && commit(collection);
 	        }
 	    }
 	    return removed;
@@ -2943,10 +2931,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	    function __() { this.constructor = d; }
 	    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
 	};
-	var attribute_1 = __webpack_require__(13);
+	var record_1 = __webpack_require__(11);
 	var commons_1 = __webpack_require__(24);
-	var record_1 = __webpack_require__(7);
-	var typespec_1 = __webpack_require__(14);
+	var record_2 = __webpack_require__(11);
+	var record_3 = __webpack_require__(11);
 	var RecordRefAttribute = (function (_super) {
 	    __extends(RecordRefAttribute, _super);
 	    function RecordRefAttribute() {
@@ -2964,10 +2952,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	    };
 	    RecordRefAttribute.prototype.validate = function (model, value, name) { };
 	    return RecordRefAttribute;
-	}(attribute_1.GenericAttribute));
-	record_1.Record.from = function from(masterCollection) {
+	}(record_1.GenericAttribute));
+	record_2.Record.from = function from(masterCollection) {
 	    var getMasterCollection = commons_1.parseReference(masterCollection);
-	    var typeSpec = new typespec_1.ChainableAttributeSpec({
+	    var typeSpec = new record_3.ChainableAttributeSpec({
 	        value: null,
 	        _attribute: RecordRefAttribute
 	    });
@@ -2993,7 +2981,7 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
-	var traversable_1 = __webpack_require__(11);
+	var traversable_1 = __webpack_require__(10);
 	function parseReference(collectionRef) {
 	    switch (typeof collectionRef) {
 	        case 'function':
@@ -3018,10 +3006,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	    function __() { this.constructor = d; }
 	    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
 	};
-	var collection_1 = __webpack_require__(17);
-	var object_plus_1 = __webpack_require__(1);
+	var collection_1 = __webpack_require__(7);
+	var object_plus_1 = __webpack_require__(2);
 	var commons_1 = __webpack_require__(24);
-	var record_1 = __webpack_require__(7);
+	var record_1 = __webpack_require__(11);
+	var fastDefaults = object_plus_1.tools.fastDefaults;
 	collection_1.Collection.subsetOf = function subsetOf(masterCollection) {
 	    var CollectionConstructor = this, SubsetOf = this._SubsetOf || ((function (_super) {
 	        __extends(SubsetOfCollection, _super);
@@ -3100,7 +3089,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	function subsetOptions(options) {
 	    var subsetOptions = { parse: true, merge: false };
 	    if (options)
-	        object_plus_1.fastDefaults(subsetOptions, options);
+	        fastDefaults(subsetOptions, options);
 	    return subsetOptions;
 	}
 
@@ -3115,11 +3104,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	    function __() { this.constructor = d; }
 	    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
 	};
-	var record_1 = __webpack_require__(7);
-	var collection_1 = __webpack_require__(17);
-	var attribute_1 = __webpack_require__(13);
-	var transactions_1 = __webpack_require__(9);
-	var object_plus_1 = __webpack_require__(1);
+	var record_1 = __webpack_require__(11);
+	var collection_1 = __webpack_require__(7);
+	var record_2 = __webpack_require__(11);
+	var transactions_1 = __webpack_require__(8);
+	var object_plus_1 = __webpack_require__(2);
+	var on = object_plus_1.eventsApi.on, off = object_plus_1.eventsApi.off, free = transactions_1.transactionApi.free, aquire = transactions_1.transactionApi.aquire;
 	var SharedType = (function (_super) {
 	    __extends(SharedType, _super);
 	    function SharedType() {
@@ -3131,7 +3121,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    SharedType.prototype.convert = function (value, options, record) {
 	        if (value == null || value instanceof this.type)
 	            return value;
-	        object_plus_1.log.error("[Shared Attribute] Cannot assign value of incompatible type.", value, record);
+	        object_plus_1.tools.log.error("[Shared Attribute] Cannot assign value of incompatible type.", value, record);
 	        return null;
 	    };
 	    SharedType.prototype.validate = function (record, value) {
@@ -3143,15 +3133,15 @@ return /******/ (function(modules) { // webpackBootstrap
 	        return null;
 	    };
 	    SharedType.prototype._handleChange = function (next, prev, record) {
-	        prev && transactions_1.Transactional.off(prev, prev._changeEventName, record._onChildrenChange, record);
-	        next && transactions_1.Transactional.on(next, next._changeEventName, record._onChildrenChange, record);
+	        prev && off(prev, prev._changeEventName, record._onChildrenChange, record);
+	        next && on(next, next._changeEventName, record._onChildrenChange, record);
 	    };
 	    SharedType.prototype.initialize = function (options) {
 	        this.toJSON = null;
 	        options.changeHandlers.unshift(this._handleChange);
 	    };
 	    return SharedType;
-	}(attribute_1.GenericAttribute));
+	}(record_2.GenericAttribute));
 	exports.SharedType = SharedType;
 	var createSharedTypeSpec = {
 	    get: function () {
@@ -3176,8 +3166,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	    function __() { this.constructor = d; }
 	    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
 	};
-	var record_1 = __webpack_require__(7);
-	var transactions_1 = __webpack_require__(9);
+	var record_1 = __webpack_require__(11);
+	var transactions_1 = __webpack_require__(8);
 	var _store = null;
 	var Store = (function (_super) {
 	    __extends(Store, _super);
@@ -3212,598 +3202,358 @@ return /******/ (function(modules) { // webpackBootstrap
 /* 28 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;/* WEBPACK VAR INJECTION */(function(global) {//     Backbone.js 1.2.3
-	
-	//     (c) 2010-2015 Jeremy Ashkenas, DocumentCloud and Investigative Reporters & Editors
-	//     Backbone may be freely distributed under the MIT license.
-	
-	(function(factory) {
-	  // Establish the root object, `window` (`self`) in the browser, or `global` on the server.
-	  // We use `self` instead of `window` for `WebWorker` support.
-	  var root = (typeof self == 'object' && self.self == self && self) ||
-	            (typeof global == 'object' && global.global == global && global);
-	
-	  // Set up Backbone appropriately for the environment. Start with AMD.
-	  if (true) {
-	    !(__WEBPACK_AMD_DEFINE_ARRAY__ = [__webpack_require__(29), __webpack_require__(30), exports], __WEBPACK_AMD_DEFINE_RESULT__ = function(_, $, exports) {
-	      // Export global even in AMD case in case this script is loaded with
-	      // others that may still expect a global Backbone.
-	      root.Backbone = factory(root, exports, _, $);
-	    }.apply(exports, __WEBPACK_AMD_DEFINE_ARRAY__), __WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
-	
-	  // Next for Node.js or CommonJS. jQuery may not be needed as a module.
-	  } else if (typeof exports !== 'undefined') {
-	    var _ = require('underscore'), $;
-	    try { $ = require('jquery'); } catch(e) {}
-	    factory(root, exports, _, $);
-	
-	  // Finally, as a browser global.
-	  } else {
-	    root.Backbone = factory(root, {}, root._, (root.jQuery || root.Zepto || root.ender || root.$));
-	  }
-	
-	}(function(root, Backbone, _, $) {
-	
-	  // Initial Setup
-	  // -------------
-	
-	  // Save the previous value of the `Backbone` variable, so that it can be
-	  // restored later on, if `noConflict` is used.
-	  var previousBackbone = root.Backbone;
-	
-	  // Create a local reference to a common array method we'll want to use later.
-	
-	  var slice = Array.prototype.slice;
-	
-	  // Current version of the library. Keep in sync with `package.json`.
-	  Backbone.VERSION = '1.2.3';
-	
-	  // For Backbone's purposes, jQuery, Zepto, Ender, or My Library (kidding) owns
-	  // the `$` variable.
-	  Backbone.$ = $;
-	
-	  // Runs Backbone.js in *noConflict* mode, returning the `Backbone` variable
-	  // to its previous owner. Returns a reference to this Backbone object.
-	  Backbone.noConflict = function() {
-	    root.Backbone = previousBackbone;
+	"use strict";
+	var _ = __webpack_require__(29);
+	var $ = __webpack_require__(30);
+	var previousBackbone = window.Backbone;
+	var slice = Array.prototype.slice;
+	exports.VERSION = '1.2.3';
+	exports.$ = exports.$;
+	function noConflict() {
+	    window.Backbone = previousBackbone;
 	    return this;
-	  };
-	
-	  // Backbone.View
-	  // -------------
-	
-	  // Backbone Views are almost more convention than they are actual code. A View
-	  // is simply a JavaScript object that represents a logical chunk of UI in the
-	  // DOM. This might be a single item, an entire list, a sidebar or panel, or
-	  // even the surrounding frame which wraps your whole app. Defining a chunk of
-	  // UI as a **View** allows you to define your DOM events declaratively, without
-	  // having to worry about render order ... and makes it easy for the view to
-	  // react to specific changes in the state of your models.
-	
-	  // Creating a Backbone.View creates its initial element outside of the DOM,
-	  // if an existing element is not provided...
-	  var View = Backbone.View = function(options) {
+	}
+	exports.noConflict = noConflict;
+	;
+	exports.emulateHTTP = false;
+	exports.emulateJSON = false;
+	function View(options) {
 	    this.cid = _.uniqueId('view');
 	    options || (options = {});
 	    _.extend(this, _.pick(options, viewOptions));
 	    this._ensureElement();
 	    this.initialize.apply(this, arguments);
 	    this.delegateEvents();
-	  };
-	
-	  // Cached regex to split keys for `delegate`.
-	  var delegateEventSplitter = /^(\S+)\s*(.*)$/;
-	
-	  // List of view options to be merged as properties.
-	  var viewOptions = ['model', 'collection', 'el', 'id', 'attributes', 'className', 'tagName', 'events'];
-	
-	  // Set up all inheritable **Backbone.View** properties and methods.
-	  _.extend(View.prototype, {
-	
-	    // The default `tagName` of a View's element is `"div"`.
+	}
+	exports.View = View;
+	;
+	var delegateEventSplitter = /^(\S+)\s*(.*)$/;
+	var viewOptions = ['model', 'collection', 'el', 'id', 'attributes', 'className', 'tagName', 'events'];
+	_.extend(View.prototype, {
 	    tagName: 'div',
-	
-	    // jQuery delegate for element lookup, scoped to DOM elements within the
-	    // current view. This should be preferred to global lookups where possible.
-	    $: function(selector) {
-	      return this.$el.find(selector);
+	    $: function (selector) {
+	        return this.$el.find(selector);
 	    },
-	
-	    // Initialize is an empty function by default. Override it with your own
-	    // initialization logic.
-	    initialize: function(){},
-	
-	    // **render** is the core function that your view should override, in order
-	    // to populate its element (`this.el`), with the appropriate HTML. The
-	    // convention is for **render** to always return `this`.
-	    render: function() {
-	      return this;
+	    initialize: function () { },
+	    render: function () {
+	        return this;
 	    },
-	
-	    // Remove this view by taking the element out of the DOM, and removing any
-	    // applicable Backbone.Events listeners.
-	    remove: function() {
-	      this.$el.remove();
-	      this.stopListening();
-	      return this;
+	    remove: function () {
+	        this.$el.remove();
+	        this.stopListening();
+	        return this;
 	    },
-	
-	    // Change the view's element (`this.el` property), including event
-	    // re-delegation.
-	    setElement: function(element, delegate) {
-	      if (this.$el) this.undelegateEvents();
-	      this.$el = element instanceof Backbone.$ ? element : Backbone.$(element);
-	      this.el = this.$el[0];
-	      if (delegate !== false) this.delegateEvents();
-	      return this;
+	    setElement: function (element, delegate) {
+	        if (this.$el)
+	            this.undelegateEvents();
+	        this.$el = element instanceof Backbone.$ ? element : Backbone.$(element);
+	        this.el = this.$el[0];
+	        if (delegate !== false)
+	            this.delegateEvents();
+	        return this;
 	    },
-	
-	    // Set callbacks, where `this.events` is a hash of
-	    //
-	    // *{"event selector": "callback"}*
-	    //
-	    //     {
-	    //       'mousedown .title':  'edit',
-	    //       'click .button':     'save',
-	    //       'click .open':       function(e) { ... }
-	    //     }
-	    //
-	    // pairs. Callbacks will be bound to the view, with `this` set properly.
-	    // Uses event delegation for efficiency.
-	    // Omitting the selector binds the event to `this.el`.
-	    // This only works for delegate-able events: not `focus`, `blur`, and
-	    // not `change`, `submit`, and `reset` in Internet Explorer.
-	    delegateEvents: function(events) {
-	      if (!(events || (events = _.result(this, 'events')))) return this;
-	      this.undelegateEvents();
-	      for (var key in events) {
-	        var method = events[key];
-	        if (!_.isFunction(method)) method = this[events[key]];
-	        if (!method) continue;
-	
-	        var match = key.match(delegateEventSplitter);
-	        var eventName = match[1], selector = match[2];
-	        method = _.bind(method, this);
-	        eventName += '.delegateEvents' + this.cid;
-	        if (selector === '') {
-	          this.$el.on(eventName, method);
-	        } else {
-	          this.$el.on(eventName, selector, method);
+	    delegateEvents: function (events) {
+	        if (!(events || (events = _.result(this, 'events'))))
+	            return this;
+	        this.undelegateEvents();
+	        for (var key in events) {
+	            var method = events[key];
+	            if (!_.isFunction(method))
+	                method = this[events[key]];
+	            if (!method)
+	                continue;
+	            var match = key.match(delegateEventSplitter);
+	            var eventName = match[1], selector = match[2];
+	            method = _.bind(method, this);
+	            eventName += '.delegateEvents' + this.cid;
+	            if (selector === '') {
+	                this.$el.on(eventName, method);
+	            }
+	            else {
+	                this.$el.on(eventName, selector, method);
+	            }
 	        }
-	      }
-	      return this;
+	        return this;
 	    },
-	
-	    // Clears all callbacks previously bound to the view with `delegateEvents`.
-	    // You usually don't need to use this, but may wish to if you have multiple
-	    // Backbone views attached to the same DOM element.
-	    undelegateEvents: function() {
-	      this.$el.off('.delegateEvents' + this.cid);
-	      return this;
+	    undelegateEvents: function () {
+	        this.$el.off('.delegateEvents' + this.cid);
+	        return this;
 	    },
-	
-	    // Ensure that the View has a DOM element to render into.
-	    // If `this.el` is a string, pass it through `$()`, take the first
-	    // matching element, and re-assign it to `el`. Otherwise, create
-	    // an element from the `id`, `className` and `tagName` properties.
-	    _ensureElement: function() {
-	      if (!this.el) {
-	        var attrs = _.extend({}, _.result(this, 'attributes'));
-	        if (this.id) attrs.id = _.result(this, 'id');
-	        if (this.className) attrs['class'] = _.result(this, 'className');
-	        var $el = Backbone.$('<' + _.result(this, 'tagName') + '>').attr(attrs);
-	        this.setElement($el, false);
-	      } else {
-	        this.setElement(_.result(this, 'el'), false);
-	      }
+	    _ensureElement: function () {
+	        if (!this.el) {
+	            var attrs = _.extend({}, _.result(this, 'attributes'));
+	            if (this.id)
+	                attrs.id = _.result(this, 'id');
+	            if (this.className)
+	                attrs['class'] = _.result(this, 'className');
+	            var $el = Backbone.$('<' + _.result(this, 'tagName') + '>').attr(attrs);
+	            this.setElement($el, false);
+	        }
+	        else {
+	            this.setElement(_.result(this, 'el'), false);
+	        }
 	    }
-	
-	  });
-	
-	  // Backbone.Router
-	  // ---------------
-	
-	  // Routers map faux-URLs to actions, and fire events when routes are
-	  // matched. Creating a new one sets its `routes` hash, if not set statically.
-	  var Router = Backbone.Router = function(options) {
+	});
+	function Router(options) {
 	    options || (options = {});
-	    if (options.routes) this.routes = options.routes;
+	    if (options.routes)
+	        this.routes = options.routes;
 	    this._bindRoutes();
 	    this.initialize.apply(this, arguments);
-	  };
-	
-	  // Cached regular expressions for matching named param parts and splatted
-	  // parts of route strings.
-	  var optionalParam = /\((.*?)\)/g;
-	  var namedParam    = /(\(\?)?:\w+/g;
-	  var splatParam    = /\*\w+/g;
-	  var escapeRegExp  = /[\-{}\[\]+?.,\\\^$|#\s]/g;
-	
-	  // Set up all inheritable **Backbone.Router** properties and methods.
-	  _.extend(Router.prototype, {
-	
-	    // Initialize is an empty function by default. Override it with your own
-	    // initialization logic.
-	    initialize: function(){},
-	
-	    // Manually bind a single named route to a callback. For example:
-	    //
-	    //     this.route('search/:query/p:num', 'search', function(query, num) {
-	    //       ...
-	    //     });
-	    //
-	    route: function(route, name, callback) {
-	      if (!_.isRegExp(route)) route = this._routeToRegExp(route);
-	      if (_.isFunction(name)) {
-	        callback = name;
-	        name = '';
-	      }
-	      if (!callback) callback = this[name];
-	      var router = this;
-	      Backbone.history.route(route, function(fragment) {
-	        var args = router._extractParameters(route, fragment);
-	        if (router.execute(callback, args, name) !== false) {
-	        router.trigger.apply(router, ['route:' + name].concat(args));
-	        router.trigger('route', name, args);
-	        Backbone.history.trigger('route', router, name, args);
+	}
+	exports.Router = Router;
+	var optionalParam = /\((.*?)\)/g;
+	var namedParam = /(\(\?)?:\w+/g;
+	var splatParam = /\*\w+/g;
+	var escapeRegExp = /[\-{}\[\]+?.,\\\^$|#\s]/g;
+	_.extend(Router.prototype, {
+	    initialize: function () { },
+	    route: function (route, name, callback) {
+	        if (!_.isRegExp(route))
+	            route = this._routeToRegExp(route);
+	        if (_.isFunction(name)) {
+	            callback = name;
+	            name = '';
 	        }
-	      });
-	      return this;
+	        if (!callback)
+	            callback = this[name];
+	        var router = this;
+	        Backbone.history.route(route, function (fragment) {
+	            var args = router._extractParameters(route, fragment);
+	            if (router.execute(callback, args, name) !== false) {
+	                router.trigger.apply(router, ['route:' + name].concat(args));
+	                router.trigger('route', name, args);
+	                Backbone.history.trigger('route', router, name, args);
+	            }
+	        });
+	        return this;
 	    },
-	
-	    // Execute a route handler with the provided parameters.  This is an
-	    // excellent place to do pre-route setup or post-route cleanup.
-	    execute: function(callback, args, name) {
-	      if (callback) callback.apply(this, args);
+	    execute: function (callback, args, name) {
+	        if (callback)
+	            callback.apply(this, args);
 	    },
-	
-	    // Simple proxy to `Backbone.history` to save a fragment into the history.
-	    navigate: function(fragment, options) {
-	      Backbone.history.navigate(fragment, options);
-	      return this;
+	    navigate: function (fragment, options) {
+	        Backbone.history.navigate(fragment, options);
+	        return this;
 	    },
-	
-	    // Bind all defined routes to `Backbone.history`. We have to reverse the
-	    // order of the routes here to support behavior where the most general
-	    // routes can be defined at the bottom of the route map.
-	    _bindRoutes: function() {
-	      if (!this.routes) return;
-	      this.routes = _.result(this, 'routes');
-	      var route, routes = _.keys(this.routes);
-	      while ((route = routes.pop()) != null) {
-	        this.route(route, this.routes[route]);
-	      }
+	    _bindRoutes: function () {
+	        if (!this.routes)
+	            return;
+	        this.routes = _.result(this, 'routes');
+	        var route, routes = _.keys(this.routes);
+	        while ((route = routes.pop()) != null) {
+	            this.route(route, this.routes[route]);
+	        }
 	    },
-	
-	    // Convert a route string into a regular expression, suitable for matching
-	    // against the current location hash.
-	    _routeToRegExp: function(route) {
-	      route = route.replace(escapeRegExp, '\\$&')
-	                   .replace(optionalParam, '(?:$1)?')
-	                   .replace(namedParam, function(match, optional) {
-	                     return optional ? match : '([^/?]+)';
-	                   })
-	                   .replace(splatParam, '([^?]*?)');
-	      return new RegExp('^' + route + '(?:\\?([\\s\\S]*))?$');
+	    _routeToRegExp: function (route) {
+	        route = route.replace(escapeRegExp, '\\$&')
+	            .replace(optionalParam, '(?:$1)?')
+	            .replace(namedParam, function (match, optional) {
+	            return optional ? match : '([^/?]+)';
+	        })
+	            .replace(splatParam, '([^?]*?)');
+	        return new RegExp('^' + route + '(?:\\?([\\s\\S]*))?$');
 	    },
-	
-	    // Given a route, and a URL fragment that it matches, return the array of
-	    // extracted decoded parameters. Empty or unmatched parameters will be
-	    // treated as `null` to normalize cross-browser behavior.
-	    _extractParameters: function(route, fragment) {
-	      var params = route.exec(fragment).slice(1);
-	      return _.map(params, function(param, i) {
-	        // Don't decode the search params.
-	        if (i === params.length - 1) return param || null;
-	        return param ? decodeURIComponent(param) : null;
-	      });
+	    _extractParameters: function (route, fragment) {
+	        var params = route.exec(fragment).slice(1);
+	        return _.map(params, function (param, i) {
+	            if (i === params.length - 1)
+	                return param || null;
+	            return param ? decodeURIComponent(param) : null;
+	        });
 	    }
-	
-	  });
-	
-	  // Backbone.History
-	  // ----------------
-	
-	  // Handles cross-browser history management, based on either
-	  // [pushState](http://diveintohtml5.info/history.html) and real URLs, or
-	  // [onhashchange](https://developer.mozilla.org/en-US/docs/DOM/window.onhashchange)
-	  // and URL fragments. If the browser supports neither (old IE, natch),
-	  // falls back to polling.
-	  var History = Backbone.History = function() {
+	});
+	function History() {
 	    this.handlers = [];
 	    this.checkUrl = _.bind(this.checkUrl, this);
-	
-	    // Ensure that `History` can be used outside of the browser.
 	    if (typeof window !== 'undefined') {
-	      this.location = window.location;
-	      this.history = window.history;
+	        this.location = window.location;
+	        this.history = window.history;
 	    }
-	  };
-	
-	  // Cached regex for stripping a leading hash/slash and trailing space.
-	  var routeStripper = /^[#\/]|\s+$/g;
-	
-	  // Cached regex for stripping leading and trailing slashes.
-	  var rootStripper = /^\/+|\/+$/g;
-	
-	
-	
-	  // Cached regex for stripping urls of hash.
-	  var pathStripper = /#.*$/;
-	
-	  // Has the history handling already been started?
-	  History.started = false;
-	
-	  // Set up all inheritable **Backbone.History** properties and methods.
-	  _.extend(History.prototype, {
-	
-	    // The default interval to poll for hash changes, if necessary, is
-	    // twenty times a second.
+	}
+	exports.History = History;
+	;
+	var routeStripper = /^[#\/]|\s+$/g;
+	var rootStripper = /^\/+|\/+$/g;
+	var pathStripper = /#.*$/;
+	History.started = false;
+	_.extend(History.prototype, {
 	    interval: 50,
-	
-	    // Are we at the app root?
-	    atRoot: function() {
-	      var path = this.location.pathname.replace(/[^\/]$/, '$&/');
-	      return path === this.root && !this.getSearch();
+	    atRoot: function () {
+	        var path = this.location.pathname.replace(/[^\/]$/, '$&/');
+	        return path === this.root && !this.getSearch();
 	    },
-	
-	    // Does the pathname match the root?
-	    matchRoot: function() {
-	      var path = this.decodeFragment(this.location.pathname);
-	      var root = path.slice(0, this.root.length - 1) + '/';
-	      return root === this.root;
+	    matchRoot: function () {
+	        var path = this.decodeFragment(this.location.pathname);
+	        var root = path.slice(0, this.root.length - 1) + '/';
+	        return root === this.root;
 	    },
-	    // Unicode characters in `location.pathname` are percent encoded so they're
-	    // decoded for comparison. `%25` should not be decoded since it may be part
-	    // of an encoded parameter.
-	    decodeFragment: function(fragment) {
-	      return decodeURI(fragment.replace(/%25/g, '%2525'));
+	    decodeFragment: function (fragment) {
+	        return decodeURI(fragment.replace(/%25/g, '%2525'));
 	    },
-	    // In IE6, the hash fragment and search params are incorrect if the
-	    // fragment contains `?`.
-	    getSearch: function() {
-	      var match = this.location.href.replace(/#.*/, '').match(/\?.+/);
-	      return match ? match[0] : '';
+	    getSearch: function () {
+	        var match = this.location.href.replace(/#.*/, '').match(/\?.+/);
+	        return match ? match[0] : '';
 	    },
-	    // Gets the true hash value. Cannot use location.hash directly due to bug
-	    // in Firefox where location.hash will always be decoded.
-	    getHash: function(window) {
-	      var match = (window || this).location.href.match(/#(.*)$/);
-	      return match ? match[1] : '';
+	    getHash: function (window) {
+	        var match = (window || this).location.href.match(/#(.*)$/);
+	        return match ? match[1] : '';
 	    },
-	
-	    // Get the pathname and search params, without the root.
-	    getPath: function() {
-	      var path = this.decodeFragment(
-	        this.location.pathname + this.getSearch()
-	      ).slice(this.root.length - 1);
-	      return path.charAt(0) === '/' ? path.slice(1) : path;
+	    getPath: function () {
+	        var path = this.decodeFragment(this.location.pathname + this.getSearch()).slice(this.root.length - 1);
+	        return path.charAt(0) === '/' ? path.slice(1) : path;
 	    },
-	
-	    // Get the cross-browser normalized URL fragment from the path or hash.
-	    getFragment: function(fragment) {
-	      if (fragment == null) {
-	        if (this._usePushState || !this._wantsHashChange) {
-	          fragment = this.getPath();
-	        } else {
-	          fragment = this.getHash();
+	    getFragment: function (fragment) {
+	        if (fragment == null) {
+	            if (this._usePushState || !this._wantsHashChange) {
+	                fragment = this.getPath();
+	            }
+	            else {
+	                fragment = this.getHash();
+	            }
 	        }
-	      }
-	      return fragment.replace(routeStripper, '');
+	        return fragment.replace(routeStripper, '');
 	    },
-	
-	    // Start the hash change handling, returning `true` if the current URL matches
-	    // an existing route, and `false` otherwise.
-	    start: function(options) {
-	      if (History.started) throw new Error('Backbone.history has already been started');
-	      History.started = true;
-	
-	      // Figure out the initial configuration. Do we need an iframe?
-	      // Is pushState desired ... is it available?
-	      this.options          = _.extend({root: '/'}, this.options, options);
-	      this.root             = this.options.root;
-	      this._wantsHashChange = this.options.hashChange !== false;
-	      this._hasHashChange   = 'onhashchange' in window && (document.documentMode === void 0 || document.documentMode > 7);
-	      this._useHashChange   = this._wantsHashChange && this._hasHashChange;
-	      this._wantsPushState  = !!this.options.pushState;
-	      this._hasPushState    = !!(this.history && this.history.pushState);
-	      this._usePushState    = this._wantsPushState && this._hasPushState;
-	      this.fragment         = this.getFragment();
-	
-	      // Normalize root to always include a leading and trailing slash.
-	      this.root = ('/' + this.root + '/').replace(rootStripper, '/');
-	
-	
-	
-	
-	      // Transition from hashChange to pushState or vice versa if both are
-	      // requested.
-	      if (this._wantsHashChange && this._wantsPushState) {
-	
-	        // If we've started off with a route from a `pushState`-enabled
-	        // browser, but we're currently in a browser that doesn't support it...
-	        if (!this._hasPushState && !this.atRoot()) {
-	          var root = this.root.slice(0, -1) || '/';
-	          this.location.replace(root + '#' + this.getPath());
-	          // Return immediately as browser will do redirect to new url
-	          return true;
-	
-	        // Or if we've started out with a hash-based route, but we're currently
-	        // in a browser where it could be `pushState`-based instead...
-	        } else if (this._hasPushState && this.atRoot()) {
-	          this.navigate(this.getHash(), {replace: true});
+	    start: function (options) {
+	        if (History.started)
+	            throw new Error('Backbone.history has already been started');
+	        History.started = true;
+	        this.options = _.extend({ root: '/' }, this.options, options);
+	        this.root = this.options.root;
+	        this._wantsHashChange = this.options.hashChange !== false;
+	        this._hasHashChange = 'onhashchange' in window && (document.documentMode === void 0 || document.documentMode > 7);
+	        this._useHashChange = this._wantsHashChange && this._hasHashChange;
+	        this._wantsPushState = !!this.options.pushState;
+	        this._hasPushState = !!(this.history && this.history.pushState);
+	        this._usePushState = this._wantsPushState && this._hasPushState;
+	        this.fragment = this.getFragment();
+	        this.root = ('/' + this.root + '/').replace(rootStripper, '/');
+	        if (this._wantsHashChange && this._wantsPushState) {
+	            if (!this._hasPushState && !this.atRoot()) {
+	                var root = this.root.slice(0, -1) || '/';
+	                this.location.replace(root + '#' + this.getPath());
+	                return true;
+	            }
+	            else if (this._hasPushState && this.atRoot()) {
+	                this.navigate(this.getHash(), { replace: true });
+	            }
 	        }
-	
-	        }
-	
-	      // Proxy an iframe to handle location events if the browser doesn't
-	      // support the `hashchange` event, HTML5 history, or the user wants
-	      // `hashChange` but not `pushState`.
-	      if (!this._hasHashChange && this._wantsHashChange && !this._usePushState) {
-	        this.iframe = document.createElement('iframe');
-	        this.iframe.src = 'javascript:0';
-	        this.iframe.style.display = 'none';
-	        this.iframe.tabIndex = -1;
-	        var body = document.body;
-	        // Using `appendChild` will throw on IE < 9 if the document is not ready.
-	        var iWindow = body.insertBefore(this.iframe, body.firstChild).contentWindow;
-	        iWindow.document.open();
-	        iWindow.document.close();
-	        iWindow.location.hash = '#' + this.fragment;
-	      }
-	
-	      // Add a cross-platform `addEventListener` shim for older browsers.
-	      var addEventListener = window.addEventListener || function (eventName, listener) {
-	        return attachEvent('on' + eventName, listener);
-	      };
-	      // Depending on whether we're using pushState or hashes, and whether
-	      // 'onhashchange' is supported, determine how we check the URL state.
-	      if (this._usePushState) {
-	        addEventListener('popstate', this.checkUrl, false);
-	      } else if (this._useHashChange && !this.iframe) {
-	        addEventListener('hashchange', this.checkUrl, false);
-	      } else if (this._wantsHashChange) {
-	        this._checkUrlInterval = setInterval(this.checkUrl, this.interval);
-	      }
-	      if (!this.options.silent) return this.loadUrl();
-	    },
-	
-	    // Disable Backbone.history, perhaps temporarily. Not useful in a real app,
-	    // but possibly useful for unit testing Routers.
-	    stop: function() {
-	      // Add a cross-platform `removeEventListener` shim for older browsers.
-	      var removeEventListener = window.removeEventListener || function (eventName, listener) {
-	        return detachEvent('on' + eventName, listener);
-	      };
-	      // Remove window listeners.
-	      if (this._usePushState) {
-	        removeEventListener('popstate', this.checkUrl, false);
-	      } else if (this._useHashChange && !this.iframe) {
-	        removeEventListener('hashchange', this.checkUrl, false);
-	      }
-	      // Clean up the iframe if necessary.
-	      if (this.iframe) {
-	        document.body.removeChild(this.iframe);
-	        this.iframe = null;
-	      }
-	      // Some environments will throw when clearing an undefined interval.
-	      if (this._checkUrlInterval) clearInterval(this._checkUrlInterval);
-	      History.started = false;
-	    },
-	
-	    // Add a route to be tested when the fragment changes. Routes added later
-	    // may override previous routes.
-	    route: function(route, callback) {
-	      this.handlers.unshift({route: route, callback: callback});
-	    },
-	
-	    // Checks the current URL to see if it has changed, and if it has,
-	    // calls `loadUrl`, normalizing across the hidden iframe.
-	    checkUrl: function(e) {
-	      var current = this.getFragment();
-	      // If the user pressed the back button, the iframe's hash will have
-	      // changed and we should use that for comparison.
-	      if (current === this.fragment && this.iframe) {
-	        current = this.getHash(this.iframe.contentWindow);
-	      }
-	      if (current === this.fragment) return false;
-	      if (this.iframe) this.navigate(current);
-	      this.loadUrl();
-	    },
-	
-	    // Attempt to load the current URL fragment. If a route succeeds with a
-	    // match, returns `true`. If no defined routes matches the fragment,
-	    // returns `false`.
-	    loadUrl: function(fragment) {
-	      // If the root doesn't match, no routes can match either.
-	      if (!this.matchRoot()) return false;
-	      fragment = this.fragment = this.getFragment(fragment);
-	      return _.some(this.handlers, function(handler) {
-	        if (handler.route.test(fragment)) {
-	          handler.callback(fragment);
-	          return true;
-	        }
-	      });
-	    },
-	
-	    // Save a fragment into the hash history, or replace the URL state if the
-	    // 'replace' option is passed. You are responsible for properly URL-encoding
-	    // the fragment in advance.
-	    //
-	    // The options object can contain `trigger: true` if you wish to have the
-	    // route callback be fired (not usually desirable), or `replace: true`, if
-	    // you wish to modify the current URL without adding an entry to the history.
-	    navigate: function(fragment, options) {
-	      if (!History.started) return false;
-	      if (!options || options === true) options = {trigger: !!options};
-	
-	      // Normalize the fragment.
-	      fragment = this.getFragment(fragment || '');
-	
-	      // Don't include a trailing slash on the root.
-	      var root = this.root;
-	      if (fragment === '' || fragment.charAt(0) === '?') {
-	        root = root.slice(0, -1) || '/';
-	      }
-	      var url = root + fragment;
-	      // Strip the hash and decode for matching.
-	      fragment = this.decodeFragment(fragment.replace(pathStripper, ''));
-	
-	      if (this.fragment === fragment) return;
-	      this.fragment = fragment;
-	
-	
-	      // If pushState is available, we use it to set the fragment as a real URL.
-	      if (this._usePushState) {
-	        this.history[options.replace ? 'replaceState' : 'pushState']({}, document.title, url);
-	
-	      // If hash changes haven't been explicitly disabled, update the hash
-	      // fragment to store history.
-	      } else if (this._wantsHashChange) {
-	        this._updateHash(this.location, fragment, options.replace);
-	        if (this.iframe && (fragment !== this.getHash(this.iframe.contentWindow))) {
-	          var iWindow = this.iframe.contentWindow;
-	          // Opening and closing the iframe tricks IE7 and earlier to push a
-	          // history entry on hash-tag change.  When replace is true, we don't
-	          // want this.
-	          if (!options.replace) {
+	        if (!this._hasHashChange && this._wantsHashChange && !this._usePushState) {
+	            this.iframe = document.createElement('iframe');
+	            this.iframe.src = 'javascript:0';
+	            this.iframe.style.display = 'none';
+	            this.iframe.tabIndex = -1;
+	            var body = document.body;
+	            var iWindow = body.insertBefore(this.iframe, body.firstChild).contentWindow;
 	            iWindow.document.open();
 	            iWindow.document.close();
-	          }
-	
-	          this._updateHash(iWindow.location, fragment, options.replace);
+	            iWindow.location.hash = '#' + this.fragment;
 	        }
-	
-	      // If you've told us that you explicitly don't want fallback hashchange-
-	      // based history, then `navigate` becomes a page refresh.
-	      } else {
-	        return this.location.assign(url);
-	      }
-	      if (options.trigger) return this.loadUrl(fragment);
+	        var addEventListener = window.addEventListener || function (eventName, listener) {
+	            return attachEvent('on' + eventName, listener);
+	        };
+	        if (this._usePushState) {
+	            addEventListener('popstate', this.checkUrl, false);
+	        }
+	        else if (this._useHashChange && !this.iframe) {
+	            addEventListener('hashchange', this.checkUrl, false);
+	        }
+	        else if (this._wantsHashChange) {
+	            this._checkUrlInterval = setInterval(this.checkUrl, this.interval);
+	        }
+	        if (!this.options.silent)
+	            return this.loadUrl();
 	    },
-	
-	    // Update the hash location, either replacing the current entry, or adding
-	    // a new one to the browser history.
-	    _updateHash: function(location, fragment, replace) {
-	      if (replace) {
-	        var href = location.href.replace(/(javascript:|#).*$/, '');
-	        location.replace(href + '#' + fragment);
-	      } else {
-	        // Some browsers require that `hash` contains a leading #.
-	        location.hash = '#' + fragment;
-	      }
+	    stop: function () {
+	        var removeEventListener = window.removeEventListener || function (eventName, listener) {
+	            return detachEvent('on' + eventName, listener);
+	        };
+	        if (this._usePushState) {
+	            removeEventListener('popstate', this.checkUrl, false);
+	        }
+	        else if (this._useHashChange && !this.iframe) {
+	            removeEventListener('hashchange', this.checkUrl, false);
+	        }
+	        if (this.iframe) {
+	            document.body.removeChild(this.iframe);
+	            this.iframe = null;
+	        }
+	        if (this._checkUrlInterval)
+	            clearInterval(this._checkUrlInterval);
+	        History.started = false;
+	    },
+	    route: function (route, callback) {
+	        this.handlers.unshift({ route: route, callback: callback });
+	    },
+	    checkUrl: function (e) {
+	        var current = this.getFragment();
+	        if (current === this.fragment && this.iframe) {
+	            current = this.getHash(this.iframe.contentWindow);
+	        }
+	        if (current === this.fragment)
+	            return false;
+	        if (this.iframe)
+	            this.navigate(current);
+	        this.loadUrl();
+	    },
+	    loadUrl: function (fragment) {
+	        if (!this.matchRoot())
+	            return false;
+	        fragment = this.fragment = this.getFragment(fragment);
+	        return _.some(this.handlers, function (handler) {
+	            if (handler.route.test(fragment)) {
+	                handler.callback(fragment);
+	                return true;
+	            }
+	        });
+	    },
+	    navigate: function (fragment, options) {
+	        if (!History.started)
+	            return false;
+	        if (!options || options === true)
+	            options = { trigger: !!options };
+	        fragment = this.getFragment(fragment || '');
+	        var root = this.root;
+	        if (fragment === '' || fragment.charAt(0) === '?') {
+	            root = root.slice(0, -1) || '/';
+	        }
+	        var url = root + fragment;
+	        fragment = this.decodeFragment(fragment.replace(pathStripper, ''));
+	        if (this.fragment === fragment)
+	            return;
+	        this.fragment = fragment;
+	        if (this._usePushState) {
+	            this.history[options.replace ? 'replaceState' : 'pushState']({}, document.title, url);
+	        }
+	        else if (this._wantsHashChange) {
+	            this._updateHash(this.location, fragment, options.replace);
+	            if (this.iframe && (fragment !== this.getHash(this.iframe.contentWindow))) {
+	                var iWindow = this.iframe.contentWindow;
+	                if (!options.replace) {
+	                    iWindow.document.open();
+	                    iWindow.document.close();
+	                }
+	                this._updateHash(iWindow.location, fragment, options.replace);
+	            }
+	        }
+	        else {
+	            return this.location.assign(url);
+	        }
+	        if (options.trigger)
+	            return this.loadUrl(fragment);
+	    },
+	    _updateHash: function (location, fragment, replace) {
+	        if (replace) {
+	            var href = location.href.replace(/(javascript:|#).*$/, '');
+	            location.replace(href + '#' + fragment);
+	        }
+	        else {
+	            location.hash = '#' + fragment;
+	        }
 	    }
-	
-	  });
-	
-	  // Create the default Backbone.history.
-	  Backbone.history = new History;
-	
-	  return Backbone;
-	
-	}));
-	
-	/* WEBPACK VAR INJECTION */}.call(exports, (function() { return this; }())))
+	});
+	exports.history = new History;
+
 
 /***/ },
 /* 29 */
@@ -3835,9 +3585,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	};
 	var sync_1 = __webpack_require__(32);
 	var _ = __webpack_require__(29);
-	var BackboneShim = __webpack_require__(28);
-	var Backbone = BackboneShim;
-	var src_1 = __webpack_require__(6);
+	var src_1 = __webpack_require__(1);
 	var defaults = src_1.tools.defaults;
 	var RestCollection = (function (_super) {
 	    __extends(RestCollection, _super);
@@ -4011,9 +3759,8 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	"use strict";
 	var _ = __webpack_require__(29);
-	var BackboneShim = __webpack_require__(28);
-	var Backbone = BackboneShim;
-	var src_1 = __webpack_require__(6);
+	var Backbone = __webpack_require__(28);
+	var src_1 = __webpack_require__(1);
 	var defaults = src_1.tools.defaults;
 	var methodMap = {
 	    'create': 'POST',
@@ -4022,14 +3769,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	    'delete': 'DELETE',
 	    'read': 'GET'
 	};
-	exports.$ = null;
+	exports.$ = Backbone.$;
 	exports.errorPromise = function (error) {
-	    var x = this.$.Deferred();
+	    var x = exports.$.Deferred();
 	    x.reject(error);
 	    return x;
 	};
 	exports.ajax = function () {
-	    return this.$.ajax.apply(this.$, arguments);
+	    return exports.$.ajax.apply(exports.$, arguments);
 	};
 	exports.sync = function (method, model, options) {
 	    if (options === void 0) { options = {}; }
@@ -4079,6 +3826,209 @@ return /******/ (function(modules) { // webpackBootstrap
 	    throw new Error('A "url" property or function must be specified');
 	}
 	exports.urlError = urlError;
+
+
+/***/ },
+/* 33 */
+/***/ function(module, exports, __webpack_require__) {
+
+	"use strict";
+	var _ = __webpack_require__(29);
+	var slice = Array.prototype.slice;
+	exports.UnderscoreModel = {
+	    pick: function () {
+	        var args = [];
+	        for (var _i = 0; _i < arguments.length; _i++) {
+	            args[_i - 0] = arguments[_i];
+	        }
+	        return _.pick(this, args);
+	    },
+	    escape: function (attr) {
+	        return _.escape(this[attr]);
+	    },
+	    matches: function (attrs) {
+	        return !!_.iteratee(attrs, this)(this);
+	    }
+	};
+	addUnderscoreMethods(exports.UnderscoreModel, 'attributes', {
+	    pairs: 1, invert: 1,
+	    omit: 0, chain: 1, isEmpty: 1
+	});
+	exports.UnderscoreCollection = {};
+	addUnderscoreMethods(exports.UnderscoreCollection, 'models', {
+	    forEach: 3, each: 3, map: 3, collect: 3, reduce: 4,
+	    foldl: 4, inject: 4, reduceRight: 4, foldr: 4, find: 3, findIndex: 3, findLastIndex: 3, detect: 3, filter: 3,
+	    select: 3, reject: 3, every: 3, all: 3, some: 3, any: 3, include: 3, includes: 3,
+	    contains: 3, invoke: 0, max: 3, min: 3, toArray: 1, size: 1, first: 3,
+	    head: 3, take: 3, initial: 3, rest: 3, tail: 3, drop: 3, last: 3,
+	    without: 0, difference: 0, indexOf: 3, shuffle: 1, lastIndexOf: 3,
+	    isEmpty: 1, chain: 1, sample: 3, partition: 3, groupBy: 3, countBy: 3,
+	    sortBy: 3, indexBy: 3
+	});
+	function addUnderscoreMethods(Mixin, attribute, methods) {
+	    _.each(methods, function (length, method) {
+	        if (_[method])
+	            Mixin[method] = addMethod(length, method, attribute);
+	    });
+	}
+	function addMethod(length, method, attribute) {
+	    switch (length) {
+	        case 1: return function () {
+	            return _[method](this[attribute]);
+	        };
+	        case 2: return function (value) {
+	            return _[method](this[attribute], value);
+	        };
+	        case 3: return function (iteratee, context) {
+	            var value = this[attribute], callback = cb(iteratee, this);
+	            return arguments.length > 1 ?
+	                _[method](value, callback, context)
+	                : _[method](value, callback);
+	        };
+	        case 4: return function (iteratee, defaultVal, context) {
+	            var value = this[attribute], callback = cb(iteratee, this);
+	            return arguments.length > 1 ?
+	                _[method](value, callback, defaultVal, context)
+	                : _[method](value, callback);
+	        };
+	        default: return function () {
+	            var args = slice.call(arguments);
+	            args.unshift(this[attribute]);
+	            return _[method].apply(_, args);
+	        };
+	    }
+	}
+	function cb(iteratee, instance) {
+	    switch (typeof iteratee) {
+	        case 'function': return iteratee;
+	        case 'string': return function (model) { return model.get(iteratee); };
+	        case 'object':
+	            if (!(iteratee instanceof instance.model))
+	                return _.matches(iteratee);
+	    }
+	    return iteratee;
+	}
+
+
+/***/ },
+/* 34 */
+/***/ function(module, exports, __webpack_require__) {
+
+	"use strict";
+	var __extends = (this && this.__extends) || function (d, b) {
+	    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
+	    function __() { this.constructor = d; }
+	    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+	};
+	var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+	    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+	    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+	    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+	    return c > 3 && r && Object.defineProperty(target, key, r), r;
+	};
+	var Backbone = __webpack_require__(28);
+	var _ = __webpack_require__(29);
+	var src_1 = __webpack_require__(1);
+	var rest_1 = __webpack_require__(31);
+	var $ = Backbone.$;
+	var RestStore = (function (_super) {
+	    __extends(RestStore, _super);
+	    function RestStore() {
+	        _super.apply(this, arguments);
+	        this._resolved = {};
+	    }
+	    RestStore.prototype.initialize = function () {
+	        var _this = this;
+	        this.each(function (element, name) {
+	            if (!element)
+	                return;
+	            element.store = _this;
+	            var fetch = element.fetch;
+	            if (fetch) {
+	                var self_1 = _this;
+	                element.fetch = function () {
+	                    return self_1._resolved[name] = fetch.apply(this, arguments);
+	                };
+	            }
+	            if (element instanceof rest_1.RestCollection && element.length) {
+	                _this._resolved[name] = true;
+	            }
+	        });
+	    };
+	    RestStore.prototype.fetch = function () {
+	        var args = [];
+	        for (var _i = 0; _i < arguments.length; _i++) {
+	            args[_i - 0] = arguments[_i];
+	        }
+	        var xhr = [], objsToFetch = args.length ? args : this.keys();
+	        for (var _a = 0, objsToFetch_1 = objsToFetch; _a < objsToFetch_1.length; _a++) {
+	            var name_1 = objsToFetch_1[_a];
+	            var attr = this.attributes[name_1];
+	            attr && attr.fetch && xhr.push(attr.fetch());
+	        }
+	        return $ && $.when && $.when.apply(Backbone.$, xhr);
+	    };
+	    RestStore.prototype.fetchOnce = function () {
+	        var args = [];
+	        for (var _i = 0; _i < arguments.length; _i++) {
+	            args[_i - 0] = arguments[_i];
+	        }
+	        var xhr = [], self = this, objsToFetch = args.length ? args : this.keys();
+	        for (var _a = 0, objsToFetch_2 = objsToFetch; _a < objsToFetch_2.length; _a++) {
+	            var name_2 = objsToFetch_2[_a];
+	            var attr = self.attributes[name_2];
+	            xhr.push(self._resolved[name_2] || attr && attr.fetch && attr.fetch());
+	        }
+	        return $ && $.when && $.when.apply(Backbone.$, xhr);
+	    };
+	    RestStore.prototype.clear = function () {
+	        var args = [];
+	        for (var _i = 0; _i < arguments.length; _i++) {
+	            args[_i - 0] = arguments[_i];
+	        }
+	        var objsToClear = args.length ? args : this.keys();
+	        for (var _a = 0, objsToClear_1 = objsToClear; _a < objsToClear_1.length; _a++) {
+	            var name_3 = objsToClear_1[_a];
+	            var element = this.attributes[name_3];
+	            if (element instanceof rest_1.RestCollection) {
+	                element.reset();
+	            }
+	            else if (element instanceof src_1.Store) {
+	                element.clear();
+	            }
+	            else if (element instanceof rest_1.RestModel) {
+	                element.set(element.defaults());
+	            }
+	            this._resolved[name_3] = false;
+	        }
+	        return this;
+	    };
+	    RestStore.define = function (props, staticProps) {
+	        var attributes = props.defaults || props.attributes;
+	        _.each(attributes, function (Type, name) {
+	            if (Type.has) {
+	                attributes[name] = Type.has
+	                    .get(function (value) {
+	                    if (!this._resolved[name]) {
+	                        value.fetch && value.fetch();
+	                    }
+	                    return value;
+	                })
+	                    .set(function (value) {
+	                    value.length || (this._resolved[name] = false);
+	                    return value;
+	                });
+	            }
+	        });
+	        return rest_1.RestModel.define.call(this, props, staticProps);
+	    };
+	    RestStore = __decorate([
+	        src_1.define({})
+	    ], RestStore);
+	    return RestStore;
+	}(src_1.Store));
+	Object.defineProperty(exports, "__esModule", { value: true });
+	exports.default = RestStore;
 
 
 /***/ }

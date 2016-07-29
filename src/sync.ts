@@ -47,10 +47,10 @@ const methodMap = {
 };
 
 
-export let $ = null;
+export let $ = Backbone.$;
     
 export let errorPromise = function( error ){
-    var x = this.$.Deferred();
+    var x = $.Deferred();
     x.reject( error );
     return x;
 }
@@ -58,7 +58,7 @@ export let errorPromise = function( error ){
 // Set the default implementation of `Backbone.ajax` to proxy through to `$`.
 // Override this if you'd like to use a different library.
 export let ajax = function(){
-    return this.$.ajax.apply( this.$, arguments );
+    return $.ajax.apply( $, arguments );
 }
 
     // Backbone.sync

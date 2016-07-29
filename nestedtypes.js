@@ -3591,6 +3591,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    function RestCollection() {
 	        _super.apply(this, arguments);
 	    }
+	    RestCollection.prototype.url = function () { return this.model.prototype.urlRoot || ''; };
 	    RestCollection.prototype.fetch = function (options) {
 	        options = _.extend({ parse: true }, options);
 	        var success = options.success;

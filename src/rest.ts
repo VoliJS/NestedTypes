@@ -19,7 +19,8 @@ interface RestOptions extends SyncOptions {
     } 
 })
 export class RestCollection extends Collection {
-    url : LazyValue< string >
+    model : typeof RestModel
+    url() : string { return this.model.prototype.urlRoot || ''; }
 
     // Fetch the default set of models for this collection, resetting the
     // collection when they arrive. If `reset: true` is passed, the response

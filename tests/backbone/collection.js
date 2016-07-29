@@ -1264,7 +1264,7 @@
             assert.equal( collection._byId[ model.id ], void 0 );
             assert.equal( collection._byId[ model.cid ], void 0 );
             assert.equal( model.collection, void 0 );
-            assert.deepEqual( model._events, { dummy : void 0 });
+            assert.deepEqual( model._events, { dummy : void 0, destroy : void 0 });
         });
 
         var model      = collection.add( { id : 1 } );

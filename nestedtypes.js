@@ -3820,7 +3820,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        if (error)
 	            error.call(options.context, xhr, textStatus, errorThrown);
 	    };
-	    var xhr = options.xhr = this.ajax(_.extend(params, options));
+	    var xhr = options.xhr = exports.ajax(_.extend(params, options));
 	    model.trigger('request', model, xhr, options);
 	    return xhr;
 	};

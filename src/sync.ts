@@ -57,7 +57,7 @@ export let errorPromise = function( error ){
 
 // Set the default implementation of `Backbone.ajax` to proxy through to `$`.
 // Override this if you'd like to use a different library.
-export let ajax = function(){
+export let ajax : ( options : {} ) => any = function(){
     return $.ajax.apply( $, arguments );
 }
 
@@ -133,7 +133,7 @@ export let sync = function( method : Method, model : Restful, options : SyncOpti
     };
 
     // Make the request, allowing the user to override any Ajax options.
-    var xhr = options.xhr = this.ajax( _.extend( params, options ) );
+    var xhr = options.xhr = ajax( _.extend( params, options ) );
     model.trigger( 'request', model, xhr, options );
     return xhr;
 }

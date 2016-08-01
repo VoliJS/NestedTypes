@@ -1,6 +1,6 @@
 (function() {
 
-/*  var Book = Backbone.Model.extend({
+  var Book = Backbone.Model.extend({
     defaults : {
         title  : "The Tempest",
         author : "Bill Shakespeare",
@@ -11,7 +11,7 @@
   });
 
   var Library = Book.Collection;
-*/
+
   var library;
 
   var attrs = {

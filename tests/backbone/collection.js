@@ -1512,7 +1512,7 @@
         };
         collection.sync = function( method, model, options ){
             options.error.call( options.context );
-            return {};
+            return { always(){} };
         };
         collection.fetch( options );
     } );

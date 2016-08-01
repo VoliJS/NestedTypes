@@ -6,6 +6,8 @@ import * as Backbone from './backbone'
 import { define, Model, Collection, tools } from 'type-r/src'
 const { defaults } = tools;
 
+const transactionalProto = tools.getBaseClass( Model ).prototype;
+
 interface RestOptions extends SyncOptions {
     wait? : boolean
     patch? : boolean
@@ -39,6 +41,24 @@ export class RestCollection extends Collection {
 
         wrapError( this, options );
         return _sync( 'read', this, options );
+    }
+
+    create( a_model, options : any = {} ){
+        const model : RestModel = a_model instanceof RestModel ?
+                                        a_model :
+                                        <any> this.model.create( a_model, options, this );
+
+        options.wait || this.add([ model ], options );
+
+        var collection  = this;
+        var success     = options.success;
+        options.success = ( model, resp, callbackOpts ) =>{
+            if( options.wait ) this.add( [ model ], callbackOpts );
+            if( success ) success.call( callbackOpts.context, model, resp, callbackOpts );
+        };
+
+        model.save( null, options );
+        return model;
     }
 
     // Proxy `Backbone.sync` by default -- but override this if you need
@@ -82,7 +102,9 @@ export class RestModel extends Model {
     // Set a hash of model attributes, and sync the model to the server.
     // If the server returns an attributes hash that differs, the model's
     // state will be `set` again.
-    save( key, val, options : RestOptions ){
+    save( attrs? : {}, options? : RestOptions )
+    save( key : string, value : any, options? : RestOptions )
+    save( key, val, options? : RestOptions ){
         // Handle both `"key", value` and `{key: value}` -style arguments.
         var attrs;
         if( key == null || typeof key === 'object' ){
@@ -113,13 +135,14 @@ export class RestModel extends Model {
         var model       = this;
         var success     = options.success;
         var attributes  = this.attributes;
-        options.success = function( serverAttrs ){
+        options.success = serverAttrs => {
             // Ensure attributes are restored during synchronous saves.
             model.attributes = attributes;
             if( wait ) serverAttrs = _.extend( {}, attrs, serverAttrs );
 
             if( serverAttrs ){
-                model.set( serverAttrs, options );
+                // When server sends string, polimorphyc Model set screws up.
+                transactionalProto.set.call( this, serverAttrs, options );
                 if( model._invalidate( options ) ) return false;
             }
 
@@ -189,9 +212,9 @@ export class RestModel extends Model {
 
 function _sync( method, _this, options ){
     // Abort and pending IO request. Just one is allowed at the time.
-    _this._xhr && _this._xhr.abort();
+    _this._xhr && _this._xhr.abort && _this._xhr.abort();
     const xhr = _this._xhr = _this.sync( method, _this, options );
-    xhr && xhr.always( function(){ _this.xhr = void 0; });
+    xhr && xhr.always && xhr.always( function(){ _this.xhr = void 0; });
     return xhr;
 }
 

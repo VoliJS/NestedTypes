@@ -1409,7 +1409,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	}(transactions_1.Transactional));
 	exports.Collection = Collection;
 	function toElements(collection, elements, options) {
-	    var parsed = options.parse ? collection.parse(elements) : elements;
+	    var parsed = options.parse ? collection.parse(elements, options) : elements;
 	    return Array.isArray(parsed) ? parsed : [parsed];
 	}
 	var slice = Array.prototype.slice;
@@ -1462,7 +1462,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        }
 	        return this;
 	    };
-	    Transactional.prototype.parse = function (data) { return data; };
+	    Transactional.prototype.parse = function (data, options) { return data; };
 	    Transactional.prototype.deepGet = function (reference) {
 	        return traversable_1.resolveReference(this, reference, function (object, key) { return object.get(key); });
 	    };
@@ -1783,7 +1783,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    function Record(a_values, a_options, owner) {
 	        var _this = this;
 	        _super.call(this, _cidCounter++, owner);
-	        var options = a_options || {}, values = (options.parse ? this.parse(a_values) : a_values) || {};
+	        var options = a_options || {}, values = (options.parse ? this.parse(a_values, options) : a_values) || {};
 	        var attributes = options.clone ? cloneAttributes(this, values) : this.defaults(values);
 	        this.forEachAttr(attributes, function (value, key, attr) {
 	            var next = attributes[key] = attr.transform(value, options, void 0, _this);
@@ -1931,7 +1931,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        });
 	        return json;
 	    };
-	    Record.prototype.parse = function (data) {
+	    Record.prototype.parse = function (data, options) {
 	        return this._parse(data);
 	    };
 	    Record.prototype.set = function (a, b, c) {
@@ -1958,7 +1958,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    Record.prototype._createTransaction = function (a_values, options) {
 	        var _this = this;
 	        if (options === void 0) { options = {}; }
-	        var isRoot = begin(this), changes = [], nested = [], attributes = this.attributes, values = options.parse ? this.parse(a_values) : a_values, merge = !options.reset;
+	        var isRoot = begin(this), changes = [], nested = [], attributes = this.attributes, values = options.parse ? this.parse(a_values, options) : a_values, merge = !options.reset;
 	        if (Object.getPrototypeOf(values) === Object.prototype) {
 	            this.forEachAttr(values, function (value, key, attr) {
 	                var prev = attributes[key];
@@ -3719,6 +3719,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	var _ = __webpack_require__(31);
 	var src_1 = __webpack_require__(1);
 	var defaults = src_1.tools.defaults;
+	var transactionalProto = src_1.tools.getBaseClass(src_1.Model).prototype;
 	var RestCollection = (function (_super) {
 	    __extends(RestCollection, _super);
 	    function RestCollection() {
@@ -3740,6 +3741,24 @@ return /******/ (function(modules) { // webpackBootstrap
 	        };
 	        wrapError(this, options);
 	        return _sync('read', this, options);
+	    };
+	    RestCollection.prototype.create = function (a_model, options) {
+	        var _this = this;
+	        if (options === void 0) { options = {}; }
+	        var model = a_model instanceof RestModel ?
+	            a_model :
+	            this.model.create(a_model, options, this);
+	        options.wait || this.add([model], options);
+	        var collection = this;
+	        var success = options.success;
+	        options.success = function (model, resp, callbackOpts) {
+	            if (options.wait)
+	                _this.add([model], callbackOpts);
+	            if (success)
+	                success.call(callbackOpts.context, model, resp, callbackOpts);
+	        };
+	        model.save(null, options);
+	        return model;
 	    };
 	    RestCollection.prototype.sync = function () {
 	        return sync_1.sync.apply(this, arguments);
@@ -3779,6 +3798,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        return sync_1.sync.apply(this, arguments);
 	    };
 	    RestModel.prototype.save = function (key, val, options) {
+	        var _this = this;
 	        var attrs;
 	        if (key == null || typeof key === 'object') {
 	            attrs = key;
@@ -3805,7 +3825,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            if (wait)
 	                serverAttrs = _.extend({}, attrs, serverAttrs);
 	            if (serverAttrs) {
-	                model.set(serverAttrs, options);
+	                transactionalProto.set.call(_this, serverAttrs, options);
 	                if (model._invalidate(options))
 	                    return false;
 	            }
@@ -3871,9 +3891,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	}(src_1.Model));
 	exports.RestModel = RestModel;
 	function _sync(method, _this, options) {
-	    _this._xhr && _this._xhr.abort();
+	    _this._xhr && _this._xhr.abort && _this._xhr.abort();
 	    var xhr = _this._xhr = _this.sync(method, _this, options);
-	    xhr && xhr.always(function () { _this.xhr = void 0; });
+	    xhr && xhr.always && xhr.always(function () { _this.xhr = void 0; });
 	    return xhr;
 	}
 	function wrapError(model, options) {

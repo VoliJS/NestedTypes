@@ -3726,6 +3726,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	        _super.apply(this, arguments);
 	    }
 	    RestCollection.prototype.url = function () { return this.model.prototype.urlRoot || ''; };
+	    RestCollection.prototype._invalidate = function (options) {
+	        var error;
+	        if (options.validate && (error = this.validationError)) {
+	            this.trigger('invalid', this, error, _.extend({ validationError: error }, options));
+	            return true;
+	        }
+	    };
 	    RestCollection.prototype.fetch = function (options) {
 	        options = _.extend({ parse: true }, options);
 	        var success = options.success;
@@ -3753,7 +3760,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        var success = options.success;
 	        options.success = function (model, resp, callbackOpts) {
 	            if (options.wait)
-	                _this.add([model], callbackOpts);
+	                _this.add([model], defaults({ parse: false }, callbackOpts));
 	            if (success)
 	                success.call(callbackOpts.context, model, resp, callbackOpts);
 	        };
@@ -3766,8 +3773,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    RestCollection = __decorate([
 	        src_1.define({
 	            itemEvents: {
-	                destroy: function (model) { this.remove(model); },
-	                invalid: true, request: true, sync: true
+	                destroy: function (model) { this.remove(model); }
 	            }
 	        })
 	    ], RestCollection);
@@ -3780,6 +3786,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	    function RestModel() {
 	        _super.apply(this, arguments);
 	    }
+	    RestModel.prototype._invalidate = function (options) {
+	        var error;
+	        if (options.validate && (error = this.validationError)) {
+	            triggerAndBubble(this, 'invalid', this, error, _.extend({ validationError: error }, options));
+	            return true;
+	        }
+	    };
 	    RestModel.prototype.fetch = function (options) {
 	        options = _.extend({ parse: true }, options);
 	        var model = this;
@@ -3790,7 +3803,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                return false;
 	            if (success)
 	                success.call(options.context, model, serverAttrs, options);
-	            model.trigger('sync', model, serverAttrs, options);
+	            triggerAndBubble(model, 'sync', model, serverAttrs, options);
 	        };
 	        wrapError(this, options);
 	        return _sync('read', this, options);
@@ -3832,7 +3845,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            }
 	            if (success)
 	                success.call(options.context, model, serverAttrs, options);
-	            model.trigger('sync', model, serverAttrs, options);
+	            triggerAndBubble(model, 'sync', model, serverAttrs, options);
 	        };
 	        wrapError(this, options);
 	        if (attrs && wait)
@@ -3850,8 +3863,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	        var success = options.success;
 	        var wait = options.wait;
 	        var destroy = function () {
-	            model.stopListening();
 	            model.trigger('destroy', model, model.collection, options);
+	            model.dispose();
 	        };
 	        options.success = function (resp) {
 	            if (wait)
@@ -3859,7 +3872,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            if (success)
 	                success.call(options.context, model, resp, options);
 	            if (!model.isNew())
-	                model.trigger('sync', model, resp, options);
+	                triggerAndBubble(model, 'sync', model, resp, options);
 	        };
 	        var xhr = false;
 	        if (this.isNew()) {
@@ -3902,8 +3915,17 @@ return /******/ (function(modules) { // webpackBootstrap
 	    options.error = function (resp) {
 	        if (error)
 	            error.call(options.context, model, resp, options);
-	        model.trigger('error', model, resp, options);
+	        triggerAndBubble(model, 'error', model, resp, options);
 	    };
+	}
+	function triggerAndBubble(model) {
+	    var args = [];
+	    for (var _i = 1; _i < arguments.length; _i++) {
+	        args[_i - 1] = arguments[_i];
+	    }
+	    model.trigger.apply(model, args);
+	    var collection = model.collection;
+	    collection && collection.trigger.apply(collection, args);
 	}
 
 
@@ -3974,6 +3996,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    };
 	    var xhr = options.xhr = exports.ajax(_.extend(params, options));
 	    model.trigger('request', model, xhr, options);
+	    model.collection && model.collection.trigger('request', model, xhr, options);
 	    return xhr;
 	};
 	function urlError() {

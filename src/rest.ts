@@ -16,13 +16,20 @@ interface RestOptions extends SyncOptions {
 
 @define({
     itemEvents : {
-        destroy( model ){ this.remove( model ); },
-        invalid : true, request : true, sync : true
+        destroy( model ){ this.remove( model ); }
     } 
 })
 export class RestCollection extends Collection {
     model : typeof RestModel
     url() : string { return this.model.prototype.urlRoot || ''; }
+
+    _invalidate( options : { validate? : boolean } ) : boolean {
+        var error;
+        if( options.validate && ( error = this.validationError ) ){
+            this.trigger( 'invalid', this, error, _.extend( { validationError : error }, options ) );
+            return true;
+        }
+    }
 
     // Fetch the default set of models for this collection, resetting the
     // collection when they arrive. If `reset: true` is passed, the response
@@ -54,7 +61,7 @@ export class RestCollection extends Collection {
         var collection  = this;
         var success     = options.success;
         options.success = ( model, resp, callbackOpts ) =>{
-            if( options.wait ) this.add( [ model ], callbackOpts );
+            if( options.wait ) this.add( [ model ], defaults({ parse : false }, callbackOpts ) );
             if( success ) success.call( callbackOpts.context, model, resp, callbackOpts );
         };
 
@@ -76,6 +83,15 @@ export class RestCollection extends Collection {
 export class RestModel extends Model {
     urlRoot : string
 
+    /** @private */
+    _invalidate( options : { validate? : boolean } ) : boolean {
+        var error;
+        if( options.validate && ( error = this.validationError ) ){
+            triggerAndBubble( this, 'invalid', this, error, _.extend( { validationError : error }, options ) );
+            return true;
+        }
+    }
+
     // Fetch the model from the server, merging the response with the model's
     // local attributes. Any changed attributes will trigger a "change" event.
     fetch( options : RestOptions ){
@@ -87,7 +103,7 @@ export class RestModel extends Model {
             if( model._invalidate( options ) ) return false;
 
             if( success ) success.call( options.context, model, serverAttrs, options );
-            model.trigger( 'sync', model, serverAttrs, options );
+            triggerAndBubble( model, 'sync', model, serverAttrs, options );
         };
 
         wrapError( this, options );
@@ -148,7 +164,7 @@ export class RestModel extends Model {
             }
 
             if( success ) success.call( options.context, model, serverAttrs, options );
-            model.trigger( 'sync', model, serverAttrs, options );
+            triggerAndBubble( model, 'sync', model, serverAttrs, options );
         };
         wrapError( this, options );
 
@@ -175,14 +191,14 @@ export class RestModel extends Model {
         var wait    = options.wait;
 
         var destroy = function(){
-            model.stopListening();
             model.trigger( 'destroy', model, model.collection, options );
+            model.dispose();
         };
 
         options.success = function( resp ){
             if( wait ) destroy();
             if( success ) success.call( options.context, model, resp, options );
-            if( !model.isNew() ) model.trigger( 'sync', model, resp, options );
+            if( !model.isNew() ) triggerAndBubble( model, 'sync', model, resp, options );
         };
 
         var xhr = false;
@@ -224,6 +240,12 @@ function wrapError( model, options ){
     var error     = options.error;
     options.error = function( resp ){
         if( error ) error.call( options.context, model, resp, options );
-        model.trigger( 'error', model, resp, options );
+        triggerAndBubble( model, 'error', model, resp, options );
     };
+}
+
+function triggerAndBubble( model : RestModel, ...args : any[] ){
+    model.trigger.apply( model, args );
+    const { collection } = model;
+    collection && collection.trigger.apply( collection, args ); 
 }

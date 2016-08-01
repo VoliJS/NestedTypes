@@ -18,6 +18,7 @@ export type Method = 'create' | 'update' | 'patch' | 'delete' | 'read'
 
 export interface Restful {
     trigger( event : string, model, xhr, options )
+    collection? : { trigger( event : string, model, xhr, options ) }
     toJSON( options : any ) : {}
 }
 
@@ -135,6 +136,7 @@ export let sync = function( method : Method, model : Restful, options : SyncOpti
     // Make the request, allowing the user to override any Ajax options.
     var xhr = options.xhr = ajax( _.extend( params, options ) );
     model.trigger( 'request', model, xhr, options );
+    model.collection && model.collection.trigger( 'request', model, xhr, options );
     return xhr;
 }
 

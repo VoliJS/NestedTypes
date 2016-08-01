@@ -1545,6 +1545,10 @@
     QUnit.test( "create with validate:true enforces validation", function( assert ){
         assert.expect( 2 );
         var ValidatingModel      = Backbone.Model.extend( {
+            defaults : {
+                foo : String
+            },
+
             validate : function( attrs ){
                 return "fail";
             }

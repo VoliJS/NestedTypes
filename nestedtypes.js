@@ -2423,7 +2423,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        return value == null || value instanceof Date ? value : new Date(value);
 	    };
 	    DateType.prototype.validate = function (model, value, name) {
-	        if (isNaN(+value))
+	        if (value != null && isNaN(+value))
 	            return name + ' is Invalid Date';
 	    };
 	    DateType.prototype.toJSON = function (value) { return value && value.toISOString(); };
@@ -2543,7 +2543,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        _super.apply(this, arguments);
 	    }
 	    NumericType.prototype.validate = function (model, value, name) {
-	        if (!isFinite(value)) {
+	        if (value != null && !isFinite(value)) {
 	            return name + ' is not valid number';
 	        }
 	    };

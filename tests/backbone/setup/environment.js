@@ -20,6 +20,7 @@
     Backbone.ajax = function(settings) {
       settings.always = function( f ){ f( settings ); return settings };
       settings.done = function( f ){ f( settings ); return settings };
+      settings.abort = function(){};
       return ( env.ajaxSettings = settings );
     };
 

@@ -5,7 +5,7 @@
     title  : "The Tempest",
     author : "Bill Shakespeare",
     audience : "",
-    b : 0,
+    b : 0, a : void 0, c : void 0,
     d : 0,
     length : 123
   });
@@ -23,7 +23,8 @@
         id     : '1-the-tempest',
         title  : "The Tempest",
         author : "Bill Shakespeare",
-        length : 123
+        length : 123,
+        a : void 0, b : void 0, c : void 0, d : void 0
       });
       collection = new klass();
       collection.add(doc);
@@ -1320,7 +1321,7 @@ QUnit.test("toJSON receives attrs during save(..., {wait: true})", function(asse
   QUnit.test("save within change event", function(assert) {
     assert.expect(1);
     var env = this;
-    var model = new Backbone.Model({firstName : "Taylor", lastName: "Swift"});
+    var model = new ( Backbone.Model.defaults({firstName : "Taylor", lastName: "Swift"}) );
     model.url = '/test';
     model.on('change', function () {
       model.save();
@@ -1356,7 +1357,7 @@ QUnit.test("toJSON receives attrs during save(..., {wait: true})", function(asse
 
   QUnit.test("save, fetch, destroy triggers error event when an error occurs", function(assert) {
     assert.expect(3);
-    var model = new Backbone.Model();
+    var model = new ( Backbone.Model.defaults({ data : void 0 }) );
     model.on('error', function () {
       assert.ok(true);
     });
@@ -1370,7 +1371,7 @@ QUnit.test("toJSON receives attrs during save(..., {wait: true})", function(asse
 
   QUnit.test("#3283 - save, fetch, destroy calls success with context", function(assert) {
     assert.expect(3);
-    var model = new Backbone.Model();
+    var model = new ( Backbone.Model.defaults({ data : void 0 }) );
     var obj = {};
     var options = {
       context: obj,
@@ -1388,7 +1389,7 @@ QUnit.test("toJSON receives attrs during save(..., {wait: true})", function(asse
 
   QUnit.test("#3283 - save, fetch, destroy calls error with context", function(assert) {
     assert.expect(3);
-    var model = new Backbone.Model();
+    var model = new ( Backbone.Model.defaults({ data : void 0 }) );
     var obj = {};
     var options = {
       context: obj,

@@ -138,7 +138,7 @@
                     num : Number,
                     str : String,
                     bool : Boolean,
-                    int : Integer
+                    int : Number.integer
                 }
             });
 
@@ -205,7 +205,9 @@
         describe( 'Date type', function(){
             var user, User = Nested.Model.extend({
                 attributes:{
-                    created: Date,
+                    created : Date,
+                    timestamp : Date.timestamp,
+                    microsoft : Date.microsoft,
                     name: String,
                     loginCount: Integer
                 }
@@ -217,6 +219,8 @@
 
             it( 'create new Date object on construction', function(){
                 expect( user.created ).to.be.instanceOf( Date );
+                expect( user.microsoft ).to.be.instanceOf( Date );
+                expect( user.timestamp ).to.be.instanceOf( Date );
             });
 
             it( 'parse ISO dates in all browsers on assignment', function(){
@@ -224,6 +228,14 @@
                 user.created = "2012-12-12T10:00";
                 expect( user.created ).to.be.instanceof( Date );
                 expect( user.created.toISOString() ).to.be.eql( '2012-12-12T10:00:00.000Z' );
+
+                user.timestamp = "2012-12-12T10:00";
+                expect( user.timestamp ).to.be.instanceof( Date );
+                expect( user.timestamp.toISOString() ).to.be.eql( '2012-12-12T10:00:00.000Z' );
+
+                user.microsoft = "2012-12-12T10:00";
+                expect( user.microsoft ).to.be.instanceof( Date );
+                expect( user.microsoft.toISOString() ).to.be.eql( '2012-12-12T10:00:00.000Z' );
             });
 
             it( 'parse integer time stamps on assignment', function(){
@@ -231,17 +243,27 @@
                 user.created = 1234567890123;
                 expect( user.created ).to.be.instanceof( Date );
                 expect( user.created.toISOString() ).to.be.eql( '2009-02-13T23:31:30.123Z' );
+
+                user.timestamp = 1234567890123;
+                expect( user.timestamp ).to.be.instanceof( Date );
+                expect( user.timestamp.toISOString() ).to.be.eql( '2009-02-13T23:31:30.123Z' );
+
+                user.microsoft = 1234567890123;
+                expect( user.microsoft ).to.be.instanceof( Date );
+                expect( user.microsoft.toISOString() ).to.be.eql( '2009-02-13T23:31:30.123Z' );                
             });
 
             it( 'parse MS time stamps on assignment', function(){
-                user.created = "/Date(1234567890123)/";
-                expect( user.created ).to.be.instanceof( Date );
-                expect( user.created.toISOString() ).to.be.eql( '2009-02-13T23:31:30.123Z' );
+                user.microsoft = "/Date(1234567890123)/";
+                expect( user.microsoft ).to.be.instanceof( Date );
+                expect( user.microsoft.toISOString() ).to.be.eql( '2009-02-13T23:31:30.123Z' );
             });
 
             it( 'is serialized to ISO date', function(){
                 var json = user.toJSON();
                 expect( json.created ).to.be.eql( '2009-02-13T23:31:30.123Z' );
+                expect( json.timestamp ).to.be.eql( 1234567890123 );
+                expect( json.microsoft ).to.be.eql( '/Date(1234567890123)/' );
             } );
         });
 

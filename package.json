@@ -16,18 +16,22 @@
     "url": "https://github.com/Volicon/backbone.nestedTypes.git"
   },
   "author": "Vlad Balin <https://github.com/gaperton>",
-  "contributors": "",
+  "contributors": [],
   "dependencies": {
-    "chai-as-promised": "^5.3.0",
-    "underscore": ">=1.5.0"
+    "jquery": "*",
+    "underscore": "^1.8.3"
   },
   "devDependencies": {
+    "chai-as-promised": "^5.3.0",
     "chai": "* <3",
-    "jquery": "*",
     "mocha": "*",
     "requirejs": "^2.1.20",
     "sinon": "*",
     "sinon-chai": "*",
+    "source-map-loader": "^0.1.5",
+    "ts-loader": "^0.8.2",
+    "type-r": "^0.1.2-0",
+    "typescript": "^1.8.10",
     "uglify-js": "*",
     "webpack": "^1.12.2"
   },

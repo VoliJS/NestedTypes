@@ -13,12 +13,25 @@ export const UnderscoreModel = {
 
     matches( attrs ){
         return !!_.iteratee( attrs, this )( this );
+    },
+
+    omit( ...keys : string[] ) : {} {
+        return this.mapObject( ( value, key ) => {
+            if( keys.indexOf( key ) < 0 ){
+                return value;
+            }
+        });
+    },
+
+    invert(){
+        const inverted = {};
+        this.each( ( value, key ) => inverted[ value ] = key );
+        return inverted;
     }
 };
 
 addUnderscoreMethods( UnderscoreModel, 'attributes', {
-    pairs: 1, invert: 1,
-    omit: 0, chain: 1, isEmpty: 1
+    pairs: 1, chain: 1, isEmpty: 1
 });
 
 export const UnderscoreCollection = {};

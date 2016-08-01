@@ -56,6 +56,9 @@ export class RestCollection extends Collection {
                                         a_model :
                                         <any> this.model.create( a_model, options, this );
 
+        // Hack! For the situation when model instance is given, aquire it. 
+        model._owner || ( model._owner = this );
+
         options.wait || this.add([ model ], options );
 
         var collection  = this;

@@ -3757,6 +3757,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        var model = a_model instanceof RestModel ?
 	            a_model :
 	            this.model.create(a_model, options, this);
+	        model._owner || (model._owner = this);
 	        options.wait || this.add([model], options);
 	        var collection = this;
 	        var success = options.success;

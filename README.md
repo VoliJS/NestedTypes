@@ -4,6 +4,8 @@ Version 2.0 alpha is here.
 
 ## TODO
 
+- [x] Underscore tests passes.
+- [x] REST IO test passes. 
 - [ ] NestedReact works with 2.0 on given examples.
 - [ ] Created NestedReact 1.0 alpha build with all ES6 features promised. 
 - [ ] Alphas are deployed to Volicon Observer.

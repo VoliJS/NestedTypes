@@ -60,7 +60,7 @@ export default class RestStore extends Store {
         return $ && $.when && $.when.apply( Backbone.$, xhr );
     }
 
-    clear( ...args : string[] ) : {} {
+    clear( ...args : string[] ) : this {
         var objsToClear = args.length ? args : this.keys();
 
         for( let name of objsToClear ){

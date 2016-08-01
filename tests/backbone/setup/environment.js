@@ -18,6 +18,8 @@
 
     // Capture ajax settings for comparison.
     Backbone.ajax = function(settings) {
+      settings.always = function( f ){ f( settings ); return settings };
+      settings.done = function( f ){ f( settings ); return settings };
       return ( env.ajaxSettings = settings );
     };
 

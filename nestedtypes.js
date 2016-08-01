@@ -1864,6 +1864,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        this.transaction(function () {
 	            _this.forEachAttr(_this.attributes, function (value, key) { return _this[key] = void 0; });
 	        }, options);
+	        return this;
 	    };
 	    Record.prototype.getOwner = function () {
 	        var owner = this._owner;
@@ -3335,11 +3336,11 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	"use strict";
 	var _ = __webpack_require__(31);
-	var $ = __webpack_require__(32);
+	var jQuery = __webpack_require__(32);
 	var previousBackbone = window.Backbone;
 	var slice = Array.prototype.slice;
 	exports.VERSION = '1.2.3';
-	exports.$ = exports.$;
+	exports.$ = jQuery;
 	function noConflict() {
 	    window.Backbone = previousBackbone;
 	    return this;
@@ -3871,8 +3872,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	exports.RestModel = RestModel;
 	function _sync(method, _this, options) {
 	    _this._xhr && _this._xhr.abort();
-	    return _this._xhr = _this.sync(method, _this, options)
-	        .always(function () { _this.xhr = void 0; });
+	    var xhr = _this._xhr = _this.sync(method, _this, options);
+	    xhr && xhr.always(function () { _this.xhr = void 0; });
+	    return xhr;
 	}
 	function wrapError(model, options) {
 	    var error = options.error;

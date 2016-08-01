@@ -7,7 +7,7 @@
 //     (c) 2010-2015 Jeremy Ashkenas, DocumentCloud and Investigative Reporters & Editors
 //     Backbone may be freely distributed under the MIT license.
 import * as _ from 'underscore'
-import * as $ from 'jquery'
+import * as jQuery from 'jquery'
 
 // Initial Setup
 // -------------
@@ -24,7 +24,7 @@ export const VERSION = '1.2.3';
 
 // For Backbone's purposes, jQuery, Zepto, Ender, or My Library (kidding) owns
 // the `$` variable.
-export let $ = $;
+export let $ = jQuery;
 
 // Runs Backbone.js in *noConflict* mode, returning the `Backbone` variable
 // to its previous owner. Returns a reference to this Backbone object.

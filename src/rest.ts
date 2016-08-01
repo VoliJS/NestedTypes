@@ -190,9 +190,9 @@ export class RestModel extends Model {
 function _sync( method, _this, options ){
     // Abort and pending IO request. Just one is allowed at the time.
     _this._xhr && _this._xhr.abort();
-
-    return _this._xhr = _this.sync( method, _this, options )
-        .always( function(){ _this.xhr = void 0; });
+    const xhr = _this._xhr = _this.sync( method, _this, options );
+    xhr && xhr.always( function(){ _this.xhr = void 0; });
+    return xhr;
 }
 
 // Wrap an optional error callback with a fallback error event.

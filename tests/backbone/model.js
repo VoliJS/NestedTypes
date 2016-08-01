@@ -1037,7 +1037,7 @@ QUnit.test("url", function(assert) {
     assert.equal(doc.url(), '/collection/1-the-tempest');
     doc.collection.url = '/collection/';
     assert.equal(doc.url(), '/collection/1-the-tempest');
-    doc.collection = null;
+    doc._owner = null;
     assert.throws(function() { doc.url(); });
     doc.collection = collection;
   });

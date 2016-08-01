@@ -78,6 +78,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }
 	});
 	Object.defineProperties(Nested, {
+	    'emulateHTTP': linkProperty(Backbone, 'emulateHTTP'),
+	    'emulateJSON': linkProperty(Backbone, 'emulateJSON'),
 	    'sync': linkProperty(Sync, 'sync'),
 	    'errorPromise': linkProperty(Sync, 'errorPromise'),
 	    'ajax': linkProperty(Sync, 'ajax'),

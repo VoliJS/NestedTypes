@@ -36,6 +36,8 @@ assign( Nested, Backbone, {
 
 // allow sync and jQuery override
 Object.defineProperties( Nested, {
+    'emulateHTTP'  : linkProperty( Backbone, 'emulateHTTP' ),
+    'emulateJSON'  : linkProperty( Backbone, 'emulateJSON' ),
     'sync'         : linkProperty( Sync, 'sync' ),
     'errorPromise' : linkProperty( Sync, 'errorPromise' ),
     'ajax'         : linkProperty( Sync, 'ajax' ),

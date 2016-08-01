@@ -20,37 +20,6 @@
             { id: 3, name : 3 }
         ]);
 
-        describe( 'Attributes merging', function(){
-            var A = Nested.Model.extend({
-                defaults : {
-                    a : 1,
-                    b : 2
-                },
-
-                f : function(){ return this.a + this.b; },
-
-                properties : {
-                    c : function(){ return this.a + this.b; }
-                }
-            });
-
-            it( 'merges properties, which does not present in model', function(){
-                var B = Nested.Model.extend({
-                    defaults : {
-                        a : 6,
-                        _x : A.has.proxy()
-                    }
-                });
-
-                var b = new B();
-
-                expect( b.a ).to.eql( 6 );
-                expect( b.b ).to.eql( 2 );
-                expect( b.f() ).to.eql( 3 );
-                expect( b.c ).to.eql( 3 );
-            });
-        });
-
         describe( 'Model.from reference', function(){
             var A = Nested.Model.extend({
                 attributes : {
@@ -223,45 +192,20 @@
         });
 
         it( 'can be initialized with a list of attributes', function(){
-            var Store = Nested.LazyStore.defaults({
+            var Store = Nested.Store.defaults({
                 users : User.Collection,
                 roles : Role.Collection
             });
 
-            Nested.store = new Store();
+            Nested.Store.global = new Store();
         });
 
-        it( 'fetch everything when called without arguments', function(){
-            Nested.store.fetch();
+        it( 'References are properly resolved', function(){
+            var store = Nested.Store.global;  
+            store.users.fetch();
+            store.roles.fetch();
 
-            expect( Nested.store._resolved.users ).to.eventually.equal('loaded');
-            expect( Nested.store._resolved.roles ).to.eventually.equal('loaded');
+            expect( store.users.first().roles.first().name ).to.eql( 'Administrators' );
         });
 
-        it( 'can be prefetched', function(){
-            Nested.store.users.fetch();
-
-            expect( Nested.store._resolved.users ).to.be.fulfilled.then(function () {
-                expect( Nested.store.users.length ).to.equal( 2 );
-            });
-        });
-
-        it( 'fetched of the first attributes access', function(){
-            var role = Nested.store.users.first().roles.first();
-
-            expect( Nested.store._resolved.roles ).to.be.fulfilled.then(function () {
-                expect( role.name ).to.equal( 'Administrators' );
-            });
-        });
-
-        it( 'individual elements can be cleaned up ', function(){
-            Nested.store.clear( 'users' );
-            expect( Nested.store._resolved.users ).to.be.not.ok;
-        });
-
-        it( 'all cache can be cleaned up ', function(){
-            Nested.store.clear();
-            expect( Nested.store._resolved.users ).to.be.not.ok;
-            expect( Nested.store._resolved.roles ).to.be.not.ok;
-        });
     });

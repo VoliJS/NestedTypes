@@ -1,5 +1,5 @@
 module.exports = {
-     entry: "./src/main",
+     entry: "./src/index",
 
      output : {
        filename : './nestedtypes.js',
@@ -8,6 +8,11 @@ module.exports = {
      },
 
      devtool : 'source-map',
+
+     resolve : {
+        modulesDirectories : [ 'node_modules', 'src' ],
+        extensions : [ '.ts', '.js' ] 
+     },
 
      externals : [
        {
@@ -25,5 +30,19 @@ module.exports = {
            root : '_'
          }
        }
-     ]
+     ],
+
+     module: {
+        loaders: [
+            {
+                test: /\.[tj]sx?$/,
+                /*exclude: /(node_modules|bower_components)/,*/
+                loader: 'ts'
+            }
+        ],
+
+        preLoaders : [
+            { test: /\.js$/, loader: "source-map-loader" }
+        ]
+    }
 };

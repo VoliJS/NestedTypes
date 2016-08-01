@@ -17,7 +17,7 @@ interface RestOptions extends SyncOptions {
 @define({
     itemEvents : {
         destroy( model ){ this.remove( model ); },
-        invalid : true
+        invalid : true, request : true, sync : true
     } 
 })
 export class RestCollection extends Collection {

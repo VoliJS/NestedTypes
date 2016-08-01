@@ -3767,7 +3767,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        src_1.define({
 	            itemEvents: {
 	                destroy: function (model) { this.remove(model); },
-	                invalid: true
+	                invalid: true, request: true, sync: true
 	            }
 	        })
 	    ], RestCollection);

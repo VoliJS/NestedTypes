@@ -27,14 +27,30 @@ export const UnderscoreModel = {
         const inverted = {};
         this.each( ( value, key ) => inverted[ value ] = key );
         return inverted;
+    },
+
+    pairs(){
+        return this.map( ( value, key ) => [ key, value ] );
+    },
+
+    isEmpty(){
+        return !this.values().length;
+    },
+
+    chain(){
+        return _.chain( this.mapObject( x => x ) );
     }
 };
 
-addUnderscoreMethods( UnderscoreModel, 'attributes', {
-    pairs: 1, chain: 1, isEmpty: 1
-});
+export const UnderscoreCollection = {
+    where(attrs, first) {
+      return this[first ? 'find' : 'filter'](attrs);
+    },
 
-export const UnderscoreCollection = {};
+    findWhere(attrs) {
+      return this.where(attrs, true);
+    }
+};
 
 addUnderscoreMethods( UnderscoreCollection, 'models', {
     forEach  : 3, each : 3, map : 3, collect : 3, reduce : 4,

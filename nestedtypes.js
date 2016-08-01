@@ -2682,7 +2682,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        case 'undefined':
 	            return void 0;
 	        case 'object':
-	            return value ? value.constructor : Object;
+	            return value ? value.constructor : void 0;
 	    }
 	}
 
@@ -3995,12 +3995,25 @@ return /******/ (function(modules) { // webpackBootstrap
 	        var inverted = {};
 	        this.each(function (value, key) { return inverted[value] = key; });
 	        return inverted;
+	    },
+	    pairs: function () {
+	        return this.map(function (value, key) { return [key, value]; });
+	    },
+	    isEmpty: function () {
+	        return !this.values().length;
+	    },
+	    chain: function () {
+	        return _.chain(this.mapObject(function (x) { return x; }));
 	    }
 	};
-	addUnderscoreMethods(exports.UnderscoreModel, 'attributes', {
-	    pairs: 1, chain: 1, isEmpty: 1
-	});
-	exports.UnderscoreCollection = {};
+	exports.UnderscoreCollection = {
+	    where: function (attrs, first) {
+	        return this[first ? 'find' : 'filter'](attrs);
+	    },
+	    findWhere: function (attrs) {
+	        return this.where(attrs, true);
+	    }
+	};
 	addUnderscoreMethods(exports.UnderscoreCollection, 'models', {
 	    forEach: 3, each: 3, map: 3, collect: 3, reduce: 4,
 	    foldl: 4, inject: 4, reduceRight: 4, foldr: 4, find: 3, findIndex: 3, findLastIndex: 3, detect: 3, filter: 3,

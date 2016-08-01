@@ -1,6 +1,10 @@
 # NestedTypes model framework
 
-Version 2.0 alpha is here.
+Version 2.0 alpha is here. Rewritten from the scratch with TypeScript, based on new `Type-R` observing serializer core. 
+
+- ES6 classes support.
+- 2-4 times faster than version 1.3 in all browsers (huge performance gain for IE11).
+- Strict ownerhip policy.
 
 ## TODO
 

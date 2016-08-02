@@ -472,7 +472,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        for (var _i = 0; _i < arguments.length; _i++) {
 	            mixins[_i - 0] = arguments[_i];
 	        }
-	        var proto = this.prototype, mergeRules = this._mixinRules || {}, _appliedMixins = this._appliedMixins || (this._appliedMixins = []);
+	        var proto = this.prototype, mergeRules = this._mixinRules || {}, _appliedMixins = this._appliedMixins = (this._appliedMixins || []).slice();
 	        for (var _a = 0, mixins_1 = mixins; _a < mixins_1.length; _a++) {
 	            var mixin = mixins_1[_a];
 	            if (mixin instanceof Array) {

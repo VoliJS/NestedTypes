@@ -1,5 +1,7 @@
 # NestedTypes model framework
 
+> Version 2.0 alpha is in `develop` branch. Hard to believe, but it's several times faster than the current version in all browsers. And it has some exciting new features. Stay tuned.
+
 master: [![Master Build Status](https://travis-ci.org/Volicon/NestedTypes.svg?branch=master)](https://travis-ci.org/Volicon/NestedTypes)
 develop: [![Develop Build Status](https://travis-ci.org/Volicon/NestedTypes.svg?branch=develop)](https://travis-ci.org/Volicon/NestedTypes)
 
@@ -17,8 +19,6 @@ drop-in backbone replacement](/docs/BackboneTransitionGuide.md) with moderate so
 - At the moment of writing, it's an only model framework which is designed to [play well with React](https://github.com/Volicon/NestedReact) and supports [pure render optimization](https://github.com/Volicon/NestedReact/#props-specs-and-pure-render-optimization). 
 
 API docs available here: http://volicon.github.io/NestedTypes/ Examples are below.
-
-> Announment. Version 2.0 is on the way. It will be faster, and built around the new transactional core rewritten with TypeScript. And it will also become simpler and hackable.
 
 ## Major changes in 1.3.x:
 

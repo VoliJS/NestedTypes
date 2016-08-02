@@ -472,13 +472,16 @@ return /******/ (function(modules) { // webpackBootstrap
 	        for (var _i = 0; _i < arguments.length; _i++) {
 	            mixins[_i - 0] = arguments[_i];
 	        }
-	        var proto = this.prototype, mergeRules = this._mixinRules || {};
+	        var proto = this.prototype, mergeRules = this._mixinRules || {}, _appliedMixins = this._appliedMixins || (this._appliedMixins = []);
 	        for (var _a = 0, mixins_1 = mixins; _a < mixins_1.length; _a++) {
 	            var mixin = mixins_1[_a];
 	            if (mixin instanceof Array) {
-	                Mixable.mixins.apply(this, mixin);
+	                return Mixable.mixins.apply(this, mixin);
 	            }
-	            else if (typeof mixin === 'function') {
+	            if (_appliedMixins.indexOf(mixin) >= 0)
+	                continue;
+	            _appliedMixins.push(mixin);
+	            if (typeof mixin === 'function') {
 	                tools_1.defaults(this, mixin);
 	                mergeProps(proto, mixin.prototype, mergeRules);
 	            }

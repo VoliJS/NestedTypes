@@ -40,7 +40,7 @@
     "LICENSE"
   ],
   "license": "MIT",
-  "version": "2.0.0-alpha2",
+  "version": "2.0.0-alpha3",
   "scripts": {
     "test": "node_modules/.bin/mocha",
     "build": "./node_modules/.bin/webpack",

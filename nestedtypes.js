@@ -2472,32 +2472,32 @@ return /******/ (function(modules) { // webpackBootstrap
 	    !supportsDate('2011-11-29T15:52:18.867') ||
 	    !supportsDate('2011-11-29T15:52:18.867Z') ||
 	    !supportsDate('2011-11-29T15:52:18.867-03:30')) {
-	    var numericKeys_1 = [1, 4, 5, 6, 7, 10, 11], isoDatePattern_1 = /^(\d{4}|[+\-]\d{6})(?:-(\d{2})(?:-(\d{2}))?)?(?:T(\d{2}):(\d{2})(?::(\d{2})(?:\.(\d{3}))?)?(?:(Z)|([+\-])(\d{2})(?::(\d{2}))?)?)?$/;
 	    DateType.prototype.convert = function (value) {
 	        return value == null || value instanceof Date ? value : new Date(safeParseDate(value));
 	    };
-	    function safeParseDate(date) {
-	        var timestamp, struct, minutesOffset = 0;
-	        if ((struct = isoDatePattern_1.exec(date))) {
-	            for (var i = 0, k; (k = numericKeys_1[i]); ++i) {
-	                struct[k] = +struct[k] || 0;
-	            }
-	            struct[2] = (+struct[2] || 1) - 1;
-	            struct[3] = +struct[3] || 1;
-	            if (struct[8] !== 'Z' && struct[9] !== undefined) {
-	                minutesOffset = struct[10] * 60 + struct[11];
-	                if (struct[9] === '+') {
-	                    minutesOffset = 0 - minutesOffset;
-	                }
-	            }
-	            timestamp =
-	                Date.UTC(struct[1], struct[2], struct[3], struct[4], struct[5] + minutesOffset, struct[6], struct[7]);
+	}
+	var numericKeys = [1, 4, 5, 6, 7, 10, 11], isoDatePattern = /^(\d{4}|[+\-]\d{6})(?:-(\d{2})(?:-(\d{2}))?)?(?:T(\d{2}):(\d{2})(?::(\d{2})(?:\.(\d{3}))?)?(?:(Z)|([+\-])(\d{2})(?::(\d{2}))?)?)?$/;
+	function safeParseDate(date) {
+	    var timestamp, struct, minutesOffset = 0;
+	    if ((struct = isoDatePattern.exec(date))) {
+	        for (var i = 0, k; (k = numericKeys[i]); ++i) {
+	            struct[k] = +struct[k] || 0;
 	        }
-	        else {
-	            timestamp = Date.parse(date);
+	        struct[2] = (+struct[2] || 1) - 1;
+	        struct[3] = +struct[3] || 1;
+	        if (struct[8] !== 'Z' && struct[9] !== undefined) {
+	            minutesOffset = struct[10] * 60 + struct[11];
+	            if (struct[9] === '+') {
+	                minutesOffset = 0 - minutesOffset;
+	            }
 	        }
-	        return timestamp;
+	        timestamp =
+	            Date.UTC(struct[1], struct[2], struct[3], struct[4], struct[5] + minutesOffset, struct[6], struct[7]);
 	    }
+	    else {
+	        timestamp = Date.parse(date);
+	    }
+	    return timestamp;
 	}
 
 
@@ -2619,7 +2619,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    ChainableAttributeSpec.prototype.set = function (fun) {
 	        this.options.transforms.push(function (next, options, prev, model) {
 	            if (this.isChanged(next, prev)) {
-	                var changed = fun.call(model, next, name);
+	                var changed = fun.call(model, next, this.name);
 	                return changed === void 0 ? prev : changed;
 	            }
 	            return prev;

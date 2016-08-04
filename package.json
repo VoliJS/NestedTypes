@@ -30,7 +30,7 @@
     "sinon-chai": "*",
     "source-map-loader": "^0.1.5",
     "ts-loader": "^0.8.2",
-    "type-r": "^0.1.2-0",
+    "type-r": "^1.0.0-a00",
     "typescript": "^1.8.10",
     "uglify-js": "*",
     "webpack": "^1.12.2"
@@ -40,7 +40,7 @@
     "LICENSE"
   ],
   "license": "MIT",
-  "version": "2.0.0-alpha5",
+  "version": "2.0.0-a01",
   "scripts": {
     "test": "node_modules/.bin/mocha",
     "build": "./node_modules/.bin/webpack",

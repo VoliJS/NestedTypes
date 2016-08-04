@@ -1696,7 +1696,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	var assign = object_plus_1.tools.assign, defaults = object_plus_1.tools.defaults, omit = object_plus_1.tools.omit, getBaseClass = object_plus_1.tools.getBaseClass;
 	transaction_1.Record.define = function (protoProps, staticProps) {
 	    if (protoProps === void 0) { protoProps = {}; }
-	    var BaseConstructor = getBaseClass(this), baseProto = BaseConstructor.prototype, staticsDefinition = object_plus_1.tools.getChangedStatics(this, 'attributes', 'collection'), definition = assign(staticsDefinition, protoProps);
+	    var BaseConstructor = getBaseClass(this), baseProto = BaseConstructor.prototype, staticsDefinition = object_plus_1.tools.getChangedStatics(this, 'attributes', 'collection', 'Collection'), definition = assign(staticsDefinition, protoProps);
+	    if ('Collection' in definition && definition.Collection === void 0) {
+	        object_plus_1.tools.log.error("[Model.define] Model.Collection is undefined. It must be defined _before_ the model.", definition);
+	    }
 	    var dynamicMixin = define_1.compile(getAttributes(definition), baseProto._attributes);
 	    if (definition.properties === false) {
 	        dynamicMixin.properties = {};
@@ -1704,7 +1707,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    assign(dynamicMixin.properties, protoProps.properties || {});
 	    defaults(dynamicMixin, omit(definition, 'attributes', 'collection'));
 	    object_plus_1.Mixable.define.call(this, dynamicMixin, staticProps);
-	    defineCollection.call(this, definition.collection);
+	    defineCollection.call(this, definition.collection || definition.Collection);
 	    return this;
 	};
 	transaction_1.Record.predefine = function () {
@@ -1723,18 +1726,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	    return definition;
 	}
 	function defineCollection(collection) {
-	    var BaseCollection = getBaseClass(this).Collection;
-	    var CollectionConstructor;
 	    if (typeof collection === 'function') {
-	        CollectionConstructor = collection;
+	        this.Collection = collection;
+	        this.Collection.prototype.model = this;
 	    }
 	    else {
-	        CollectionConstructor = this.Collection;
-	        if (collection)
-	            CollectionConstructor.define(collection);
+	        this.Collection.define(collection || {});
 	    }
-	    CollectionConstructor.prototype.model = this;
-	    this.Collection = CollectionConstructor;
 	}
 	Object.defineProperties(Date, {
 	    microsoft: {

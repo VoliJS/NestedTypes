@@ -1697,7 +1697,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	transaction_1.Record.define = function (protoProps, staticProps) {
 	    if (protoProps === void 0) { protoProps = {}; }
 	    var BaseConstructor = getBaseClass(this), baseProto = BaseConstructor.prototype, staticsDefinition = object_plus_1.tools.getChangedStatics(this, 'attributes', 'collection', 'Collection'), definition = assign(staticsDefinition, protoProps);
-	    if ('Collection' in definition && definition.Collection === void 0) {
+	    if ('Collection' in this && this.Collection === void 0) {
 	        object_plus_1.tools.log.error("[Model.define] Model.Collection is undefined. It must be defined _before_ the model.", definition);
 	    }
 	    var dynamicMixin = define_1.compile(getAttributes(definition), baseProto._attributes);

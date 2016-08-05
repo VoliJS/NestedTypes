@@ -1413,7 +1413,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	        object_plus_1.define({
 	            cidPrefix: 'c',
 	            model: record_1.Record,
-	            _changeEventName: 'changes'
+	            _changeEventName: 'changes',
+	            _aggregates: true
 	        })
 	    ], Collection);
 	    return Collection;
@@ -2411,7 +2412,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    TransactionalType.prototype._handleChange = function (next, prev, record) {
 	        prev && free(record, prev);
 	        if (next && !aquire(record, next, this.name)) {
-	            object_plus_1.tools.log.error('[Aggregation error] Assigned value already has an owner. Use shared attribute type.');
+	            object_plus_1.tools.log.warn('[Aggregation error] Assigned value already has an owner. Use shared attribute type.');
 	        }
 	    };
 	    return TransactionalType;
@@ -2771,12 +2772,23 @@ return /******/ (function(modules) { // webpackBootstrap
 	    return models;
 	}
 	exports.dispose = dispose;
-	function aquire(owner, child) {
-	    _aquire(owner, child);
-	    var _itemEvents = owner._itemEvents;
-	    _itemEvents && _itemEvents.subscribe(owner, child);
+	function convertAndAquire(collection, attrs, options) {
+	    var model = collection.model;
+	    var record;
+	    if (attrs instanceof model) {
+	        record = attrs;
+	        if (collection._aggregates && !_aquire(collection, record)) {
+	            object_plus_1.tools.log.warn('[Aggregation error] Record already has an owner. Use susbet collection type.', record);
+	        }
+	    }
+	    else {
+	        record = model.create(attrs, options, collection);
+	    }
+	    var _itemEvents = collection._itemEvents;
+	    _itemEvents && _itemEvents.subscribe(collection, record);
+	    return record;
 	}
-	exports.aquire = aquire;
+	exports.convertAndAquire = convertAndAquire;
 	function free(owner, child) {
 	    _free(owner, child);
 	    var _itemEvents = owner._itemEvents;
@@ -2816,17 +2828,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }
 	}
 	exports.removeIndex = removeIndex;
-	function toModel(collection, attrs, options) {
-	    var model = collection.model;
-	    return attrs instanceof model ? attrs : model.create(attrs, options, collection);
-	}
-	exports.toModel = toModel;
-	function convertAndAquire(collection, attrs, options) {
-	    var model = collection.model, record = attrs instanceof model ? attrs : model.create(attrs, options, collection);
-	    aquire(collection, record);
-	    return record;
-	}
-	exports.convertAndAquire = convertAndAquire;
 	var CollectionTransaction = (function () {
 	    function CollectionTransaction(object, isRoot, added, removed, nested, sorted) {
 	        this.object = object;
@@ -2928,9 +2929,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	            }
 	        }
 	        else {
-	            model = commons_1.toModel(collection, item, a_options);
+	            model = commons_1.convertAndAquire(collection, item, a_options);
 	            models.push(model);
-	            commons_1.aquire(collection, model);
 	            commons_1.addIndex(_byId, model);
 	        }
 	    }
@@ -3006,8 +3006,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            }
 	        }
 	        else {
-	            model = commons_1.toModel(collection, item, options);
-	            commons_1.aquire(collection, model);
+	            model = commons_1.convertAndAquire(collection, item, options);
 	            toAdd.push(model);
 	        }
 	        models[j++] = model;
@@ -3027,8 +3026,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        if (src && (_byId[src[idAttribute]] || _byId[src.cid])) {
 	            continue;
 	        }
-	        var model = commons_1.toModel(self, src, options);
-	        commons_1.aquire(self, model);
+	        var model = commons_1.convertAndAquire(self, src, options);
 	        models[j++] = model;
 	        commons_1.addIndex(_byId, model);
 	    }
@@ -3204,13 +3202,36 @@ return /******/ (function(modules) { // webpackBootstrap
 	    function __() { this.constructor = d; }
 	    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
 	};
+	var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+	    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+	    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+	    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+	    return c > 3 && r && Object.defineProperty(target, key, r), r;
+	};
 	var collection_1 = __webpack_require__(7);
 	var object_plus_1 = __webpack_require__(2);
 	var commons_1 = __webpack_require__(27);
 	var record_1 = __webpack_require__(11);
 	var fastDefaults = object_plus_1.tools.fastDefaults;
 	collection_1.Collection.subsetOf = function subsetOf(masterCollection) {
-	    var CollectionConstructor = this, SubsetOf = this._SubsetOf || ((function (_super) {
+	    var CollectionConstructor = this, SubsetOf = this._SubsetOf || (this._SubsetOf = defineSubsetOf(this)), getMasterCollection = commons_1.parseReference(masterCollection), typeSpec = new record_1.ChainableAttributeSpec({
+	        type: SubsetOf,
+	        validate: function (model, value, name) { },
+	    });
+	    typeSpec.get(function (refs) {
+	        !refs || refs.resolvedWith || refs.resolve(getMasterCollection(this));
+	        return refs;
+	    });
+	    return typeSpec;
+	};
+	function subsetOptions(options) {
+	    var subsetOptions = { parse: true, merge: false };
+	    if (options)
+	        fastDefaults(subsetOptions, options);
+	    return subsetOptions;
+	}
+	function defineSubsetOf(CollectionConstructor) {
+	    var SubsetOfCollection = (function (_super) {
 	        __extends(SubsetOfCollection, _super);
 	        function SubsetOfCollection(recordsOrIds, options) {
 	            _super.call(this, recordsOrIds, subsetOptions(options));
@@ -3271,24 +3292,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	        SubsetOfCollection.prototype.toggleAll = function () {
 	            return this.length ? this.reset() : this.addAll();
 	        };
+	        SubsetOfCollection = __decorate([
+	            object_plus_1.define({
+	                _aggregates: false
+	            })
+	        ], SubsetOfCollection);
 	        return SubsetOfCollection;
-	    }(CollectionConstructor)));
-	    var getMasterCollection = commons_1.parseReference(masterCollection);
-	    var typeSpec = new record_1.ChainableAttributeSpec({
-	        type: SubsetOf,
-	        validate: function (model, value, name) { },
-	    });
-	    typeSpec.get(function (refs) {
-	        !refs || refs.resolvedWith || refs.resolve(getMasterCollection(this));
-	        return refs;
-	    });
-	    return typeSpec;
-	};
-	function subsetOptions(options) {
-	    var subsetOptions = { parse: true, merge: false };
-	    if (options)
-	        fastDefaults(subsetOptions, options);
-	    return subsetOptions;
+	    }(CollectionConstructor));
+	    return SubsetOfCollection;
 	}
 
 

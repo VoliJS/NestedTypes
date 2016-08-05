@@ -2296,11 +2296,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	var object_plus_1 = __webpack_require__(2);
 	var notEqual = object_plus_1.tools.notEqual, assign = object_plus_1.tools.assign;
 	var GenericAttribute = (function () {
-	    function GenericAttribute(name, options) {
+	    function GenericAttribute(name, a_options) {
 	        this.name = name;
-	        this.options = options;
 	        this.getHook = null;
-	        var value = options.value, type = options.type, parse = options.parse, toJSON = options.toJSON, _a = options.getHooks, getHooks = _a === void 0 ? [] : _a, _b = options.transforms, transforms = _b === void 0 ? [] : _b, _c = options.changeHandlers, changeHandlers = _c === void 0 ? [] : _c, validate = options.validate;
+	        var options = this.options = assign({ getHooks: [], transforms: [], changeHandlers: [] }, a_options);
+	        options.getHooks = options.getHooks.slice();
+	        options.transforms = options.transforms.slice();
+	        options.changeHandlers = options.changeHandlers.slice();
+	        var value = options.value, type = options.type, parse = options.parse, toJSON = options.toJSON, validate = options.validate, getHooks = options.getHooks, transforms = options.transforms, changeHandlers = options.changeHandlers;
 	        this.value = value;
 	        this.type = type;
 	        this.parse = parse;

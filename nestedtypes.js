@@ -1667,16 +1667,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	    return self;
 	}
 	exports.resolveReference = resolveReference;
-	function referenceToObject(reference, value) {
-	    var path = reference.split('.'), root = {}, last = path.length - 1;
-	    var current = root;
-	    for (var i = 0; i < last; i++) {
-	        current = current[path[i]] = {};
-	    }
-	    current[path[last]] = value;
-	    return root;
-	}
-	exports.referenceToObject = referenceToObject;
 
 
 /***/ },
@@ -1879,8 +1869,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	    };
 	    Record.prototype.clear = function (options) {
 	        var _this = this;
+	        var nullify = options && options.nullify;
 	        this.transaction(function () {
-	            _this.forEachAttr(_this.attributes, function (value, key) { return _this[key] = void 0; });
+	            _this.forEachAttr(_this.attributes, function (value, key) { return _this[key] = nullify ? null : void 0; });
 	        }, options);
 	        return this;
 	    };
@@ -1966,6 +1957,37 @@ return /******/ (function(modules) { // webpackBootstrap
 	            return _super.prototype.set.call(this, a, b);
 	        }
 	        var _a;
+	    };
+	    Record.prototype.deepSet = function (name, value, options) {
+	        var _this = this;
+	        this.transaction(function () {
+	            var path = name.split('.'), l = path.length - 1, attr = path[l];
+	            var model = _this;
+	            for (var i = 0; i < l; i++) {
+	                var key = path[i];
+	                var next = model.get ? model.get(key) : model[key];
+	                if (!next) {
+	                    var attrSpecs = model._attributes;
+	                    if (attrSpecs) {
+	                        var newModel = attrSpecs[key].create();
+	                        if (options && options.nullify && newModel._attributes) {
+	                            newModel.clear(options);
+	                        }
+	                        model[key] = next = newModel;
+	                    }
+	                    else
+	                        return;
+	                }
+	                model = next;
+	            }
+	            if (model.set) {
+	                model.set(attr, value, options);
+	            }
+	            else {
+	                model[attr] = value;
+	            }
+	        });
+	        return this;
 	    };
 	    Record.prototype.transaction = function (fun, options) {
 	        if (options === void 0) { options = {}; }

@@ -1297,9 +1297,15 @@ return /******/ (function(modules) { // webpackBootstrap
 	        var index = a_index < 0 ? a_index + this.models.length : a_index;
 	        return this.models[index];
 	    };
-	    Collection.prototype.clone = function (owner) {
+	    Collection.prototype.clone = function (options) {
+	        if (options === void 0) { options = {}; }
 	        var models = this.map(function (model) { return model.clone(); });
-	        return new this.constructor(models, { model: this.model, comparator: this.comparator }, owner);
+	        var copy = new this.constructor(models, { model: this.model, comparator: this.comparator }, options.owner);
+	        if (options.key)
+	            copy._ownerKey = options.key;
+	        if (options.pinStore)
+	            copy._defaultStore = this.getStore();
+	        return copy;
 	    };
 	    Collection.prototype.toJSON = function () {
 	        return this.models.map(function (model) { return model.toJSON(); });
@@ -1479,7 +1485,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    };
 	    Transactional.prototype.parse = function (data, options) { return data; };
 	    Transactional.prototype.deepGet = function (reference) {
-	        return traversable_1.resolveReference(this, reference, function (object, key) { return object.get(key); });
+	        return traversable_1.resolveReference(this, reference, function (object, key) { return object.get ? object.get(key) : object[key]; });
 	    };
 	    Transactional.prototype.getOwner = function () {
 	        return this._owner;
@@ -1794,6 +1800,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    function Record(a_values, a_options, owner) {
 	        var _this = this;
 	        _super.call(this, _cidCounter++, owner);
+	        this.attributes = {};
 	        var options = a_options || {}, values = (options.parse ? this.parse(a_values, options) : a_values) || {};
 	        var attributes = options.clone ? cloneAttributes(this, values) : this.defaults(values);
 	        this.forEachAttr(attributes, function (value, key, attr) {
@@ -1861,7 +1868,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        return null;
 	    };
 	    Record.prototype.isNew = function () {
-	        return this.id === void 0;
+	        return this.id == null;
 	    };
 	    Record.prototype.has = function (key) {
 	        return this[key] != void 0;
@@ -1914,9 +1921,17 @@ return /******/ (function(modules) { // webpackBootstrap
 	    Record.prototype._parse = function (data) { return data; };
 	    Record.prototype.defaults = function (values) { return {}; };
 	    Record.prototype.initialize = function (values, options) { };
-	    Record.prototype.clone = function (owner) {
-	        return new this.constructor(this.attributes, { clone: true }, owner);
+	    Record.prototype.clone = function (options) {
+	        if (options === void 0) { options = {}; }
+	        var copy = new this.constructor(this.attributes, { clone: true }, options.owner);
+	        if (options.pinStore)
+	            copy._defaultStore = this.getStore();
+	        if (options.key)
+	            copy._ownerKey = options.key;
+	        return copy;
 	    };
+	    Record.prototype.deepClone = function () { return this.clone(); };
+	    ;
 	    Record.prototype._validateNested = function (errors) {
 	        var _this = this;
 	        var length = 0;
@@ -2337,17 +2352,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	    };
 	    GenericAttribute.prototype.handleChange = function (next, prev, model) { };
 	    GenericAttribute.prototype.create = function () { return new this.type(); };
-	    GenericAttribute.prototype.clone = function (value, options) {
-	        if (options === void 0) { options = {}; }
+	    GenericAttribute.prototype.clone = function (value) {
 	        if (value && typeof value === 'object') {
-	            if (value.clone) {
-	                return value.clone(options);
-	            }
-	            if (options.deep) {
-	                var proto = Object.getPrototypeOf(value);
-	                if (proto === Object.prototype || proto === Array.prototype) {
-	                    return JSON.parse(JSON.stringify(value));
-	                }
+	            if (value.clone)
+	                return value.clone();
+	            var proto = Object.getPrototypeOf(value);
+	            if (proto === Object.prototype || proto === Array.prototype) {
+	                return JSON.parse(JSON.stringify(value));
 	            }
 	        }
 	        return value;
@@ -2564,8 +2575,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	    ConstructorType.prototype.convert = function (value) {
 	        return value == null || value instanceof this.type ? value : new this.type(value);
 	    };
-	    ConstructorType.prototype.clone = function (value, options) {
-	        return value.clone ? value.clone(value, options) : this.convert(JSON.parse(JSON.stringify(value)));
+	    ConstructorType.prototype.clone = function (value) {
+	        return value.clone ? value.clone() : this.convert(JSON.parse(JSON.stringify(value)));
 	    };
 	    return ConstructorType;
 	}(generic_1.GenericAttribute));

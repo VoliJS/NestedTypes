@@ -8,7 +8,7 @@ import { RestCollection, RestModel } from './rest'
 import { Store } from 'type-r/src'
 import * as Sync from './sync'
 import { UnderscoreModel, UnderscoreCollection } from './underscore-mixin'
-import RestStore from './rest-store'
+import { RestStore, LazyStore } from './rest-store'
  
 Nested.Mixable.mixins( Nested.Events );
 Nested.Mixable.mixTo( Backbone.View, Backbone.Router, Backbone.History );
@@ -23,7 +23,8 @@ assign( Nested, Backbone, {
     Class     : Nested.Messenger,
     Model     : RestModel,
     Collection : RestCollection,
-    LazyStore  : RestStore,
+    LazyStore  : LazyStore,
+    Store     : RestStore,
 
     defaults( x ){
         return Nested.Model.defaults( x );

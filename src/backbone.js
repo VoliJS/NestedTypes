@@ -99,7 +99,7 @@ _.extend(View.prototype, {
   // re-delegation.
   setElement: function (element, delegate) {
     if (this.$el) this.undelegateEvents();
-    this.$el = element instanceof Backbone.$ ? element : Backbone.$(element);
+    this.$el = element instanceof $ ? element : $(element);
     this.el = this.$el[0];
     if (delegate !== false) this.delegateEvents();
     return this;
@@ -158,7 +158,7 @@ _.extend(View.prototype, {
       var attrs = _.extend({}, _.result(this, 'attributes'));
       if (this.id) attrs.id = _.result(this, 'id');
       if (this.className) attrs['class'] = _.result(this, 'className');
-      var $el = Backbone.$('<' + _.result(this, 'tagName') + '>').attr(attrs);
+      var $el = $('<' + _.result(this, 'tagName') + '>').attr(attrs);
       this.setElement($el, false);
     } else {
       this.setElement(_.result(this, 'el'), false);
@@ -207,12 +207,12 @@ _.extend(Router.prototype, {
     }
     if (!callback) callback = this[name];
     var router = this;
-    Backbone.history.route(route, function (fragment) {
+    history.route(route, function (fragment) {
       var args = router._extractParameters(route, fragment);
       if (router.execute(callback, args, name) !== false) {
         router.trigger.apply(router, ['route:' + name].concat(args));
         router.trigger('route', name, args);
-        Backbone.history.trigger('route', router, name, args);
+        history.trigger('route', router, name, args);
       }
     });
     return this;
@@ -226,7 +226,7 @@ _.extend(Router.prototype, {
 
   // Simple proxy to `Backbone.history` to save a fragment into the history.
   navigate: function (fragment, options) {
-    Backbone.history.navigate(fragment, options);
+    history.navigate(fragment, options);
     return this;
   },
 

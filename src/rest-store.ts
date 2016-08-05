@@ -1,13 +1,16 @@
 import * as Backbone from './backbone'
 import * as _ from 'underscore'
-import { define, Store } from 'type-r/src'
-
+import { mixins, define, Store } from 'type-r/src'
 import { RestModel, RestCollection } from './rest'
 
 const { $ } = Backbone;
 
 @define({})
-export default class RestStore extends Store {
+@mixins( Store )
+export class RestStore extends RestModel {}
+
+@define({})
+export class LazyStore extends RestStore {
     _resolved  : {} = {}
 
     initialize(){

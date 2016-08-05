@@ -72,7 +72,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	    Class: Nested.Messenger,
 	    Model: rest_1.RestModel,
 	    Collection: rest_1.RestCollection,
-	    LazyStore: rest_store_1.default,
+	    LazyStore: rest_store_1.LazyStore,
+	    Store: rest_store_1.RestStore,
 	    defaults: function (x) {
 	        return Nested.Model.defaults(x);
 	    }
@@ -635,6 +636,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	    if (rules === void 0) { rules = {}; }
 	    for (var _i = 0, _a = Object.keys(source); _i < _a.length; _i++) {
 	        var name_1 = _a[_i];
+	        if (name_1 === 'constructor')
+	            continue;
 	        var sourceProp = Object.getOwnPropertyDescriptor(source, name_1), destProp = tools_1.getPropertyDescriptor(target, name_1);
 	        if (destProp) {
 	            var rule = rules[name_1], value = destProp.value;
@@ -3415,7 +3418,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    setElement: function (element, delegate) {
 	        if (this.$el)
 	            this.undelegateEvents();
-	        this.$el = element instanceof Backbone.$ ? element : Backbone.$(element);
+	        this.$el = element instanceof exports.$ ? element : exports.$(element);
 	        this.el = this.$el[0];
 	        if (delegate !== false)
 	            this.delegateEvents();
@@ -3455,7 +3458,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                attrs.id = _.result(this, 'id');
 	            if (this.className)
 	                attrs['class'] = _.result(this, 'className');
-	            var $el = Backbone.$('<' + _.result(this, 'tagName') + '>').attr(attrs);
+	            var $el = exports.$('<' + _.result(this, 'tagName') + '>').attr(attrs);
 	            this.setElement($el, false);
 	        }
 	        else {
@@ -3487,12 +3490,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	        if (!callback)
 	            callback = this[name];
 	        var router = this;
-	        Backbone.history.route(route, function (fragment) {
+	        exports.history.route(route, function (fragment) {
 	            var args = router._extractParameters(route, fragment);
 	            if (router.execute(callback, args, name) !== false) {
 	                router.trigger.apply(router, ['route:' + name].concat(args));
 	                router.trigger('route', name, args);
-	                Backbone.history.trigger('route', router, name, args);
+	                exports.history.trigger('route', router, name, args);
 	            }
 	        });
 	        return this;
@@ -3502,7 +3505,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            callback.apply(this, args);
 	    },
 	    navigate: function (fragment, options) {
-	        Backbone.history.navigate(fragment, options);
+	        exports.history.navigate(fragment, options);
 	        return this;
 	    },
 	    _bindRoutes: function () {
@@ -4178,9 +4181,21 @@ return /******/ (function(modules) { // webpackBootstrap
 	    __extends(RestStore, _super);
 	    function RestStore() {
 	        _super.apply(this, arguments);
+	    }
+	    RestStore = __decorate([
+	        src_1.define({}),
+	        src_1.mixins(src_1.Store)
+	    ], RestStore);
+	    return RestStore;
+	}(rest_1.RestModel));
+	exports.RestStore = RestStore;
+	var LazyStore = (function (_super) {
+	    __extends(LazyStore, _super);
+	    function LazyStore() {
+	        _super.apply(this, arguments);
 	        this._resolved = {};
 	    }
-	    RestStore.prototype.initialize = function () {
+	    LazyStore.prototype.initialize = function () {
 	        var _this = this;
 	        this.each(function (element, name) {
 	            if (!element)
@@ -4198,7 +4213,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            }
 	        });
 	    };
-	    RestStore.prototype.fetch = function () {
+	    LazyStore.prototype.fetch = function () {
 	        var args = [];
 	        for (var _i = 0; _i < arguments.length; _i++) {
 	            args[_i - 0] = arguments[_i];
@@ -4211,7 +4226,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        }
 	        return $ && $.when && $.when.apply(Backbone.$, xhr);
 	    };
-	    RestStore.prototype.fetchOnce = function () {
+	    LazyStore.prototype.fetchOnce = function () {
 	        var args = [];
 	        for (var _i = 0; _i < arguments.length; _i++) {
 	            args[_i - 0] = arguments[_i];
@@ -4224,7 +4239,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        }
 	        return $ && $.when && $.when.apply(Backbone.$, xhr);
 	    };
-	    RestStore.prototype.clear = function () {
+	    LazyStore.prototype.clear = function () {
 	        var args = [];
 	        for (var _i = 0; _i < arguments.length; _i++) {
 	            args[_i - 0] = arguments[_i];
@@ -4246,7 +4261,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        }
 	        return this;
 	    };
-	    RestStore.define = function (props, staticProps) {
+	    LazyStore.define = function (props, staticProps) {
 	        var attributes = props.defaults || props.attributes;
 	        _.each(attributes, function (Type, name) {
 	            if (Type.has) {
@@ -4268,13 +4283,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	        });
 	        return rest_1.RestModel.define.call(this, props, staticProps);
 	    };
-	    RestStore = __decorate([
+	    LazyStore = __decorate([
 	        src_1.define({})
-	    ], RestStore);
-	    return RestStore;
-	}(src_1.Store));
-	Object.defineProperty(exports, "__esModule", { value: true });
-	exports.default = RestStore;
+	    ], LazyStore);
+	    return LazyStore;
+	}(RestStore));
+	exports.LazyStore = LazyStore;
 
 
 /***/ }

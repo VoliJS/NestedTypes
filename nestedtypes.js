@@ -1245,17 +1245,19 @@ return /******/ (function(modules) { // webpackBootstrap
 	    };
 	    Collection.prototype._onChildrenChange = function (record, options) {
 	        if (options === void 0) { options = {}; }
-	        var isRoot = begin(this), idAttribute = this.idAttribute;
-	        if (record.hasChanged(idAttribute)) {
-	            var _byId = this._byId;
-	            delete _byId[record.previous(idAttribute)];
-	            var id = record.id;
-	            id == null || (_byId[id] = record);
+	        var _byId = this._byId;
+	        if (_byId[record.cid]) {
+	            var isRoot = begin(this), idAttribute = this.idAttribute;
+	            if (record.hasChanged(idAttribute)) {
+	                delete _byId[record.previous(idAttribute)];
+	                var id = record.id;
+	                id == null || (_byId[id] = record);
+	            }
+	            if (markAsDirty(this, options)) {
+	                trigger2(this, 'change', record, options);
+	            }
+	            isRoot && commit(this);
 	        }
-	        if (markAsDirty(this, options)) {
-	            trigger2(this, 'change', record, options);
-	        }
-	        isRoot && commit(this);
 	    };
 	    Collection.prototype.get = function (objOrId) {
 	        if (objOrId == null)
@@ -1327,11 +1329,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	    };
 	    Collection.prototype.reset = function (a_elements, options) {
 	        if (options === void 0) { options = {}; }
-	        var previousModels = commons_1.dispose(this);
+	        var isRoot = begin(this), previousModels = commons_1.dispose(this);
 	        if (a_elements) {
 	            set_1.emptySetTransaction(this, toElements(this, a_elements, options), options, true);
 	        }
+	        markAsDirty(this, options);
 	        options.silent || trigger2(this, 'reset', this, defaults({ previousModels: previousModels }, options));
+	        isRoot && commit(this);
 	        return this.models;
 	    };
 	    Collection.prototype.add = function (a_elements, options) {
@@ -1589,7 +1593,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            child._ownerKey = key;
 	            return true;
 	        }
-	        return false;
+	        return child._owner === owner;
 	    },
 	    free: function (owner, child) {
 	        if (owner === child._owner) {
@@ -1623,7 +1627,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    ValidationError.prototype.eachError = function (iteratee, object) {
 	        this.each(function (value, key) {
 	            if (value instanceof ValidationError) {
-	                value._traverse(iteratee, object.get(key));
+	                value.eachError(iteratee, object.get(key));
 	            }
 	            else {
 	                iteratee(value, key, object);
@@ -1672,8 +1676,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        if (!self)
 	            return;
 	    }
-	    action(self, path[skip]);
-	    return self;
+	    return action(self, path[skip]);
 	}
 	exports.resolveReference = resolveReference;
 
@@ -1898,14 +1901,19 @@ return /******/ (function(modules) { // webpackBootstrap
 	    Record.prototype.Attributes = function (x) { this.id = x.id; };
 	    Record.prototype.forEachAttr = function (attrs, iteratee) {
 	        var _attributes = this._attributes;
+	        var unknown;
 	        for (var name_1 in attrs) {
 	            var spec = _attributes[name_1];
 	            if (spec) {
 	                iteratee(attrs[name_1], name_1, spec);
 	            }
 	            else {
-	                log.warn('[Unknown Attribute]', this, 'Unknown record attribute "' + name_1 + '" is ignored:', attrs);
+	                unknown || (unknown = []);
+	                unknown.push(name_1);
 	            }
+	        }
+	        if (unknown) {
+	            log.warn("[Record] Unknown attributes are ignored (" + unknown.join(', ') + "). Record:", _attributes, 'Attributes:', attrs);
 	        }
 	    };
 	    Record.prototype.each = function (iteratee, context) {
@@ -2432,7 +2440,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        _super.apply(this, arguments);
 	    }
 	    TransactionalType.prototype.canBeUpdated = function (prev, next) {
-	        return prev && next && !(next instanceof this.type);
+	        return prev && next != null && !(next instanceof this.type);
 	    };
 	    TransactionalType.prototype.convert = function (value, options, record) {
 	        return value == null || value instanceof this.type ? value : this.type.create(value, options, record);
@@ -3280,7 +3288,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            return _super.prototype.add.call(this, elements, subsetOptions(options));
 	        };
 	        SubsetOfCollection.prototype.reset = function (elements, options) {
-	            return _super.prototype.add.call(this, elements, subsetOptions(options));
+	            return _super.prototype.reset.call(this, elements, subsetOptions(options));
 	        };
 	        SubsetOfCollection.prototype._createTransaction = function (elements, options) {
 	            return _super.prototype._createTransaction.call(this, elements, subsetOptions(options));

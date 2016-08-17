@@ -44,6 +44,7 @@
   "scripts": {
     "test": "node_modules/.bin/mocha",
     "build": "./node_modules/.bin/webpack",
+    "deploy": "xcopy /E /Y ..\\TransactionalJS\\src .\\node_modules\\type-r\\src && npm run build && copy .\\nestedtypes.js ..\\observer-frontend\\htdocs\\node_modules\\nestedtypes",
     "watch": "./node_modules/.bin/webpack --watch"
   }
 }

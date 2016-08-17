@@ -549,6 +549,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        if (BaseClass.create === this.create) {
 	            this.create = Mixable.create;
 	        }
+	        this.__super__ = BaseClass.prototype;
 	        return this;
 	    };
 	    Mixable._mixinRules = { properties: 'merge' };
@@ -1453,6 +1454,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    return Array.isArray(parsed) ? parsed : [parsed];
 	}
 	var slice = Array.prototype.slice;
+	record_1.createSharedTypeSpec(Collection);
 	record_1.Record.Collection = Collection;
 
 
@@ -1738,6 +1740,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    return this;
 	};
 	transaction_1.Record._attribute = attributes_1.TransactionalType;
+	createSharedTypeSpec(transaction_1.Record);
 	function getAttributes(_a) {
 	    var defaults = _a.defaults, attributes = _a.attributes, idAttribute = _a.idAttribute;
 	    var definition = typeof defaults === 'function' ? defaults() : attributes || defaults || {};
@@ -2045,7 +2048,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                var prev = attributes[key];
 	                if (merge && attr.canBeUpdated(prev, value)) {
 	                    var nestedTransaction = prev._createTransaction(value, options);
-	                    if (nestedTransaction) {
+	                    if (nestedTransaction && attr.propagateChanges) {
 	                        nested.push(nestedTransaction);
 	                        changes.push(key);
 	                    }
@@ -2068,7 +2071,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	        isRoot && commit(this);
 	    };
 	    Record.prototype._onChildrenChange = function (child, options) {
-	        this.forceAttributeChange(child._ownerKey, options);
+	        var _ownerKey = child._ownerKey, attribute = this._attributes[_ownerKey];
+	        if (!attribute || attribute.propagateChanges)
+	            this.forceAttributeChange(_ownerKey, options);
 	    };
 	    Record.prototype.forceAttributeChange = function (key, options) {
 	        if (options === void 0) { options = {}; }
@@ -2131,7 +2136,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    var isRoot = begin(record), options = {}, attributes = record.attributes, spec = record._attributes[name], prev = attributes[name];
 	    if (spec.canBeUpdated(prev, value)) {
 	        var nestedTransaction = prev._createTransaction(value, options);
-	        if (nestedTransaction) {
+	        if (nestedTransaction && spec.propagateChanges) {
 	            nestedTransaction.commit(true);
 	            markAsDirty(record, options);
 	            trigger3(record, 'change:' + name, record, prev, options);
@@ -2341,9 +2346,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	        options.getHooks = options.getHooks.slice();
 	        options.transforms = options.transforms.slice();
 	        options.changeHandlers = options.changeHandlers.slice();
-	        var value = options.value, type = options.type, parse = options.parse, toJSON = options.toJSON, validate = options.validate, getHooks = options.getHooks, transforms = options.transforms, changeHandlers = options.changeHandlers;
+	        var value = options.value, type = options.type, parse = options.parse, toJSON = options.toJSON, changeEvents = options.changeEvents, validate = options.validate, getHooks = options.getHooks, transforms = options.transforms, changeHandlers = options.changeHandlers;
 	        this.value = value;
 	        this.type = type;
+	        this.propagateChanges = changeEvents !== false;
 	        this.parse = parse;
 	        this.toJSON = toJSON === void 0 ? this.toJSON : toJSON;
 	        this.validate = validate || this.validate;
@@ -2474,7 +2480,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    TransactionalType.prototype._handleChange = function (next, prev, record) {
 	        prev && free(record, prev);
 	        if (next && !aquire(record, next, this.name)) {
-	            object_plus_1.tools.log.warn('[Aggregation error] Assigned value already has an owner. Use shared attribute type.');
+	            object_plus_1.tools.log.warn("[Record] aggregated '" + this.name + "' attribute value already has an owner.", next, record._attributes);
 	        }
 	    };
 	    return TransactionalType;
@@ -2691,7 +2697,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    };
 	    SharedType.prototype.initialize = function (options) {
 	        this.toJSON = null;
-	        options.changeHandlers.unshift(this._handleChange);
+	        this.propagateChanges && options.changeHandlers.unshift(this._handleChange);
 	    };
 	    return SharedType;
 	}(generic_1.GenericAttribute));
@@ -2724,9 +2730,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	        }) : validate;
 	        return this;
 	    };
-	    ChainableAttributeSpec.prototype.triggerWhenChanged = function (events) {
-	        return this;
-	    };
 	    ChainableAttributeSpec.prototype.watcher = function (ref) {
 	        this.options._onChange = ref;
 	        return this;
@@ -2753,11 +2756,15 @@ return /******/ (function(modules) { // webpackBootstrap
 	        });
 	        return this;
 	    };
+	    ChainableAttributeSpec.prototype.changeEvents = function (events) {
+	        this.options.changeEvents = events;
+	        return this;
+	    };
 	    ChainableAttributeSpec.prototype.events = function (map) {
 	        var eventMap = new object_plus_1.EventMap(map);
 	        this.options.changeHandlers.push(function (next, prev, record) {
-	            prev && eventMap.unsubscribe(record, prev);
-	            next && eventMap.subscribe(record, next);
+	            prev && prev.trigger && eventMap.unsubscribe(record, prev);
+	            next && next.trigger && eventMap.subscribe(record, next);
 	        });
 	        return this;
 	    };

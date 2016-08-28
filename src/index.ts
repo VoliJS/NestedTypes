@@ -18,19 +18,6 @@ Nested.Collection.mixins( UnderscoreCollection );
 
 const { assign } = Nested.tools;
 
-assign( Nested, Backbone, {
-    Backbone  : Backbone,
-    Class     : Nested.Messenger,
-    Model     : RestModel,
-    Collection : RestCollection,
-    LazyStore  : LazyStore,
-    Store     : RestStore,
-
-    defaults( x ){
-        return Nested.Model.defaults( x );
-    }
-} );
-
 /**
  * Prepare  
  */
@@ -47,6 +34,19 @@ Object.defineProperties( Nested, {
     '$' : {
         get(){ return Backbone.$; },
         set( value ){ Backbone.$ = Sync.$ = value; }
+    }
+} );
+
+assign( Nested, Backbone, {
+    Backbone  : Backbone,
+    Class     : Nested.Messenger,
+    Model     : RestModel,
+    Collection : RestCollection,
+    LazyStore  : LazyStore,
+    Store     : RestStore,
+
+    defaults( x ){
+        return Nested.Model.defaults( x );
     }
 } );
 

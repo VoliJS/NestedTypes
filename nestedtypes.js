@@ -67,17 +67,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	Nested.Model.mixins(underscore_mixin_1.UnderscoreModel);
 	Nested.Collection.mixins(underscore_mixin_1.UnderscoreCollection);
 	var assign = Nested.tools.assign;
-	assign(Nested, Backbone, {
-	    Backbone: Backbone,
-	    Class: Nested.Messenger,
-	    Model: rest_1.RestModel,
-	    Collection: rest_1.RestCollection,
-	    LazyStore: rest_store_1.LazyStore,
-	    Store: rest_store_1.RestStore,
-	    defaults: function (x) {
-	        return Nested.Model.defaults(x);
-	    }
-	});
 	Object.defineProperties(Nested, {
 	    'emulateHTTP': linkProperty(Backbone, 'emulateHTTP'),
 	    'emulateJSON': linkProperty(Backbone, 'emulateJSON'),
@@ -89,6 +78,17 @@ return /******/ (function(modules) { // webpackBootstrap
 	    '$': {
 	        get: function () { return Backbone.$; },
 	        set: function (value) { Backbone.$ = Sync.$ = value; }
+	    }
+	});
+	assign(Nested, Backbone, {
+	    Backbone: Backbone,
+	    Class: Nested.Messenger,
+	    Model: rest_1.RestModel,
+	    Collection: rest_1.RestCollection,
+	    LazyStore: rest_store_1.LazyStore,
+	    Store: rest_store_1.RestStore,
+	    defaults: function (x) {
+	        return Nested.Model.defaults(x);
 	    }
 	});
 	function linkProperty(Namespace, name) {

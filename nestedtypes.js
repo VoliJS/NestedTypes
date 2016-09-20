@@ -1497,7 +1497,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	var object_plus_1 = __webpack_require__(2);
 	var validation_1 = __webpack_require__(9);
 	var traversable_1 = __webpack_require__(10);
-	var assign = object_plus_1.tools.assign, trigger2 = object_plus_1.eventsApi.trigger2, trigger3 = object_plus_1.eventsApi.trigger3;
+	var assign = object_plus_1.tools.assign, trigger2 = object_plus_1.eventsApi.trigger2, trigger3 = object_plus_1.eventsApi.trigger3, on = object_plus_1.eventsApi.on, off = object_plus_1.eventsApi.off;
 	var Transactional = (function () {
 	    function Transactional(cid) {
 	        this._events = void 0;
@@ -1517,6 +1517,15 @@ return /******/ (function(modules) { // webpackBootstrap
 	        this._disposed = true;
 	    };
 	    Transactional.prototype.initialize = function () { };
+	    Transactional.prototype.onChanges = function (handler, target) {
+	        on(this, this._changeEventName, handler, target);
+	    };
+	    Transactional.prototype.offChanges = function (handler, target) {
+	        off(this, this._changeEventName, handler, target);
+	    };
+	    Transactional.prototype.listenToChanges = function (target, handler) {
+	        this.listenTo(target, target._changeEventName, handler);
+	    };
 	    Transactional.prototype.transaction = function (fun, options) {
 	        if (options === void 0) { options = {}; }
 	        var isRoot = exports.transactionApi.begin(this);
@@ -2551,14 +2560,21 @@ return /******/ (function(modules) { // webpackBootstrap
 	    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
 	};
 	var generic_1 = __webpack_require__(15);
+	var object_plus_1 = __webpack_require__(2);
 	var DateProto = Date.prototype;
 	var DateType = (function (_super) {
 	    __extends(DateType, _super);
 	    function DateType() {
 	        _super.apply(this, arguments);
 	    }
-	    DateType.prototype.convert = function (value) {
-	        return value == null || value instanceof Date ? value : new Date(value);
+	    DateType.prototype.convert = function (value, options, prev, record) {
+	        if (value == null || value instanceof Date)
+	            return value;
+	        var date = new Date(value);
+	        if (isNaN(+date)) {
+	            object_plus_1.tools.log.warn("[Invalid Date] in " + (record.constructor.name || 'Model') + "." + this.name + " attribute.", value, record);
+	        }
+	        return date;
 	    };
 	    DateType.prototype.validate = function (model, value, name) {
 	        if (value != null && isNaN(+value))
@@ -2584,7 +2600,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                return new Date(Number(msDate[1]));
 	            }
 	        }
-	        return _super.prototype.convert.call(this, value);
+	        return DateType.prototype.convert.apply(this, arguments);
 	    };
 	    MSDateType.prototype.toJSON = function (value) { return value && "/Date(" + value.getTime() + ")/"; };
 	    return MSDateType;
@@ -2725,25 +2741,30 @@ return /******/ (function(modules) { // webpackBootstrap
 	    function SharedRecordType() {
 	        _super.apply(this, arguments);
 	    }
+	    SharedRecordType.prototype.clone = function (value) {
+	        return value;
+	    };
 	    SharedRecordType.prototype.canBeUpdated = function (prev, next) { };
 	    SharedRecordType.prototype.convert = function (value, options, prev, record) {
 	        return value == null || value instanceof this.type ? value : this.type.create(value, options);
 	    };
-	    SharedRecordType.prototype.validate = function (record, value) {
-	        var error = value && value.validationError;
-	        if (error)
-	            return error;
-	    };
+	    SharedRecordType.prototype.validate = function (model, value, name) { };
 	    SharedRecordType.prototype.create = function () {
 	        return null;
 	    };
 	    SharedRecordType.prototype._handleChange = function (next, prev, record) {
-	        prev && off(prev, prev._changeEventName, record._onChildrenChange, record);
-	        next && on(next, next._changeEventName, record._onChildrenChange, record);
+	        prev && off(prev, prev._changeEventName, this._onChange, record);
+	        next && on(next, next._changeEventName, this._onChange, record);
 	    };
 	    SharedRecordType.prototype.initialize = function (options) {
 	        this.toJSON = null;
-	        this.propagateChanges && options.changeHandlers.unshift(this._handleChange);
+	        if (this.propagateChanges) {
+	            var attribute_1 = this;
+	            this._onChange = function (child, options) {
+	                this.forceAttributeChange(attribute_1.name, options);
+	            };
+	            options.changeHandlers.unshift(this._handleChange);
+	        }
 	    };
 	    return SharedRecordType;
 	}(generic_1.GenericAttribute));
@@ -2796,7 +2817,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        this.options.transforms.push(function (next, options, prev, model) {
 	            if (this.isChanged(next, prev)) {
 	                var changed = fun.call(model, next, this.name);
-	                return changed === void 0 ? prev : changed;
+	                return changed === void 0 ? prev : this.convert(changed, options, prev, model);
 	            }
 	            return prev;
 	        });
@@ -3390,6 +3411,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                this.refs.map(function (objOrId) { return objOrId.id || objOrId; }) :
 	                this.models.map(function (model) { return model.id; });
 	        };
+	        SubsetOfCollection.prototype._validateNested = function () { return 0; };
 	        SubsetOfCollection.prototype.clone = function (owner) {
 	            var Ctor = this.constructor, copy = new Ctor(this.models, {
 	                model: this.model,

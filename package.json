@@ -43,8 +43,10 @@
   "version": "2.0.0-b07",
   "scripts": {
     "test": "node_modules/.bin/mocha",
+    "pull" : "git submodule update --remote",
     "build": "./node_modules/.bin/webpack",
-    "deploy": "xcopy /E /Y ..\\TransactionalJS\\src .\\node_modules\\type-r\\src && npm run build && copy .\\nestedtypes.js ..\\observer-frontend\\htdocs\\node_modules\\nestedtypes",
+    "deploy": "copy .\\nestedtypes.js ..\\observer-frontend\\htdocs\\node_modules\\nestedtypes",
+    "all" : "npm run pull && npm run build && npm run deploy",
     "watch": "./node_modules/.bin/webpack --watch"
   }
 }

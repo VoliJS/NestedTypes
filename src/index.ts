@@ -1,11 +1,11 @@
 /**
  * Prepare backbone View, Router, History, and Events.  
  */
-import * as Nested from 'type-r/src'
+import * as Nested from '../type-r/src'
 export = Nested;
 import * as Backbone from './backbone'
 import { RestCollection, RestModel } from './rest'
-import { Store } from 'type-r/src'
+import { Store } from '../type-r/src'
 import * as Sync from './sync'
 import { UnderscoreModel, UnderscoreCollection } from './underscore-mixin'
 import { RestStore, LazyStore } from './rest-store'

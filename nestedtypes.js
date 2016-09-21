@@ -1202,6 +1202,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        function Subset(a, b, listen) {
 	            Ctor.call(this, a, b, listen ? 1 : 2);
 	        }
+	        object_plus_1.Mixable.mixTo(Subset);
 	        Subset.prototype = this.prototype;
 	        Subset._attribute = record_1.TransactionalType;
 	        Subset['of'] = function (path) {
@@ -1700,13 +1701,19 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ function(module, exports) {
 
 	"use strict";
-	var referenceMask = /\~|\^|([^.]+)/g;
+	var referenceMask = /\^|([^.]+)/g;
 	var CompiledReference = (function () {
 	    function CompiledReference(reference, splitTail) {
 	        if (splitTail === void 0) { splitTail = false; }
 	        var path = reference
 	            .match(referenceMask)
-	            .map(function (key) { return key === '~' ? 'getStore()' : (key === '^' ? 'getOwner()' : key); });
+	            .map(function (key) {
+	            if (key === '^')
+	                return 'getOwner()';
+	            if (key[0] === '~')
+	                return "getStore().get(\"" + key.substr(1) + "\")";
+	            return key;
+	        });
 	        this.tail = splitTail && path.pop();
 	        this.local = !path.length;
 	        path.unshift('self');
@@ -2567,13 +2574,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	    function DateType() {
 	        _super.apply(this, arguments);
 	    }
-	    DateType.prototype.convert = function (value, options, prev, record) {
+	    DateType.prototype.convert = function (value) {
 	        if (value == null || value instanceof Date)
 	            return value;
 	        var date = new Date(value);
-	        if (isNaN(+date)) {
-	            object_plus_1.tools.log.warn("[Invalid Date] in " + (record.constructor.name || 'Model') + "." + this.name + " attribute.", value, record);
-	        }
+	        if (isNaN(+date))
+	            logInvalidDate(this, value, arguments[3]);
 	        return date;
 	    };
 	    DateType.prototype.validate = function (model, value, name) {
@@ -2586,6 +2592,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	    return DateType;
 	}(generic_1.GenericAttribute));
 	exports.DateType = DateType;
+	function logInvalidDate(attribute, value, record) {
+	    object_plus_1.tools.log.warn("[Invalid Date] in " + (record.constructor.name || 'Model') + "." + attribute.name + " attribute.", value, record);
+	}
 	Date._attribute = DateType;
 	var msDatePattern = /\/Date\(([0-9]+)\)\//;
 	var MSDateType = (function (_super) {
@@ -2663,6 +2672,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
 	};
 	var generic_1 = __webpack_require__(15);
+	var object_plus_1 = __webpack_require__(2);
 	var ConstructorType = (function (_super) {
 	    __extends(ConstructorType, _super);
 	    function ConstructorType() {
@@ -2696,6 +2706,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	    function NumericType() {
 	        _super.apply(this, arguments);
 	    }
+	    NumericType.prototype.convert = function (value) {
+	        var num = value == null ? value : this.type(value);
+	        if (num !== num)
+	            logInvalidNumber(this, value, arguments[3]);
+	        return num;
+	    };
 	    NumericType.prototype.validate = function (model, value, name) {
 	        if (value != null && !isFinite(value)) {
 	            return name + ' is not valid number';
@@ -2704,6 +2720,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	    return NumericType;
 	}(PrimitiveType));
 	exports.NumericType = NumericType;
+	function logInvalidNumber(attribute, value, record) {
+	    object_plus_1.tools.log.warn("[Invalid Number] in " + (record.constructor.name || 'Model') + "." + attribute.name + " attribute.", value, record);
+	}
 	Number._attribute = NumericType;
 	var ArrayType = (function (_super) {
 	    __extends(ArrayType, _super);
@@ -3486,9 +3505,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	    Store.prototype.getStore = function () { return this; };
 	    Store.prototype.get = function (name) {
 	        var local = this[name];
-	        if (local || this === _store)
+	        if (local || this === this._defaultStore)
 	            return local;
-	        return this._owner ? this._owner.get(name) : _store[name];
+	        return this._owner ? this._owner.get(name) : this._defaultStore.get(name);
 	    };
 	    Object.defineProperty(Store, "global", {
 	        get: function () { return _store; },

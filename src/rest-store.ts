@@ -1,6 +1,6 @@
 import * as Backbone from './backbone'
 import * as _ from 'underscore'
-import { mixins, define, Store } from 'type-r/src'
+import { mixins, define, Store } from '../type-r/src'
 import { RestModel, RestCollection } from './rest'
 
 const { $ } = Backbone;

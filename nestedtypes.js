@@ -1324,7 +1324,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    };
 	    Collection.prototype.clone = function (options) {
 	        if (options === void 0) { options = {}; }
-	        var models = this.map(function (model) { return model.clone(); }), copy = new this.constructor(models, { model: this.model, comparator: this.comparator });
+	        var models = this.map(function (model) { return model.clone(); }), copy = new this.constructor(models, { model: this.model, comparator: this.comparator }, this._shared);
 	        if (options.pinStore)
 	            copy._defaultStore = this.getStore();
 	        return copy;

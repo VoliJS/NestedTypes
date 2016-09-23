@@ -655,6 +655,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }
 	    return target;
 	}
+	exports.mergeProps = mergeProps;
 
 
 /***/ },
@@ -769,7 +770,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                var _events = this._events;
 	                var queue = _events[name];
 	                if (queue)
-	                    _fireEventAll(queue, allArgs.splice(0, 1));
+	                    _fireEventAll(queue, allArgs.slice(1));
 	                if (queue = _events.all)
 	                    _fireEventAll(queue, allArgs);
 	        }
@@ -901,7 +902,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	function _fireEventAll(events, a) {
 	    for (var _i = 0, events_1 = events; _i < events_1.length; _i++) {
 	        var ev = events_1[_i];
-	        ev.callback.call(ev.ctx, a);
+	        ev.callback.apply(ev.ctx, a);
 	    }
 	}
 

@@ -194,8 +194,8 @@ export class RestModel extends Model {
         var wait    = options.wait;
 
         var destroy = function(){
+            model.stopListening(); // TBD: figure out whenever we need to dispose the model.
             model.trigger( 'destroy', model, model.collection, options );
-            model.dispose();
         };
 
         options.success = function( resp ){

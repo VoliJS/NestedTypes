@@ -1208,7 +1208,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        Subset['of'] = function (path) {
 	            return Ctor.subsetOf(path);
 	        };
-	        this.Subset = Subset;
+	        this.Set = this.Subset = Subset;
 	        transactions_1.Transactional.predefine.call(this);
 	        record_1.createSharedTypeSpec(this, SharedCollectionType);
 	        return this;
@@ -3432,12 +3432,17 @@ return /******/ (function(modules) { // webpackBootstrap
 	        };
 	        SubsetOfCollection.prototype._validateNested = function () { return 0; };
 	        SubsetOfCollection.prototype.clone = function (owner) {
-	            var Ctor = this.constructor, copy = new Ctor(this.models, {
+	            var Ctor = this.constructor, copy = new Ctor([], {
 	                model: this.model,
 	                comparator: this.comparator
 	            });
-	            copy.resolvedWith = this.resolvedWith;
-	            copy.refs = this.refs;
+	            if (this.resolvedWith) {
+	                copy.resolvedWith = this.resolvedWith;
+	                copy.reset(this.models, { silent: true });
+	            }
+	            else {
+	                copy.refs = this.refs;
+	            }
 	            return copy;
 	        };
 	        SubsetOfCollection.prototype.parse = function (raw) {
@@ -3450,8 +3455,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	                        records.push(record);
 	                }
 	            }
-	            else {
-	                this.refs = raw;
+	            else if (elements.length) {
+	                this.refs = elements;
 	            }
 	            return records;
 	        };
@@ -4060,8 +4065,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	        var success = options.success;
 	        var wait = options.wait;
 	        var destroy = function () {
+	            model.stopListening();
 	            model.trigger('destroy', model, model.collection, options);
-	            model.dispose();
 	        };
 	        options.success = function (resp) {
 	            if (wait)

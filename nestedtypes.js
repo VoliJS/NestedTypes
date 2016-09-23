@@ -639,10 +639,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	        var name_1 = _a[_i];
 	        if (name_1 === 'constructor')
 	            continue;
-	        var sourceProp = Object.getOwnPropertyDescriptor(source, name_1), destProp = tools_1.getPropertyDescriptor(target, name_1);
-	        if (destProp) {
-	            var rule = rules[name_1], value = destProp.value;
-	            if (rule && value) {
+	        var sourceProp = Object.getOwnPropertyDescriptor(source, name_1), destProp = tools_1.getPropertyDescriptor(target, name_1), value = destProp && destProp.value;
+	        if (value != null) {
+	            var rule = rules[name_1];
+	            if (rule) {
 	                target[name_1] = typeof rule === 'object' ?
 	                    mergeObjects(value, sourceProp.value, rule) : (rule === 'merge' ?
 	                    mergeObjects(value, sourceProp.value) :

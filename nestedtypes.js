@@ -558,7 +558,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	    return Mixable;
 	}());
 	exports.Mixable = Mixable;
-	Mixable.prototype.toString = Mixable.prototype.valueOf = void 0;
 	function toPropertyDescriptor(x) {
 	    if (x) {
 	        return typeof x === 'function' ? { get: x } : x;
@@ -789,7 +788,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	    return Messenger;
 	}());
 	exports.Messenger = Messenger;
-	Messenger.prototype.toString = Messenger.prototype.valueOf = void 0;
 	var slice = Array.prototype.slice;
 	exports.Events = omit(Messenger.prototype, 'constructor', 'initialize');
 	function eventsApi(iteratee, events, name, callback, opts) {
@@ -1618,7 +1616,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	    return Transactional;
 	}());
 	exports.Transactional = Transactional;
-	Transactional.prototype.toString = Transactional.prototype.valueOf = void 0;
 	exports.transactionApi = {
 	    begin: function (object) {
 	        return object._transaction ? false : (object._transaction = true);

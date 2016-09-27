@@ -330,7 +330,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        discard[arguments[i]] = true;
 	    }
 	    for (var name in source) {
-	        if (!discard[name] && source.hasOwnProperty(name)) {
+	        if (!discard.hasOwnProperty(name) && source.hasOwnProperty(name)) {
 	            dest[name] = source[name];
 	        }
 	    }
@@ -558,6 +558,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    return Mixable;
 	}());
 	exports.Mixable = Mixable;
+	Mixable.prototype.toString = Mixable.prototype.valueOf = void 0;
 	function toPropertyDescriptor(x) {
 	    if (x) {
 	        return typeof x === 'function' ? { get: x } : x;
@@ -788,6 +789,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    return Messenger;
 	}());
 	exports.Messenger = Messenger;
+	Messenger.prototype.toString = Messenger.prototype.valueOf = void 0;
 	var slice = Array.prototype.slice;
 	exports.Events = omit(Messenger.prototype, 'constructor', 'initialize');
 	function eventsApi(iteratee, events, name, callback, opts) {
@@ -1616,6 +1618,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    return Transactional;
 	}());
 	exports.Transactional = Transactional;
+	Transactional.prototype.toString = Transactional.prototype.valueOf = void 0;
 	exports.transactionApi = {
 	    begin: function (object) {
 	        return object._transaction ? false : (object._transaction = true);
@@ -1776,7 +1779,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        dynamicMixin.properties = {};
 	    }
 	    assign(dynamicMixin.properties, protoProps.properties || {});
-	    defaults(dynamicMixin, omit(definition, 'attributes', 'collection'));
+	    assign(dynamicMixin, omit(definition, 'attributes', 'collection', 'defaults', 'properties', 'forEachAttr'));
 	    object_plus_1.Mixable.define.call(this, dynamicMixin, staticProps);
 	    defineCollection.call(this, definition.collection || definition.Collection);
 	    return this;

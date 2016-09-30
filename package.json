@@ -39,7 +39,7 @@
     "LICENSE"
   ],
   "license": "MIT",
-  "version": "2.0.0-rc1",
+  "version": "2.0.0-rc2",
   "scripts": {
     "test": "node_modules/.bin/mocha",
     "pull" : "git submodule update --remote",

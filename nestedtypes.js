@@ -516,7 +516,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    Mixable.define = function (definition, staticProps) {
 	        if (definition === void 0) { definition = {}; }
 	        if (!this.define) {
-	            tools_1.log.error("[Class.define] Class must have class extensions to use @define decorator. Use '@extendable' before @define, or extend the base class with class extensions.", definition);
+	            tools_1.log.error("[Class Defininition] Class must have class extensions to use @define decorator. Use '@extendable' before @define, or extend the base class with class extensions.", definition);
 	            return this;
 	        }
 	        this.predefine();
@@ -1341,7 +1341,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        if (elements === void 0) { elements = []; }
 	        if (options === void 0) { options = {}; }
 	        if (options.add !== void 0) {
-	            log.error("Collection.set doesn't support 'add' option, behaving as if options.add === true.");
+	            this._log('warn', "Collection.set doesn't support 'add' option, behaving as if options.add === true.", options);
 	        }
 	        if (options.reset) {
 	            this.reset(elements, options);
@@ -1455,6 +1455,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	            }
 	        }
 	        return next;
+	    };
+	    Collection.prototype._log = function (level, text, value) {
+	        object_plus_1.tools.log[level](("[Collection Update] " + this.model.prototype.getClassName() + "." + this.getClassName() + ": ") + text, value, 'Attributes spec:', this.model.prototype._attributes);
+	    };
+	    Collection.prototype.getClassName = function () {
+	        return _super.prototype.getClassName.call(this) || 'Collection';
 	    };
 	    Collection._attribute = record_1.TransactionalType;
 	    Collection = __decorate([
@@ -1608,6 +1614,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	    };
 	    Transactional.prototype.isValid = function (key) {
 	        return !this.getValidationError(key);
+	    };
+	    Transactional.prototype.valueOf = function () { return this.cid; };
+	    Transactional.prototype.toString = function () { return this.cid; };
+	    Transactional.prototype.getClassName = function () {
+	        var string = this.constructor.name;
+	        if (name !== 'Subclass')
+	            return name;
 	    };
 	    Transactional = __decorate([
 	        object_plus_1.mixins(object_plus_1.Messenger),
@@ -1769,7 +1782,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    if (protoProps === void 0) { protoProps = {}; }
 	    var BaseConstructor = getBaseClass(this), baseProto = BaseConstructor.prototype, staticsDefinition = object_plus_1.tools.getChangedStatics(this, 'attributes', 'collection', 'Collection'), definition = assign(staticsDefinition, protoProps);
 	    if ('Collection' in this && this.Collection === void 0) {
-	        object_plus_1.tools.log.error("[Model.define] Model.Collection is undefined. It must be defined _before_ the model.", definition);
+	        object_plus_1.tools.log.error("[Model Definition] " + this.prototype.getClassName() + ".Collection is undefined. It must be defined _before_ the model.", definition);
 	    }
 	    var dynamicMixin = define_1.compile(getAttributes(definition), baseProto._attributes);
 	    if (definition.properties === false) {
@@ -1981,11 +1994,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	            }
 	            else {
 	                unknown || (unknown = []);
-	                unknown.push(name_1);
+	                unknown.push("'" + name_1 + "'");
 	            }
 	        }
 	        if (unknown) {
-	            log.warn("[Record] Unknown attributes are ignored (" + unknown.join(', ') + "). Record:", _attributes, 'Attributes:', attrs);
+	            this._log('warn', "attributes " + unknown.join(', ') + " are not defined", attrs);
 	        }
 	    };
 	    Record.prototype.each = function (iteratee, context) {
@@ -2119,7 +2132,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            });
 	        }
 	        else {
-	            log.error('[Type Error]', this, 'Record update rejected (', values, '). Incompatible type.');
+	            this._log('error', 'incompatible argument type', values);
 	        }
 	        if (changes.length && markAsDirty(this, options)) {
 	            return new RecordTransaction(this, isRoot, nested, changes);
@@ -2158,6 +2171,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	            }
 	        });
 	        _super.prototype.dispose.call(this);
+	    };
+	    Record.prototype._log = function (level, text, value) {
+	        object_plus_1.tools.log[level](("[Model Update] " + this.getClassName() + ": ") + text, value, 'Attributes spec:', this._attributes);
+	    };
+	    Record.prototype.getClassName = function () {
+	        return _super.prototype.getClassName.call(this) || 'Model';
 	    };
 	    Record = __decorate([
 	        object_plus_1.define({
@@ -2475,6 +2494,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	        }
 	    };
 	    GenericAttribute.prototype.initialize = function (name, options) { };
+	    GenericAttribute.prototype._log = function (level, text, value, record) {
+	        object_plus_1.tools.log[level](("[Attribute Update] " + record.getClassName() + "." + this.name + ": ") + text, value, 'Attributes spec:', record._attributes);
+	    };
 	    return GenericAttribute;
 	}());
 	exports.GenericAttribute = GenericAttribute;
@@ -2514,7 +2536,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	var transaction_1 = __webpack_require__(12);
 	var generic_1 = __webpack_require__(15);
 	var transactions_1 = __webpack_require__(8);
-	var object_plus_1 = __webpack_require__(2);
 	var free = transactions_1.transactionApi.free, aquire = transactions_1.transactionApi.aquire;
 	var TransactionalType = (function (_super) {
 	    __extends(TransactionalType, _super);
@@ -2537,7 +2558,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            return value;
 	        if (value instanceof this.type) {
 	            if (value._shared === 1) {
-	                object_plus_1.tools.log.warn("[Record] Aggregated attribute \"" + this.name + " : " + (this.type.name || 'Collection') + "\" is assigned with shared collection type.", value, record._attributes);
+	                this._log('error', 'aggregated attribute is assigned with shared collection type', value, record);
 	            }
 	            return options.merge ? value.clone() : value;
 	        }
@@ -2557,7 +2578,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    TransactionalType.prototype._handleChange = function (next, prev, record) {
 	        prev && free(record, prev);
 	        if (next && !aquire(record, next, this.name)) {
-	            object_plus_1.tools.log.warn("[Record] aggregated '" + this.name + "' attribute value already has an owner.", next, record._attributes);
+	            this._log('error', 'aggregated attribute assigned with object which is aggregated somewhere else', next, record);
 	        }
 	    };
 	    return TransactionalType;
@@ -2577,7 +2598,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
 	};
 	var generic_1 = __webpack_require__(15);
-	var object_plus_1 = __webpack_require__(2);
 	var DateProto = Date.prototype;
 	var DateType = (function (_super) {
 	    __extends(DateType, _super);
@@ -2589,7 +2609,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            return value;
 	        var date = new Date(value);
 	        if (isNaN(+date))
-	            logInvalidDate(this, value, arguments[3]);
+	            this._log('warn', 'assigned with Invalid Date', value, arguments[3]);
 	        return date;
 	    };
 	    DateType.prototype.validate = function (model, value, name) {
@@ -2602,9 +2622,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	    return DateType;
 	}(generic_1.GenericAttribute));
 	exports.DateType = DateType;
-	function logInvalidDate(attribute, value, record) {
-	    object_plus_1.tools.log.warn("[Invalid Date] in " + (record.constructor.name || 'Model') + "." + attribute.name + " attribute.", value, record);
-	}
 	Date._attribute = DateType;
 	var msDatePattern = /\/Date\(([0-9]+)\)\//;
 	var MSDateType = (function (_super) {
@@ -2682,7 +2699,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
 	};
 	var generic_1 = __webpack_require__(15);
-	var object_plus_1 = __webpack_require__(2);
 	var ConstructorType = (function (_super) {
 	    __extends(ConstructorType, _super);
 	    function ConstructorType() {
@@ -2719,7 +2735,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    NumericType.prototype.convert = function (value) {
 	        var num = value == null ? value : this.type(value);
 	        if (num !== num)
-	            logInvalidNumber(this, value, arguments[3]);
+	            this._log('warn', 'assigned with Invalid Number', value, arguments[3]);
 	        return num;
 	    };
 	    NumericType.prototype.validate = function (model, value, name) {
@@ -2730,9 +2746,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	    return NumericType;
 	}(PrimitiveType));
 	exports.NumericType = NumericType;
-	function logInvalidNumber(attribute, value, record) {
-	    object_plus_1.tools.log.warn("[Invalid Number] in " + (record.constructor.name || 'Model') + "." + attribute.name + " attribute.", value, record);
-	}
 	Number._attribute = NumericType;
 	var ArrayType = (function (_super) {
 	    __extends(ArrayType, _super);
@@ -3065,7 +3078,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	}());
 	exports.CollectionTransaction = CollectionTransaction;
 	function logAggregationError(collection) {
-	    object_plus_1.tools.log.warn('[Collection] Added records which already has an owner:', collection._aggregationError, collection);
+	    collection._log('error', 'added records already have an owner', collection._aggregationError);
 	    collection._aggregationError = void 0;
 	}
 	exports.logAggregationError = logAggregationError;

@@ -1618,7 +1618,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    Transactional.prototype.valueOf = function () { return this.cid; };
 	    Transactional.prototype.toString = function () { return this.cid; };
 	    Transactional.prototype.getClassName = function () {
-	        var string = this.constructor.name;
+	        var name = this.constructor.name;
 	        if (name !== 'Subclass')
 	            return name;
 	    };

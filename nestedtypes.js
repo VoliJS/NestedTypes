@@ -2570,7 +2570,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            return error;
 	    };
 	    TransactionalType.prototype.create = function () {
-	        return new this.type();
+	        return this.type.create();
 	    };
 	    TransactionalType.prototype.initialize = function (options) {
 	        options.changeHandlers.unshift(this._handleChange);

@@ -124,29 +124,31 @@ export class RestModel extends Model {
     // state will be `set` again.
     save( attrs? : {}, options? : RestOptions )
     save( key : string, value : any, options? : RestOptions )
-    save( key, val, options? : RestOptions ){
+    save( key, val, a_options? : RestOptions ){
         // Handle both `"key", value` and `{key: value}` -style arguments.
-        var attrs;
+        let attrs, originalOptions;
+
         if( key == null || typeof key === 'object' ){
             attrs   = key;
-            options = val;
+            originalOptions = val || {};
         }
         else{
             (attrs = {})[ key ] = val;
+            originalOptions = a_options || {};
         }
 
-        options  = _.extend( { validate : true, parse : true }, options );
-        var wait = options.wait;
+        const options = _.extend( { validate : true, parse : true }, originalOptions ),
+              wait = options.wait;
 
         // If we're not waiting and attributes exist, save acts as
         // `set(attr).save(null, opts)` with validation. Otherwise, check if
         // the model will be valid when the attributes, if any, are set.
         if( attrs && !wait ){
-            this.set( attrs, options );
+            this.set( attrs, originalOptions );
         }
 
-        if( this._invalidate( options ) ){
-            if( attrs && wait ) this.set( attrs, options );
+        if( this._invalidate( originalOptions ) ){
+            if( attrs && wait ) this.set( attrs, originalOptions );
             return errorPromise( this.validationError );
         }
 
@@ -169,6 +171,7 @@ export class RestModel extends Model {
             if( success ) success.call( options.context, model, serverAttrs, options );
             triggerAndBubble( model, 'sync', model, serverAttrs, options );
         };
+
         wrapError( this, options );
 
         // Set temporary attributes if `{wait: true}` to properly find new ids.

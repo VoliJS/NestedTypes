@@ -4061,24 +4061,24 @@ return /******/ (function(modules) { // webpackBootstrap
 	    RestModel.prototype.sync = function () {
 	        return sync_1.sync.apply(this, arguments);
 	    };
-	    RestModel.prototype.save = function (key, val, options) {
+	    RestModel.prototype.save = function (key, val, a_options) {
 	        var _this = this;
-	        var attrs;
+	        var attrs, originalOptions;
 	        if (key == null || typeof key === 'object') {
 	            attrs = key;
-	            options = val;
+	            originalOptions = val || {};
 	        }
 	        else {
 	            (attrs = {})[key] = val;
+	            originalOptions = a_options || {};
 	        }
-	        options = _.extend({ validate: true, parse: true }, options);
-	        var wait = options.wait;
+	        var options = _.extend({ validate: true, parse: true }, originalOptions), wait = options.wait;
 	        if (attrs && !wait) {
-	            this.set(attrs, options);
+	            this.set(attrs, originalOptions);
 	        }
-	        if (this._invalidate(options)) {
+	        if (this._invalidate(originalOptions)) {
 	            if (attrs && wait)
-	                this.set(attrs, options);
+	                this.set(attrs, originalOptions);
 	            return sync_1.errorPromise(this.validationError);
 	        }
 	        var model = this;

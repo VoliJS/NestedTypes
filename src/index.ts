@@ -33,7 +33,7 @@ Object.defineProperties( Nested, {
     'store'        : linkProperty( Store, 'global' ),
     '$' : {
         get(){ return Backbone.$; },
-        set( value ){ Backbone.$ = Sync.$ = value; }
+        set( value ){ (<any>Backbone).$ = (<any>Sync).$ = value; }
     }
 } );
 

@@ -7,14 +7,13 @@ import * as Backbone from './backbone'
 import { RestCollection, RestModel } from './rest'
 import { Store } from '../type-r/src'
 import * as Sync from './sync'
-import { UnderscoreModel, UnderscoreCollection } from './underscore-mixin'
+import * as _ from 'underscore'
 import { RestStore, LazyStore } from './rest-store'
  
 Nested.Mixable.mixins( Nested.Events );
 Nested.Mixable.mixTo( Backbone.View, Backbone.Router, Backbone.History );
 
-Nested.Model.mixins( UnderscoreModel );
-Nested.Collection.mixins( UnderscoreCollection );
+Nested.useUnderscore( _ );
 
 const { assign } = Nested.tools;
 

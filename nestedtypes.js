@@ -2841,7 +2841,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	    ChainableAttributeSpec.prototype.check = function (check, error) {
 	        function validate(model, value, name) {
 	            if (!check.call(model, value, name)) {
-	                return error || check.error || name + ' is not valid';
+	                var msg = error || check.error || name + ' is not valid';
+	                return typeof msg === 'function' ? msg.call(model, name) : msg;
 	            }
 	        }
 	        var prev = this.options.validate;

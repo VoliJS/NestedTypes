@@ -1750,7 +1750,7 @@ QUnit.test( "#1939 - `parse` is passed `options`", function( assert ){
             },
             initialize : function(){
                 assert.equal( this.prop, 'value' );
-                assert.equal( this.collection, collection );
+                assert.equal( this.collection, void 0 );
                 return this;
             }
         } );

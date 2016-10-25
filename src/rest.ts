@@ -147,7 +147,7 @@ export class RestModel extends Model {
             this.set( attrs, originalOptions );
         }
 
-        if( this._invalidate( originalOptions ) ){
+        if( this._invalidate( options ) ){
             if( attrs && wait ) this.set( attrs, originalOptions );
             return errorPromise( this.validationError );
         }

@@ -4201,7 +4201,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        if (attrs && !wait) {
 	            this.set(attrs, originalOptions);
 	        }
-	        if (this._invalidate(originalOptions)) {
+	        if (this._invalidate(options)) {
 	            if (attrs && wait)
 	                this.set(attrs, originalOptions);
 	            return sync_1.errorPromise(this.validationError);

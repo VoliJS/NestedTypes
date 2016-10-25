@@ -33,16 +33,16 @@
   });
 
   QUnit.test("initialize", function(assert) {
-    assert.expect(3);
+    assert.expect(2);
     var Model = Backbone.Model.extend({
       initialize: function() {
         this.one = 1;
-        assert.equal(this.collection, collection);
+        //assert.equal(this.collection, collection); No access to collection in constructor.
       }
     });
-    var model = new Model({}, {}, collection );
+    var model = new Model({}, {} );
     assert.equal(model.one, 1);
-    assert.equal(model.collection, collection);
+    assert.equal(model.collection, void 0);
   });
 
   QUnit.test("initialize with attributes and options", function(assert) {
@@ -936,7 +936,7 @@
 
   QUnit.test('#3778 - id will only be updated if it is set', function(assert) {
     assert.expect(2);
-    var model = new Backbone.Model({id: 1});
+    var model = new ( Backbone.Model.defaults({ foo : '' }))({id: 1});
     model.id = 2;
     model.set({foo: 'bar'});
     assert.equal(model.id, 2);

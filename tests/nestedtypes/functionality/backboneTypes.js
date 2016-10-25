@@ -39,7 +39,7 @@
                 first : A.has.parse( function( resp ){
                     return { a : resp.a + 1, b : resp.b + 1 };
                 }),
-                second : A.has.triggerWhenChanged( false ),
+                second : A.has.changeEvents( false ),
                 c : A.Collection
             }
         });
@@ -241,7 +241,7 @@
             it( 'send single "change" event in a nested transaction', function(){
                 var m = new B();
 
-                shouldFireChangeOnce( m, 'first second', function(){
+                shouldFireChangeOnce( m, 'first', function(){
                     m.transaction( function(){
                         m.first.a = 7;
                         m.second.a = 7;

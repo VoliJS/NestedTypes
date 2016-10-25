@@ -1,5 +1,6 @@
 {
   "name": "nestedtypes",
+  "version": "2.0.0-rc8",
   "main": "nestedtypes.js",
   "description": "Next generation data framework, which can be used as drop-in backbonejs replacement.",
   "homepage": "https://github.com/Volicon/backbone.nestedTypes",
@@ -39,7 +40,6 @@
     "LICENSE"
   ],
   "license": "MIT",
-  "version": "2.0.0-rc7",
   "scripts": {
     "test": "node_modules/.bin/mocha",
     "pull" : "git submodule update --remote",

@@ -36,7 +36,7 @@ export class LazyStore extends RestStore {
 
     // fetch specified items, or all items if called without arguments.
     // returns jquery promise
-    fetch( ...args : string[] ) : {} {
+    fetch( ...args : string[] ) : JQueryXHR {
         var xhr         = [],
             objsToFetch = args.length ? args : this.keys();
 
@@ -50,7 +50,7 @@ export class LazyStore extends RestStore {
 
     // fetch specified items, or all items if called without arguments.
     // returns first jquery promise.
-    fetchOnce( ...args : string[] ) : {} {
+    fetchOnce( ...args : string[] ) : JQueryXHR {
         var xhr         = [],
             self        = this,
             objsToFetch = args.length ? args : this.keys();

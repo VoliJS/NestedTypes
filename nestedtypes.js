@@ -4249,7 +4249,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            if (!model.isNew())
 	                triggerAndBubble(model, 'sync', model, resp, options);
 	        };
-	        var xhr = false;
+	        var xhr;
 	        if (this.isNew()) {
 	            _.defer(options.success);
 	        }
@@ -4259,7 +4259,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        }
 	        if (!wait)
 	            destroy();
-	        return xhr;
+	        return xhr || false;
 	    };
 	    RestModel.prototype.url = function () {
 	        var base = _.result(this, 'urlRoot') ||
@@ -4282,7 +4282,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	function _sync(method, _this, options) {
 	    _this._xhr && _this._xhr.abort && _this._xhr.abort();
 	    var xhr = _this._xhr = _this.sync(method, _this, options);
-	    xhr && xhr.always && xhr.always(function () { _this.xhr = void 0; });
+	    xhr && xhr.always && xhr.always(function () { _this._xhr = void 0; });
 	    return xhr;
 	}
 	function wrapError(model, options) {

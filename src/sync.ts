@@ -20,6 +20,8 @@ export interface Restful {
     trigger( event : string, model, xhr, options )
     collection? : { trigger( event : string, model, xhr, options ) }
     toJSON( options : any ) : {}
+    _xhr : JQueryXHR
+    sync( method : string, object : Restful, options : SyncOptions )
 }
 
 export interface SyncOptions {
@@ -80,7 +82,7 @@ export let ajax : ( options : {} ) => any = function(){
     // instead of `application/json` with the model in a param named `model`.
     // Useful when interfacing with server-side languages like **PHP** that make
     // it difficult to read the body of `PUT` requests.
-export let sync = function( method : Method, model : Restful, options : SyncOptions = {} ){
+export let sync = function( method : Method, model : Restful, options : SyncOptions = {} ) : JQueryXHR{
     var type = methodMap[ method ];
     // Default options, unless specified.
     defaults( options, {

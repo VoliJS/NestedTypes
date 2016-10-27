@@ -1,4 +1,4 @@
-import { sync, errorPromise, urlError, SyncOptions, LazyValue } from './sync'
+import { sync, errorPromise, urlError, SyncOptions, Restful, LazyValue } from './sync'
 
 import * as _ from 'underscore'
 import * as Backbone from './backbone'
@@ -19,7 +19,9 @@ interface RestOptions extends SyncOptions {
         destroy( model ){ this.remove( model ); }
     } 
 })
-export class RestCollection extends Collection {
+export class RestCollection extends Collection implements Restful {
+    _xhr : JQueryXHR
+
     model : typeof RestModel
     url() : string { return this.model.prototype.urlRoot || ''; }
 
@@ -34,7 +36,7 @@ export class RestCollection extends Collection {
     // Fetch the default set of models for this collection, resetting the
     // collection when they arrive. If `reset: true` is passed, the response
     // data will be passed through the `reset` method instead of `set`.
-    fetch( options : RestOptions ){
+    fetch( options : RestOptions ) : JQueryXHR {
         options         = _.extend( { parse : true }, options );
         var success     = options.success;
         var collection  = this;
@@ -51,7 +53,7 @@ export class RestCollection extends Collection {
         return _sync( 'read', this, options );
     }
 
-    create( a_model, options : any = {} ){
+    create( a_model, options : any = {} ) : RestModel {
         const model : RestModel = a_model instanceof RestModel ?
                                         a_model :
                                         <any> this.model.create( a_model, options, this );
@@ -83,7 +85,9 @@ export class RestCollection extends Collection {
     collection : RestCollection,
     urlRoot : ''
 })
-export class RestModel extends Model {
+export class RestModel extends Model implements Restful {
+    _xhr : JQueryXHR
+
     urlRoot : string
 
     /** @private */
@@ -97,7 +101,7 @@ export class RestModel extends Model {
 
     // Fetch the model from the server, merging the response with the model's
     // local attributes. Any changed attributes will trigger a "change" event.
-    fetch( options : RestOptions ){
+    fetch( options? : RestOptions ) : JQueryXHR {
         options         = _.extend( { parse : true }, options );
         var model       = this;
         var success     = options.success;
@@ -115,16 +119,17 @@ export class RestModel extends Model {
 
     // Proxy `Backbone.sync` by default -- but override this if you need
     // custom syncing semantics for *this* particular model.
-    sync(){
+    sync( method : string, self : this, options : SyncOptions ) : JQueryXHR
+    sync() : JQueryXHR {
         return sync.apply( this, arguments );
     }
 
     // Set a hash of model attributes, and sync the model to the server.
     // If the server returns an attributes hash that differs, the model's
     // state will be `set` again.
-    save( attrs? : {}, options? : RestOptions )
-    save( key : string, value : any, options? : RestOptions )
-    save( key, val, a_options? : RestOptions ){
+    save( attrs? : {}, options? : RestOptions ) : JQueryPromise< any >
+    save( key : string, value : any, options? : RestOptions ) : JQueryPromise< any >
+    save( key, val, a_options? : RestOptions ) : JQueryPromise< any > {
         // Handle both `"key", value` and `{key: value}` -style arguments.
         let attrs, originalOptions;
 
@@ -190,7 +195,7 @@ export class RestModel extends Model {
     // Destroy this model on the server if it was already persisted.
     // Optimistically removes the model from its collection, if it has one.
     // If `wait: true` is passed, waits for the server to respond before removal.
-    destroy( options : RestOptions ){
+    destroy( options : RestOptions ) : JQueryXHR | boolean {
         options     = options ? _.clone( options ) : {};
         var model   = this;
         var success = options.success;
@@ -207,7 +212,8 @@ export class RestModel extends Model {
             if( !model.isNew() ) triggerAndBubble( model, 'sync', model, resp, options );
         };
 
-        var xhr = false;
+        var xhr : JQueryXHR;
+
         if( this.isNew() ){
             _.defer( options.success );
         }
@@ -215,34 +221,39 @@ export class RestModel extends Model {
             wrapError( this, options );
             xhr = _sync( 'delete', this, options );
         }
+
         if( !wait ) destroy();
-        return xhr;
+        
+        return xhr || false;
     }
 
     // Default URL for the model's representation on the server -- if you're
     // using Backbone's restful methods, override this to change the endpoint
     // that will be called.
-    url(){
+    url() : string {
         var base =
                 _.result( this, 'urlRoot' ) ||
                 _.result( this.collection, 'url' ) ||
                 urlError();
+
         if( this.isNew() ) return base;
+
         var id = this.get( this.idAttribute );
+
         return base.replace( /[^\/]$/, '$&/' ) + encodeURIComponent( id );
     }
 }
 
-function _sync( method, _this, options ){
+function _sync( method : string, _this : Restful, options ) : JQueryXHR {
     // Abort and pending IO request. Just one is allowed at the time.
     _this._xhr && _this._xhr.abort && _this._xhr.abort();
     const xhr = _this._xhr = _this.sync( method, _this, options );
-    xhr && xhr.always && xhr.always( function(){ _this.xhr = void 0; });
+    xhr && xhr.always && xhr.always( function(){ _this._xhr = void 0; });
     return xhr;
 }
 
 // Wrap an optional error callback with a fallback error event.
-function wrapError( model, options ){
+function wrapError( model : any, options : RestOptions ){
     var error     = options.error;
     options.error = function( resp ){
         if( error ) error.call( options.context, model, resp, options );
@@ -250,7 +261,7 @@ function wrapError( model, options ){
     };
 }
 
-function triggerAndBubble( model : RestModel, ...args : any[] ){
+function triggerAndBubble( model : any, ...args : any[] ){
     model.trigger.apply( model, args );
     const { collection } = model;
     collection && collection.trigger.apply( collection, args ); 

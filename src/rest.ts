@@ -185,7 +185,7 @@ export class RestModel extends Model implements Restful {
 
         var method = this.isNew() ? 'create' : (options.patch ? 'patch' : 'update');
         if( method === 'patch' && !options.attrs ) options.attrs = attrs;
-        var xhr = _sync( method, this, options );
+        var xhr = wrapIO( this, this.sync( method, this, options ) );
 
         // Restore attributes.
         this.attributes = attributes;
@@ -196,7 +196,7 @@ export class RestModel extends Model implements Restful {
     // Destroy this model on the server if it was already persisted.
     // Optimistically removes the model from its collection, if it has one.
     // If `wait: true` is passed, waits for the server to respond before removal.
-    destroy( options : RestOptions ) : JQueryXHR | boolean {
+    destroy( options : RestOptions ) : JQueryPromise< any > | boolean {
         options     = options ? _.clone( options ) : {};
         var model   = this;
         var success = options.success;
@@ -213,14 +213,14 @@ export class RestModel extends Model implements Restful {
             if( !model.isNew() ) triggerAndBubble( model, 'sync', model, resp, options );
         };
 
-        var xhr : JQueryXHR;
+        var xhr : JQueryPromise< any >;
 
         if( this.isNew() ){
             _.defer( options.success );
         }
         else{
             wrapError( this, options );
-            xhr = _sync( 'delete', this, options );
+            xhr = wrapIO( this, this.sync( 'delete', this, options ) );
         }
 
         if( !wait ) destroy();

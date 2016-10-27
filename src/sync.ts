@@ -20,7 +20,7 @@ export interface Restful {
     trigger( event : string, model, xhr, options )
     collection? : { trigger( event : string, model, xhr, options ) }
     toJSON( options : any ) : {}
-    _xhr : JQueryXHR
+    _xhr : JQueryPromise< any >
     sync( method : string, object : Restful, options : SyncOptions )
 }
 

@@ -36,7 +36,7 @@ export class RestCollection extends Collection implements Restful {
     // Fetch the default set of models for this collection, resetting the
     // collection when they arrive. If `reset: true` is passed, the response
     // data will be passed through the `reset` method instead of `set`.
-    fetch( options : RestOptions ) : JQueryXHR {
+    fetch( options : RestOptions ) : JQueryPromise< any > {
         options         = _.extend( { parse : true }, options );
         var success     = options.success;
         var collection  = this;
@@ -50,7 +50,7 @@ export class RestCollection extends Collection implements Restful {
         };
 
         wrapError( this, options );
-        return _sync( 'read', this, options );
+        return wrapIO( this, this.sync( 'read', this, options ) );
     }
 
     create( a_model, options : any = {} ) : RestModel {
@@ -76,6 +76,7 @@ export class RestCollection extends Collection implements Restful {
 
     // Proxy `Backbone.sync` by default -- but override this if you need
     // custom syncing semantics for *this* particular model.
+    sync( method : string, object : Restful, options : SyncOptions )
     sync(){
         return sync.apply( this, arguments );
     }
@@ -86,7 +87,7 @@ export class RestCollection extends Collection implements Restful {
     urlRoot : ''
 })
 export class RestModel extends Model implements Restful {
-    _xhr : JQueryXHR
+    _xhr : JQueryPromise< any >
 
     urlRoot : string
 
@@ -101,7 +102,7 @@ export class RestModel extends Model implements Restful {
 
     // Fetch the model from the server, merging the response with the model's
     // local attributes. Any changed attributes will trigger a "change" event.
-    fetch( options? : RestOptions ) : JQueryXHR {
+    fetch( options? : RestOptions ) : JQueryPromise< any > {
         options         = _.extend( { parse : true }, options );
         var model       = this;
         var success     = options.success;
@@ -114,7 +115,7 @@ export class RestModel extends Model implements Restful {
         };
 
         wrapError( this, options );
-        return _sync( 'read', this, options );
+        return wrapIO( this, this.sync( 'read', this, options ) );
     }
 
     // Proxy `Backbone.sync` by default -- but override this if you need
@@ -244,12 +245,22 @@ export class RestModel extends Model implements Restful {
     }
 }
 
-function _sync( method : string, _this : Restful, options ) : JQueryXHR {
+export function wrapIO( _this : Restful, promise : JQueryPromise< any > ) : JQueryPromise< any > {
     // Abort and pending IO request. Just one is allowed at the time.
-    _this._xhr && _this._xhr.abort && _this._xhr.abort();
-    const xhr = _this._xhr = _this.sync( method, _this, options );
-    xhr && xhr.always && xhr.always( function(){ _this._xhr = void 0; });
-    return xhr;
+    const jqXHR = <JQueryXHR> _this._xhr;
+    if( jqXHR && jqXHR.abort ){
+        jqXHR.abort();
+    }
+
+    _this._xhr = promise;
+
+    if( promise && promise.always ){
+        promise.always( function(){
+            _this._xhr = void 0;
+        });
+    }
+
+    return promise;
 }
 
 // Wrap an optional error callback with a fallback error event.

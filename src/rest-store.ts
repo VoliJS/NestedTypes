@@ -1,7 +1,7 @@
 import * as Backbone from './backbone'
 import * as _ from 'underscore'
 import { mixins, define, Store } from '../type-r/src'
-import { RestModel, RestCollection, wrapIO } from './rest'
+import { RestModel, RestCollection } from './rest'
 
 const { $ } = Backbone;
 
@@ -37,16 +37,29 @@ export class LazyStore extends RestStore {
     // fetch specified items, or all items if called without arguments.
     // returns jquery promise
     fetch( ...args : string[] ) : JQueryPromise< any > {
-        var xhr         = [],
+        var xhrs         = [],
             objsToFetch = args.length ? args : this.keys();
 
         for( let name of objsToFetch ){
             var attr = this.attributes[name];
-            attr && attr.fetch && xhr.push( attr.fetch() );
+            attr && attr.fetch && xhrs.push( attr.fetch() );
         }
 
-        return wrapIO( this, $ && $.when && $.when.apply( Backbone.$, xhr ) );
+        const promise = $ && $.when && $.when.apply( Backbone.$, xhrs );
+        
+        if( promise ){
+            // Add abort method as wrapIO expects jqXHR object. 
+            promise.abort = () => xhrs.forEach( xhr => xhr.abort && xhr.abort() );
+            return promise;
+        }
     }
+
+    hasPendingIO() : boolean {
+        return this._keys.some( key => {
+            const value = this.attributes[ key ];
+            return value && value.hasPendingIO && value.hasPendingIO();
+        } );
+    } 
 
     // fetch specified items, or all items if called without arguments.
     // returns first jquery promise.
@@ -60,7 +73,7 @@ export class LazyStore extends RestStore {
             xhr.push( self._resolved[ name ] || attr && attr.fetch && attr.fetch());
         }
 
-        return wrapIO( this, $ && $.when && $.when.apply( Backbone.$, xhr ) );
+        return $ && $.when && $.when.apply( Backbone.$, xhr );
     }
 
     clear( ...args : string[] ) : this {

@@ -4099,6 +4099,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    function RestCollection() {
 	        _super.apply(this, arguments);
 	    }
+	    RestCollection.prototype.hasPendingIO = function () { return Boolean(this._xhr); };
 	    RestCollection.prototype.url = function () { return this.model.prototype.urlRoot || ''; };
 	    RestCollection.prototype._invalidate = function (options) {
 	        var error;
@@ -4121,7 +4122,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            collection.trigger('sync', collection, resp, options);
 	        };
 	        wrapError(this, options);
-	        return _sync('read', this, options);
+	        return this.sync('read', this, options);
 	    };
 	    RestCollection.prototype.create = function (a_model, options) {
 	        var _this = this;
@@ -4161,6 +4162,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	    function RestModel() {
 	        _super.apply(this, arguments);
 	    }
+	    RestModel.prototype.hasPendingIO = function () {
+	        return Boolean(this._xhr);
+	    };
 	    RestModel.prototype._invalidate = function (options) {
 	        var error;
 	        if (options.validate && (error = this.validationError)) {
@@ -4181,7 +4185,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            triggerAndBubble(model, 'sync', model, serverAttrs, options);
 	        };
 	        wrapError(this, options);
-	        return _sync('read', this, options);
+	        return this.sync('read', this, options);
 	    };
 	    RestModel.prototype.sync = function () {
 	        return sync_1.sync.apply(this, arguments);
@@ -4228,7 +4232,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        var method = this.isNew() ? 'create' : (options.patch ? 'patch' : 'update');
 	        if (method === 'patch' && !options.attrs)
 	            options.attrs = attrs;
-	        var xhr = _sync(method, this, options);
+	        var xhr = this.sync(method, this, options);
 	        this.attributes = attributes;
 	        return xhr;
 	    };
@@ -4255,7 +4259,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        }
 	        else {
 	            wrapError(this, options);
-	            xhr = _sync('delete', this, options);
+	            xhr = this.sync('delete', this, options);
 	        }
 	        if (!wait)
 	            destroy();
@@ -4279,12 +4283,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	    return RestModel;
 	}(src_1.Model));
 	exports.RestModel = RestModel;
-	function _sync(method, _this, options) {
-	    _this._xhr && _this._xhr.abort && _this._xhr.abort();
-	    var xhr = _this._xhr = _this.sync(method, _this, options);
-	    xhr && xhr.always && xhr.always(function () { _this._xhr = void 0; });
-	    return xhr;
-	}
 	function wrapError(model, options) {
 	    var error = options.error;
 	    options.error = function (resp) {
@@ -4362,14 +4360,22 @@ return /******/ (function(modules) { // webpackBootstrap
 	    if (params.type !== 'GET' && !options.emulateJSON) {
 	        params.processData = false;
 	    }
-	    var error = options.error;
+	    var success = options.success, error = options.error;
 	    options.error = function (xhr, textStatus, errorThrown) {
+	        model._xhr = void 0;
 	        options.textStatus = textStatus;
 	        options.errorThrown = errorThrown;
 	        if (error)
 	            error.call(options.context, xhr, textStatus, errorThrown);
 	    };
-	    var xhr = options.xhr = exports.ajax(_.extend(params, options));
+	    options.success = function () {
+	        model._xhr = void 0;
+	        if (success)
+	            success.apply(options.context, arguments);
+	    };
+	    if (model._xhr && model._xhr.abort)
+	        model._xhr.abort();
+	    var xhr = model._xhr = options.xhr = exports.ajax(_.extend(params, options));
 	    model.trigger('request', model, xhr, options);
 	    model.collection && model.collection.trigger('request', model, xhr, options);
 	    return xhr;
@@ -4442,13 +4448,24 @@ return /******/ (function(modules) { // webpackBootstrap
 	        for (var _i = 0; _i < arguments.length; _i++) {
 	            args[_i - 0] = arguments[_i];
 	        }
-	        var xhr = [], objsToFetch = args.length ? args : this.keys();
+	        var xhrs = [], objsToFetch = args.length ? args : this.keys();
 	        for (var _a = 0, objsToFetch_1 = objsToFetch; _a < objsToFetch_1.length; _a++) {
 	            var name_1 = objsToFetch_1[_a];
 	            var attr = this.attributes[name_1];
-	            attr && attr.fetch && xhr.push(attr.fetch());
+	            attr && attr.fetch && xhrs.push(attr.fetch());
 	        }
-	        return $ && $.when && $.when.apply(Backbone.$, xhr);
+	        var promise = $ && $.when && $.when.apply(Backbone.$, xhrs);
+	        if (promise) {
+	            promise.abort = function () { return xhrs.forEach(function (xhr) { return xhr.abort && xhr.abort(); }); };
+	            return promise;
+	        }
+	    };
+	    LazyStore.prototype.hasPendingIO = function () {
+	        var _this = this;
+	        return this._keys.some(function (key) {
+	            var value = _this.attributes[key];
+	            return value && value.hasPendingIO && value.hasPendingIO();
+	        });
 	    };
 	    LazyStore.prototype.fetchOnce = function () {
 	        var args = [];

@@ -20,7 +20,8 @@ export interface Restful {
     trigger( event : string, model, xhr, options )
     collection? : { trigger( event : string, model, xhr, options ) }
     toJSON( options : any ) : {}
-    _xhr : JQueryPromise< any >
+    _xhr : JQueryXHR
+    hasPendingIO() : boolean
     sync( method : string, object : Restful, options : SyncOptions )
 }
 
@@ -128,15 +129,25 @@ export let sync = function( method : Method, model : Restful, options : SyncOpti
     }
 
     // Pass along `textStatus` and `errorThrown` from jQuery.
-    var error     = options.error;
+    const { success, error } = options;
+
     options.error = function( xhr, textStatus, errorThrown ){
+        model._xhr = void 0;
         options.textStatus  = textStatus;
         options.errorThrown = errorThrown;
         if( error ) error.call( options.context, xhr, textStatus, errorThrown );
     };
 
+    options.success = function(){
+        model._xhr = void 0;
+        if( success ) success.apply( options.context, arguments );
+    }
+
+    // Cancel pending request, if any.
+    if( model._xhr && model._xhr.abort ) model._xhr.abort();
+
     // Make the request, allowing the user to override any Ajax options.
-    var xhr = options.xhr = ajax( _.extend( params, options ) );
+    const xhr = model._xhr = options.xhr = ajax( _.extend( params, options ) );
     model.trigger( 'request', model, xhr, options );
     model.collection && model.collection.trigger( 'request', model, xhr, options );
     return xhr;

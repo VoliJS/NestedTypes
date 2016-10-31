@@ -21,6 +21,7 @@ interface RestOptions extends SyncOptions {
 })
 export class RestCollection extends Collection implements Restful {
     _xhr : JQueryXHR
+    hasPendingIO(){ return Boolean( this._xhr ); }
 
     model : typeof RestModel
     url() : string { return this.model.prototype.urlRoot || ''; }
@@ -50,7 +51,7 @@ export class RestCollection extends Collection implements Restful {
         };
 
         wrapError( this, options );
-        return wrapIO( this, this.sync( 'read', this, options ) );
+        return this.sync( 'read', this, options );
     }
 
     create( a_model, options : any = {} ) : RestModel {
@@ -87,7 +88,11 @@ export class RestCollection extends Collection implements Restful {
     urlRoot : ''
 })
 export class RestModel extends Model implements Restful {
-    _xhr : JQueryPromise< any >
+    _xhr : JQueryXHR
+
+    hasPendingIO() : boolean {
+        return Boolean( this._xhr );
+    }
 
     urlRoot : string
 
@@ -115,7 +120,7 @@ export class RestModel extends Model implements Restful {
         };
 
         wrapError( this, options );
-        return wrapIO( this, this.sync( 'read', this, options ) );
+        return this.sync( 'read', this, options );
     }
 
     // Proxy `Backbone.sync` by default -- but override this if you need
@@ -185,7 +190,7 @@ export class RestModel extends Model implements Restful {
 
         var method = this.isNew() ? 'create' : (options.patch ? 'patch' : 'update');
         if( method === 'patch' && !options.attrs ) options.attrs = attrs;
-        var xhr = wrapIO( this, this.sync( method, this, options ) );
+        var xhr = this.sync( method, this, options );
 
         // Restore attributes.
         this.attributes = attributes;
@@ -220,7 +225,7 @@ export class RestModel extends Model implements Restful {
         }
         else{
             wrapError( this, options );
-            xhr = wrapIO( this, this.sync( 'delete', this, options ) );
+            xhr = this.sync( 'delete', this, options );
         }
 
         if( !wait ) destroy();
@@ -243,24 +248,6 @@ export class RestModel extends Model implements Restful {
 
         return base.replace( /[^\/]$/, '$&/' ) + encodeURIComponent( id );
     }
-}
-
-export function wrapIO( _this : Restful, promise : JQueryPromise< any > ) : JQueryPromise< any > {
-    // Abort and pending IO request. Just one is allowed at the time.
-    const jqXHR = <JQueryXHR> _this._xhr;
-    if( jqXHR && jqXHR.abort ){
-        jqXHR.abort();
-    }
-
-    _this._xhr = promise;
-
-    if( promise && promise.always ){
-        promise.always( function(){
-            _this._xhr = void 0;
-        });
-    }
-
-    return promise;
 }
 
 // Wrap an optional error callback with a fallback error event.

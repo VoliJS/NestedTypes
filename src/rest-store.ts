@@ -59,7 +59,7 @@ export class LazyStore extends RestStore {
             const value = this.attributes[ key ];
             return value && value.hasPendingIO && value.hasPendingIO();
         } );
-    } 
+    }
 
     // fetch specified items, or all items if called without arguments.
     // returns first jquery promise.

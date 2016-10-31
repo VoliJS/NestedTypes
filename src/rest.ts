@@ -47,6 +47,8 @@ export class RestCollection extends Collection implements Restful {
             if( collection._invalidate( options ) ) return false;
 
             if( success ) success.call( options.context, collection, resp, options );
+            
+            collection._xhr = void 0;
             collection.trigger( 'sync', collection, resp, options );
         };
 
@@ -255,11 +257,28 @@ function wrapError( model : any, options : RestOptions ){
     var error     = options.error;
     options.error = function( resp ){
         if( error ) error.call( options.context, model, resp, options );
+
+        model._xhr = void 0;
         triggerAndBubble( model, 'error', model, resp, options );
     };
 }
 
+export function wrapRequest( method, model, options ){
+    // Cancel pending request...
+    if( model._xhr && model._xhr.abort ){
+        model._xhr.abort();
+    }
+
+    model._xhr = model.sync( method, model, options );
+
+    triggerAndBubble( model, 'request', model._xhr, options );
+}
+
 function triggerAndBubble( model : any, ...args : any[] ){
+    if( args[ 0 ] === 'sync' ){
+        model._xhr = void 0;
+    }
+
     model.trigger.apply( model, args );
     const { collection } = model;
     collection && collection.trigger.apply( collection, args ); 

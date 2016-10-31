@@ -132,14 +132,12 @@ export let sync = function( method : Method, model : Restful, options : SyncOpti
     const { success, error } = options;
 
     options.error = function( xhr, textStatus, errorThrown ){
-        model._xhr = void 0;
         options.textStatus  = textStatus;
         options.errorThrown = errorThrown;
         if( error ) error.call( options.context, xhr, textStatus, errorThrown );
     };
 
     options.success = function(){
-        model._xhr = void 0;
         if( success ) success.apply( options.context, arguments );
     }
 

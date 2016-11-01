@@ -1,6 +1,6 @@
 {
   "name": "nestedtypes",
-  "version": "2.0.0-rc8",
+  "version": "2.0.0-rc9",
   "main": "nestedtypes.js",
   "description": "Next generation data framework, which can be used as drop-in backbonejs replacement.",
   "homepage": "https://github.com/Volicon/backbone.nestedTypes",

@@ -401,6 +401,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    return dest;
 	}
 	exports.defaults = defaults;
+	Object.setPrototypeOf || (Object.setPrototypeOf = defaults);
 	function keys(o) {
 	    return o ? Object.keys(o) : [];
 	}

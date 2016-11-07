@@ -793,8 +793,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	        return this;
 	    };
 	    Messenger.prototype.dispose = function () {
+	        if (this._disposed)
+	            return;
 	        this.stopListening();
 	        this.off();
+	        this._disposed = true;
 	    };
 	    Messenger = __decorate([
 	        extendable
@@ -1178,9 +1181,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	var add_1 = __webpack_require__(22);
 	var set_1 = __webpack_require__(23);
 	var remove_1 = __webpack_require__(24);
-	var trigger2 = object_plus_1.eventsApi.trigger2, begin = transactions_1.transactionApi.begin, commit = transactions_1.transactionApi.commit, markAsDirty = transactions_1.transactionApi.markAsDirty, omit = object_plus_1.tools.omit, log = object_plus_1.tools.log, assign = object_plus_1.tools.assign, defaults = object_plus_1.tools.defaults;
+	var trigger2 = object_plus_1.eventsApi.trigger2, on = object_plus_1.eventsApi.on, off = object_plus_1.eventsApi.off, begin = transactions_1.transactionApi.begin, commit = transactions_1.transactionApi.commit, markAsDirty = transactions_1.transactionApi.markAsDirty, omit = object_plus_1.tools.omit, log = object_plus_1.tools.log, assign = object_plus_1.tools.assign, defaults = object_plus_1.tools.defaults;
 	var _count = 0;
 	var silentOptions = { silent: true };
+	var slice = Array.prototype.slice;
 	var Collection = (function (_super) {
 	    __extends(Collection, _super);
 	    function Collection(records, options, shared) {
@@ -1216,18 +1220,15 @@ return /******/ (function(modules) { // webpackBootstrap
 	    Collection.predefine = function () {
 	        var Ctor = this;
 	        this._SubsetOf = null;
-	        function Subset(a, b, listen) {
-	            Ctor.call(this, a, b, listen ? 1 : 2);
+	        function RefsCollection(a, b, listen) {
+	            Ctor.call(this, a, b, transactions_1.ItemsBehavior.share | (listen ? transactions_1.ItemsBehavior.listen : 0));
 	        }
-	        object_plus_1.Mixable.mixTo(Subset);
-	        Subset.prototype = this.prototype;
-	        Subset._attribute = record_1.TransactionalType;
-	        Subset['of'] = function (path) {
-	            return Ctor.subsetOf(path);
-	        };
-	        this.Set = this.Subset = Subset;
+	        object_plus_1.Mixable.mixTo(RefsCollection);
+	        RefsCollection.prototype = this.prototype;
+	        RefsCollection._attribute = record_1.AggregatedType;
+	        this.Refs = this.Subset = RefsCollection;
 	        transactions_1.Transactional.predefine.call(this);
-	        record_1.createSharedTypeSpec(this, SharedCollectionType);
+	        record_1.createSharedTypeSpec(this, record_1.SharedType);
 	        return this;
 	    };
 	    Collection.define = function (protoProps, staticProps) {
@@ -1341,7 +1342,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    };
 	    Collection.prototype.clone = function (options) {
 	        if (options === void 0) { options = {}; }
-	        var models = this.map(function (model) { return model.clone(); }), copy = new this.constructor(models, { model: this.model, comparator: this.comparator }, this._shared);
+	        var models = this._shared & transactions_1.ItemsBehavior.share ? this.models : this.map(function (model) { return model.clone(); }), copy = new this.constructor(models, { model: this.model, comparator: this.comparator }, this._shared);
 	        if (options.pinStore)
 	            copy._defaultStore = this.getStore();
 	        return copy;
@@ -1367,12 +1368,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	        return this;
 	    };
 	    Collection.prototype.dispose = function () {
-	        if (!this._shared) {
-	            for (var _i = 0, _a = this.models; _i < _a.length; _i++) {
-	                var record = _a[_i];
-	                if (record._owner === this)
-	                    record.dispose();
-	            }
+	        if (this._disposed)
+	            return;
+	        var aggregated = !this._shared;
+	        for (var _i = 0, _a = this.models; _i < _a.length; _i++) {
+	            var record = _a[_i];
+	            commons_1.free(this, record);
+	            if (aggregated)
+	                record.dispose();
 	        }
 	        _super.prototype.dispose.call(this);
 	    };
@@ -1476,7 +1479,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    Collection.prototype.getClassName = function () {
 	        return _super.prototype.getClassName.call(this) || 'Collection';
 	    };
-	    Collection._attribute = record_1.TransactionalType;
+	    Collection._attribute = record_1.AggregatedType;
 	    Collection = __decorate([
 	        object_plus_1.define({
 	            cidPrefix: 'c',
@@ -1492,18 +1495,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    var parsed = options.parse ? collection.parse(elements, options) : elements;
 	    return Array.isArray(parsed) ? parsed : [parsed];
 	}
-	var slice = Array.prototype.slice;
-	var SharedCollectionType = (function (_super) {
-	    __extends(SharedCollectionType, _super);
-	    function SharedCollectionType() {
-	        _super.apply(this, arguments);
-	    }
-	    SharedCollectionType.prototype.convert = function (value, options, prev, record) {
-	        return value == null || value instanceof this.type ? value : new this.type(value, options, 1);
-	    };
-	    return SharedCollectionType;
-	}(record_1.SharedRecordType));
-	record_1.createSharedTypeSpec(Collection, SharedCollectionType);
+	record_1.createSharedTypeSpec(Collection, record_1.SharedType);
 	record_1.Record.Collection = Collection;
 
 
@@ -1522,6 +1514,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	var validation_1 = __webpack_require__(9);
 	var traversable_1 = __webpack_require__(10);
 	var assign = object_plus_1.tools.assign, trigger2 = object_plus_1.eventsApi.trigger2, trigger3 = object_plus_1.eventsApi.trigger3, on = object_plus_1.eventsApi.on, off = object_plus_1.eventsApi.off;
+	(function (ItemsBehavior) {
+	    ItemsBehavior[ItemsBehavior["share"] = 1] = "share";
+	    ItemsBehavior[ItemsBehavior["listen"] = 2] = "listen";
+	    ItemsBehavior[ItemsBehavior["persistent"] = 4] = "persistent";
+	})(exports.ItemsBehavior || (exports.ItemsBehavior = {}));
+	var ItemsBehavior = exports.ItemsBehavior;
 	var Transactional = (function () {
 	    function Transactional(cid) {
 	        this._events = void 0;
@@ -1534,6 +1532,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	        this.cid = this.cidPrefix + cid;
 	    }
 	    Transactional.prototype.dispose = function () {
+	        if (this._disposed)
+	            return;
 	        this._owner = void 0;
 	        this._ownerKey = void 0;
 	        this.off();
@@ -1812,11 +1812,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	    transactions_1.Transactional.predefine.call(this);
 	    this.Collection = getBaseClass(this).Collection.extend();
 	    this.Collection.prototype.model = this;
-	    createSharedTypeSpec(this, attributes_1.SharedRecordType);
+	    createSharedTypeSpec(this, attributes_1.SharedType);
 	    return this;
 	};
-	transaction_1.Record._attribute = attributes_1.TransactionalType;
-	createSharedTypeSpec(transaction_1.Record, attributes_1.SharedRecordType);
+	transaction_1.Record._attribute = attributes_1.AggregatedType;
+	createSharedTypeSpec(transaction_1.Record, attributes_1.SharedType);
 	function getAttributes(_a) {
 	    var defaults = _a.defaults, attributes = _a.attributes, idAttribute = _a.idAttribute;
 	    var definition = typeof defaults === 'function' ? defaults() : attributes || defaults || {};
@@ -2179,10 +2179,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	    });
 	    Record.prototype.dispose = function () {
 	        var _this = this;
-	        this.forEachAttr(this.attributes, function (value, key) {
-	            if (value && _this === value._owner) {
-	                value.dispose();
-	            }
+	        if (this._disposed)
+	            return;
+	        this.forEachAttr(this.attributes, function (value, key, attribute) {
+	            attribute.dispose(_this, value);
 	        });
 	        _super.prototype.dispose.call(this);
 	    };
@@ -2221,7 +2221,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	function cloneAttributes(record, a_attributes) {
 	    var attributes = new record.Attributes(a_attributes);
 	    record.forEachAttr(attributes, function (value, name, attr) {
-	        attributes[name] = attr.clone(value);
+	        attributes[name] = attr.clone(value, record);
 	    });
 	    return attributes;
 	}
@@ -2475,7 +2475,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    };
 	    GenericAttribute.prototype.handleChange = function (next, prev, model) { };
 	    GenericAttribute.prototype.create = function () { return new this.type(); };
-	    GenericAttribute.prototype.clone = function (value) {
+	    GenericAttribute.prototype.clone = function (value, record) {
 	        if (value && typeof value === 'object') {
 	            if (value.clone)
 	                return value.clone();
@@ -2486,6 +2486,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        }
 	        return value;
 	    };
+	    GenericAttribute.prototype.dispose = function (record, value) { };
 	    GenericAttribute.prototype.validate = function (record, value, key) { };
 	    GenericAttribute.prototype.toJSON = function (value, key) {
 	        return value && value.toJSON ? value.toJSON() : value;
@@ -2551,12 +2552,15 @@ return /******/ (function(modules) { // webpackBootstrap
 	var generic_1 = __webpack_require__(15);
 	var transactions_1 = __webpack_require__(8);
 	var free = transactions_1.transactionApi.free, aquire = transactions_1.transactionApi.aquire;
-	var TransactionalType = (function (_super) {
-	    __extends(TransactionalType, _super);
-	    function TransactionalType() {
+	var AggregatedType = (function (_super) {
+	    __extends(AggregatedType, _super);
+	    function AggregatedType() {
 	        _super.apply(this, arguments);
 	    }
-	    TransactionalType.prototype.canBeUpdated = function (prev, next, options) {
+	    AggregatedType.prototype.clone = function (value) {
+	        return value ? value.clone() : value;
+	    };
+	    AggregatedType.prototype.canBeUpdated = function (prev, next, options) {
 	        if (prev && next != null) {
 	            if (next instanceof this.type) {
 	                if (options.merge)
@@ -2567,38 +2571,44 @@ return /******/ (function(modules) { // webpackBootstrap
 	            }
 	        }
 	    };
-	    TransactionalType.prototype.convert = function (value, options, prev, record) {
+	    AggregatedType.prototype.convert = function (value, options, prev, record) {
 	        if (value == null)
 	            return value;
 	        if (value instanceof this.type) {
-	            if (value._shared === 1) {
+	            if (value._shared && !(value._shared & transactions_1.ItemsBehavior.persistent)) {
 	                this._log('error', 'aggregated attribute is assigned with shared collection type', value, record);
 	            }
 	            return options.merge ? value.clone() : value;
 	        }
 	        return this.type.create(value, options);
 	    };
-	    TransactionalType.prototype.validate = function (record, value) {
+	    AggregatedType.prototype.dispose = function (record, value) {
+	        if (value) {
+	            free(record, value);
+	            value.dispose();
+	        }
+	    };
+	    AggregatedType.prototype.validate = function (record, value) {
 	        var error = value && value.validationError;
 	        if (error)
 	            return error;
 	    };
-	    TransactionalType.prototype.create = function () {
+	    AggregatedType.prototype.create = function () {
 	        return this.type.create();
 	    };
-	    TransactionalType.prototype.initialize = function (options) {
+	    AggregatedType.prototype.initialize = function (options) {
 	        options.changeHandlers.unshift(this._handleChange);
 	    };
-	    TransactionalType.prototype._handleChange = function (next, prev, record) {
+	    AggregatedType.prototype._handleChange = function (next, prev, record) {
 	        prev && free(record, prev);
 	        if (next && !aquire(record, next, this.name)) {
 	            this._log('error', 'aggregated attribute assigned with object which is aggregated somewhere else', next, record);
 	        }
 	    };
-	    return TransactionalType;
+	    return AggregatedType;
 	}(generic_1.GenericAttribute));
-	exports.TransactionalType = TransactionalType;
-	transaction_1.Record._attribute = TransactionalType;
+	exports.AggregatedType = AggregatedType;
+	transaction_1.Record._attribute = AggregatedType;
 
 
 /***/ },
@@ -2722,7 +2732,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        return value == null || value instanceof this.type ? value : new this.type(value);
 	    };
 	    ConstructorType.prototype.clone = function (value) {
-	        return value.clone ? value.clone() : this.convert(JSON.parse(JSON.stringify(value)));
+	        return value && value.clone ? value.clone() : this.convert(JSON.parse(JSON.stringify(value)));
 	    };
 	    return ConstructorType;
 	}(generic_1.GenericAttribute));
@@ -2794,15 +2804,20 @@ return /******/ (function(modules) { // webpackBootstrap
 	var transactions_1 = __webpack_require__(8);
 	var object_plus_1 = __webpack_require__(2);
 	var on = object_plus_1.eventsApi.on, off = object_plus_1.eventsApi.off, free = transactions_1.transactionApi.free, aquire = transactions_1.transactionApi.aquire;
-	var SharedRecordType = (function (_super) {
-	    __extends(SharedRecordType, _super);
-	    function SharedRecordType() {
+	var shareAndListen = transactions_1.ItemsBehavior.listen | transactions_1.ItemsBehavior.share;
+	var SharedType = (function (_super) {
+	    __extends(SharedType, _super);
+	    function SharedType() {
 	        _super.apply(this, arguments);
 	    }
-	    SharedRecordType.prototype.clone = function (value) {
-	        return value;
+	    SharedType.prototype.clone = function (value, record) {
+	        if (!value || value._owner !== record)
+	            return value;
+	        var clone = value.clone();
+	        aquire(record, clone, this.name);
+	        return clone;
 	    };
-	    SharedRecordType.prototype.canBeUpdated = function (prev, next, options) {
+	    SharedType.prototype.canBeUpdated = function (prev, next, options) {
 	        if (prev && next != null) {
 	            if (next instanceof this.type) {
 	                if (options.merge)
@@ -2813,18 +2828,44 @@ return /******/ (function(modules) { // webpackBootstrap
 	            }
 	        }
 	    };
-	    SharedRecordType.prototype.convert = function (value, options, prev, record) {
-	        return value == null || value instanceof this.type ? value : this.type.create(value, options);
+	    SharedType.prototype.convert = function (value, options, prev, record) {
+	        if (value == null || value instanceof this.type)
+	            return value;
+	        var implicitObject = new this.type(value, options, shareAndListen);
+	        aquire(record, implicitObject, this.name);
+	        return implicitObject;
 	    };
-	    SharedRecordType.prototype.validate = function (model, value, name) { };
-	    SharedRecordType.prototype.create = function () {
+	    SharedType.prototype.validate = function (model, value, name) { };
+	    SharedType.prototype.create = function () {
 	        return null;
 	    };
-	    SharedRecordType.prototype._handleChange = function (next, prev, record) {
-	        prev && off(prev, prev._changeEventName, this._onChange, record);
-	        next && on(next, next._changeEventName, this._onChange, record);
+	    SharedType.prototype._handleChange = function (next, prev, record) {
+	        if (prev) {
+	            if (prev._owner === record) {
+	                free(record, prev);
+	            }
+	            else {
+	                off(prev, prev._changeEventName, this._onChange, record);
+	            }
+	        }
+	        if (next) {
+	            if (next._owner !== record) {
+	                on(next, next._changeEventName, this._onChange, record);
+	            }
+	        }
 	    };
-	    SharedRecordType.prototype.initialize = function (options) {
+	    SharedType.prototype.dispose = function (record, value) {
+	        if (value) {
+	            if (value._owner === record) {
+	                free(record, value);
+	                value.dispose();
+	            }
+	            else {
+	                off(value, value._changeEventName, this._onChange, record);
+	            }
+	        }
+	    };
+	    SharedType.prototype.initialize = function (options) {
 	        this.toJSON = null;
 	        if (this.propagateChanges) {
 	            var attribute_1 = this;
@@ -2834,9 +2875,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	            options.changeHandlers.unshift(this._handleChange);
 	        }
 	    };
-	    return SharedRecordType;
+	    return SharedType;
 	}(generic_1.GenericAttribute));
-	exports.SharedRecordType = SharedRecordType;
+	exports.SharedType = SharedType;
 
 
 /***/ },
@@ -2982,7 +3023,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    var record;
 	    if (collection._shared) {
 	        record = attrs instanceof model ? attrs : model.create(attrs, options);
-	        if (collection._shared === 1) {
+	        if (collection._shared & transactions_1.ItemsBehavior.listen) {
 	            on(record, record._changeEventName, collection._onChildrenChange, collection);
 	        }
 	    }
@@ -3000,7 +3041,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	exports.convertAndAquire = convertAndAquire;
 	function free(owner, child) {
 	    if (owner._shared) {
-	        if (owner._shared === 1) {
+	        if (owner._shared & transactions_1.ItemsBehavior.listen) {
 	            off(child, child._changeEventName, owner._onChildrenChange, owner);
 	        }
 	    }
@@ -3451,6 +3492,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	var object_plus_1 = __webpack_require__(2);
 	var commons_1 = __webpack_require__(27);
 	var record_1 = __webpack_require__(11);
+	var transactions_1 = __webpack_require__(8);
 	var fastDefaults = object_plus_1.tools.fastDefaults;
 	collection_1.Collection.subsetOf = function subsetOf(masterCollection) {
 	    var SubsetOf = this._SubsetOf || (this._SubsetOf = defineSubsetCollection(this)), getMasterCollection = commons_1.parseReference(masterCollection), typeSpec = new record_1.ChainableAttributeSpec({
@@ -3468,11 +3510,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	        fastDefaults(subsetOptions, options);
 	    return subsetOptions;
 	}
+	var subsetOfBehavior = transactions_1.ItemsBehavior.share | transactions_1.ItemsBehavior.persistent;
 	function defineSubsetCollection(CollectionConstructor) {
 	    var SubsetOfCollection = (function (_super) {
 	        __extends(SubsetOfCollection, _super);
 	        function SubsetOfCollection(recordsOrIds, options) {
-	            _super.call(this, recordsOrIds, subsetOptions(options), 2);
+	            _super.call(this, recordsOrIds, subsetOptions(options), subsetOfBehavior);
 	            this.resolvedWith = null;
 	        }
 	        Object.defineProperty(SubsetOfCollection.prototype, "_state", {

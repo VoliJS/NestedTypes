@@ -1225,7 +1225,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        }
 	        object_plus_1.Mixable.mixTo(RefsCollection);
 	        RefsCollection.prototype = this.prototype;
-	        RefsCollection._attribute = record_1.AggregatedType;
+	        RefsCollection._attribute = CollectionRefsType;
 	        this.Refs = this.Subset = RefsCollection;
 	        transactions_1.Transactional.predefine.call(this);
 	        record_1.createSharedTypeSpec(this, record_1.SharedType);
@@ -1495,6 +1495,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	    var parsed = options.parse ? collection.parse(elements, options) : elements;
 	    return Array.isArray(parsed) ? parsed : [parsed];
 	}
+	var CollectionRefsType = (function (_super) {
+	    __extends(CollectionRefsType, _super);
+	    function CollectionRefsType() {
+	        _super.apply(this, arguments);
+	    }
+	    CollectionRefsType.defaultValue = [];
+	    return CollectionRefsType;
+	}(record_1.SharedType));
 	record_1.createSharedTypeSpec(Collection, record_1.SharedType);
 	record_1.Record.Collection = Collection;
 
@@ -2891,8 +2899,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	var ChainableAttributeSpec = (function () {
 	    function ChainableAttributeSpec(options) {
 	        if (options === void 0) { options = {}; }
-	        this.options = { getHooks: [], transforms: [], changeHandlers: [] };
-	        assign(this.options, options);
+	        this.options = assign({}, options);
+	        var _a = options.getHooks, getHooks = _a === void 0 ? [] : _a, _b = options.transforms, transforms = _b === void 0 ? [] : _b, _c = options.changeHandlers, changeHandlers = _c === void 0 ? [] : _c;
+	        this.options.getHooks = getHooks.slice();
+	        this.options.transforms = transforms.slice();
+	        this.options.changeHandlers = changeHandlers.slice();
 	    }
 	    ChainableAttributeSpec.prototype.check = function (check, error) {
 	        function validate(model, value, name) {
@@ -2946,7 +2957,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	        return this;
 	    };
 	    Object.defineProperty(ChainableAttributeSpec.prototype, "has", {
-	        get: function () { return this; },
+	        get: function () {
+	            return new ChainableAttributeSpec(this.options);
+	        },
 	        enumerable: true,
 	        configurable: true
 	    });
@@ -2969,7 +2982,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	function toAttributeDescriptor(spec) {
 	    var attrSpec;
 	    if (typeof spec === 'function') {
-	        attrSpec = new ChainableAttributeSpec({ type: spec });
+	        attrSpec = new ChainableAttributeSpec({ type: spec, value: spec._attribute.defaultValue });
 	    }
 	    else if (spec && spec instanceof ChainableAttributeSpec) {
 	        attrSpec = spec;

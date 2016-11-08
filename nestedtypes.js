@@ -2898,12 +2898,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	var assign = object_plus_1.tools.assign;
 	var ChainableAttributeSpec = (function () {
 	    function ChainableAttributeSpec(options) {
-	        if (options === void 0) { options = {}; }
-	        this.options = assign({}, options);
-	        var _a = options.getHooks, getHooks = _a === void 0 ? [] : _a, _b = options.transforms, transforms = _b === void 0 ? [] : _b, _c = options.changeHandlers, changeHandlers = _c === void 0 ? [] : _c;
-	        this.options.getHooks = getHooks.slice();
-	        this.options.transforms = transforms.slice();
-	        this.options.changeHandlers = changeHandlers.slice();
+	        this.options = { getHooks: [], transforms: [], changeHandlers: [] };
+	        if (options)
+	            assign(this.options, options);
 	    }
 	    ChainableAttributeSpec.prototype.check = function (check, error) {
 	        function validate(model, value, name) {
@@ -2913,59 +2910,65 @@ return /******/ (function(modules) { // webpackBootstrap
 	            }
 	        }
 	        var prev = this.options.validate;
-	        this.options.validate = prev ? (function (model, value, name) {
-	            return prev(model, value, name) || validate(model, value, name);
-	        }) : validate;
-	        return this;
+	        return this._set({
+	            validate: prev ? (function (model, value, name) {
+	                return prev(model, value, name) || validate(model, value, name);
+	            }) : validate
+	        });
 	    };
 	    ChainableAttributeSpec.prototype.watcher = function (ref) {
-	        this.options._onChange = ref;
-	        return this;
+	        return this._set({ _onChange: ref });
 	    };
 	    ChainableAttributeSpec.prototype.parse = function (fun) {
-	        this.options.parse = fun;
-	        return this;
+	        return this._set({ parse: fun });
 	    };
 	    ChainableAttributeSpec.prototype.toJSON = function (fun) {
-	        this.options.toJSON = fun || null;
-	        return this;
+	        return this._set({ toJSON: fun || null });
 	    };
 	    ChainableAttributeSpec.prototype.get = function (fun) {
-	        this.options.getHooks.push(fun);
-	        return this;
+	        return this._set({
+	            getHooks: this.options.getHooks.concat(fun)
+	        });
 	    };
 	    ChainableAttributeSpec.prototype.set = function (fun) {
-	        this.options.transforms.push(function (next, options, prev, model) {
+	        function handleSetHook(next, options, prev, model) {
 	            if (this.isChanged(next, prev)) {
 	                var changed = fun.call(model, next, this.name);
 	                return changed === void 0 ? prev : this.convert(changed, options, prev, model);
 	            }
 	            return prev;
+	        }
+	        return this._set({
+	            transforms: this.options.transforms.concat(handleSetHook)
 	        });
-	        return this;
 	    };
 	    ChainableAttributeSpec.prototype.changeEvents = function (events) {
-	        this.options.changeEvents = events;
-	        return this;
+	        return this._set({ changeEvents: events });
 	    };
 	    ChainableAttributeSpec.prototype.events = function (map) {
 	        var eventMap = new object_plus_1.EventMap(map);
-	        this.options.changeHandlers.push(function (next, prev, record) {
+	        function handleEventsSubscribtion(next, prev, record) {
 	            prev && prev.trigger && eventMap.unsubscribe(record, prev);
 	            next && next.trigger && eventMap.subscribe(record, next);
+	        }
+	        return this._set({
+	            changeHandlers: this.options.changeHandlers.concat(handleEventsSubscribtion)
 	        });
-	        return this;
 	    };
 	    Object.defineProperty(ChainableAttributeSpec.prototype, "has", {
 	        get: function () {
-	            return new ChainableAttributeSpec(this.options);
+	            return this;
 	        },
 	        enumerable: true,
 	        configurable: true
 	    });
+	    ChainableAttributeSpec.prototype._set = function (options) {
+	        var cloned = new ChainableAttributeSpec(this.options);
+	        assign(cloned.options, options);
+	        return cloned;
+	    };
 	    ChainableAttributeSpec.prototype.value = function (x) {
-	        this.options.value = x;
-	        return this;
+	        return this._set({ value: x });
 	    };
 	    return ChainableAttributeSpec;
 	}());
@@ -3448,7 +3451,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        value: null,
 	        _attribute: RecordRefAttribute
 	    });
-	    typeSpec
+	    return typeSpec
 	        .get(function (objOrId, name) {
 	        if (typeof objOrId === 'object')
 	            return objOrId;
@@ -3461,7 +3464,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	        }
 	        return record;
 	    });
-	    return typeSpec;
 	};
 
 
@@ -3511,11 +3513,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	    var SubsetOf = this._SubsetOf || (this._SubsetOf = defineSubsetCollection(this)), getMasterCollection = commons_1.parseReference(masterCollection), typeSpec = new record_1.ChainableAttributeSpec({
 	        type: SubsetOf
 	    });
-	    typeSpec.get(function (refs) {
+	    return typeSpec.get(function (refs) {
 	        !refs || refs.resolvedWith || refs.resolve(getMasterCollection(this));
 	        return refs;
 	    });
-	    return typeSpec;
 	};
 	function subsetOptions(options) {
 	    var subsetOptions = { parse: true };

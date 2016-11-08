@@ -4163,6 +4163,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	    function RestCollection() {
 	        _super.apply(this, arguments);
 	    }
+	    RestCollection.prototype.dispose = function () {
+	        if (this._xhr && this._xhr.abort)
+	            this._xhr.abort();
+	        _super.prototype.dispose.call(this);
+	    };
 	    RestCollection.prototype.url = function () { return this.model.prototype.urlRoot || ''; };
 	    RestCollection.prototype._invalidate = function (options) {
 	        var error;
@@ -4231,6 +4236,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	            triggerAndBubble(this, 'invalid', this, error, _.extend({ validationError: error }, options));
 	            return true;
 	        }
+	    };
+	    RestModel.prototype.dispose = function () {
+	        if (this._xhr && this._xhr.abort)
+	            this._xhr.abort();
+	        _super.prototype.dispose.call(this);
 	    };
 	    RestModel.prototype.fetch = function (options) {
 	        options = _.extend({ parse: true }, options);

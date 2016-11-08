@@ -22,6 +22,11 @@ interface RestOptions extends SyncOptions {
 export class RestCollection extends Collection implements Restful {
     _xhr : JQueryXHR
 
+    dispose(){
+        if( this._xhr && this._xhr.abort ) this._xhr.abort();
+        super.dispose();
+    }
+
     model : typeof RestModel
     url() : string { return this.model.prototype.urlRoot || ''; }
 
@@ -97,6 +102,11 @@ export class RestModel extends Model implements Restful {
             triggerAndBubble( this, 'invalid', this, error, _.extend( { validationError : error }, options ) );
             return true;
         }
+    }
+
+    dispose(){
+        if( this._xhr && this._xhr.abort ) this._xhr.abort();
+        super.dispose();
     }
 
     // Fetch the model from the server, merging the response with the model's

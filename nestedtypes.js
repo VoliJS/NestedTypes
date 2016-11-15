@@ -1233,7 +1233,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    };
 	    Collection.define = function (protoProps, staticProps) {
 	        if (protoProps === void 0) { protoProps = {}; }
-	        var staticsDefinition = object_plus_1.tools.getChangedStatics(this, 'model', 'itemEvents'), definition = assign(staticsDefinition, protoProps);
+	        var staticsDefinition = object_plus_1.tools.getChangedStatics(this, 'comparator', 'model', 'itemEvents'), definition = assign(staticsDefinition, protoProps);
 	        var spec = omit(definition, 'itemEvents');
 	        if (definition.itemEvents) {
 	            var eventsMap = new object_plus_1.EventMap(this.prototype._itemEvents);
@@ -2457,6 +2457,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	        this.parse = parse;
 	        this.toJSON = toJSON === void 0 ? this.toJSON : toJSON;
 	        this.validate = validate || this.validate;
+	        if (options.isRequired) {
+	            this.validate = wrapIsRequired(this.validate);
+	        }
 	        transforms.unshift(this.convert);
 	        if (this.get)
 	            getHooks.unshift(this.get);
@@ -2542,6 +2545,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	function chainTransforms(prevTransform, nextTransform) {
 	    return function (value, options, prev, model) {
 	        return nextTransform.call(this, prevTransform.call(this, value, options, prev, model), options, prev, model);
+	    };
+	}
+	function wrapIsRequired(validate) {
+	    return function (record, value, key) {
+	        return value ? validate.call(this, record, value, key) : 'Required';
 	    };
 	}
 
@@ -2916,6 +2924,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	            }) : validate
 	        });
 	    };
+	    Object.defineProperty(ChainableAttributeSpec.prototype, "isRequired", {
+	        get: function () {
+	            return this._set({ isRequired: true });
+	        },
+	        enumerable: true,
+	        configurable: true
+	    });
 	    ChainableAttributeSpec.prototype.watcher = function (ref) {
 	        return this._set({ _onChange: ref });
 	    };

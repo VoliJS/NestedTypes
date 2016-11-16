@@ -100,7 +100,7 @@ export class LazyStore extends RestStore {
                         return value;
                     })
                     .set( function( value ){
-                        if( !value.length ){
+                        if( !value || !value.length ){
                             const resolved = this._resolved || ( this._resolved = {} ); 
                             resolved[name] = false;
                         }

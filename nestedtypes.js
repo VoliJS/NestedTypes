@@ -2918,7 +2918,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            }
 	        }
 	        var prev = this.options.validate;
-	        return this._set({
+	        return this.metadata({
 	            validate: prev ? (function (model, value, name) {
 	                return prev(model, value, name) || validate(model, value, name);
 	            }) : validate
@@ -2926,22 +2926,22 @@ return /******/ (function(modules) { // webpackBootstrap
 	    };
 	    Object.defineProperty(ChainableAttributeSpec.prototype, "isRequired", {
 	        get: function () {
-	            return this._set({ isRequired: true });
+	            return this.metadata({ isRequired: true });
 	        },
 	        enumerable: true,
 	        configurable: true
 	    });
 	    ChainableAttributeSpec.prototype.watcher = function (ref) {
-	        return this._set({ _onChange: ref });
+	        return this.metadata({ _onChange: ref });
 	    };
 	    ChainableAttributeSpec.prototype.parse = function (fun) {
-	        return this._set({ parse: fun });
+	        return this.metadata({ parse: fun });
 	    };
 	    ChainableAttributeSpec.prototype.toJSON = function (fun) {
-	        return this._set({ toJSON: fun || null });
+	        return this.metadata({ toJSON: fun || null });
 	    };
 	    ChainableAttributeSpec.prototype.get = function (fun) {
-	        return this._set({
+	        return this.metadata({
 	            getHooks: this.options.getHooks.concat(fun)
 	        });
 	    };
@@ -2953,12 +2953,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	            }
 	            return prev;
 	        }
-	        return this._set({
+	        return this.metadata({
 	            transforms: this.options.transforms.concat(handleSetHook)
 	        });
 	    };
 	    ChainableAttributeSpec.prototype.changeEvents = function (events) {
-	        return this._set({ changeEvents: events });
+	        return this.metadata({ changeEvents: events });
 	    };
 	    ChainableAttributeSpec.prototype.events = function (map) {
 	        var eventMap = new object_plus_1.EventMap(map);
@@ -2966,7 +2966,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            prev && prev.trigger && eventMap.unsubscribe(record, prev);
 	            next && next.trigger && eventMap.subscribe(record, next);
 	        }
-	        return this._set({
+	        return this.metadata({
 	            changeHandlers: this.options.changeHandlers.concat(handleEventsSubscribtion)
 	        });
 	    };
@@ -2977,13 +2977,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	        enumerable: true,
 	        configurable: true
 	    });
-	    ChainableAttributeSpec.prototype._set = function (options) {
+	    ChainableAttributeSpec.prototype.metadata = function (options) {
 	        var cloned = new ChainableAttributeSpec(this.options);
 	        assign(cloned.options, options);
 	        return cloned;
 	    };
 	    ChainableAttributeSpec.prototype.value = function (x) {
-	        return this._set({ value: x });
+	        return this.metadata({ value: x });
 	    };
 	    return ChainableAttributeSpec;
 	}());
@@ -2991,16 +2991,19 @@ return /******/ (function(modules) { // webpackBootstrap
 	Function.prototype.value = function (x) {
 	    return new ChainableAttributeSpec({ type: this, value: x });
 	};
+	Object.defineProperty(Function.prototype, 'isRequired', {
+	    get: function () { return this.has.isRequired; }
+	});
 	Object.defineProperty(Function.prototype, 'has', {
 	    get: function () {
-	        return this._has || new ChainableAttributeSpec({ type: this });
+	        return this._has || new ChainableAttributeSpec({ type: this, value: this._attribute.defaultValue });
 	    },
 	    set: function (value) { this._has = value; }
 	});
 	function toAttributeDescriptor(spec) {
 	    var attrSpec;
 	    if (typeof spec === 'function') {
-	        attrSpec = new ChainableAttributeSpec({ type: spec, value: spec._attribute.defaultValue });
+	        attrSpec = spec.has;
 	    }
 	    else if (spec && spec instanceof ChainableAttributeSpec) {
 	        attrSpec = spec;

@@ -4583,12 +4583,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	        _.each(attributes, function (Type, name) {
 	            if (Type.has) {
 	                attributes[name] = Type.has
-	                    .get(function (value) {
-	                    if (!this._resolved[name]) {
-	                        value.fetch && value.fetch();
-	                    }
-	                    return value;
-	                })
 	                    .set(function (value) {
 	                    if (!value || !value.length) {
 	                        var resolved = this._resolved || (this._resolved = {});

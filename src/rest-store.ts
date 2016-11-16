@@ -92,13 +92,6 @@ export class LazyStore extends RestStore {
         _.each( attributes, ( Type : Function, name ) => {
             if( Type.has ){
                 attributes[name] = Type.has
-                    .get( function( value ){
-                        if( !this._resolved[name] ) {
-                            value.fetch && value.fetch();
-                        }
-
-                        return value;
-                    })
                     .set( function( value ){
                         if( !value || !value.length ){
                             const resolved = this._resolved || ( this._resolved = {} ); 

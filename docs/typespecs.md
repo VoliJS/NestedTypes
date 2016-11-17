@@ -1,4 +1,4 @@
-# Type System Reference
+# Quick API Reference
 
 Central concept in NestedTypes is `Record` type, which is the JS class with following capabilities:
 
@@ -212,7 +212,7 @@ class Team extends Record {
 }
 ``` 
 
-#### Tilda-references and Stores
+#### Tilda-References and Stores
 
 Symbolic reference staring with `~` is resolved relative to the record called _store_,
 which is located with `record.getStore()` method.
@@ -240,8 +240,16 @@ class Team extends Record {
 
 ## Attribute has-annotations
 
-You can control different aspects of record's attribute behavior through additional metadata.
+It's possible to control different aspects of record's attribute behavior through additional metadata.
 All of them starts with a keyword `.has` added to the constructor type.
+
+Object describing an attribute is called *metatype*. Operations on metatypes are immutable (returns new metatype),
+and can be chained.
+
+```javascript
+// Declare Month metatype.
+const Month = Number.value( 1 ).has.check( x => x > 0 && x <= 12 );
+``` 
 
 #### attribute : Type.has.toJSON( false | ( x, name ) => json )
 
@@ -268,10 +276,30 @@ When nested attribute is changed, don't mark the owner as changed.
 Listen to the specified events from the attribute. handler can be either function or
 the name of the record's method.
 
-#### attribute : Type.has.check( x => true | false, errorMsg? )
+#### attribute : Type.has.check( x => boolean, errorMsg? : any )
 
-Attach check to the attribute. Checks can be chained.
+Attach check to the attribute. Checks can be chained. Attribute is valid whenever check function returns truthy value.
+
+errorMessage is optional.
 
 #### attribute : Type.isRequired
 
 Similar to `Type.has.check( x => x, 'Required' )`.
+
+## Validation
+
+Validation is performed recursively on ownership tree. Record and collection shares the same validation API.
+
+#### record.validate()
+
+Override it to add custom record-level validation. Method shoudl return truthy value in case of validation error.
+
+For attribute level checks see `Type.has.check` annotation.
+
+#### record.isValid() : boolean
+
+Checks whenever record is valid. 
+
+#### record.validationError
+
+Return validation error object or null if there are no errors.

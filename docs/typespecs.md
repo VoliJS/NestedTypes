@@ -87,6 +87,33 @@ You can use this pattern when you need to add custom members to the record's col
 
 ## Nested Records and Collections
 
+Nested records and collections are declared with mentioning constructor in attribute type annotation.
+All changes in nested objects are deeply observable; any change in children will cause change events in a parent.
+
+Records and collections emiting the [standard set of Backbone events](http://backbonejs.org/#Events-catalog), with following differences:
+
+- Collections does not bubble `change:[attribute]` event from the model by default (`change` event is bubbled);
+     event bubbling needs to be enabled for every particular event with `static itemEvents = { 'change:attr1' : true, ... }` declaration.
+- Collections have `changes` event which is semantically similar to the model's `change`.
+
+### Transactions
+
+Record's `change` event (and collection's `changes` event) are _transactional_. Whatever some changes 
+are made as the reaction on any of change event, it won't cause additional `change` event for the owner.
+
+Also, you can explicitly group the sequence of changes to the single transaction:
+
+```javascript
+    some.record.transaction( record => {
+        record.a = 1;
+        record.b = 2;
+        ...
+    }); // some.record will emit single 'change' event if there was any changes.
+
+    // Execute collection.each in the scope of transaction.
+    todoCollection.updateEach( item => item.done = true ); // One 'changes' event will be emitted. 
+```
+
 ### Aggregation
 
 Record can aggregate other records and collections in its attributes. 
@@ -107,7 +134,7 @@ team.members.add( new User({ name : 'John' }) );
 Aggregated members are:
 
 - serialized as nested JSON.
-- created, cloned, validated, and disposed recursively when the operation happens to its owner.
+- following operations recursively when the operation happens to its owner.
 
 Aggregated members forms the tree of exclusive ownership. The same record or collection instance cannot be aggregated in two places at the same time,
 and this rule is checked and enforced. 
@@ -150,8 +177,8 @@ Special type annotation is required to point out the master collection which wil
 
 id-reference types behaves as shared types, but:
 
-- serializable as an object id (or array of ids).
-- not observable (internal changes do not trigger change events on the record).
+- they are serializable as an object id (or array of ids for collections).
+- they are not observable (internal changes do not trigger change events on the record).
 
 `masterCollection` reference may be either:
 
@@ -162,18 +189,89 @@ id-reference types behaves as shared types, but:
 ```javascript
 class Team extends Record {
     static attributes = {
-        members : User.Collection
+        members : User.Collection,
         leader : User.from( 'members' ) // <- leader is serializable reference to the record from members collection.  
+    }
+}
+``` 
+
+#### Owner-references
+
+`^` symbol in symbolic reference represents `getOwner()` call and returns the record owner.
+Collections are skipped.
+
+Following example expects that `Team` record will be aggregated (alone or in a collection) together
+with `users` collection.
+
+```javascript
+class Team extends Record {
+    static attributes = {
+        members : User.Collection.subsetOf( '^users' ),
+        leader : User.from( 'members' )  
+    }
+}
+``` 
+
+#### Tilda-references and Stores
+
+Symbolic reference staring with `~` is resolved relative to the record called _store_,
+which is located with `record.getStore()` method.
+For instance, reference `~users` will be resolved as `this.getStore().users`.
+
+`getStore()` uses following store location algorithm:
+
+1. It traverse an ownership tree upwards and return the first `Store` model it has found.
+2. If none of the record's owners is the Store, it returns global store from `Nested.store`. 
+
+`Store` is the subclass of the `Record` and behaves as a regular Record.
+Therefore, resolution of id references depends on the context and you may have as many stores as you like.
+
+Following example expects that there's `users` collection in some upper record which is inherited from Store,
+or (if there are none) in the global store: 
+
+```javascript
+class Team extends Record {
+    static attributes = {
+        members : User.Collection.subsetOf( '~users' ),
+        leader : User.from( 'members' )  
     }
 }
 ```
 
-### Tilda-references and Stores
+## Attribute has-annotations
 
-There's a special *tilda-reference* pointing to the elements of records called *stores*.
-In NestedTypes store is the regular record which
-is used as a root for tilda-reference resolution. You may have as many stores as you like.
+You can control different aspects of record's attribute behavior through additional metadata.
+All of them starts with a keyword `.has` added to the constructor type.
 
-Reference `~users` will be translated to `this.getStore().users`.
+#### attribute : Type.has.toJSON( false | ( x, name ) => json )
 
-#### Store location algorithm
+Override default serializer for the attribute. `false` option will exclude attribute from serialization.
+
+#### attribute : Type.has.parse( ( json, name ) => data )
+
+Override default JSON parser for the attribute.
+
+#### attribute : Type.has.get( ( value, name ) => value )
+
+Get hook which may transform attribute value on read. Get hooks can be chained.
+
+#### attribute : Type.has.set( ( value, name ) => value )
+
+Set hook which may transform attribute value before it's assigned. Set hooks can be chained.
+
+#### attribute : RecordOrCollectionType.has.changeEvents( false )
+
+When nested attribute is changed, don't mark the owner as changed.
+
+#### attribute : Type.has.events({ [ event ] : handler | handlerName })
+
+Listen to the specified events from the attribute. handler can be either function or
+the name of the record's method.
+
+#### attribute : Type.has.check( x => true | false, errorMsg? )
+
+Attach check to the attribute. Checks can be chained.
+
+#### attribute : Type.isRequired
+
+Similar to `Type.has.check( x => x, 'Required' )`.

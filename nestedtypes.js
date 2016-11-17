@@ -2313,7 +2313,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 	exports.compile = compile;
 	function createAttribute(spec, name) {
-	    return attributes_1.GenericAttribute.create(typespec_1.toAttributeDescriptor(spec), name);
+	    return attributes_1.AnyType.create(typespec_1.toAttributeDescriptor(spec), name);
 	}
 	function createEventMap(attrSpecs) {
 	    var events;
@@ -2442,8 +2442,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	var transaction_1 = __webpack_require__(12);
 	var object_plus_1 = __webpack_require__(2);
 	var notEqual = object_plus_1.tools.notEqual, assign = object_plus_1.tools.assign;
-	var GenericAttribute = (function () {
-	    function GenericAttribute(name, a_options) {
+	var AnyType = (function () {
+	    function AnyType(name, a_options) {
 	        this.name = name;
 	        this.getHook = null;
 	        var options = this.options = assign({ getHooks: [], transforms: [], changeHandlers: [] }, a_options);
@@ -2474,19 +2474,19 @@ return /******/ (function(modules) { // webpackBootstrap
 	            this.handleChange = changeHandlers.reduce(chainChangeHandlers);
 	        }
 	    }
-	    GenericAttribute.create = function (options, name) {
-	        var type = options.type, AttributeCtor = options._attribute || (type ? type._attribute : GenericAttribute);
+	    AnyType.create = function (options, name) {
+	        var type = options.type, AttributeCtor = options._attribute || (type ? type._attribute : AnyType);
 	        return new AttributeCtor(name, options);
 	    };
-	    GenericAttribute.prototype.canBeUpdated = function (prev, next, options) { };
-	    GenericAttribute.prototype.transform = function (value, options, prev, model) { return value; };
-	    GenericAttribute.prototype.convert = function (value, options, prev, model) { return value; };
-	    GenericAttribute.prototype.isChanged = function (a, b) {
+	    AnyType.prototype.canBeUpdated = function (prev, next, options) { };
+	    AnyType.prototype.transform = function (value, options, prev, model) { return value; };
+	    AnyType.prototype.convert = function (value, options, prev, model) { return value; };
+	    AnyType.prototype.isChanged = function (a, b) {
 	        return notEqual(a, b);
 	    };
-	    GenericAttribute.prototype.handleChange = function (next, prev, model) { };
-	    GenericAttribute.prototype.create = function () { return new this.type(); };
-	    GenericAttribute.prototype.clone = function (value, record) {
+	    AnyType.prototype.handleChange = function (next, prev, model) { };
+	    AnyType.prototype.create = function () { return new this.type(); };
+	    AnyType.prototype.clone = function (value, record) {
 	        if (value && typeof value === 'object') {
 	            if (value.clone)
 	                return value.clone();
@@ -2497,12 +2497,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	        }
 	        return value;
 	    };
-	    GenericAttribute.prototype.dispose = function (record, value) { };
-	    GenericAttribute.prototype.validate = function (record, value, key) { };
-	    GenericAttribute.prototype.toJSON = function (value, key) {
+	    AnyType.prototype.dispose = function (record, value) { };
+	    AnyType.prototype.validate = function (record, value, key) { };
+	    AnyType.prototype.toJSON = function (value, key) {
 	        return value && value.toJSON ? value.toJSON() : value;
 	    };
-	    GenericAttribute.prototype.createPropertyDescriptor = function () {
+	    AnyType.prototype.createPropertyDescriptor = function () {
 	        var _a = this, name = _a.name, getHook = _a.getHook;
 	        if (name !== 'id') {
 	            return {
@@ -2519,14 +2519,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	            };
 	        }
 	    };
-	    GenericAttribute.prototype.initialize = function (name, options) { };
-	    GenericAttribute.prototype._log = function (level, text, value, record) {
+	    AnyType.prototype.initialize = function (name, options) { };
+	    AnyType.prototype._log = function (level, text, value, record) {
 	        object_plus_1.tools.log[level](("[Attribute Update] " + record.getClassName() + "." + this.name + ": ") + text, value, 'Attributes spec:', record._attributes);
 	    };
-	    return GenericAttribute;
+	    return AnyType;
 	}());
-	exports.GenericAttribute = GenericAttribute;
-	transaction_1.Record.prototype._attributes = { id: GenericAttribute.create({ value: void 0 }, 'id') };
+	exports.AnyType = AnyType;
+	transaction_1.Record.prototype._attributes = { id: AnyType.create({ value: void 0 }, 'id') };
 	transaction_1.Record.prototype.defaults = function (attrs) {
 	    if (attrs === void 0) { attrs = {}; }
 	    return { id: attrs.id };
@@ -2539,7 +2539,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 	function chainGetHooks(prevHook, nextHook) {
 	    return function (value, name) {
-	        return nextHook.call(prevHook.call(value, name), name);
+	        return nextHook.call(this, prevHook.call(this, value, name), name);
 	    };
 	}
 	function chainTransforms(prevTransform, nextTransform) {
@@ -2622,7 +2622,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        }
 	    };
 	    return AggregatedType;
-	}(generic_1.GenericAttribute));
+	}(generic_1.AnyType));
 	exports.AggregatedType = AggregatedType;
 	transaction_1.Record._attribute = AggregatedType;
 
@@ -2660,7 +2660,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    DateType.prototype.isChanged = function (a, b) { return (a && +a) !== (b && +b); };
 	    DateType.prototype.clone = function (value) { return value && new Date(+value); };
 	    return DateType;
-	}(generic_1.GenericAttribute));
+	}(generic_1.AnyType));
 	exports.DateType = DateType;
 	Date._attribute = DateType;
 	var msDatePattern = /\/Date\(([0-9]+)\)\//;
@@ -2751,7 +2751,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        return value && value.clone ? value.clone() : this.convert(JSON.parse(JSON.stringify(value)));
 	    };
 	    return ConstructorType;
-	}(generic_1.GenericAttribute));
+	}(generic_1.AnyType));
 	Function.prototype._attribute = ConstructorType;
 	var PrimitiveType = (function (_super) {
 	    __extends(PrimitiveType, _super);
@@ -2764,7 +2764,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    PrimitiveType.prototype.isChanged = function (a, b) { return a !== b; };
 	    PrimitiveType.prototype.clone = function (value) { return value; };
 	    return PrimitiveType;
-	}(generic_1.GenericAttribute));
+	}(generic_1.AnyType));
 	exports.PrimitiveType = PrimitiveType;
 	Boolean._attribute = String._attribute = PrimitiveType;
 	var NumericType = (function (_super) {
@@ -2801,7 +2801,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    };
 	    ArrayType.prototype.clone = function (value) { return value && value.slice(); };
 	    return ArrayType;
-	}(generic_1.GenericAttribute));
+	}(generic_1.AnyType));
 	exports.ArrayType = ArrayType;
 	Array._attribute = ArrayType;
 
@@ -2892,7 +2892,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        }
 	    };
 	    return SharedType;
-	}(generic_1.GenericAttribute));
+	}(generic_1.AnyType));
 	exports.SharedType = SharedType;
 
 
@@ -3446,29 +3446,29 @@ return /******/ (function(modules) { // webpackBootstrap
 	var commons_1 = __webpack_require__(27);
 	var record_2 = __webpack_require__(11);
 	var record_3 = __webpack_require__(11);
-	var RecordRefAttribute = (function (_super) {
-	    __extends(RecordRefAttribute, _super);
-	    function RecordRefAttribute() {
+	var RecordRefType = (function (_super) {
+	    __extends(RecordRefType, _super);
+	    function RecordRefType() {
 	        _super.apply(this, arguments);
 	    }
-	    RecordRefAttribute.prototype.toJSON = function (value) {
+	    RecordRefType.prototype.toJSON = function (value) {
 	        return value && typeof value === 'object' ? value.id : value;
 	    };
-	    RecordRefAttribute.prototype.clone = function (value) {
+	    RecordRefType.prototype.clone = function (value) {
 	        return value && typeof value === 'object' ? value.id : value;
 	    };
-	    RecordRefAttribute.prototype.isChanged = function (a, b) {
+	    RecordRefType.prototype.isChanged = function (a, b) {
 	        var aId = a && (a.id == null ? a : a.id), bId = b && (b.id == null ? b : b.id);
 	        return aId !== bId;
 	    };
-	    RecordRefAttribute.prototype.validate = function (model, value, name) { };
-	    return RecordRefAttribute;
-	}(record_1.GenericAttribute));
+	    RecordRefType.prototype.validate = function (model, value, name) { };
+	    return RecordRefType;
+	}(record_1.AnyType));
 	record_2.Record.from = function from(masterCollection) {
 	    var getMasterCollection = commons_1.parseReference(masterCollection);
 	    var typeSpec = new record_3.ChainableAttributeSpec({
 	        value: null,
-	        _attribute: RecordRefAttribute
+	        _attribute: RecordRefType
 	    });
 	    return typeSpec
 	        .get(function (objOrId, name) {

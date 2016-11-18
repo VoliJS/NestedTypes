@@ -3278,7 +3278,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    var previous = collection.models, added = _reallocate(collection, items, nested, options);
 	    var reusedCount = collection.models.length - added.length, removed = reusedCount < previous.length ? (reusedCount ? _garbageCollect(collection, previous) :
 	        commons_1.freeAll(collection, previous)) : [];
-	    var addedOrChanged = nested.length || added.length, sorted = (addedOrChanged && commons_1.sortElements(collection, options)) || added.length || options.sorted;
+	    var addedOrChanged = nested.length || added.length, sorted = (commons_1.sortElements(collection, options) && addedOrChanged) || added.length || options.sorted;
 	    if (addedOrChanged || removed.length || sorted) {
 	        if (markAsDirty(collection, options)) {
 	            return new commons_1.CollectionTransaction(collection, isRoot, added, removed, nested, sorted);

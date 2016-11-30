@@ -388,7 +388,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	exports.assign = assign;
 	function defaults(dest, source) {
 	    for (var name in source) {
-	        if (source.hasOwnProperty(name) && dest[name] === void 0) {
+	        if (source.hasOwnProperty(name) && !dest.hasOwnProperty(name)) {
 	            dest[name] = source[name];
 	        }
 	    }

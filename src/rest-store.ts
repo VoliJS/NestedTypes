@@ -1,12 +1,13 @@
 import * as Backbone from './backbone'
 import * as _ from 'underscore'
-import { mixins, define, Store } from '../type-r/src'
+import { mixins, mixinRules, define, Store } from '../type-r/src'
 import { RestModel, RestCollection } from './rest'
 
 const { $ } = Backbone;
 
 @define({})
 @mixins( Store )
+@mixinRules({ get : 'overwrite' })
 export class RestStore extends RestModel {}
 
 @define({})

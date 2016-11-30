@@ -327,7 +327,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	function getPropertyDescriptor(obj, prop) {
 	    var desc;
 	    for (var proto = obj; !desc && proto; proto = Object.getPrototypeOf(proto)) {
-	        desc = Object.getOwnPropertyDescriptor(obj, prop);
+	        desc = Object.getOwnPropertyDescriptor(proto, prop);
 	    }
 	    return desc;
 	}
@@ -625,6 +625,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	        return function () {
 	            return tools_1.defaults(a.call(this), b.call(this));
 	        };
+	    },
+	    overwrite: function (a, b) {
+	        return b;
 	    },
 	    sequence: function (a, b) {
 	        return function () {
@@ -4502,7 +4505,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }
 	    RestStore = __decorate([
 	        src_1.define({}),
-	        src_1.mixins(src_1.Store)
+	        src_1.mixins(src_1.Store),
+	        src_1.mixinRules({ get: 'overwrite' })
 	    ], RestStore);
 	    return RestStore;
 	}(rest_1.RestModel));

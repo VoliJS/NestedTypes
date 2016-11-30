@@ -7,7 +7,7 @@ const { $ } = Backbone;
 
 @define({})
 @mixins( Store )
-@mixinRules({ get : 'overwrite' })
+@mixinRules({ get : 'overwrite', getStore : 'overwrite' })
 export class RestStore extends RestModel {}
 
 @define({})

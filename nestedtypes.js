@@ -4506,7 +4506,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    RestStore = __decorate([
 	        src_1.define({}),
 	        src_1.mixins(src_1.Store),
-	        src_1.mixinRules({ get: 'overwrite' })
+	        src_1.mixinRules({ get: 'overwrite', getStore: 'overwrite' })
 	    ], RestStore);
 	    return RestStore;
 	}(rest_1.RestModel));

@@ -756,13 +756,17 @@ return /******/ (function(modules) { // webpackBootstrap
 	        return this;
 	    };
 	    Messenger.prototype.listenTo = function (source, a, b) {
-	        addReference(this, source);
-	        source.on(a, !b && typeof a === 'object' ? this : b, this);
+	        if (source) {
+	            addReference(this, source);
+	            source.on(a, !b && typeof a === 'object' ? this : b, this);
+	        }
 	        return this;
 	    };
 	    Messenger.prototype.listenToOnce = function (source, a, b) {
-	        addReference(this, source);
-	        source.once(a, !b && typeof a === 'object' ? this : b, this);
+	        if (source) {
+	            addReference(this, source);
+	            source.once(a, !b && typeof a === 'object' ? this : b, this);
+	        }
 	        return this;
 	    };
 	    Messenger.prototype.stopListening = function (a_source, a, b) {
@@ -777,7 +781,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                    source.off(a, second, this);
 	                }
 	            }
-	            else {
+	            else if (a_source === void 0) {
 	                for (var cid in _listeningTo)
 	                    _listeningTo[cid].off(a, second, this);
 	                if (removeAll)

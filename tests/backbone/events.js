@@ -73,7 +73,7 @@
     _.extend(obj, Backbone.Events);
 
     var increment = function() {
-      this.counter += 1;
+      obj.counter += 1;
     };
 
     obj.on({
@@ -224,50 +224,50 @@
   });
 
   QUnit.test("stopListening cleans up references", function(assert) {
-    assert.expect(12);
+    assert.expect(10);
     var a = _.extend({}, Backbone.Events);
     var b = _.extend({}, Backbone.Events);
     var fn = function() {};
     b.on('event', fn);
     a.listenTo(b, 'event', fn).stopListening();
     assert.equal(_.size(a._listeningTo), 0);
-    assert.equal(_.size(b._events.event), 1);
+    assert.equal( b._events.event.context, void 0 );
     assert.equal(_.size(b._listeners), 0);
     a.listenTo(b, 'event', fn).stopListening(b);
     assert.equal(_.size(a._listeningTo), 0);
-    assert.equal(_.size(b._events.event), 1);
+    assert.equal( b._events.event.context, void 0 );
     assert.equal(_.size(b._listeners), 0);
     a.listenTo(b, 'event', fn).stopListening(b, 'event');
-    assert.equal(_.size(a._listeningTo), 0);
-    assert.equal(_.size(b._events.event), 1);
+    //assert.equal(_.size(a._listeningTo), 0);
+    assert.equal( b._events.event.context, void 0 );
     assert.equal(_.size(b._listeners), 0);
     a.listenTo(b, 'event', fn).stopListening(b, 'event', fn);
-    assert.equal(_.size(a._listeningTo), 0);
-    assert.equal(_.size(b._events.event), 1);
+    //assert.equal(_.size(a._listeningTo), 0);
+    assert.equal( b._events.event.context, void 0 );
     assert.equal(_.size(b._listeners), 0);
   });
 
   QUnit.test("stopListening cleans up references from listenToOnce", function(assert) {
-    assert.expect(12);
+    assert.expect(10);
     var a = _.extend({}, Backbone.Events);
     var b = _.extend({}, Backbone.Events);
     var fn = function() {};
     b.on('event', fn);
     a.listenToOnce(b, 'event', fn).stopListening();
     assert.equal(_.size(a._listeningTo), 0);
-    assert.equal(_.size(b._events.event), 1);
+    assert.equal( b._events.event.context, void 0 );
     assert.equal(_.size(b._listeners), 0);
     a.listenToOnce(b, 'event', fn).stopListening(b);
     assert.equal(_.size(a._listeningTo), 0);
-    assert.equal(_.size(b._events.event), 1);
+    assert.equal( b._events.event.context, void 0 );
     assert.equal(_.size(b._listeners), 0);
     a.listenToOnce(b, 'event', fn).stopListening(b, 'event');
-    assert.equal(_.size(a._listeningTo), 0);
-    assert.equal(_.size(b._events.event), 1);
+    //assert.equal(_.size(a._listeningTo), 0); We do not count references.
+    assert.equal( b._events.event.context, void 0 );
     assert.equal(_.size(b._listeners), 0);
     a.listenToOnce(b, 'event', fn).stopListening(b, 'event', fn);
-    assert.equal(_.size(a._listeningTo), 0);
-    assert.equal(_.size(b._events.event), 1);
+    //assert.equal(_.size(a._listeningTo), 0);
+    assert.equal( b._events.event.context, void 0 );
     assert.equal(_.size(b._listeners), 0);
   });
 
@@ -277,23 +277,24 @@
     var b = _.extend({}, Backbone.Events);
     var fn = function() {};
     a.listenTo(b, 'event', fn);
-    b.off();
+    a.stopListening( b );
     assert.equal(_.size(a._listeningTo), 0);
     assert.equal(_.size(b._listeners), 0);
     a.listenTo(b, 'event', fn);
     b.off('event');
-    assert.equal(_.size(a._listeningTo), 0);
+    assert.equal(_.size(a._listeningTo), 1);
     assert.equal(_.size(b._listeners), 0);
     a.listenTo(b, 'event', fn);
     b.off(null, fn);
-    assert.equal(_.size(a._listeningTo), 0);
+    assert.equal(_.size(a._listeningTo), 1);
     assert.equal(_.size(b._listeners), 0);
     a.listenTo(b, 'event', fn);
-    b.off(null, null, a);
+    a.stopListening( b );
     assert.equal(_.size(a._listeningTo), 0);
     assert.equal(_.size(b._listeners), 0);
   });
 
+/* Do not support this.
   QUnit.test("listenTo and stopListening cleaning up references", function(assert) {
     assert.expect(2);
     var a = _.extend({}, Backbone.Events);
@@ -314,6 +315,8 @@
     b.trigger('anything');
     assert.equal(_.size(a._listeningTo), 0);
   });
+
+  */
 
   QUnit.test("listenToOnce with event maps cleans up references", function(assert) {
     assert.expect(2);
@@ -622,7 +625,7 @@
   QUnit.test("Off during iteration with once.", function(assert) {
     assert.expect(2);
     var obj = _.extend({}, Backbone.Events);
-    var f = function(){ this.off('event', f); };
+    var f = function(){ obj.off('event', f); };
     obj.on('event', f);
     obj.once('event', function(){});
     obj.on('event', function(){ assert.ok(true); });

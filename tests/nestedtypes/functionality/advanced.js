@@ -58,11 +58,11 @@ describe( 'Advanced functionality', function(){
             expect( a.shared ).to.equal( b.owned );
         } );
 
-        it( "is converted to the ownerless model on assignment", function(){
+        it( "is converted to the aggregated model on assignment", function(){
             var a = new A();
             a.shared = { name : 'Hey' };
             expect( a.shared.name ).to.equal( 'Hey' );
-            expect( a.shared._owner ).to.equal( void 0 );
+            expect( a.shared._owner ).to.equal( a );
         } );
         
         it( "is not serialized", function(){
@@ -120,11 +120,11 @@ describe( 'Advanced functionality', function(){
             expect( a.sharedC ).to.equal( b.ownedC );
         } );
 
-        it( "is converted to the ownerless Subset collection on assignment", function(){
+        it( "is converted to the owned Refs collection on assignment", function(){
             var a = new A();
             a.sharedC = [{ name : 'Hey' }];
             expect( a.sharedC.first().name ).to.equal( 'Hey' );
-            expect( a.sharedC._owner ).to.equal( void 0 );
+            expect( a.sharedC._owner ).to.equal( a );
 
             var callback = sinon.spy();
             a.on( 'change', callback );
@@ -139,7 +139,7 @@ describe( 'Advanced functionality', function(){
         });
     });
 
-    describe( 'Collection.Subset', function(){
+    describe( 'Collection.Refs', function(){
         var M = Model.extend({
             attributes : {
                 name : String
@@ -148,7 +148,7 @@ describe( 'Advanced functionality', function(){
 
         var A = Model.extend({
             attributes : {
-                subset : M.Collection.Subset,
+                subset : M.Collection.Refs,
                 aggregated : M.Collection
             }
         });
@@ -171,6 +171,29 @@ describe( 'Advanced functionality', function(){
             expect( a.aggregated.first()._owner ).to.equal( a.aggregated );
         } );
 
+        it( 'is owned by parent', function(){
+            var a = new A();
+            expect( a.subset._owner ).to.equal( a );
+        });
+
+        it( 'behaves as shared type', function(){
+            var a = new A();
+
+            var { subset } = a;
+            a.subset = a.aggregated;
+
+            expect( subset._owner ).to.be.undefined;
+
+            a.subset = new M.Collection();
+
+            expect( a.subset._owner ).to.be.undefined;
+
+            a.subset = null;
+            a.subset = [];
+
+            expect( a.subset._owner ).to.equal( a );
+        });
+
         it( "doesn't merge records on set", function(){
             var a = new A();
 
@@ -189,6 +212,13 @@ describe( 'Advanced functionality', function(){
     });
 
     describe( 'Attribute .has options', function(){
+        it( 'Pass through an attribute descriptor', function(){
+            var T = Number.has,
+                T2 = T.has;
+
+            expect( T ).to.equal( T2 );
+        } );
+
         describe( '.has.changeEvents( false )', function(){
             var M = Model.extend({
                 attributes : {
@@ -217,6 +247,41 @@ describe( 'Advanced functionality', function(){
                 m.set({ a : { x : 2 } });
                 expect( token ).to.equal( m._changeToken ); 
             } );
+        });
+    });
+
+    it( 'can filter aggregated collection', function(){
+        const c = new M.Collection( { name : 'a' }, { name : 'b' } );
+        c.reset( c.last() );
+        expect( c.first()._owner ).to.equal( c );
+    });
+
+    it( 'model.clone() should clean up an owner', function(){
+        const c = new M.Collection( { name : 'a' }, { name : 'b' } );
+        
+        expect( c.first()._owner ).to.be.eql( c );
+        expect( c.first().clone()._owner ).to.be.eql( void 0 );
+    });
+
+    describe( 'Different bugs', function(){
+        const M = Model.extend({
+            attributes : {
+                name : ''
+            },
+
+            collection : {
+                comparator : 'name'
+            }
+        });
+
+        it( 'Collection sorts on set when nothing changed', function(){
+            const c = new M.Collection();
+
+            c.set( [ { id : 1, name : 'b' }, { id : 2, name : 'a' } ] );
+            expect( c.first().name ).to.be.equal( 'a' );
+
+            c.set( [ { id : 1, name : 'b' }, { id : 2, name : 'a' } ] );
+            expect( c.first().name ).to.be.equal( 'a' );
         });
 
     });

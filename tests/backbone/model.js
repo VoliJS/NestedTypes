@@ -35,12 +35,16 @@
   QUnit.test("initialize", function(assert) {
     assert.expect(2);
     var Model = Backbone.Model.extend({
+      attrbutes : {
+        one : 5
+      },
+
       initialize: function() {
         this.one = 1;
         //assert.equal(this.collection, collection); No access to collection in constructor.
       }
     });
-    var model = new Model({}, {} );
+    var model = new Model({}, {});
     assert.equal(model.one, 1);
     assert.equal(model.collection, void 0);
   });
@@ -563,7 +567,7 @@
     assert.expect(2);
     var changed = 0, model = new ( Backbone.Model.defaults({a: null}) );
     model.on('change', function() {
-      assert.ok(this.hasChanged('a'));
+      assert.ok(model.hasChanged('a'));
     })
     .on('change:a', function() {
       changed++;
@@ -699,17 +703,17 @@
     model.on('change', function() {
       switch(count++) {
         case 0:
-          assert.deepEqual(this.changedAttributes(), {x: true});
+          assert.deepEqual(model.changedAttributes(), {x: true});
           assert.equal(model.previous('x'), undefined);
           model.set({y: true});
           break;
         case 1:
-          assert.deepEqual(this.changedAttributes(), {x: true, y: true});
+          assert.deepEqual(model.changedAttributes(), {x: true, y: true});
           assert.equal(model.previous('x'), undefined);
           model.set({z: true});
           break;
         case 2:
-          assert.deepEqual(this.changedAttributes(), {x: true, y: true, z: true});
+          assert.deepEqual(model.changedAttributes(), {x: true, y: true, z: true});
           assert.equal(model.previous('y'), undefined);
           break;
         default:
@@ -727,15 +731,15 @@
     model.on('change', function() {
       switch(count++) {
         case 0:
-          assert.deepEqual(this.changedAttributes(), {x: true});
+          assert.deepEqual(model.changedAttributes(), {x: true});
           model.set({y: true}, {silent: true});
           model.set({z: true});
           break;
         case 1:
-          assert.deepEqual(this.changedAttributes(), {x: true, y: true, z: true});
+          assert.deepEqual(model.changedAttributes(), {x: true, y: true, z: true});
           break;
         case 2:
-          assert.deepEqual(this.changedAttributes(), {z: false});
+          assert.deepEqual(model.changedAttributes(), {z: false});
           break;
         default:
           assert.ok(false);
@@ -936,7 +940,7 @@
 
   QUnit.test('#3778 - id will only be updated if it is set', function(assert) {
     assert.expect(2);
-    var model = new ( Backbone.Model.defaults({ foo : '' }))({id: 1});
+    var model = new ( Backbone.Model.defaults({id: 1, foo : void 0}) );
     model.id = 2;
     model.set({foo: 'bar'});
     assert.equal(model.id, 2);

@@ -44,7 +44,7 @@
     "test": "node_modules/.bin/mocha",
     "pull" : "git submodule update --remote",
     "build": "./node_modules/.bin/webpack",
-    "deploy": "copy .\\nestedtypes.* ..\\observer-frontend\\htdocs\\js\\lib\\nested",
+    "deploy": "cp ./nestedtypes.* ../observer-frontend/htdocs/js/lib/nested",
     "all" : "npm run pull && npm run build && npm run deploy",
     "watch": "./node_modules/.bin/webpack --watch"
   }

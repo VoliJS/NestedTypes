@@ -540,7 +540,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            Subclass = (function (_super) {
 	                __extends(_Subclass, _super);
 	                function _Subclass() {
-	                    return _super.apply(this, arguments) || this;
+	                    return _super !== null && _super.apply(this, arguments) || this;
 	                }
 	                return _Subclass;
 	            }(this));
@@ -1369,7 +1369,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	var CollectionRefsType = (function (_super) {
 	    __extends(CollectionRefsType, _super);
 	    function CollectionRefsType() {
-	        return _super.apply(this, arguments) || this;
+	        return _super !== null && _super.apply(this, arguments) || this;
 	    }
 	    return CollectionRefsType;
 	}(record_1.SharedType));
@@ -1887,19 +1887,21 @@ return /******/ (function(modules) { // webpackBootstrap
 	        }
 	    };
 	    Record.prototype.each = function (iteratee, context) {
-	        var fun = context !== void 0 ? function (v, k) { return iteratee.call(context, v, k); } : iteratee, _a = this, attributes = _a.attributes, _keys = _a._keys;
-	        for (var _i = 0, _keys_1 = _keys; _i < _keys_1.length; _i++) {
-	            var key = _keys_1[_i];
+	        var fun = context !== void 0 ? function (v, k) { return iteratee.call(context, v, k); } : iteratee, attributes = this.attributes;
+	        for (var _i = 0, _a = this._keys; _i < _a.length; _i++) {
+	            var key = _a[_i];
 	            var value = attributes[key];
 	            if (value !== void 0)
 	                fun(value, key);
 	        }
 	    };
 	    Record.prototype.keys = function () {
-	        return this.map(function (value, key) {
-	            if (value !== void 0)
-	                return key;
-	        });
+	        var keys = [], attributes = this.attributes;
+	        for (var _i = 0, _a = this._keys; _i < _a.length; _i++) {
+	            var key = _a[_i];
+	            attributes[key] === void 0 || keys.push(key);
+	        }
+	        return keys;
 	    };
 	    Record.prototype.values = function () {
 	        return this.map(function (value) { return value; });
@@ -2448,7 +2450,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	var AggregatedType = (function (_super) {
 	    __extends(AggregatedType, _super);
 	    function AggregatedType() {
-	        return _super.apply(this, arguments) || this;
+	        return _super !== null && _super.apply(this, arguments) || this;
 	    }
 	    AggregatedType.prototype.clone = function (value) {
 	        return value ? value.clone() : value;
@@ -2520,7 +2522,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	var DateType = (function (_super) {
 	    __extends(DateType, _super);
 	    function DateType() {
-	        return _super.apply(this, arguments) || this;
+	        return _super !== null && _super.apply(this, arguments) || this;
 	    }
 	    DateType.prototype.convert = function (value, a, b, record) {
 	        if (value == null || value instanceof Date)
@@ -2549,7 +2551,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	var MSDateType = (function (_super) {
 	    __extends(MSDateType, _super);
 	    function MSDateType() {
-	        return _super.apply(this, arguments) || this;
+	        return _super !== null && _super.apply(this, arguments) || this;
 	    }
 	    MSDateType.prototype.convert = function (value) {
 	        if (typeof value === 'string') {
@@ -2567,7 +2569,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	var TimestampType = (function (_super) {
 	    __extends(TimestampType, _super);
 	    function TimestampType() {
-	        return _super.apply(this, arguments) || this;
+	        return _super !== null && _super.apply(this, arguments) || this;
 	    }
 	    TimestampType.prototype.toJSON = function (value) { return value.getTime(); };
 	    return TimestampType;
@@ -2624,7 +2626,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	var ConstructorType = (function (_super) {
 	    __extends(ConstructorType, _super);
 	    function ConstructorType() {
-	        return _super.apply(this, arguments) || this;
+	        return _super !== null && _super.apply(this, arguments) || this;
 	    }
 	    ConstructorType.prototype.convert = function (value) {
 	        return value == null || value instanceof this.type ? value : new this.type(value);
@@ -2638,7 +2640,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	var PrimitiveType = (function (_super) {
 	    __extends(PrimitiveType, _super);
 	    function PrimitiveType() {
-	        return _super.apply(this, arguments) || this;
+	        return _super !== null && _super.apply(this, arguments) || this;
 	    }
 	    PrimitiveType.prototype.create = function () { return this.type(); };
 	    PrimitiveType.prototype.toJSON = function (value) { return value; };
@@ -2652,7 +2654,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	var NumericType = (function (_super) {
 	    __extends(NumericType, _super);
 	    function NumericType() {
-	        return _super.apply(this, arguments) || this;
+	        return _super !== null && _super.apply(this, arguments) || this;
 	    }
 	    NumericType.prototype.convert = function (value, a, b, record) {
 	        var num = value == null ? value : this.type(value);
@@ -2673,7 +2675,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	var ArrayType = (function (_super) {
 	    __extends(ArrayType, _super);
 	    function ArrayType() {
-	        return _super.apply(this, arguments) || this;
+	        return _super !== null && _super.apply(this, arguments) || this;
 	    }
 	    ArrayType.prototype.toJSON = function (value) { return value; };
 	    ArrayType.prototype.convert = function (value, a, b, record) {
@@ -2707,7 +2709,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	var SharedType = (function (_super) {
 	    __extends(SharedType, _super);
 	    function SharedType() {
-	        return _super.apply(this, arguments) || this;
+	        return _super !== null && _super.apply(this, arguments) || this;
 	    }
 	    SharedType.prototype.clone = function (value, record) {
 	        if (!value || value._owner !== record)
@@ -3334,7 +3336,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	var RecordRefType = (function (_super) {
 	    __extends(RecordRefType, _super);
 	    function RecordRefType() {
-	        return _super.apply(this, arguments) || this;
+	        return _super !== null && _super.apply(this, arguments) || this;
 	    }
 	    RecordRefType.prototype.toJSON = function (value) {
 	        return value && typeof value === 'object' ? value.id : value;
@@ -3531,7 +3533,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	var Store = (function (_super) {
 	    __extends(Store, _super);
 	    function Store() {
-	        return _super.apply(this, arguments) || this;
+	        return _super !== null && _super.apply(this, arguments) || this;
 	    }
 	    Store.prototype.getStore = function () { return this; };
 	    Store.prototype.get = function (name) {
@@ -3950,7 +3952,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	var RestCollection = (function (_super) {
 	    __extends(RestCollection, _super);
 	    function RestCollection() {
-	        return _super.apply(this, arguments) || this;
+	        return _super !== null && _super.apply(this, arguments) || this;
 	    }
 	    RestCollection.prototype.dispose = function () {
 	        if (this._xhr && this._xhr.abort)
@@ -4017,7 +4019,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	var RestModel = (function (_super) {
 	    __extends(RestModel, _super);
 	    function RestModel() {
-	        return _super.apply(this, arguments) || this;
+	        return _super !== null && _super.apply(this, arguments) || this;
 	    }
 	    RestModel.prototype._invalidate = function (options) {
 	        var error;
@@ -4379,7 +4381,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	var RestStore = (function (_super) {
 	    __extends(RestStore, _super);
 	    function RestStore() {
-	        return _super.apply(this, arguments) || this;
+	        return _super !== null && _super.apply(this, arguments) || this;
 	    }
 	    return RestStore;
 	}(rest_1.RestModel));
@@ -4392,7 +4394,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	var LazyStore = (function (_super) {
 	    __extends(LazyStore, _super);
 	    function LazyStore() {
-	        var _this = _super.apply(this, arguments) || this;
+	        var _this = _super !== null && _super.apply(this, arguments) || this;
 	        _this._resolved = {};
 	        return _this;
 	    }

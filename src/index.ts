@@ -2,7 +2,6 @@
  * Prepare backbone View, Router, History, and Events.  
  */
 import * as Nested from '../type-r/src'
-export = Nested;
 import * as Backbone from './backbone'
 import { RestCollection, RestModel } from './rest'
 import { Store } from '../type-r/src'
@@ -48,8 +47,12 @@ assign( Nested, Backbone, {
 
     defaults( x ){
         return Nested.Model.defaults( x );
-    }
+    },
+
+    default : Nested
 } );
+
+export = Nested;
 
 function linkProperty( Namespace, name ){
     return {

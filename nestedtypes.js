@@ -1193,13 +1193,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	        }
 	    };
 	    Collection.prototype.each = function (iteratee, context) {
-	        var fun = context !== void 0 ? function (v, k) { return iteratee.call(context, v, k); } : iteratee, models = this.models;
+	        var fun = bindContext(iteratee, context), models = this.models;
 	        for (var i = 0; i < models.length; i++) {
 	            fun(models[i], i);
 	        }
 	    };
 	    Collection.prototype.every = function (iteratee, context) {
-	        var fun = context !== void 0 ? function (v, k) { return iteratee.call(context, v, k); } : iteratee, models = this.models;
+	        var fun = toPredicateFunction(iteratee, context), models = this.models;
 	        for (var i = 0; i < models.length; i++) {
 	            if (!fun(models[i], i))
 	                return false;
@@ -1207,11 +1207,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	        return true;
 	    };
 	    Collection.prototype.filter = function (iteratee, context) {
-	        var fun = context !== void 0 ? function (v, k) { return iteratee.call(context, v, k); } : iteratee, models = this.models;
+	        var fun = toPredicateFunction(iteratee, context), models = this.models;
 	        return this.map(function (x, i) { return fun(x, i) ? x : void 0; });
 	    };
 	    Collection.prototype.some = function (iteratee, context) {
-	        var fun = context !== void 0 ? function (v, k) { return iteratee.call(context, v, k); } : iteratee, models = this.models;
+	        var fun = toPredicateFunction(iteratee, context), models = this.models;
 	        for (var i = 0; i < models.length; i++) {
 	            if (fun(models[i], i))
 	                return true;
@@ -1219,7 +1219,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        return false;
 	    };
 	    Collection.prototype.map = function (iteratee, context) {
-	        var fun = context !== void 0 ? function (v, k) { return iteratee.call(context, v, k); } : iteratee, models = this.models, mapped = Array(models.length);
+	        var fun = bindContext(iteratee, context), models = this.models, mapped = Array(models.length);
 	        var j = 0;
 	        for (var i = 0; i < models.length; i++) {
 	            var x = fun(models[i], i);
@@ -1416,6 +1416,21 @@ return /******/ (function(modules) { // webpackBootstrap
 	CollectionRefsType.defaultValue = [];
 	record_1.createSharedTypeSpec(Collection, record_1.SharedType);
 	record_1.Record.Collection = Collection;
+	function bindContext(fun, context) {
+	    return context !== void 0 ? function (v, k) { return fun.call(context, v, k); } : fun;
+	}
+	function toPredicateFunction(iteratee, context) {
+	    if (typeof iteratee === 'object') {
+	        return function (x) {
+	            for (var key in iteratee) {
+	                if (iteratee[key] !== x[key])
+	                    return false;
+	            }
+	            return true;
+	        };
+	    }
+	    return bindContext(iteratee, context);
+	}
 	var Collection_1;
 
 

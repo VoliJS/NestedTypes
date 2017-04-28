@@ -1,7 +1,7 @@
 /**
  * Prepare backbone View, Router, History, and Events.  
  */
-import * as Nested from './type-r'
+import * as TypeR from './type-r'
 import * as Backbone from './backbone'
 import { RestCollection, RestModel } from './rest'
 import { Store } from './type-r'
@@ -9,10 +9,11 @@ import * as Sync from './sync'
 
 import { ModelMixin, CollectionMixin } from './underscore-mixin'
 import { RestStore, LazyStore } from './rest-store'
- 
+
+const Nested : typeof TypeR & typeof Backbone = Object.create( TypeR );
+
 Nested.Mixable.mixins( Nested.Events );
 Nested.Mixable.mixTo( Backbone.View, Backbone.Router, Backbone.History );
-
 Nested.Record.mixins( ModelMixin );
 Nested.Record.Collection.mixins( CollectionMixin );
 
@@ -56,7 +57,7 @@ export = Nested;
 
 function linkProperty( Namespace, name ){
     return {
-        get : function(){ return Namespace[ name ]; },
-        set : function( value ){ Namespace[ name ] = value; }
+        get(){ return Namespace[ name ]; },
+        set( value ){ Namespace[ name ] = value; }
     };
 }

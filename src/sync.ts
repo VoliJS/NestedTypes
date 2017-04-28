@@ -8,7 +8,7 @@
 import * as _ from 'underscore'
 import * as Backbone from './backbone'
 
-import { tools } from '../type-r/src'
+import { tools } from './type-r'
 const { defaults } = tools;
 
 export type LazyValue< T > = () => T | T;

@@ -4,14 +4,13 @@
     "module":"commonjs",
     "moduleResolution": "node",
     "sourceMap": true,
-    "outDir": "./dist",
+    "outDir": "./lib",
     "noImplicitAny": false,
     "removeComments":true,
     "experimentalDecorators": true,
     "allowJs" : true
   },
   "files":[
-    "./src/index.ts",
-    "./typings/index.d.ts"
+    "./src/index.ts"
   ]
 }

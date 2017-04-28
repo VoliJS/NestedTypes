@@ -1,51 +1,57 @@
 {
   "name": "nestedtypes",
-  "version": "2.0.0-rc99",
-  "main": "nestedtypes.js",
-  "description": "Next generation data framework, which can be used as drop-in backbonejs replacement.",
-  "homepage": "https://github.com/Volicon/backbone.nestedTypes",
+  "version": "2.0.0-rc990",
+  "main": "./dist/index.js",
+  "module": "./lib/index.js",
+  "types": "./lib/index.d.ts",
+  "description": "BackboneJS compatibility layer for the Type-R",
+  "homepage": "https://github.com/Volicon/NestedTypes",
   "keywords": [
-    "backbone",
-    "relation",
+    "backbonejs",
+    "relations",
     "nested",
     "model",
-    "types",
+    "collection",
     "properties"
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/Volicon/backbone.nestedTypes.git"
+    "url": "https://github.com/Volicon/NestedTypes.git"
   },
   "author": "Vlad Balin <https://github.com/gaperton>",
   "contributors": [],
-  "dependencies": {
+  "peerDependencies": {
     "jquery": "*",
-    "underscore": "^1.8.3"
+    "underscore": "*"
   },
   "devDependencies": {
-    "chai-as-promised": "^5.3.0",
+    "@types/jquery": "^2.0.41",
     "chai": "* <3",
+    "chai-as-promised": "^5.3.0",
+    "jquery": "*",
     "mocha": "*",
-    "requirejs": "^2.1.20",
+    "requirejs": "*",
     "sinon": "*",
     "sinon-chai": "*",
     "source-map-loader": "^0.1.5",
-    "ts-loader": "^0.8.2",
-    "typescript": "^2.0.0",
-    "uglify-js": "*",
-    "webpack": "^1.12.2"
+    "ts-loader": "*",
+    "typescript": "*",
+    "underscore": "*",
+    "webpack": "*"
   },
   "files": [
-    "nestedtypes.js",
+    "dist",
+    "lib",
+    "src",
     "LICENSE"
   ],
   "license": "MIT",
   "scripts": {
     "test": "node_modules/.bin/mocha",
-    "pull" : "git submodule update --remote",
-    "build": "./node_modules/.bin/webpack",
-    "deploy": "cp ./nestedtypes.* ../observer-frontend/htdocs/js/lib/nested",
-    "all" : "npm run pull && npm run build && npm run deploy",
-    "watch": "./node_modules/.bin/webpack --watch"
+    "build": "npm run pull && npm run compile",
+    "pull": "git submodule update --remote && cp -R ./submodules/Type-R/src/* ./src/type-r",
+    "compile": "node_modules/.bin/tsc && ./node_modules/.bin/webpack -p",
+    "deploy": "cp ./dist/* ../observer-frontend/htdocs/js/lib/nested",
+    "all": "npm run pull && npm run build && npm run deploy"
   }
 }

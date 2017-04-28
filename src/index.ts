@@ -1,10 +1,10 @@
 /**
  * Prepare backbone View, Router, History, and Events.  
  */
-import * as Nested from '../type-r/src'
+import * as Nested from './type-r'
 import * as Backbone from './backbone'
 import { RestCollection, RestModel } from './rest'
-import { Store } from '../type-r/src'
+import { Store } from './type-r'
 import * as Sync from './sync'
 
 import { ModelMixin, CollectionMixin } from './underscore-mixin'

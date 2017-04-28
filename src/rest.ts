@@ -3,7 +3,7 @@ import { sync, errorPromise, urlError, SyncOptions, Restful, LazyValue } from '.
 import * as _ from 'underscore'
 import * as Backbone from './backbone'
 
-import { define, Model, Collection, tools } from '../type-r/src'
+import { define, Model, Collection, tools } from './type-r'
 const { defaults } = tools;
 
 const transactionalProto = tools.getBaseClass( Model ).prototype;

@@ -1,0 +1,104 @@
+import { Messenger, CallbacksByEvents, MessengersByCid, MixinRules, MessengerDefinition, eventsApi, Constructor, MixableConstructor } from './object-plus';
+import { ValidationError, Validatable, ChildrenErrors } from './validation';
+import { Traversable } from './traversable';
+export declare type TransactionalConstructor = MixableConstructor<Transactional>;
+export declare type TransactionalDefinition = MessengerDefinition;
+export declare enum ItemsBehavior {
+    share = 1,
+    listen = 2,
+    persistent = 4,
+}
+export declare abstract class Transactional implements Messenger, Validatable, Traversable {
+    static create: (a: any, b?: any, c?: any) => Transactional;
+    static mixins: (...mixins: (Constructor<any> | {})[]) => MixableConstructor<Transactional>;
+    static mixinRules: (mixinRules: MixinRules) => MixableConstructor<Transactional>;
+    static mixTo: (...args: Constructor<any>[]) => MixableConstructor<Transactional>;
+    static extend: (spec?: TransactionalDefinition, statics?: {}) => MixableConstructor<Transactional>;
+    static define: (spec?: TransactionalDefinition, statics?: {}) => MixableConstructor<Transactional>;
+    static predefine: () => typeof Messenger;
+    on: (events: string | CallbacksByEvents, callback, context?) => this;
+    once: (events: string | CallbacksByEvents, callback, context?) => this;
+    off: (events?: string | CallbacksByEvents, callback?, context?) => this;
+    trigger: (name: string, a?, b?, c?, d?, e?) => this;
+    stopListening: (source?: Messenger, a?: string | CallbacksByEvents, b?: Function) => this;
+    listenTo: (source: Messenger, a: string | CallbacksByEvents, b?: Function) => this;
+    listenToOnce: (source: Messenger, a: string | CallbacksByEvents, b?: Function) => this;
+    _disposed: boolean;
+    readonly __inner_state__: any;
+    _shared?: number;
+    dispose(): void;
+    initialize(): void;
+    _events: eventsApi.HandlersByEvent;
+    _listeningTo: MessengersByCid;
+    _localEvents: eventsApi.EventMap;
+    cid: string;
+    cidPrefix: string;
+    static shared: any;
+    _changeToken: {};
+    _transaction: boolean;
+    _isDirty: TransactionOptions;
+    _owner: Owner;
+    _ownerKey: string;
+    _changeEventName: string;
+    onChanges(handler: Function, target?: Messenger): void;
+    offChanges(handler?: Function, target?: Messenger): void;
+    listenToChanges(target: Transactional, handler: any): void;
+    constructor(cid: string | number);
+    abstract clone(options?: CloneOptions): this;
+    transaction(fun: (self: this) => void, options?: TransactionOptions): void;
+    updateEach(iteratee: (val: any, key: string) => void, options?: TransactionOptions): void;
+    set(values: any, options?: TransactionOptions): this;
+    assignFrom(source: Transactional | Object): this;
+    abstract _createTransaction(values: any, options?: TransactionOptions): Transaction;
+    parse(data: any, options?: TransactionOptions): any;
+    abstract toJSON(): {};
+    abstract get(key: string): any;
+    deepGet(reference: string): any;
+    getOwner(): Owner;
+    _defaultStore: Transactional;
+    getStore(): Transactional;
+    abstract each(iteratee: (val: any, key: string | number) => void, context?: any): any;
+    map<T>(iteratee: (val: any, key: string | number) => T, context?: any): T[];
+    mapObject<T>(iteratee: (val: any, key: string | number) => T, context?: any): {
+        [key: string]: T;
+    };
+    _validationError: ValidationError;
+    readonly validationError: ValidationError;
+    abstract _validateNested(errors: ChildrenErrors): number;
+    validate(obj?: Transactional): any;
+    getValidationError(key: string): any;
+    deepValidationError(reference: string): any;
+    eachValidationError(iteratee: (error: any, key: string, object: Transactional) => void): void;
+    isValid(key: string): boolean;
+    valueOf(): string;
+    toString(): string;
+    getClassName(): string;
+    abstract _log(level: string, text: string, value: any): void;
+}
+export interface CloneOptions {
+    pinStore?: boolean;
+}
+export interface Owner extends Traversable, Messenger {
+    _onChildrenChange(child: Transactional, options: TransactionOptions): void;
+    getOwner(): Owner;
+    getStore(): Transactional;
+}
+export interface Transaction {
+    object: Transactional;
+    commit(initiator?: Transactional): any;
+}
+export interface TransactionOptions {
+    parse?: boolean;
+    silent?: boolean;
+    merge?: boolean;
+    remove?: boolean;
+    reset?: boolean;
+    validate?: boolean;
+}
+export declare const transactionApi: {
+    begin(object: Transactional): boolean;
+    markAsDirty(object: Transactional, options: TransactionOptions): boolean;
+    commit(object: Transactional, initiator?: Transactional): void;
+    aquire(owner: Owner, child: Transactional, key?: string): boolean;
+    free(owner: Owner, child: Transactional): void;
+};

@@ -11,6 +11,15 @@ import * as jQuery from 'jquery'
 
 // Initial Setup
 // -------------
+declare global {
+    interface Window {
+      Backbone : any
+    }
+
+    function attachEvent( a, b );
+    function detachEvent( a, b );
+}
+
 
 // Save the previous value of the `Backbone` variable, so that it can be
 // restored later on, if `noConflict` is used.
@@ -297,7 +306,7 @@ var rootStripper = /^\/+|\/+$/g;
 var pathStripper = /#.*$/;
 
 // Has the history handling already been started?
-History.started = false;
+(History as any).started = false;
 
 // Set up all inheritable **Backbone.History** properties and methods.
 _.extend(History.prototype, {
@@ -360,15 +369,15 @@ _.extend(History.prototype, {
   // Start the hash change handling, returning `true` if the current URL matches
   // an existing route, and `false` otherwise.
   start: function (options) {
-    if (History.started) throw new Error('Backbone.history has already been started');
-    History.started = true;
+    if ((History as any).started) throw new Error('Backbone.history has already been started');
+    (History as any).started = true;
 
     // Figure out the initial configuration. Do we need an iframe?
     // Is pushState desired ... is it available?
     this.options = _.extend({ root: '/' }, this.options, options);
     this.root = this.options.root;
     this._wantsHashChange = this.options.hashChange !== false;
-    this._hasHashChange = 'onhashchange' in window && (document.documentMode === void 0 || document.documentMode > 7);
+    this._hasHashChange = 'onhashchange' in window && ((document as any).documentMode === void 0 || (document as any).documentMode > 7);
     this._useHashChange = this._wantsHashChange && this._hasHashChange;
     this._wantsPushState = !!this.options.pushState;
     this._hasPushState = !!(this.history && this.history.pushState);
@@ -453,7 +462,7 @@ _.extend(History.prototype, {
     }
     // Some environments will throw when clearing an undefined interval.
     if (this._checkUrlInterval) clearInterval(this._checkUrlInterval);
-    History.started = false;
+    (History as any).started = false;
   },
 
   // Add a route to be tested when the fragment changes. Routes added later
@@ -499,7 +508,7 @@ _.extend(History.prototype, {
   // route callback be fired (not usually desirable), or `replace: true`, if
   // you wish to modify the current URL without adding an entry to the history.
   navigate: function (fragment, options) {
-    if (!History.started) return false;
+    if (!(History as any).started) return false;
     if (!options || options === true) options = { trigger: !!options };
 
     // Normalize the fragment.

@@ -8,7 +8,7 @@ const { defaults } = tools;
 
 const transactionalProto = tools.getBaseClass( Model ).prototype;
 
-interface RestOptions extends SyncOptions {
+export interface RestOptions extends SyncOptions {
     wait? : boolean
     patch? : boolean
     reset? : boolean

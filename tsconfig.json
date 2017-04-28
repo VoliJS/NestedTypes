@@ -2,13 +2,13 @@
   "compilerOptions": {
     "target": "es5",
     "module":"commonjs",
+    "declaration": true,
     "moduleResolution": "node",
     "sourceMap": true,
     "outDir": "./lib",
     "noImplicitAny": false,
     "removeComments":true,
-    "experimentalDecorators": true,
-    "allowJs" : true
+    "experimentalDecorators": true
   },
   "files":[
     "./src/index.ts"

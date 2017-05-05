@@ -1,9 +1,7 @@
-import * as Backbone from './backbone'
+import Backbone from './backbone'
 import * as _ from 'underscore'
 import { mixins, mixinRules, define, Store } from './type-r'
 import { RestModel, RestCollection } from './rest'
-
-const { $ } = Backbone;
 
 @define({})
 @mixins( Store )
@@ -46,7 +44,8 @@ export class LazyStore extends RestStore {
             attr && attr.fetch && xhr.push( attr.fetch() );
         }
 
-        return $ && $.when && $.when.apply( Backbone.$, xhr );
+        const { $ } = Backbone;
+        return $ && $.when && $.when.apply( $, xhr );
     }
 
     // fetch specified items, or all items if called without arguments.
@@ -61,7 +60,8 @@ export class LazyStore extends RestStore {
             xhr.push( self._resolved[ name ] || attr && attr.fetch && attr.fetch());
         }
 
-        return $ && $.when && $.when.apply( Backbone.$, xhr );
+        const { $ } = Backbone;
+        return $ && $.when && $.when.apply( $, xhr );
     }
 
     clear( ...args : string[] ) : this {

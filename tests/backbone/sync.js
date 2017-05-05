@@ -74,50 +74,6 @@
     assert.equal(data.length, 123);
   });
 
-  QUnit.test("update with emulateHTTP and emulateJSON", function(assert) {
-    assert.expect(7);
-    library.first().save({id: '2-the-tempest', author: 'Tim Shakespeare'}, {
-      emulateHTTP: true,
-      emulateJSON: true
-    });
-    assert.equal(this.ajaxSettings.url, '/library/2-the-tempest');
-    assert.equal(this.ajaxSettings.type, 'POST');
-    assert.equal(this.ajaxSettings.dataType, 'json');
-    assert.equal(this.ajaxSettings.data._method, 'PUT');
-    var data = JSON.parse(this.ajaxSettings.data.model);
-    assert.equal(data.id, '2-the-tempest');
-    assert.equal(data.author, 'Tim Shakespeare');
-    assert.equal(data.length, 123);
-  });
-
-  QUnit.test("update with just emulateHTTP", function(assert) {
-    assert.expect(6);
-    library.first().save({id: '2-the-tempest', author: 'Tim Shakespeare'}, {
-      emulateHTTP: true
-    });
-    assert.equal(this.ajaxSettings.url, '/library/2-the-tempest');
-    assert.equal(this.ajaxSettings.type, 'POST');
-    assert.equal(this.ajaxSettings.contentType, 'application/json');
-    var data = JSON.parse(this.ajaxSettings.data);
-    assert.equal(data.id, '2-the-tempest');
-    assert.equal(data.author, 'Tim Shakespeare');
-    assert.equal(data.length, 123);
-  });
-
-  QUnit.test("update with just emulateJSON", function(assert) {
-    assert.expect(6);
-    library.first().save({id: '2-the-tempest', author: 'Tim Shakespeare'}, {
-      emulateJSON: true
-    });
-    assert.equal(this.ajaxSettings.url, '/library/2-the-tempest');
-    assert.equal(this.ajaxSettings.type, 'PUT');
-    assert.equal(this.ajaxSettings.contentType, 'application/x-www-form-urlencoded');
-    var data = JSON.parse(this.ajaxSettings.data.model);
-    assert.equal(data.id, '2-the-tempest');
-    assert.equal(data.author, 'Tim Shakespeare');
-    assert.equal(data.length, 123);
-  });
-
   QUnit.test("read model", function(assert) {
     assert.expect(3);
     library.first().save({id: '2-the-tempest', author: 'Tim Shakespeare'});
@@ -136,17 +92,6 @@
     assert.equal(this.ajaxSettings.data, null);
   });
 
-  QUnit.test("destroy with emulateHTTP", function(assert) {
-    assert.expect(3);
-    library.first().save({id: '2-the-tempest', author: 'Tim Shakespeare'});
-    library.first().destroy({
-      emulateHTTP: true,
-      emulateJSON: true
-    });
-    assert.equal(this.ajaxSettings.url, '/library/2-the-tempest');
-    assert.equal(this.ajaxSettings.type, 'POST');
-    assert.equal(JSON.stringify(this.ajaxSettings.data), '{"_method":"DELETE"}');
-  });
 
   QUnit.test("urlError", function(assert) {
     assert.expect(2);
@@ -183,54 +128,6 @@
       error: function() { assert.ok(true); }
     });
     this.ajaxSettings.error();
-  });
-
-  QUnit.test('Use Backbone.emulateHTTP as default.', function(assert) {
-    assert.expect(2);
-    var model = new Backbone.Model;
-    model.url = '/test';
-
-    Backbone.emulateHTTP = true;
-    model.sync('create', model);
-    assert.strictEqual(this.ajaxSettings.emulateHTTP, true);
-
-    Backbone.emulateHTTP = false;
-    model.sync('create', model);
-    assert.strictEqual(this.ajaxSettings.emulateHTTP, false);
-  });
-
-  QUnit.test('Use Backbone.emulateJSON as default.', function(assert) {
-    assert.expect(2);
-    var model = new Backbone.Model;
-    model.url = '/test';
-
-    Backbone.emulateJSON = true;
-    model.sync('create', model);
-    assert.strictEqual(this.ajaxSettings.emulateJSON, true);
-
-    Backbone.emulateJSON = false;
-    model.sync('create', model);
-    assert.strictEqual(this.ajaxSettings.emulateJSON, false);
-  });
-
-  QUnit.test("#1756 - Call user provided beforeSend function.", function(assert) {
-    assert.expect(4);
-    Backbone.emulateHTTP = true;
-    var model = new Backbone.Model;
-    model.url = '/test';
-    var xhr = {
-      setRequestHeader: function(header, value) {
-        assert.strictEqual(header, 'X-HTTP-Method-Override');
-        assert.strictEqual(value, 'DELETE');
-      }
-    };
-    model.sync('delete', model, {
-      beforeSend: function(_xhr) {
-        assert.ok(_xhr === xhr);
-        return false;
-      }
-    });
-    assert.strictEqual(this.ajaxSettings.beforeSend(xhr), false);
   });
 
   QUnit.test('#2928 - Pass along `textStatus` and `errorThrown`.', function(assert) {

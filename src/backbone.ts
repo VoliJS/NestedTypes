@@ -20,7 +20,6 @@ declare global {
     function detachEvent( a, b );
 }
 
-
 // Save the previous value of the `Backbone` variable, so that it can be
 // restored later on, if `noConflict` is used.
 const previousBackbone = window.Backbone;
@@ -28,22 +27,23 @@ const previousBackbone = window.Backbone;
 // Create a local reference to a common array method we'll want to use later.
 const slice = Array.prototype.slice;
 
-// Current version of the library. Keep in sync with `package.json`.
-export const VERSION = '1.2.3';
-
 // For Backbone's purposes, jQuery, Zepto, Ender, or My Library (kidding) owns
 // the `$` variable.
-export let $ = jQuery;
+const exported = {
+  $ : jQuery,
+  history : null,
+  VERSION : '1.2.3',
+  View, History, Router, noConflict
+}
+
+export default exported;
 
 // Runs Backbone.js in *noConflict* mode, returning the `Backbone` variable
 // to its previous owner. Returns a reference to this Backbone object.
-export function noConflict() {
+function noConflict() {
   window.Backbone = previousBackbone;
   return this;
 };
-
-export let emulateHTTP = false;
-export let emulateJSON = false;
 
 // Backbone.View
 // -------------
@@ -108,7 +108,7 @@ _.extend(View.prototype, {
   // re-delegation.
   setElement: function (element, delegate) {
     if (this.$el) this.undelegateEvents();
-    this.$el = element instanceof $ ? element : $(element);
+    this.$el = element instanceof exported.$ ? element : exported.$(element);
     this.el = this.$el[0];
     if (delegate !== false) this.delegateEvents();
     return this;
@@ -167,7 +167,7 @@ _.extend(View.prototype, {
       var attrs = _.extend({}, _.result(this, 'attributes'));
       if (this.id) attrs.id = _.result(this, 'id');
       if (this.className) attrs['class'] = _.result(this, 'className');
-      var $el = $('<' + _.result(this, 'tagName') + '>').attr(attrs);
+      var $el = exported.$('<' + _.result(this, 'tagName') + '>').attr(attrs);
       this.setElement($el, false);
     } else {
       this.setElement(_.result(this, 'el'), false);
@@ -216,12 +216,12 @@ _.extend(Router.prototype, {
     }
     if (!callback) callback = this[name];
     var router = this;
-    history.route(route, function (fragment) {
+    exported.history.route(route, function (fragment) {
       var args = router._extractParameters(route, fragment);
       if (router.execute(callback, args, name) !== false) {
         router.trigger.apply(router, ['route:' + name].concat(args));
         router.trigger('route', name, args);
-        history.trigger('route', router, name, args);
+        exported.history.trigger('route', router, name, args);
       }
     });
     return this;
@@ -235,7 +235,7 @@ _.extend(Router.prototype, {
 
   // Simple proxy to `Backbone.history` to save a fragment into the history.
   navigate: function (fragment, options) {
-    history.navigate(fragment, options);
+    exported.history.navigate(fragment, options);
     return this;
   },
 
@@ -571,5 +571,5 @@ _.extend(History.prototype, {
 });
 
 // Create the default Backbone.history.
-export const history = new History;
+exported.history = new History;
 

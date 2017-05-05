@@ -6,7 +6,7 @@
  * With validation patches - NestedTypes validation semantic is applied. (c) Vlad Balin, 2015.
  */
 import * as _ from 'underscore'
-import * as Backbone from './backbone'
+import Backbone from './backbone'
 
 import { tools } from './type-r'
 const { defaults } = tools;
@@ -27,8 +27,6 @@ export interface Restful {
 export interface SyncOptions {
     url? : LazyValue< string >
     data? : any
-    emulateJSON? : boolean
-    emulateHTTP? : boolean
     attrs? : {}
     beforeSend? : ( xhr ) => any
 
@@ -49,20 +47,30 @@ const methodMap = {
     'read'   : 'GET'
 };
 
-
-export let $ = Backbone.$;
+const exported = {
+    $ : Backbone.$,
     
-export let errorPromise = function( error ){
-    var x = $.Deferred();
-    x.reject( error );
-    return x;
-}
+    errorPromise : error => {
+        var x = $.Deferred();
+        x.reject( error );
+        return x;
+    },
 
-// Set the default implementation of `Backbone.ajax` to proxy through to `$`.
-// Override this if you'd like to use a different library.
-export let ajax : ( options : {} ) => any = function(){
-    return $.ajax.apply( $, arguments );
-}
+    // Set the default implementation of `Backbone.ajax` to proxy through to `$`.
+    // Override this if you'd like to use a different library.
+    ajax : function( options : {} ){
+        return $.ajax.apply( $, arguments );
+    },
+
+    sync,
+
+    // Throw an error when a URL is needed, and none is supplied.
+    urlError : function(){
+        throw new Error( 'A "url" property or function must be specified' );
+    }
+};
+
+export default exported;
 
     // Backbone.sync
     // -------------
@@ -75,27 +83,16 @@ export let ajax : ( options : {} ) => any = function(){
     // * Use `setTimeout` to batch rapid-fire updates into a single request.
     // * Send up the models as XML instead of JSON.
     // * Persist models via WebSockets instead of Ajax.
-    //
-    // Turn on `Backbone.emulateHTTP` in order to send `PUT` and `DELETE` requests
-    // as `POST`, with a `_method` parameter containing the true HTTP method,
-    // as well as all requests with the body as `application/x-www-form-urlencoded`
-    // instead of `application/json` with the model in a param named `model`.
-    // Useful when interfacing with server-side languages like **PHP** that make
-    // it difficult to read the body of `PUT` requests.
-export let sync = function( method : Method, model : Restful, options : SyncOptions = {} ) : JQueryXHR{
+
+function sync( method : Method, model : Restful, options : SyncOptions = {} ) : JQueryXHR{
     var type = methodMap[ method ];
-    // Default options, unless specified.
-    defaults( options, {
-        emulateHTTP: Backbone.emulateHTTP,
-        emulateJSON: Backbone.emulateJSON
-    });
 
     // Default JSON-request options.
     var params : any = { type : type, dataType : 'json' };
 
     // Ensure that we have a URL.
     if( !options.url ){
-        params.url = _.result( model, 'url' ) || urlError();
+        params.url = _.result( model, 'url' ) || exported.urlError();
     }
 
     // Ensure that we have the appropriate request data.
@@ -104,26 +101,8 @@ export let sync = function( method : Method, model : Restful, options : SyncOpti
         params.data        = JSON.stringify( options.attrs || model.toJSON( options ) );
     }
 
-    // For older servers, emulate JSON by encoding the request into an HTML-form.
-    if( options.emulateJSON ){
-        params.contentType = 'application/x-www-form-urlencoded';
-        params.data        = params.data ? { model : params.data } : {};
-    }
-
-    // For older servers, emulate HTTP by mimicking the HTTP method with `_method`
-    // And an `X-HTTP-Method-Override` header.
-    if( options.emulateHTTP && (type === 'PUT' || type === 'DELETE' || type === 'PATCH') ){
-        params.type = 'POST';
-        if( options.emulateJSON ) params.data._method = type;
-        var beforeSend     = options.beforeSend;
-        options.beforeSend = function( xhr ){
-            xhr.setRequestHeader( 'X-HTTP-Method-Override', type );
-            if( beforeSend ) return beforeSend.apply( this, arguments );
-        };
-    }
-
     // Don't process data on a non-GET request.
-    if( params.type !== 'GET' && !options.emulateJSON ){
+    if( params.type !== 'GET' ){
         params.processData = false;
     }
 
@@ -136,14 +115,8 @@ export let sync = function( method : Method, model : Restful, options : SyncOpti
     };
 
     // Make the request, allowing the user to override any Ajax options.
-    var xhr = options.xhr = ajax( _.extend( params, options ) );
+    var xhr = options.xhr = exported.ajax( _.extend( params, options ) );
     model.trigger( 'request', model, xhr, options );
     model.collection && model.collection.trigger( 'request', model, xhr, options );
     return xhr;
-}
-
-
-// Throw an error when a URL is needed, and none is supplied.
-export function urlError(){
-    throw new Error( 'A "url" property or function must be specified' );
 }

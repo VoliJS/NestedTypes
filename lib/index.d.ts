@@ -1,4 +1,11 @@
 import * as TypeR from './type-r';
-import * as Backbone from './backbone';
+export * from './type-r';
+import Backbone from './backbone';
+import { RestCollection, RestModel } from './rest';
+import { RestStore, LazyStore } from './rest-store';
+export declare const Class: typeof TypeR.Messenger;
 declare const Nested: typeof TypeR & typeof Backbone;
-export = Nested;
+export default Nested;
+export { Backbone, RestStore as Store, LazyStore, RestCollection as Collection, RestModel as Model };
+export declare function defaults(x: any): typeof Nested.Record;
+export * from './backbone';

@@ -13,8 +13,6 @@ export interface Restful {
 export interface SyncOptions {
     url?: LazyValue<string>;
     data?: any;
-    emulateJSON?: boolean;
-    emulateHTTP?: boolean;
     attrs?: {};
     beforeSend?: (xhr) => any;
     success?: (resp: any) => void;
@@ -24,8 +22,11 @@ export interface SyncOptions {
     xhr?: any;
     context?: {};
 }
-export declare let $: JQueryStatic;
-export declare let errorPromise: (error: any) => JQueryDeferred<{}>;
-export declare let ajax: (options: {}) => any;
-export declare let sync: (method: Method, model: Restful, options?: SyncOptions) => JQueryXHR;
-export declare function urlError(): void;
+declare const exported: {
+    $: JQueryStatic;
+    errorPromise: (error: any) => JQueryDeferred<{}>;
+    ajax: (options: {}) => any;
+    sync: (method: Method, model: Restful, options?: SyncOptions) => JQueryXHR;
+    urlError: () => never;
+};
+export default exported;

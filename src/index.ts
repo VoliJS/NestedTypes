@@ -1,62 +1,66 @@
 /**
+ * Extend Type-R namespace
+ */
+import * as TypeR from './type-r'
+export * from './type-r'
+
+/**
  * Prepare backbone View, Router, History, and Events.  
  */
-import * as Nested from '../type-r/src'
-import * as Backbone from './backbone'
+import Backbone from './backbone'
 import { RestCollection, RestModel } from './rest'
-import { Store } from '../type-r/src'
-import * as Sync from './sync'
+import { Store as BaseStore, tools } from './type-r'
+import Sync from './sync'
 
 import { ModelMixin, CollectionMixin } from './underscore-mixin'
 import { RestStore, LazyStore } from './rest-store'
- 
-Nested.Mixable.mixins( Nested.Events );
-Nested.Mixable.mixTo( Backbone.View, Backbone.Router, Backbone.History );
-
-Nested.Record.mixins( ModelMixin );
-Nested.Record.Collection.mixins( CollectionMixin );
-
-const { assign } = Nested.tools;
 
 /**
  * Prepare  
  */
 
-// allow sync and jQuery override
-Object.defineProperties( Nested, {
-    'emulateHTTP'  : linkProperty( Backbone, 'emulateHTTP' ),
-    'emulateJSON'  : linkProperty( Backbone, 'emulateJSON' ),
-    'sync'         : linkProperty( Sync, 'sync' ),
-    'errorPromise' : linkProperty( Sync, 'errorPromise' ),
-    'ajax'         : linkProperty( Sync, 'ajax' ),
-    'history'      : linkProperty( Backbone, 'history' ),
-    'store'        : linkProperty( Store, 'global' ),
-    '$' : {
-        get(){ return Backbone.$; },
-        set( value ){ (<any>Backbone).$ = (<any>Sync).$ = value; }
-    }
-} );
+export const Class : typeof TypeR.Messenger = TypeR.Messenger;
 
-assign( Nested, Backbone, {
-    Backbone  : Backbone,
-    Class     : Nested.Messenger,
-    Model     : RestModel,
-    Collection : RestCollection,
-    LazyStore  : LazyStore,
-    Store     : RestStore,
-
-    defaults( x ){
-        return Nested.Model.defaults( x );
+const Nested : typeof TypeR & typeof Backbone = Object.create( TypeR, tools.defaults({
+        'sync'         : linkProperty( Sync, 'sync' ),
+        'errorPromise' : linkProperty( Sync, 'errorPromise' ),
+        'ajax'         : linkProperty( Sync, 'ajax' ),
+        'history'      : linkProperty( Backbone, 'history' ),
+        'store'        : linkProperty( BaseStore, 'global' ),
+        '$' : {
+            get(){ return Backbone.$; },
+            set( value ){ (<any>Backbone).$ = (<any>Sync).$ = value; }
+        }
     },
+    toProps( { Backbone, Class, Model : RestModel, Collection : RestCollection, LazyStore, Store : RestStore, defaults } ),
+    toProps( Backbone )
+));
 
-    default : Nested
-} );
+export default Nested;
 
-export = Nested;
+export { Backbone, RestStore as Store, LazyStore, RestCollection as Collection, RestModel as Model };
 
+export function defaults( x ) : typeof Nested.Record {
+    return Nested.Model.defaults( x );
+}
+
+export * from './backbone';
+
+Nested.Mixable.mixins( Nested.Events );
+Nested.Mixable.mixTo( Backbone.View, Backbone.Router, Backbone.History );
+Nested.Record.mixins( ModelMixin );
+Nested.Record.Collection.mixins( CollectionMixin );
+
+/**
+ * Local utilities
+ */
 function linkProperty( Namespace, name ){
     return {
-        get : function(){ return Namespace[ name ]; },
-        set : function( value ){ Namespace[ name ] = value; }
+        get(){ return Namespace[ name ]; },
+        set( value ){ Namespace[ name ] = value; }
     };
 }
+
+function toProps( obj ){
+    return tools.transform({}, obj, x => ({ value : x }) );
+} 

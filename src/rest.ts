@@ -1,14 +1,14 @@
-import { sync, errorPromise, urlError, SyncOptions, Restful, LazyValue } from './sync'
+import Sync, { SyncOptions, Restful, LazyValue } from './sync'
 
 import * as _ from 'underscore'
 import * as Backbone from './backbone'
 
-import { define, Model, Collection, tools } from '../type-r/src'
+import { define, Model, Collection, tools } from './type-r'
 const { defaults } = tools;
 
 const transactionalProto = tools.getBaseClass( Model ).prototype;
 
-interface RestOptions extends SyncOptions {
+export interface RestOptions extends SyncOptions {
     wait? : boolean
     patch? : boolean
     reset? : boolean
@@ -82,7 +82,7 @@ export class RestCollection extends Collection implements Restful {
     // Proxy `Backbone.sync` by default -- but override this if you need
     // custom syncing semantics for *this* particular model.
     sync(){
-        return sync.apply( this, arguments );
+        return Sync.sync.apply( this, arguments );
     }
 };
 
@@ -131,7 +131,7 @@ export class RestModel extends Model implements Restful {
     // custom syncing semantics for *this* particular model.
     sync( method : string, self : this, options : SyncOptions ) : JQueryXHR
     sync() : JQueryXHR {
-        return sync.apply( this, arguments );
+        return Sync.sync.apply( this, arguments );
     }
 
     // Set a hash of model attributes, and sync the model to the server.
@@ -164,7 +164,7 @@ export class RestModel extends Model implements Restful {
 
         if( this._invalidate( options ) ){
             if( attrs && wait ) this.set( attrs, originalOptions );
-            return errorPromise( this.validationError );
+            return Sync.errorPromise( this.validationError );
         }
 
         // After a successful server-side save, the client is (optionally)
@@ -244,7 +244,7 @@ export class RestModel extends Model implements Restful {
         var base =
                 _.result( this, 'urlRoot' ) ||
                 _.result( this.collection, 'url' ) ||
-                urlError();
+                Sync.urlError();
 
         if( this.isNew() ) return base;
 

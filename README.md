@@ -1,3 +1,8 @@
+NestedTypes 2.0 will become BackboneJS compatibility layer for the Type-R.
+Type-R is written from the scratch with the TypeScript and contains no Backbone legacy.
+
+Documentation update pending. Don't try 2.0rc unless you know what you're doing. 2.0rc is used Volicon's internal integration.
+
 # NestedTypes 2.0 model framework
 
 Post-backbone data framework. 10 times faster, first-class support for nested models and collections and relations by id. 

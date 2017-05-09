@@ -47,7 +47,7 @@ export class AggregatedType extends AnyType {
 
     dispose ( record : Record, value : Transactional ){
         if( value ){
-            free( record, value );
+            this.handleChange( void 0, value, record );
             value.dispose();
         }
     }

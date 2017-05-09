@@ -86,7 +86,9 @@ export class AnyType implements Attribute {
         return value;
     }
 
-    dispose( record : Record, value : any ){}
+    dispose( record : Record, value : any ) : void {
+        this.handleChange( void 0, value, record );
+    }
 
     validate( record : Record, value : any, key : string ){}
 

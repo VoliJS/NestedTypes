@@ -31,6 +31,7 @@ export class DateType extends AnyType {
     isChanged( a, b ) { return ( a && a.getTime() ) !== ( b && b.getTime() ); }
 
     clone( value ) { return value && new Date( value.getTime() ); }
+    dispose(){}
 }
 
 Date._attribute = DateType;

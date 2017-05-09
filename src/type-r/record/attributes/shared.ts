@@ -82,14 +82,9 @@ export class SharedType extends AnyType {
 
     dispose( record : Record, value : Transactional ){
         if( value ){
-            // If the object was implicitly created, dispose it.
-            if( value._owner === record ){
-                free( record, value );
-                value.dispose();
-            }
-            else{
-                off( value, value._changeEventName, this._onChange, record );
-            }
+            const owned = value._owner === record;
+            this.handleChange( void 0, value, record );
+            owned && value.dispose();
         }
     }
 

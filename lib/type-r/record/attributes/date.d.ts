@@ -5,6 +5,7 @@ export declare class DateType extends AnyType {
     toJSON(value: any): any;
     isChanged(a: any, b: any): boolean;
     clone(value: any): Date;
+    dispose(): void;
 }
 export declare class MSDateType extends DateType {
     convert(value: any): any;

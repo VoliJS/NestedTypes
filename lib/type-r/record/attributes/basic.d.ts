@@ -1,6 +1,7 @@
 import { AnyType } from './generic';
 export declare class PrimitiveType extends AnyType {
     type: NumberConstructor | StringConstructor | BooleanConstructor;
+    dispose(): void;
     create(): string | number | boolean;
     toJSON(value: any): any;
     convert(value: any): any;
@@ -14,6 +15,7 @@ export declare class NumericType extends PrimitiveType {
 }
 export declare class ArrayType extends AnyType {
     toJSON(value: any): any;
+    dispose(): void;
     convert(value: any, a?: any, b?: any, record?: any): any;
     clone(value: any): any;
 }

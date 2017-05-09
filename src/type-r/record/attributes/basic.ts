@@ -23,6 +23,7 @@ Function.prototype._attribute = ConstructorType;
 export class PrimitiveType extends AnyType {
     type : NumberConstructor | StringConstructor | BooleanConstructor
 
+    dispose(){}
     create() { return this.type(); }
 
     toJSON( value ) { return value; }
@@ -67,6 +68,7 @@ Number._attribute = NumericType;
  */ 
 export class ArrayType extends AnyType {
     toJSON( value ) { return value; }
+    dispose(){}
 
     convert( value, a?, b?, record? ) {
         // Fix incompatible constructor behaviour of Array...

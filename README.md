@@ -1,4 +1,4 @@
-NestedTypes 2.0 is BackboneJS compatibility layer for the [Type-R](https://volicon.github.io/Type-R/Getting_Started.html) data-layer framework.
+NestedTypes 2.0 is BackboneJS compatibility layer for the [Type-R](https://volicon.github.io/Type-R/Getting_Started.html) data framework.
 Type-R is Model/Collection core written from the scratch with the TypeScript and has no side dependencies.
 
 NestedTypes adds support for REST (standard BackboneJS API), Underscore methods, and Backbone 1.1 classes. 

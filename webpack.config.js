@@ -1,13 +1,18 @@
 module.exports = {
-     entry: "./src/main",
+     entry: "./lib/index.js",
 
      output : {
-       filename : './nestedtypes.js',
+       filename : './dist/index.js',
        library : "Nested",
        libraryTarget : 'umd'
      },
 
      devtool : 'source-map',
+
+     resolve : {
+        modules : [ 'node_modules', 'src' ],
+        extensions : [ '.ts', '.js' ] 
+     },
 
      externals : [
        {
@@ -25,5 +30,20 @@ module.exports = {
            root : '_'
          }
        }
-     ]
+     ],
+
+    module: {
+        rules: [
+            {
+                test: /\.tsx?$/,
+                exclude: /(node_modules|bower_components)/,
+                loader: 'ts-loader'
+            },
+            {
+                enforce : "pre",
+                test: /\.js$/,
+                loader: "source-map-loader"
+            }
+        ],
+    }
 };

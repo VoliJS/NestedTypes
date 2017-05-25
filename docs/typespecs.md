@@ -1,32 +1,3 @@
-NestedTypes 2.0 is BackboneJS compatibility layer for the [Type-R](https://volicon.github.io/Type-R/Getting_Started.html) data-layer framework.
-Type-R is Model/Collection core written from the scratch with the TypeScript and has no side dependencies.
-
-NestedTypes adds support for REST (standard BackboneJS API), Underscore methods, and Backbone 1.1 classes. 
-
-> If you're upgrading from the version 1.3, *[there are compatibility issues](/docs/compatibility.md)*.
-> Mostly due to the fact that the Type-R and NestedTypes 2.0 is built around the concept of [aggregation trees](https://volicon.github.io/Type-R/API_by_feature/Aggregation_tree.html).
-> NestedTypes 1.3 code won't work without refactoring. 
-
-# NestedTypes 2.0 new features
-
-Post-backbone data framework. 10 times faster, first-class support for nested models and collections and relations by id. 
-
-- ES6 classes support.
-- Deeply observable changes.
-- First-class support for [aggregation](https://volicon.github.io/Type-R/API_by_feature/Aggregation_tree.html) and [relations by id](https://volicon.github.io/Type-R/API_by_feature/id-references_and_Stores.html).
-- Attribute type annotations and dynamic type safety.
-- More than 10 times faster than BackboneJS and 2-4 times faster than NestedTypes 1.3 in all browsers.
-
-# Installation & Requirements
-
-All modern JS engines are supported (IE10+, Safari, Firefox, Edge, Chrome, nodejs). May work in IE9 but not tested.
-
-`npm install nestedtypes`
-
-`underscore` and `jquery` are hard dependencies.
-
-For lighter framework version without dependencies and Backbone compatibility shim check out [Type-R](https://github.com/Volicon/Type-R).   
-
 # Quick API Reference
 
 Central concept in NestedTypes is `Record` type, which is the JS class with following capabilities:

@@ -1,22 +1,21 @@
-NestedTypes 2.0 will become BackboneJS compatibility layer for the Type-R.
-Type-R is written from the scratch with the TypeScript and contains no Backbone legacy.
+NestedTypes 2.0 is BackboneJS compatibility layer for the [Type-R](https://volicon.github.io/Type-R/Getting_Started.html) data-layer framework.
+Type-R is Model/Collection core written from the scratch with the TypeScript and has no side dependencies.
 
-Documentation update pending. Don't try 2.0rc unless you know what you're doing. 2.0rc is used Volicon's internal integration.
+NestedTypes adds support for REST (standard BackboneJS API), Underscore methods, and Backbone 1.1 classes. 
 
-# NestedTypes 2.0 model framework
+> If you're upgrading from the version 1.3, *[there are compatibility issues](/docs/compatibility.md)*.
+> Mostly due to the fact that the Type-R and NestedTypes 2.0 is built around the concept of [aggregation trees](https://volicon.github.io/Type-R/API_by_feature/Aggregation_tree.html).
+> NestedTypes 1.3 code won't work without refactoring. 
+
+# NestedTypes 2.0 new features
 
 Post-backbone data framework. 10 times faster, first-class support for nested models and collections and relations by id. 
 
 - ES6 classes support.
 - Deeply observable changes.
-- Aggregated records and collections.
-- First-class support for [relations by id](/docs/RelationsGuide.md).
+- First-class support for [aggregation](https://volicon.github.io/Type-R/API_by_feature/Aggregation_tree.html) and [relations by id](https://volicon.github.io/Type-R/API_by_feature/id-references_and_Stores.html).
 - Attribute type annotations and dynamic type safety.
-- About 10 times faster than BackboneJS and 2-4 times faster than NestedTypes 1.3 in all browsers.
-- Backward compatible with the majority of [BackboneJS API](http://backbonejs.org/). Although, [it's conceptually different](/docs/BackboneTransitionGuide.md).
-
-> If you're upgrading from the version 1.3, *[there are compatibility issues](/docs/compatibility.md)*.
-> NestedTypes 1.3 code won't work without refactoring. 
+- More than 10 times faster than BackboneJS and 2-4 times faster than NestedTypes 1.3 in all browsers.
 
 # Installation & Requirements
 

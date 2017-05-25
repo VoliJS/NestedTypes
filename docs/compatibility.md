@@ -5,7 +5,22 @@ Because of that, NestedTypes 1.3 code will not work without modifications.
 
 ### Refactoring Guide
 
-TBD
+## Watch out for aggregation errors!
+
+Read the [Type-R documentation](https://volicon.github.io/Type-R/API_by_feature/Aggregation_tree.html) about aggregation and shared references.
+
+The majority of the refactoring required is adding `Model.shared` and `Collection.Refs` in places where the UI state has references to shared objects.
+
+Errors will appear when you are trying to assign parts of one aggregation tree to another. They will look like this:
+
+`[Model Update] Aggregated 'User.name : ModelType' attribute is assigned with an object which is aggregated somewhere else.`
+
+`[Model Update] Aggregated 'User.name : CollectionType' attribute is assigned with a shared Collection.Set.`
+
+`[Collection Update] Aggregating [[ Model.name : ] CollectionType ] collection is updated with models which are aggregated somewhere else.`
+
+## Old API Deprecations
+- `modelOrCollection.clone()` now performs deep cloning. `modelOrCollection.deepClone()` is deprecated.
 
 ### API changes
 

@@ -7,7 +7,7 @@ NestedTypes adds support for REST (standard BackboneJS API), Underscore methods,
 > Mostly due to the fact that the Type-R and NestedTypes 2.0 is built around the concept of [aggregation trees](https://volicon.github.io/Type-R/API_by_feature/Aggregation_tree.html).
 > NestedTypes 1.3 code won't work without refactoring. 
 
-# NestedTypes 2.0 new features
+# Features
 
 Post-backbone data framework. 10 times faster, first-class support for nested models and collections and relations by id. 
 

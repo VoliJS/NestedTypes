@@ -15,7 +15,7 @@ Record.define = function( protoProps : RecordDefinition = {}, staticProps ){
     const BaseConstructor : typeof Record = getBaseClass( this ),
           baseProto : Record = BaseConstructor.prototype,
           // Extract record definition from static members, if any.
-          staticsDefinition : RecordDefinition = tools.getChangedStatics( this, 'attributes', 'collection', 'Collection' ),
+          staticsDefinition : RecordDefinition = tools.getChangedStatics( this, 'attributes', 'collection', 'Collection', 'idAttribute' ),
           // Definition can be made either through statics or define argument.
           // Merge them together, so we won't care about it below. 
           definition = assign( staticsDefinition, protoProps );

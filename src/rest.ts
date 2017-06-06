@@ -91,6 +91,15 @@ export class RestCollection extends Collection implements Restful {
     urlRoot : ''
 })
 export class RestModel extends Model implements Restful {
+    static define( protoProps, staticProps ){
+          const  staticsDefinition = tools.getChangedStatics( this, 'urlRoot' ),
+                // Definition can be made either through statics or define argument.
+                // Merge them together, so we won't care about it below. 
+                definition = tools.assign( staticsDefinition, protoProps );
+
+        return Model.define.call( this, definition, staticProps );
+    }
+
     _xhr : JQueryXHR
 
     urlRoot : string

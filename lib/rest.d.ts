@@ -32,4 +32,6 @@ export declare class RestModel extends Model implements Restful {
     save(key: string, value: any, options?: RestOptions): JQueryPromise<any>;
     destroy(options: RestOptions): JQueryXHR | boolean;
     url(): string;
+    set(key: string, value: any, options?: object): this;
+    set(attrs: {}, options?: object): this;
 }

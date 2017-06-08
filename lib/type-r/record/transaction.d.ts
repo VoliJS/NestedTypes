@@ -94,8 +94,6 @@ export declare class Record extends Transactional implements Owner {
     get(key: string): any;
     toJSON(): Object;
     parse(data: any, options?: TransactionOptions): any;
-    set(key: string, value: any, options?: TransactionOptions): this;
-    set(attrs: {}, options?: TransactionOptions): this;
     deepSet(name: string, value: any, options?: any): this;
     transaction(fun: (self: this) => void, options?: TransactionOptions): void;
     _createTransaction(a_values: {}, options?: TransactionOptions): Transaction;

@@ -261,6 +261,23 @@ export class RestModel extends Model implements Restful {
 
         return base.replace( /[^\/]$/, '$&/' ) + encodeURIComponent( id );
     }
+
+    set( key : string, value : any, options? : object ) : this
+    set( attrs : {}, options? : object ) : this
+    set( a, b?, c? ) : this {
+        if( typeof a === 'string' ){
+            if( c ){
+                return <this> super.set({ [ a ] : b }, c );
+            }
+            else{
+                this[ a ] = b;
+                return this;
+            } 
+        }
+        else{
+            return <this> super.set( a, b );
+        }
+    }
 }
 
 function _sync( method : string, _this : Restful, options ) : JQueryXHR {

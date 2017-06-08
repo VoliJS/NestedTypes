@@ -204,8 +204,7 @@ export class Record extends Transactional implements Owner {
     }
 
     unset( key, options? ) : this {
-        this.set( key, void 0, options );
-        return this; 
+        return this.set({ [ key ] : void 0 }, options );
     }
 
     clear( options? ) : this {
@@ -448,24 +447,6 @@ export class Record extends Transactional implements Owner {
      * Transactional control
      */
 
-    // Polimorphic set method.
-    set( key : string, value : any, options? : TransactionOptions ) : this
-    set( attrs : {}, options? : TransactionOptions ) : this
-    set( a, b?, c? ) : this {
-        if( typeof a === 'string' ){
-            if( c ){
-                return <this> super.set({ [ a ] : b }, c );
-            }
-            else{
-                setAttribute( this, a, b );
-                return this;
-            } 
-        }
-        else{
-            return <this> super.set( a, b );
-        }
-    }
-
     deepSet( name : string, value : any, options? ){
         // Operation might involve series of nested object updates, thus it's wrapped in transaction.
         this.transaction( () => {
@@ -505,7 +486,7 @@ export class Record extends Transactional implements Owner {
 
             // Set model attribute.
             if( model.set ){
-                model.set( attr, value, options );
+                model.set({ [ attr ] : value }, options );
             }
             else{
                 model[ attr ] = value;

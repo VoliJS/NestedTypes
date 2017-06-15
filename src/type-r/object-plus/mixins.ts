@@ -203,7 +203,7 @@ export class Mixable {
         // For each merge rule defined, if there is something in prototype it must be merged with the base class
         // according to the rules.
         if( this._mixinRules ){
-            const baseProto = getBaseClass( this );
+            const baseProto = getBaseClass( this ).prototype;
 
             for( let name of Object.keys( proto ) ){
                 if( name !== 'constructor' && this._mixinRules.hasOwnProperty( name ) && name in baseProto ){

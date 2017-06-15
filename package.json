@@ -35,7 +35,7 @@
     "sinon-chai": "*",
     "source-map-loader": "^0.1.5",
     "ts-loader": "*",
-    "typescript": "*",
+    "typescript": "<2.4.0",
     "underscore": "*",
     "webpack": "*"
   },

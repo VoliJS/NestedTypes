@@ -2,6 +2,7 @@ import { EventMap, EventsDefinition } from '../object-plus';
 import { Transactional, CloneOptions, TransactionOptions, TransactionalDefinition } from '../transactions';
 import { Record, AggregatedType } from '../record';
 import { IdIndex, CollectionCore, CollectionTransaction } from './commons';
+import { AddOptions } from './add';
 export declare type GenericComparator = string | ((x: Record) => number) | ((a: Record, b: Record) => number);
 export interface CollectionOptions extends TransactionOptions {
     comparator?: GenericComparator;
@@ -52,7 +53,7 @@ export declare class Collection extends Transactional implements CollectionCore 
     set(elements?: ElementsArg, options?: TransactionOptions): this;
     dispose(): void;
     reset(a_elements?: ElementsArg, options?: TransactionOptions): Record[];
-    add(a_elements: ElementsArg, options?: TransactionOptions): Record[];
+    add(a_elements: ElementsArg, options?: AddOptions): Record[];
     remove(recordsOrIds: any, options?: TransactionOptions): Record[] | Record;
     _createTransaction(a_elements: ElementsArg, options?: TransactionOptions): CollectionTransaction;
     static _attribute: typeof AggregatedType;

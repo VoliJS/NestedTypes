@@ -196,8 +196,23 @@ export class Mixable {
         // Define native properties.
         properties && Object.defineProperties( proto, transform( {}, <PropertyMap>properties, toPropertyDescriptor ) );
 
-        // Apply mixins and mixin rules.
+        // Apply mixin rules.
         mixinRules && this.mixinRules( mixinRules );
+
+        // Apply merge rules to overriden prototype members.
+        // For each merge rule defined, if there is something in prototype it must be merged with the base class
+        // according to the rules.
+        if( this._mixinRules ){
+            const baseProto = getBaseClass( this );
+
+            for( let name of Object.keys( proto ) ){
+                if( name !== 'constructor' && this._mixinRules.hasOwnProperty( name ) && name in baseProto ){
+                    proto[ name ] = mergeProp( proto[ name ], baseProto[ name ], this._mixinRules[ name ] );
+                }
+            }
+        }
+
+        // Apply mixins.
         mixins && this.mixins( mixins );
 
         return this;
@@ -377,12 +392,7 @@ export function mergeProps< T extends {} >( target : T, source : {}, rules : Mix
             const rule  = rules[ name ];
 
             if( rule ) {
-                target[ name ] = typeof rule === 'object' ?
-                    mergeObjects( value, sourceProp.value, rule ) :(
-                        rule === 'merge' ?
-                            mergeObjects( value, sourceProp.value ) :
-                            mergeFunctions[ rule ]( value, sourceProp.value )
-                    );
+                target[ name ] = mergeProp( value, sourceProp.value, rule );
             }
         }
         else {
@@ -391,4 +401,13 @@ export function mergeProps< T extends {} >( target : T, source : {}, rules : Mix
     }
 
     return target;
+}
+
+function mergeProp( destVal, sourceVal, rule : MergeRule | MixinRules ){
+    return typeof rule === 'object' ?
+                    mergeObjects( destVal, sourceVal, rule ) : (
+                        rule === 'merge' ?
+                            mergeObjects( destVal, sourceVal ) :
+                            mergeFunctions[ rule ]( destVal, sourceVal )
+                    );
 }

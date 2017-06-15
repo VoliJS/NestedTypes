@@ -3,7 +3,7 @@ import { ItemsBehavior, transactionApi, Transactional, CloneOptions, Transaction
 import { Record, SharedType, AggregatedType, createSharedTypeSpec } from '../record'
 
 import { IdIndex, free, sortElements, dispose, Elements, CollectionCore, addIndex, removeIndex, updateIndex, Comparator, CollectionTransaction } from './commons'
-import { addTransaction } from './add'
+import { addTransaction, AddOptions } from './add'
 import { setTransaction, emptySetTransaction } from './set'
 import { removeOne, removeMany } from './remove'
 
@@ -366,7 +366,7 @@ export class Collection extends Transactional implements CollectionCore {
     }
 
     // Add elements to collection.
-    add( a_elements : ElementsArg , options : TransactionOptions = {} ){
+    add( a_elements : ElementsArg , options : AddOptions = {} ){
         const elements = toElements( this, a_elements, options ),
               transaction = this.models.length ?
                     addTransaction( this, elements, options ) :

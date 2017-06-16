@@ -34,8 +34,7 @@ function subsetOptions( options : CollectionOptions ){
 const subsetOfBehavior = ItemsBehavior.share | ItemsBehavior.persistent;
 
 function defineSubsetCollection( CollectionConstructor : typeof Collection ) {
-    @define({})
-    class SubsetOfCollection extends CollectionConstructor {
+    @define class SubsetOfCollection extends CollectionConstructor {
         refs : any[];
         resolvedWith : Collection = null;
 

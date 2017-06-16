@@ -3,12 +3,13 @@ import * as _ from 'underscore'
 import { mixins, mixinRules, define, Store } from './type-r'
 import { RestModel, RestCollection } from './rest'
 
-@define({})
-@mixins( Store )
-@mixinRules({ get : 'overwrite', getStore : 'overwrite' })
+@define({
+    getStore : Store.prototype.getStore,
+    get : Store.prototype.get,
+})
 export class RestStore extends RestModel {}
 
-@define({})
+@define
 export class LazyStore extends RestStore {
     _resolved  : {} = {}
 

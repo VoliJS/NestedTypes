@@ -39,7 +39,7 @@ export interface MixinRules {
  * - *every* - property is the function `( ...args : any[] ) => boolean`. Resulting method will return true if every single function returns true.
  * - *some* - same as previous, but method will return true when at least one function returns true.
  */
-export type MergeRule = 'merge' | 'overwrite' | 'mergeSequence' | 'pipe' | 'sequence' | 'reverse' | 'every' | 'some'
+export type MergeRule = 'merge' | 'mergeSequence' | 'pipe' | 'sequence' | 'reverse' | 'every' | 'some'
 
 /** @hidden */
 declare function __extends( a, b )
@@ -295,6 +295,8 @@ export function predefine( Constructor : MixableConstructor< any > ) : void {
 /** @decorator `@define` for metaprogramming magic. Can be used with [[Mixable]] classes only.
  *  Forwards the call to [[Mixable.define]].
  */
+export function define( spec : ClassDefinition ) : ClassDecorator;
+export function define( spec : MixableConstructor< any > ) : void;
 export function define( spec : ClassDefinition | MixableConstructor< any > ){
     // Handle the case when `@define` used without arguments.
     if( typeof spec === 'function' ){
@@ -344,12 +346,8 @@ const mergeFunctions : IMergeFunctions = {
 
     mergeSequence( a : Function, b : Function ) : Function {
         return function() : Object {
-            return defaults( a.call( this ), b.call( this ) );
+            return defaults( a.apply( this, arguments ), b.apply( this, arguments ) );
         }
-    },
-
-    overwrite( a, b ){
-        return b;
     },
 
     sequence( a : Function, b : Function ){

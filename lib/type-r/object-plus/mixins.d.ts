@@ -12,7 +12,7 @@ export declare type Mixin = Constructor<any> | {};
 export interface MixinRules {
     [propertyName: string]: MergeRule | MixinRules;
 }
-export declare type MergeRule = 'merge' | 'overwrite' | 'mergeSequence' | 'pipe' | 'sequence' | 'reverse' | 'every' | 'some';
+export declare type MergeRule = 'merge' | 'mergeSequence' | 'pipe' | 'sequence' | 'reverse' | 'every' | 'some';
 export interface Constructor<T> {
     new (...args: any[]): T;
 }
@@ -44,5 +44,6 @@ export declare function mixinRules(rules: MixinRules): (Ctor: Function) => void;
 export declare function mixins(...list: {}[]): (Ctor: Function) => void;
 export declare function extendable(Type: Function): void;
 export declare function predefine(Constructor: MixableConstructor<any>): void;
-export declare function define(spec: ClassDefinition | MixableConstructor<any>): (Ctor: Function) => void;
+export declare function define(spec: ClassDefinition): ClassDecorator;
+export declare function define(spec: MixableConstructor<any>): void;
 export declare function mergeProps<T extends {}>(target: T, source: {}, rules?: MixinRules): T;

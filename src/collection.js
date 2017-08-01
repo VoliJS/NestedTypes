@@ -25,7 +25,7 @@ var Remove     = require( './collections/remove' ),
     removeOne  = Remove.removeOne,
     removeMany = Remove.removeMany;
 
-CollectionProto = Backbone.Collection.prototype;
+var CollectionProto = Backbone.Collection.prototype;
 
 // transactional wrapper for collections
 function transaction( func ){

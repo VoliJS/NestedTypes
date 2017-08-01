@@ -84,7 +84,7 @@ attribute.Type.extend( {
 // ----------------
 // Global Mock for missing Integer data type...
 // -------------------------------------
-Integer = function( x ){ return x ? Math.round( x ) : 0; };
+window.Integer = function( x ){ return x ? Math.round( x ) : 0; };
 
 var PrimitiveType = attribute.Type.extend( {
     create : function(){ return this.type(); },

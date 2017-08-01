@@ -200,7 +200,7 @@
 
         function define( a_protoProps, a_staticProps ){
             var protoProps = a_protoProps || {};
-            staticProps    = a_staticProps || {};
+            var staticProps    = a_staticProps || {};
 
             if( protoProps.mixins ){
                 protoProps = attachMixins( protoProps );

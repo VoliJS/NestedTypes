@@ -52,7 +52,7 @@ return /******/ (function(modules) { // webpackBootstrap
 /************************************************************************/
 /******/ ([
 /* 0 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	// NestedTypes namespace
 	// =======================
@@ -129,9 +129,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }
 	} );
 
-/***/ },
+/***/ }),
 /* 1 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	var Backbone        = __webpack_require__( 2 ),
 	    BaseModel       = Backbone.Model,
@@ -671,9 +671,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = Model;
 
 
-/***/ },
+/***/ }),
 /* 2 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	/* Backbone core extensions: bug fixes and optimizations
 	    - Use Object+ for all backbone objects
@@ -701,9 +701,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	// Make Object.extend classes capable of sending and receiving Backbone Events...
 	Object.assign( Class.prototype, Events );
 
-/***/ },
+/***/ }),
 /* 3 */
-/***/ function(module, exports) {
+/***/ (function(module, exports) {
 
 	/* Object extensions: backbone-style OO functions and helpers...
 	 * (c) Vlad Balin & Volicon, 2015
@@ -907,7 +907,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	        function define( a_protoProps, a_staticProps ){
 	            var protoProps = a_protoProps || {};
-	            staticProps    = a_staticProps || {};
+	            var staticProps    = a_staticProps || {};
 	
 	            if( protoProps.mixins ){
 	                protoProps = attachMixins( protoProps );
@@ -947,9 +947,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	module.exports = Object.extend.Class;
 
-/***/ },
+
+/***/ }),
 /* 4 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;/* WEBPACK VAR INJECTION */(function(global) {//     Backbone.js 1.2.3
 	
@@ -1705,21 +1706,21 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	/* WEBPACK VAR INJECTION */}.call(exports, (function() { return this; }())))
 
-/***/ },
+/***/ }),
 /* 5 */
-/***/ function(module, exports) {
+/***/ (function(module, exports) {
 
 	module.exports = __WEBPACK_EXTERNAL_MODULE_5__;
 
-/***/ },
+/***/ }),
 /* 6 */
-/***/ function(module, exports) {
+/***/ (function(module, exports) {
 
 	module.exports = __WEBPACK_EXTERNAL_MODULE_6__;
 
-/***/ },
+/***/ }),
 /* 7 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
 	
@@ -2080,9 +2081,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	// want global "pubsub" in a convenient place.
 	module.exports = Events;
 
-/***/ },
+/***/ }),
 /* 8 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	// Optimized Model.set functions
 	//---------------------------------
@@ -2331,9 +2332,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }
 	}
 
-/***/ },
+/***/ }),
 /* 9 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	__webpack_require__( 3 );
 	
@@ -2381,9 +2382,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = Object.extend.error;
 
 
-/***/ },
+/***/ }),
 /* 10 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	// Options wrapper for chained and safe type specs...
 	// --------------------------------------------------
@@ -2824,9 +2825,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = createOptions;
 
 
-/***/ },
+/***/ }),
 /* 11 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
 	
@@ -2886,9 +2887,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	    return this.length ? this : null;
 	};
 
-/***/ },
+/***/ }),
 /* 12 */
-/***/ function(module, exports) {
+/***/ (function(module, exports) {
 
 	/**
 	 * Backbone.js 1.2.3 REST implementation
@@ -3185,9 +3186,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	    return x;
 	};
 
-/***/ },
+/***/ }),
 /* 13 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	var _ = __webpack_require__( 5 );
 	
@@ -3280,9 +3281,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 
-/***/ },
+/***/ }),
 /* 14 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	var _               = __webpack_require__( 5 ),
 	    Backbone        = __webpack_require__( 2 ),
@@ -3311,7 +3312,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    removeOne  = Remove.removeOne,
 	    removeMany = Remove.removeMany;
 	
-	CollectionProto = Backbone.Collection.prototype;
+	var CollectionProto = Backbone.Collection.prototype;
 	
 	// transactional wrapper for collections
 	function transaction( func ){
@@ -3598,9 +3599,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }
 	} );
 
-/***/ },
+
+/***/ }),
 /* 15 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	/**
 	 * Helper functions
@@ -3735,9 +3737,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	    trigger3( self, event, model, collection, options );
 	}
 
-/***/ },
+/***/ }),
 /* 16 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	/**
 	 * Add models to collection, if models with the same id doesn't belong to collection
@@ -4009,9 +4011,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	    return toAdd;
 	}
 
-/***/ },
+/***/ }),
 /* 17 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	/**
 	 * Remove single element from collection
@@ -4125,9 +4127,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }
 	}
 
-/***/ },
+/***/ }),
 /* 18 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	// Nested Relations
 	//=================
@@ -4363,9 +4365,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	};
 
 
-/***/ },
+/***/ }),
 /* 19 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	// Date.parse with progressive enhancement for ISO 8601 <https://github.com/csnover/js-iso8601>
 	// (c) 2011 Colin Snover <http://zetafleet.com>
@@ -4453,7 +4455,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	// ----------------
 	// Global Mock for missing Integer data type...
 	// -------------------------------------
-	Integer = function( x ){ return x ? Math.round( x ) : 0; };
+	window.Integer = function( x ){ return x ? Math.round( x ) : 0; };
 	
 	var PrimitiveType = attribute.Type.extend( {
 	    create : function(){ return this.type(); },
@@ -4590,16 +4592,17 @@ return /******/ (function(modules) { // webpackBootstrap
 	} ).attach( Model, Collection );
 
 
-/***/ },
+/***/ }),
 /* 20 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	var Backbone   = __webpack_require__( 2 ),
-	    $          = Backbone.$;
-	    Model      = __webpack_require__( 1 ),
-	    Collection = __webpack_require__( 14 ),
-	    RestMixin  = __webpack_require__( 12 ),
+	    $          = Backbone.$,
 	    _          = __webpack_require__( 5 );
+	
+	window.Model      = __webpack_require__( 1 );
+	window.Collection = __webpack_require__( 14 );
+	window.RestMixin  = __webpack_require__( 12 );
 	
 	var _store = null;
 	
@@ -4717,7 +4720,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 
-/***/ }
+/***/ })
 /******/ ])
 });
 ;

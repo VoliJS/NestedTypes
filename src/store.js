@@ -1,9 +1,10 @@
 var Backbone   = require( './backbone+' ),
-    $          = Backbone.$;
-    Model      = require( './model' ),
-    Collection = require( './collection' ),
-    RestMixin  = require( './rest-mixin' ),
+    $          = Backbone.$,
     _          = require( 'underscore' );
+
+window.Model      = require( './model' );
+window.Collection = require( './collection' );
+window.RestMixin  = require( './rest-mixin' );
 
 var _store = null;
 

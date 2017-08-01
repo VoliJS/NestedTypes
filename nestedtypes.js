@@ -4379,7 +4379,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	    modelSet   = __webpack_require__( 8 ),
 	    Model      = __webpack_require__( 1 ),
 	    errors     = __webpack_require__( 9 ),
-	    Collection = __webpack_require__( 14 );
+	    Collection = __webpack_require__( 14 ),
+	    GlobalEnv  = __webpack_require__( 21 );
 	
 	// Constructors Attribute
 	// ----------------
@@ -4455,7 +4456,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	// ----------------
 	// Global Mock for missing Integer data type...
 	// -------------------------------------
-	window.Integer = function( x ){ return x ? Math.round( x ) : 0; };
+	GlobalEnv.Integer = function( x ){ return x ? Math.round( x ) : 0; };
 	
 	var PrimitiveType = attribute.Type.extend( {
 	    create : function(){ return this.type(); },
@@ -4598,11 +4599,12 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	var Backbone   = __webpack_require__( 2 ),
 	    $          = Backbone.$,
-	    _          = __webpack_require__( 5 );
+	    GlobalEnv  = __webpack_require__( 21 );
 	
-	window.Model      = __webpack_require__( 1 );
-	window.Collection = __webpack_require__( 14 );
-	window.RestMixin  = __webpack_require__( 12 );
+	GlobalEnv.Model      = __webpack_require__( 1 );
+	GlobalEnv.Collection = __webpack_require__( 14 );
+	GlobalEnv.RestMixin  = __webpack_require__( 12 );
+	GlobalEnv._          = __webpack_require__( 5 );
 	
 	var _store = null;
 	
@@ -4719,6 +4721,24 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }
 	}
 
+
+/***/ }),
+/* 21 */
+/***/ (function(module, exports) {
+
+	/* WEBPACK VAR INJECTION */(function(global) {//    This code originates from https://github.com/megawac/underscore/commit/365311c9a440438531ca1c6bfd49e3c7c5f46079
+	//    and is found in the NPM package purposeindustries/window-or-global (v1.0.1)
+	
+	//    https://github.com/purposeindustries/window-or-global
+	//    (c) 2015 Purpose Industries
+	//    window-or-global may be freely distributed under the MIT license.
+	
+	'use strict'
+	module.exports = (typeof self === 'object' && self.self === self && self)
+	  || (typeof global === 'object' && global.global === global && global)
+	  || this;
+	
+	/* WEBPACK VAR INJECTION */}.call(exports, (function() { return this; }())))
 
 /***/ })
 /******/ ])

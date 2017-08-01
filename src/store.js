@@ -1,10 +1,11 @@
 var Backbone   = require( './backbone+' ),
     $          = Backbone.$,
-    _          = require( 'underscore' );
+    GlobalEnv  = require( './env' );
 
-window.Model      = require( './model' );
-window.Collection = require( './collection' );
-window.RestMixin  = require( './rest-mixin' );
+GlobalEnv.Model      = require( './model' );
+GlobalEnv.Collection = require( './collection' );
+GlobalEnv.RestMixin  = require( './rest-mixin' );
+GlobalEnv._          = require( 'underscore' );
 
 var _store = null;
 

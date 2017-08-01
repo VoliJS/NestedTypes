@@ -8,7 +8,8 @@ var attribute  = require( './attribute' ),
     modelSet   = require( './modelset' ),
     Model      = require( './model' ),
     errors     = require( './errors' ),
-    Collection = require( './collection' );
+    Collection = require( './collection' ),
+    GlobalEnv  = require( './env' );
 
 // Constructors Attribute
 // ----------------
@@ -84,7 +85,7 @@ attribute.Type.extend( {
 // ----------------
 // Global Mock for missing Integer data type...
 // -------------------------------------
-window.Integer = function( x ){ return x ? Math.round( x ) : 0; };
+GlobalEnv.Integer = function( x ){ return x ? Math.round( x ) : 0; };
 
 var PrimitiveType = attribute.Type.extend( {
     create : function(){ return this.type(); },

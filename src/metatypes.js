@@ -9,7 +9,7 @@ var attribute  = require( './attribute' ),
     Model      = require( './model' ),
     errors     = require( './errors' ),
     Collection = require( './collection' ),
-    GlobalEnv  = require( './env' );
+    GlobalEnv  = require( './utils/env' );
 
 // Constructors Attribute
 // ----------------

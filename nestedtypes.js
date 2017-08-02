@@ -75,7 +75,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	Model.Collection = Collection;
 	
-	var Store = __webpack_require__( 20 );
+	var Store = __webpack_require__( 21 );
 	Object.defineProperty( exports, 'store', Store.globalProp );
 	
 	exports.store = new Store.Model();
@@ -4380,7 +4380,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    Model      = __webpack_require__( 1 ),
 	    errors     = __webpack_require__( 9 ),
 	    Collection = __webpack_require__( 14 ),
-	    GlobalEnv  = __webpack_require__( 21 );
+	    GlobalEnv  = __webpack_require__( 20 );
 	
 	// Constructors Attribute
 	// ----------------
@@ -4595,11 +4595,29 @@ return /******/ (function(modules) { // webpackBootstrap
 
 /***/ }),
 /* 20 */
+/***/ (function(module, exports) {
+
+	/* WEBPACK VAR INJECTION */(function(global) {//    This code originates from https://github.com/megawac/underscore/commit/365311c9a440438531ca1c6bfd49e3c7c5f46079
+	//    and is found in the NPM package purposeindustries/window-or-global (v1.0.1)
+	
+	//    https://github.com/purposeindustries/window-or-global
+	//    (c) 2015 Purpose Industries
+	//    window-or-global may be freely distributed under the MIT license.
+	
+	'use strict'
+	module.exports = (typeof self === 'object' && self.self === self && self)
+	  || (typeof global === 'object' && global.global === global && global)
+	  || this;
+	
+	/* WEBPACK VAR INJECTION */}.call(exports, (function() { return this; }())))
+
+/***/ }),
+/* 21 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	var Backbone   = __webpack_require__( 2 ),
 	    $          = Backbone.$,
-	    GlobalEnv  = __webpack_require__( 21 );
+	    GlobalEnv  = __webpack_require__( 20 );
 	
 	GlobalEnv.Model      = __webpack_require__( 1 );
 	GlobalEnv.Collection = __webpack_require__( 14 );
@@ -4721,24 +4739,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }
 	}
 
-
-/***/ }),
-/* 21 */
-/***/ (function(module, exports) {
-
-	/* WEBPACK VAR INJECTION */(function(global) {//    This code originates from https://github.com/megawac/underscore/commit/365311c9a440438531ca1c6bfd49e3c7c5f46079
-	//    and is found in the NPM package purposeindustries/window-or-global (v1.0.1)
-	
-	//    https://github.com/purposeindustries/window-or-global
-	//    (c) 2015 Purpose Industries
-	//    window-or-global may be freely distributed under the MIT license.
-	
-	'use strict'
-	module.exports = (typeof self === 'object' && self.self === self && self)
-	  || (typeof global === 'object' && global.global === global && global)
-	  || this;
-	
-	/* WEBPACK VAR INJECTION */}.call(exports, (function() { return this; }())))
 
 /***/ })
 /******/ ])

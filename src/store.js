@@ -1,6 +1,6 @@
 var Backbone   = require( './backbone+' ),
     $          = Backbone.$,
-    GlobalEnv  = require( './env' );
+    GlobalEnv  = require( './utils/env' );
 
 GlobalEnv.Model      = require( './model' );
 GlobalEnv.Collection = require( './collection' );

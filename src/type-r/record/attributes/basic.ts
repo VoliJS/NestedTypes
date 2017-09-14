@@ -83,3 +83,26 @@ export class ArrayType extends AnyType {
 }
 
 Array._attribute = ArrayType;
+
+export function doNothing(){}
+
+export class FunctionType extends AnyType {
+    // Functions are not serialized.
+    toJSON( value ) { return void 0; }
+    create(){ return doNothing; }
+    dispose(){}
+
+    convert( next, prev, record ) {
+        // Fix incompatible constructor behaviour of Function...
+        if( next == null || typeof next === 'function' ) return next;
+
+        this._log( 'warn', 'assigned with non-function', next, record );
+
+        return doNothing;
+    }
+
+    // Functions are not cloned.
+    clone( value ){ return value; }
+}
+
+Function._attribute = FunctionType;

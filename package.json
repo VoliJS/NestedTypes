@@ -1,6 +1,6 @@
 {
   "name": "nestedtypes",
-  "version": "2.0.2",
+  "version": "2.0.3",
   "main": "./dist/index.js",
   "module": "./lib/index.js",
   "types": "./lib/index.d.ts",
@@ -25,19 +25,19 @@
     "underscore": "*"
   },
   "devDependencies": {
-    "@types/jquery": "^2.0.41",
+    "@types/jquery": "^2.0.48",
     "chai": "* <3",
     "chai-as-promised": "^5.3.0",
     "jquery": "*",
-    "mocha": "*",
-    "requirejs": "*",
-    "sinon": "*",
-    "sinon-chai": "*",
+    "mocha": "^3.5.3",
+    "requirejs": "^2.3.5",
+    "sinon": "^3.2.1",
+    "sinon-chai": "^2.13.0",
     "source-map-loader": "^0.1.5",
-    "ts-loader": "*",
+    "ts-loader": "^2.3.7",
     "typescript": "<2.4.0",
     "underscore": "*",
-    "webpack": "*"
+    "webpack": "^3.5.6"
   },
   "files": [
     "dist",

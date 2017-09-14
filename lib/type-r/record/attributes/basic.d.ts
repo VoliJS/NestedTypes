@@ -19,3 +19,11 @@ export declare class ArrayType extends AnyType {
     convert(value: any, a?: any, b?: any, record?: any): any;
     clone(value: any): any;
 }
+export declare function doNothing(): void;
+export declare class FunctionType extends AnyType {
+    toJSON(value: any): any;
+    create(): typeof doNothing;
+    dispose(): void;
+    convert(next: any, prev: any, record: any): any;
+    clone(value: any): any;
+}

@@ -1,5 +1,5 @@
 {
-  "name": "nestedtypes-next",
+  "name": "nestedtypes",
   "version": "2.1.0-beta.00",
   "main": "./dist/index.js",
   "module": "./lib/index.js",

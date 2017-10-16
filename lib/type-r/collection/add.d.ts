@@ -2,4 +2,4 @@ import { CollectionTransaction, CollectionOptions, CollectionCore } from './comm
 export interface AddOptions extends CollectionOptions {
     at?: number;
 }
-export declare function addTransaction(collection: CollectionCore, items: any, options: AddOptions, merge?: boolean): CollectionTransaction;
+export declare function addTransaction(collection: CollectionCore, items: any[], options: AddOptions, merge?: boolean): CollectionTransaction;

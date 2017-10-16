@@ -1,19 +1,32 @@
-import { AnyType } from './generic'
+/**
+ * Date attribute type.
+ * 
+ * Implements validation, cross-browser compatibility fixes, variety of Date serialization formats,
+ * and optimized update pipeline.
+ */
+import { AnyType } from './any'
 import { tools } from '../../object-plus'
+import { AttributesContainer } from './updates'
+import { TransactionOptions } from '../../transactions'
+import { ChainableAttributeSpec } from './attrDef'
 
 const DateProto = Date.prototype;
 
 // Date Attribute
 /** @private */
 export class DateType extends AnyType {
-    convert( value : any, a?, b?, record? ){
-        if( value == null || value instanceof Date ) return value;
+    create(){
+        return new Date();
+    }
+    
+    convert( next : any, a, record ){
+        if( next == null || next instanceof Date ) return next;
 
-        const date = new Date( value ),
+        const date = new Date( next ),
               timestamp = date.getTime();
 
         if( timestamp !== timestamp ){
-            this._log( 'warn', 'assigned with Invalid Date', value, record );
+            this._log( 'warn', 'assigned with Invalid Date', next, record );
         }
 
         return date;
@@ -30,6 +43,20 @@ export class DateType extends AnyType {
 
     isChanged( a, b ) { return ( a && a.getTime() ) !== ( b && b.getTime() ); }
 
+    doInit( value, record : AttributesContainer, options : TransactionOptions ){
+        // Date don't have handleChanges step.
+        return this.transform( value === void 0 ? this.defaultValue() : value, void 0, record, options );
+    }
+
+    doUpdate( value, record, options, nested ){
+        const   { name } = this,
+                { attributes } = record,
+                prev = attributes[ name ];
+        
+        // Date don't have handleChanges step.
+        return this.isChanged( prev , attributes[ name ] = this.transform( value, prev, record, options ) );
+    }
+
     clone( value ) { return value && new Date( value.getTime() ); }
     dispose(){}
 }
@@ -39,9 +66,9 @@ Date._attribute = DateType;
 const msDatePattern  = /\/Date\(([0-9]+)\)\//;
 
 export class MSDateType extends DateType {
-    convert( value ) {
-        if( typeof value === 'string' ){
-            const msDate = msDatePattern.exec( value );
+    convert( next ) {
+        if( typeof next === 'string' ){
+            const msDate = msDatePattern.exec( next );
             if( msDate ){
                 return new Date( Number( msDate[ 1 ] ) );
             }
@@ -54,8 +81,35 @@ export class MSDateType extends DateType {
 }
 
 export class TimestampType extends DateType {
-    toJSON( value ) { return value.getTime(); }
+    toJSON( value ) { return value && value.getTime(); }
 }
+
+declare global {
+    interface DateConstructor {
+        microsoft : ChainableAttributeSpec
+        timestamp :  ChainableAttributeSpec
+    }
+}
+
+Object.defineProperties( Date, {
+    microsoft : {
+        get(){
+            return new ChainableAttributeSpec({
+                type : Date,
+                _attribute : MSDateType
+            })
+        }
+    },
+
+    timestamp : {
+        get(){
+            return new ChainableAttributeSpec({
+                type : Date,
+                _attribute : TimestampType
+            })
+        }
+    }
+});
 
 // If ISO date is not supported by date constructor (such as in Safari), polyfill it.
 function supportsDate( date ){

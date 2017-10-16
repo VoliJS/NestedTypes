@@ -1,49 +1,65 @@
-export interface ClassDefinition {
-    properties?: PropertyMap | boolean;
-    mixins?: Mixin[];
-    mixinRules?: MixinRules;
-    [name: string]: any;
-}
-export interface PropertyMap {
-    [name: string]: Property;
-}
-export declare type Property = PropertyDescriptor | (() => any);
-export declare type Mixin = Constructor<any> | {};
-export interface MixinRules {
-    [propertyName: string]: MergeRule | MixinRules;
-}
-export declare type MergeRule = 'merge' | 'mergeSequence' | 'pipe' | 'sequence' | 'reverse' | 'every' | 'some';
-export interface Constructor<T> {
+export interface Subclass<T> extends MixableConstructor {
     new (...args: any[]): T;
-}
-export interface MixableConstructor<T> extends Constructor<T> {
     prototype: T;
-    create(a: any, b?: any): T;
-    mixins(...mixins: (Constructor<any> | {})[]): MixableConstructor<T>;
-    mixinRules(mixinRules: MixinRules): MixableConstructor<T>;
-    mixTo(...args: Constructor<any>[]): MixableConstructor<T>;
-    define(definition: ClassDefinition, staticProps?: {}): MixableConstructor<T>;
-    extend(spec?: ClassDefinition, statics?: {}): MixableConstructor<T>;
-    predefine(): MixableConstructor<T>;
+}
+export interface MixableConstructor extends Function {
+    __super__?: object;
+    mixins?: MixinsState;
+    onExtend?: (BaseClass: Function) => void;
+    onDefine?: (definition: object, BaseClass: Function) => void;
+    define?: (definition?: object, statics?: object) => MixableConstructor;
+    extend?: (definition?: object, statics?: object) => MixableConstructor;
+}
+export interface MixableDefinition {
+    mixins?: Mixin[];
 }
 export declare class Mixable {
-    constructor();
-    initialize(): void;
-    static create(a: any, b?: any): Mixable;
-    protected static _mixinRules: MixinRules;
-    static _appliedMixins: any[];
-    static mixins(...mixins: (Mixin | Mixin[])[]): typeof Mixable;
-    static mixTo<T>(...args: Function[]): typeof Mixable;
-    static mixinRules(mixinRules: MixinRules): MixableConstructor<Mixable>;
-    static define(definition?: ClassDefinition, staticProps?: {}): typeof Mixable;
-    static extend(spec?: ClassDefinition, statics?: {}): typeof Mixable;
-    static predefine(): typeof Mixable;
-    static __super__: {};
+    static onExtend: (BaseClass: Function) => void;
+    static onDefine: (definition: object, BaseClass: Function) => object;
+    static __super__: object;
+    static mixins: MixinsState;
+    static define(protoProps?: MixableDefinition, staticProps?: object): MixableConstructor;
+    static extend<T extends object>(spec?: T, statics?: {}): Subclass<T>;
 }
-export declare function mixinRules(rules: MixinRules): (Ctor: Function) => void;
-export declare function mixins(...list: {}[]): (Ctor: Function) => void;
-export declare function extendable(Type: Function): void;
-export declare function predefine(Constructor: MixableConstructor<any>): void;
-export declare function define(spec: ClassDefinition): ClassDecorator;
-export declare function define(spec: MixableConstructor<any>): void;
-export declare function mergeProps<T extends {}>(target: T, source: {}, rules?: MixinRules): T;
+export declare function predefine(Constructor: MixableConstructor): void;
+export declare function define(ClassOrDefinition: Function): void;
+export declare function define(ClassOrDefinition: object): ClassDecorator;
+export declare function definitions(rules: MixinMergeRules): ClassDecorator;
+export declare function definitionDecorator(definitionKey: any, value: any): (proto: object, name: string) => void;
+export declare class MixinsState {
+    Class: MixableConstructor;
+    mergeRules: MixinMergeRules;
+    definitionRules: MixinMergeRules;
+    definitions: object;
+    appliedMixins: Mixin[];
+    static get(Class: any): MixinsState;
+    constructor(Class: MixableConstructor);
+    getStaticDefinitions(BaseClass: Function): {
+        [key: string]: any;
+    };
+    merge(mixins: Mixin[]): void;
+    populate(...ctors: Function[]): void;
+    mergeObject(dest: object, source: object, unshift?: boolean): void;
+    mergeInheritedMembers(BaseClass: Function): void;
+}
+export interface MixinMergeRules {
+    [name: string]: MixinMergeRule;
+}
+export declare type MixinMergeRule = (a: any, b: any) => any;
+export declare type Mixin = {
+    [key: string]: any;
+} | Function;
+export interface MixinRulesDecorator {
+    (rules: MixinMergeRules): ClassDecorator;
+    value(a: object, b: object): object;
+    protoValue(a: object, b: object): object;
+    merge(a: object, b: object): object;
+    pipe(a: Function, b: Function): Function;
+    defaults(a: Function, b: Function): Function;
+    classFirst(a: Function, b: Function): Function;
+    classLast(a: Function, b: Function): Function;
+    every(a: Function, b: Function): Function;
+    some(a: Function, b: Function): Function;
+}
+export declare const mixins: (...list: Mixin[]) => (Class: Function) => void;
+export declare const mixinRules: MixinRulesDecorator;

@@ -2,10 +2,10 @@
  * Type spec engine. Declare attributes using chainable syntax,
  * and returns object with spec.
  */
-import { Transactional } from '../transactions'
-import { ChangeAttrHandler, AttributeDescriptor } from './attributes'
-import { Record } from './transaction'
-import { EventMap, EventsDefinition, Constructor, tools } from '../object-plus'
+import { Transactional } from '../../transactions'
+import { ChangeAttrHandler, AttributeOptions, Parse } from './any'
+import {  AttributesContainer } from './updates'
+import { EventMap, EventsDefinition, definitionDecorator, tools } from '../../object-plus'
 
 const { assign } = tools;
 
@@ -15,9 +15,9 @@ export interface AttributeCheck {
 }
 
 export class ChainableAttributeSpec {
-    options : AttributeDescriptor;
+    options : AttributeOptions;
 
-    constructor( options : AttributeDescriptor ) {
+    constructor( options : AttributeOptions ) {
         // Shallow copy options, fill it with defaults.
         this.options = { getHooks : [], transforms : [], changeHandlers : []};
         if( options ) assign( this.options, options );
@@ -42,6 +42,10 @@ export class ChainableAttributeSpec {
         });
     }
 
+    get asProp(){
+        return definitionDecorator( 'attributes', this );
+    }
+
     get isRequired() : ChainableAttributeSpec {
         return this.metadata({ isRequired : true }); 
     }
@@ -50,7 +54,8 @@ export class ChainableAttributeSpec {
         return this.metadata({ _onChange : ref });
     }
 
-    parse( fun ) : ChainableAttributeSpec {
+    // Attribute-specific parse transform
+    parse( fun : Parse ) : ChainableAttributeSpec {
         return this.metadata({ parse : fun });
     }
 
@@ -69,10 +74,10 @@ export class ChainableAttributeSpec {
 
     // Attribute set hook.
     set( fun ) : ChainableAttributeSpec {
-        function handleSetHook( next, options, prev, model ) {
+        function handleSetHook( next, prev, record : AttributesContainer, options ) {
             if( this.isChanged( next, prev ) ) {
-                var changed = fun.call( model, next, this.name );
-                return changed === void 0 ? prev : this.convert( changed, options, prev, model );
+                const changed = fun.call( record, next, this.name );
+                return changed === void 0 ? prev : this.convert( changed, prev, record, options );
             }
 
             return prev;
@@ -91,7 +96,7 @@ export class ChainableAttributeSpec {
     events( map : EventsDefinition ) : ChainableAttributeSpec {
         const eventMap = new EventMap( map );
 
-        function handleEventsSubscribtion( next, prev, record : Record ){
+        function handleEventsSubscribtion( next, prev, record : AttributesContainer ){
             prev && prev.trigger && eventMap.unsubscribe( record, prev );
 
             next && next.trigger && eventMap.subscribe( record, next );
@@ -107,14 +112,14 @@ export class ChainableAttributeSpec {
         return this;
     }
 
-    metadata( options : AttributeDescriptor ) : ChainableAttributeSpec {
+    metadata( options : AttributeOptions ) : ChainableAttributeSpec {
         const cloned = new ChainableAttributeSpec( this.options );
         assign( cloned.options, options );
         return cloned;
     }
 
     value( x ) : ChainableAttributeSpec {
-        return this.metadata({ value : x });
+        return this.metadata({ value : x, hasCustomDefault : true });
     }
 }
 
@@ -124,12 +129,13 @@ declare global {
     interface Function{
         value : ( x : any ) => ChainableAttributeSpec;
         isRequired : ChainableAttributeSpec;
+        asProp : PropertyDecorator
         has : ChainableAttributeSpec;
     }
 }
 
 Function.prototype.value = function( x ) {
-    return new ChainableAttributeSpec( { type : this, value : x } );
+    return new ChainableAttributeSpec( { type : this, value : x, hasCustomDefault : true } );
 };
 
 Object.defineProperty( Function.prototype, 'isRequired', {
@@ -137,16 +143,24 @@ Object.defineProperty( Function.prototype, 'isRequired', {
     set( x ){ this._isRequired = x; }
 });
 
+Object.defineProperty( Function.prototype, 'asProp', {
+    get() { return this.has.asProp; },
+});
+
 Object.defineProperty( Function.prototype, 'has', {
     get() {
         // workaround for sinon.js and other libraries overriding 'has'
-        return this._has || new ChainableAttributeSpec( { type : this, value : this._attribute.defaultValue } );
+        return this._has || new ChainableAttributeSpec( {
+            type : this,
+            value : this._attribute.defaultValue,
+            hasCustomDefault : this._attribute.defaultValue !== void 0
+        } );
     },
 
     set( value ) { this._has = value; }
 } );
 
-export function toAttributeDescriptor( spec : any ) : AttributeDescriptor {
+export function toAttributeOptions( spec : any ) : AttributeOptions {
     let attrSpec : ChainableAttributeSpec;
 
     if( typeof spec === 'function' ) {
@@ -165,14 +179,14 @@ export function toAttributeDescriptor( spec : any ) : AttributeDescriptor {
         }
         // All others will be created in regular way.
         else{
-            attrSpec = new ChainableAttributeSpec({ type : type, value : spec });
+            attrSpec = new ChainableAttributeSpec({ type : type, value : spec, hasCustomDefault : true });
         }
     }
  
     return attrSpec.options;
 }
 
-function inferType( value : {} ) : Constructor<any> {
+function inferType( value : {} ) : Function {
     switch( typeof value ) {
         case 'number' :
             return Number;

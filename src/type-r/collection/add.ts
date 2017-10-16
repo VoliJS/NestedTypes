@@ -9,9 +9,9 @@ export interface AddOptions extends CollectionOptions {
 }
 
 /** @private */
-export function addTransaction( collection : CollectionCore, items, options : AddOptions, merge? : boolean ){
+export function addTransaction( collection : CollectionCore, items : any[], options : AddOptions, merge? : boolean ){
     const isRoot = begin( collection ),
-          nested = [];
+          nested : Transaction[]= [];
 
     var added = appendElements( collection, items, nested, options, merge );
 
@@ -65,7 +65,7 @@ function moveElements( source : any[], at : number, added : any[] ) : void {
 
 // append data to model and index
 /** @private */
-function appendElements( collection : CollectionCore, a_items, nested : Transaction[], a_options, forceMerge : boolean ){
+function appendElements( collection : CollectionCore, a_items : any[], nested : Transaction[], a_options : AddOptions, forceMerge : boolean ){
     var { _byId, models } = collection,
         merge       = ( forceMerge || a_options.merge ) && !collection._shared,
         parse       = a_options.parse,

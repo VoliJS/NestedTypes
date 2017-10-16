@@ -3,7 +3,7 @@ import Sync, { SyncOptions, Restful, LazyValue } from './sync'
 import * as _ from 'underscore'
 import * as Backbone from './backbone'
 
-import { define, Model, Collection, tools } from './type-r'
+import { define, Model, Collection, tools, definitions, mixinRules } from './type-r'
 const { defaults } = tools;
 
 const transactionalProto = tools.getBaseClass( Model ).prototype;
@@ -61,7 +61,7 @@ export class RestCollection extends Collection implements Restful {
     create( a_model, options : any = {} ) : RestModel {
         const model : RestModel = a_model instanceof RestModel ?
                                         a_model :
-                                        <any> this.model.create( a_model, options, this );
+                                        <any> this.model.create( a_model, options );
 
         // Hack! For the situation when model instance is given, aquire it. 
         model._owner || ( model._owner = this );
@@ -87,19 +87,14 @@ export class RestCollection extends Collection implements Restful {
 };
 
 @define({
-    collection : RestCollection,
     urlRoot : ''
 })
+@definitions({
+    urlRoot : mixinRules.protoValue
+})
 export class RestModel extends Model implements Restful {
-    static define( protoProps, staticProps ){
-          const  staticsDefinition = tools.getChangedStatics( this, 'urlRoot' ),
-                // Definition can be made either through statics or define argument.
-                // Merge them together, so we won't care about it below. 
-                definition = tools.assign( staticsDefinition, protoProps );
-
-        return Model.define.call( this, definition, staticProps );
-    }
-
+    static Collection = RestCollection;
+    
     _xhr : JQueryXHR
 
     urlRoot : string

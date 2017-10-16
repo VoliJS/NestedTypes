@@ -8,5 +8,5 @@ export declare class LazyStore extends RestStore {
     fetch(...args: string[]): JQueryXHR;
     fetchOnce(...args: string[]): JQueryXHR;
     clear(...args: string[]): this;
-    static define(props: any, staticProps: any): any;
+    static onDefine(definitions: any, BaseClass: any): void;
 }

@@ -19,7 +19,7 @@ export declare class RestCollection extends Collection implements Restful {
     sync(): any;
 }
 export declare class RestModel extends Model implements Restful {
-    static define(protoProps: any, staticProps: any): any;
+    static Collection: typeof RestCollection;
     _xhr: JQueryXHR;
     urlRoot: string;
     _invalidate(options: {

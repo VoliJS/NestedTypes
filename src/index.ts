@@ -9,7 +9,7 @@ export * from './type-r'
  */
 import Backbone from './backbone'
 import { RestCollection, RestModel } from './rest'
-import { Store as BaseStore, tools } from './type-r'
+import { Store as BaseStore, tools, MixinsState } from './type-r'
 import Sync from './sync'
 
 import { ModelMixin, CollectionMixin } from './underscore-mixin'
@@ -46,10 +46,10 @@ export function defaults( x ) : typeof Nested.Record {
 
 export * from './backbone';
 
-Nested.Mixable.mixins( Nested.Events );
-Nested.Mixable.mixTo( Backbone.View, Backbone.Router, Backbone.History );
-Nested.Record.mixins( ModelMixin );
-Nested.Record.Collection.mixins( CollectionMixin );
+MixinsState.get( Nested.Mixable ).merge([ Nested.Events ]);
+Nested.Mixable.mixins.populate( Backbone.View, Backbone.Router, Backbone.History );
+Nested.Record.mixins.merge([ ModelMixin ]);
+Nested.Record.Collection.mixins.merge([ CollectionMixin ]);
 
 /**
  * Local utilities

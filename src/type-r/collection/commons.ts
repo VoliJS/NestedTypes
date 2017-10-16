@@ -20,7 +20,7 @@ export interface CollectionCore extends Transactional, Owner {
     _shared : number
     _aggregationError : Record[]
 
-    _log( level : string, text : string, value )
+    _log( level : string, text : string, value : any ) : void
 }
 
 // Collection's manipulation methods elements
@@ -44,7 +44,7 @@ export function dispose( collection : CollectionCore ) : Record[]{
 }
 
 /** @private */
-export function convertAndAquire( collection : CollectionCore, attrs : {} | Record, options ){
+export function convertAndAquire( collection : CollectionCore, attrs : {} | Record, options : CollectionOptions ){
     const { model } = collection;
     
     let record : Record;
@@ -73,7 +73,7 @@ export function convertAndAquire( collection : CollectionCore, attrs : {} | Reco
 }
 
 /** @private */
-export function free( owner : CollectionCore, child : Record ) : void {
+export function free( owner : CollectionCore, child : Record, unset? : boolean ) : void {
     if( owner._shared ){
         if( owner._shared & ItemsBehavior.listen ){
             off( child, child._changeEventName, owner._onChildrenChange, owner );
@@ -81,6 +81,7 @@ export function free( owner : CollectionCore, child : Record ) : void {
     }
     else{
         _free( owner, child );
+        unset || child.dispose();
     }
 
     const { _itemEvents } = owner;

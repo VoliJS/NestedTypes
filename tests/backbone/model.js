@@ -123,16 +123,17 @@
   });
 
   QUnit.test("isNew", function(assert) {
+    var M = Backbone.attributes({ 'foo': 0, 'bar': 0, 'baz': 0});
     assert.expect(6);
-    var a = new Backbone.Model({ 'foo': 1, 'bar': 2, 'baz': 3});
+    var a = new M({ 'foo': 1, 'bar': 2, 'baz': 3});
     assert.ok(a.isNew(), "it should be new");
-    a = new Backbone.Model({ 'foo': 1, 'bar': 2, 'baz': 3, 'id': -5 });
+    a = new M({ 'foo': 1, 'bar': 2, 'baz': 3, 'id': -5 });
     assert.ok(!a.isNew(), "any defined ID is legal, negative or positive");
-    a = new Backbone.Model({ 'foo': 1, 'bar': 2, 'baz': 3, 'id': 0 });
+    a = new M({ 'foo': 1, 'bar': 2, 'baz': 3, 'id': 0 });
     assert.ok(!a.isNew(), "any defined ID is legal, including zero");
-    assert.ok( new Backbone.Model({          }).isNew(), "is true when there is no id");
-    assert.ok(!new Backbone.Model({ 'id': 2  }).isNew(), "is false for a positive integer");
-    assert.ok(!new Backbone.Model({ 'id': -5 }).isNew(), "is false for a negative integer");
+    assert.ok( new M({          }).isNew(), "is true when there is no id");
+    assert.ok(!new M({ 'id': 2  }).isNew(), "is false for a positive integer");
+    assert.ok(!new M({ 'id': -5 }).isNew(), "is false for a negative integer");
   });
 
   QUnit.test("get", function(assert) {
@@ -296,7 +297,7 @@
 
   QUnit.test("using a non-default id attribute.", function(assert) {
     assert.expect(4);
-    var MongoModel = Backbone.Model.extend({idAttribute : '_id', defaults : { _id : '' }});
+    var MongoModel = Backbone.Model.extend({idAttribute : '_id', defaults : { _id : '', title : '' }});
     var model = new MongoModel({id: 'eye-dee', _id: 25, title: 'Model'});
     //assert.equal(model.get('id'), 'eye-dee');
     assert.equal(model.id, 25);
@@ -328,7 +329,6 @@
     assert.equal(collection.get('c6').cid.charAt(0), 'm');
     collection.set([{id: 'c6', value: 'test'}], {
       merge: true,
-      add: true,
       remove: false
     });
     assert.ok(collection.get('c6').has('value'));
@@ -372,7 +372,7 @@
   });
 
   QUnit.test("defaults", function(assert) {
-    assert.expect(4);
+    assert.expect(2);
     var Defaulted = Backbone.Model.extend({
       defaults: {
         "one": 1,
@@ -382,6 +382,8 @@
     var model = new Defaulted({two: undefined});
     assert.equal(model.get('one'), 1);
     assert.equal(model.get('two'), 2);
+    /* defaults as function is deprecated.
+    
     Defaulted = Backbone.Model.extend({
       defaults: function() {
         return {
@@ -392,7 +394,7 @@
     });
     model = new Defaulted({two: undefined});
     assert.equal(model.get('one'), 3);
-    assert.equal(model.get('two'), 4);
+    assert.equal(model.get('two'), 4);*/
   });
 
   QUnit.test("change, hasChanged, changedAttributes, previous, previousAttributes", function(assert) {
@@ -494,9 +496,6 @@
     model.validate = function(attrs) {
       if (this.admin) return "Can't change admin status.";
     };
-    model.on('invalid', function(model, error) {
-      boundError = true;
-    });
     var result = model.set({a: 100}, {validate:true});
     assert.equal(result, model);
     assert.equal(model.get('a'), 100);
@@ -506,8 +505,8 @@
     assert.equal( model.isValid(), false);
     assert.equal(model.get('a'), 200);
     assert.equal(model.validationError.error, "Can't change admin status.");
-    model._invalidate( { validate : true } );
-    assert.equal(boundError, true);
+
+    assert.equal(model.isValid(), false);
   });
 
   QUnit.test("defaults always extend attrs (#459)", function(assert) {

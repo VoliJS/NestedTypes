@@ -14,8 +14,16 @@ import { Collection } from './collection'
 
 // Define synonims for NestedTypes backward compatibility.
 import { Record as Model } from './record' 
-import { Mixable as Class } from './object-plus/'
-export { Model, Class }; 
+import { define, Mixable as Class } from './object-plus/'
+export { Model, Class };
+
+export function attributes( attrDefs ) : typeof Model {
+    @define class DefaultRecord extends Model {
+        static attributes = attrDefs;
+    }
+
+    return DefaultRecord;
+}
 
 import { ChainableAttributeSpec } from './record'
 

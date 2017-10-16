@@ -1,6 +1,6 @@
-import { Record } from '../transaction'
-import { AnyType } from './generic'
-import { ItemsBehavior, Owner, transactionApi, Transactional, TransactionOptions, TransactionalConstructor } from '../../transactions' 
+import { AnyType } from './any'
+import { AttributesContainer, ConstructorOptions } from './updates'
+import { ItemsBehavior, Owner, transactionApi, Transactional, TransactionOptions } from '../../transactions' 
 import { tools, eventsApi } from '../../object-plus'
 
 const { on, off } = eventsApi,
@@ -18,9 +18,54 @@ const shareAndListen = ItemsBehavior.listen | ItemsBehavior.share;
 
 /** @private */
 export class SharedType extends AnyType {
-    type : TransactionalConstructor
+    type : typeof Transactional
 
-    clone( value : Transactional, record : Record ) : Transactional {
+     doInit( value, record : AttributesContainer, options : ConstructorOptions ){
+        const v = options.clone ? this.clone( value, record ) : (
+            value === void 0 ? this.defaultValue() : value
+        );
+
+        const x = this.transform( v, void 0, record, options );
+        this.handleChange( x, void 0, record, options );
+        return x;
+    }
+
+    doUpdate( value, record, options, nested : any[] ){ // Last to things can be wrapped to an object, either transaction or ad-hoc
+        const key = this.name, { attributes } = record; 
+        const prev = attributes[ key ];
+        let update;
+
+        // This can be moved to transactional attribute. And chained with the rest.
+        if( update = this.canBeUpdated( prev, value, options ) ) { // todo - skip empty updates.
+            const nestedTransaction = prev._createTransaction( update, options );
+            if( nestedTransaction ){
+                if( nested ){
+                    nested.push( nestedTransaction );
+                }
+                else{
+                    nestedTransaction.commit( record );
+                }
+
+                if( this.propagateChanges ) return true;
+            }
+
+            return false;
+        }
+
+        const next = this.transform( value, prev, record, options );
+        attributes[ key ] = next;
+
+        if( this.isChanged( next, prev ) ) { // Primitives and nested comparison can be inlined.
+            // Do the rest of the job after assignment
+            this.handleChange( next, prev, record, options );
+
+            return true;
+        }
+
+        return false;
+    }
+
+    clone( value : Transactional, record : AttributesContainer ) : Transactional {
         // References are not cloned.
         if( !value || value._owner !== record ) return value;
 
@@ -40,11 +85,11 @@ export class SharedType extends AnyType {
         }
     }
 
-    convert( value : any, options : TransactionOptions, prev : any, record : Record ) : Transactional {
-        if( value == null || value instanceof this.type ) return value;
+    convert( next : any, prev : any, record : AttributesContainer, options : TransactionOptions ) : Transactional {
+        if( next == null || next instanceof this.type ) return next;
 
         // Convert type using implicitly created rtransactional object.
-        const implicitObject = new this.type( value, options, shareAndListen );
+        const implicitObject = new ( this.type as any )( next, options, shareAndListen );
 
         // To prevent a leak, we need to take an ownership on it.
         aquire( record, implicitObject, this.name );
@@ -61,11 +106,12 @@ export class SharedType extends AnyType {
     }
 
     // Listening to the change events
-    _handleChange( next : Transactional, prev : Transactional, record : Record ){
+    _handleChange( next : Transactional, prev : Transactional, record : AttributesContainer ){
         if( prev ){
             // If there was an implicitly created object, remove an ownership.
             if( prev._owner === record ){
                 free( record, prev );
+                prev.dispose();
             }
             else{
                 off( prev, prev._changeEventName, this._onChange, record );
@@ -80,11 +126,9 @@ export class SharedType extends AnyType {
         } 
     }
 
-    dispose( record : Record, value : Transactional ){
+    dispose( record : AttributesContainer, value : Transactional ){
         if( value ){
-            const owned = value._owner === record;
-            this.handleChange( void 0, value, record );
-            owned && value.dispose();
+            this.handleChange( void 0, value, record, {} );
         }
     }
 

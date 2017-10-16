@@ -1,4 +1,4 @@
-import { Messenger, CallbacksByEvents, MessengersByCid, MixinRules, MessengerDefinition, tools, extendable, mixins, eventsApi, define, Constructor, MixableConstructor } from './object-plus'
+import { Messenger, CallbacksByEvents, MessengersByCid, MixinsState, MixinMergeRules, MessengerDefinition, tools, mixins, eventsApi, define } from './object-plus'
 import { ValidationError, Validatable, ChildrenErrors } from './validation'
 import { Traversable, resolveReference } from './traversable'
 
@@ -11,7 +11,6 @@ const { assign } = tools,
  */
 
 /** @private */
-export type TransactionalConstructor = MixableConstructor< Transactional >
 export type TransactionalDefinition = MessengerDefinition
 
 export enum ItemsBehavior {
@@ -21,19 +20,31 @@ export enum ItemsBehavior {
 }
 
 // Transactional object interface
+@define
 @mixins( Messenger )
-@extendable
 export abstract class Transactional implements Messenger, Validatable, Traversable {
     // Mixins are hard in TypeScript. We need to copy type signatures over...
-    // Define extendable mixin static properties.
-    static create : ( a : any, b? : any, c? : any ) => Transactional
-    static mixins : ( ...mixins : ( Constructor<any> | {} )[] ) => MixableConstructor< Transactional >
-    static mixinRules : ( mixinRules : MixinRules ) => MixableConstructor< Transactional >
-    static mixTo : ( ...args : Constructor<any>[] ) => MixableConstructor< Transactional >
-    static extend : (spec? : TransactionalDefinition, statics? : {} ) => MixableConstructor< Transactional >
-    static define : (spec? : TransactionalDefinition, statics? : {} ) => MixableConstructor< Transactional >
-    static predefine : () => typeof Messenger
+    // Here goes 'Mixable' mixin.
+    static __super__ : object;
+    static mixins : MixinsState;
+    static define : ( definition? : TransactionalDefinition, statics? : object ) => typeof Transactional;
+    static extend : ( definition? : TransactionalDefinition, statics? : object ) => typeof Transactional;
 
+    static onDefine : ( definition : TransactionalDefinition, BaseClass : typeof Transactional ) => void;
+
+    static onExtend( BaseClass : typeof Transactional ) : void {
+        // Make sure we don't inherit class factories.
+        if( BaseClass.create === this.create ) {
+            this.create = Transactional.create;
+        }
+    }
+
+    // Define extendable mixin static properties.
+    static create( a : any, b? : any ) : Transactional {
+        return new (this as any)( a, b );
+    }
+
+    /** Generic class factory. May be overridden for abstract classes. Not inherited. */
     on : ( events : string | CallbacksByEvents, callback, context? ) => this
     once : ( events : string | CallbacksByEvents, callback, context? ) => this
     off : ( events? : string | CallbacksByEvents, callback?, context? ) => this
@@ -61,7 +72,8 @@ export abstract class Transactional implements Messenger, Validatable, Traversab
         this._disposed = true;
     }
 
-    initialize() : void{}
+    // Must be called at the end of the constructor in the subclass.
+    initialize() : void {}
 
     /** @private */
     _events : eventsApi.HandlersByEvent = void 0;
@@ -133,7 +145,8 @@ export abstract class Transactional implements Messenger, Validatable, Traversab
     // Execute given function in the scope of ad-hoc transaction.
     transaction( fun : ( self : this ) => void, options : TransactionOptions = {} ) : void{
         const isRoot = transactionApi.begin( this );
-        fun.call( this, this );
+        const update = fun.call( this, this );
+        update && this.set( update );
         isRoot && transactionApi.commit( this );
     }
 
@@ -164,7 +177,7 @@ export abstract class Transactional implements Messenger, Validatable, Traversab
     // Used internally to implement two-phase commit.
     // Returns null if there are no any changes.
     /** @private */  
-    abstract _createTransaction( values : any, options? : TransactionOptions ) : Transaction
+    abstract _createTransaction( values : any, options? : TransactionOptions ) : Transaction | void
     
     // Parse function applied when 'parse' option is set for transaction.
     parse( data : any, options? : TransactionOptions ) : any { return data }
@@ -278,7 +291,7 @@ export abstract class Transactional implements Messenger, Validatable, Traversab
         return !this.getValidationError( key );
     }
 
-    valueOf(){ return this.cid; }
+    valueOf() : Object { return this.cid; }
     toString(){ return this.cid; }
 
     // Get class name for an object instance. Works fine with ES6 classes definitions (not in IE).
@@ -333,6 +346,9 @@ export interface TransactionOptions {
 
     // Always replace enclosed objects with new instances
     reset? : boolean // = false
+
+    // Do not dispose aggregated members
+    unset? : boolean
 
     validate? : boolean
 }

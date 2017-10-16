@@ -37,7 +37,7 @@ export function removeOne( collection : CollectionCore, el : Record | {} | strin
             trigger3( collection, 'remove', model, collection, options );
         } 
 
-        free( collection, model );
+        free( collection, model, options.unset );
 
         notify && trigger2( collection, 'update', collection, options );
 

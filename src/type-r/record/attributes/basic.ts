@@ -1,25 +1,49 @@
-import { AnyType } from './generic'
+/**
+ * Built-in JSON types attributes: Object, Array, Number, String, Boolean, and immutable class.
+ * 
+ * Adds type assertions, default validation, and optimized update pipeline.
+ */
+
+import { AnyType } from './any'
 import { tools } from '../../object-plus'
+import { AttributesContainer } from './updates'
+import { TransactionOptions } from '../../transactions'
 
-// Default attribute type for all constructor functions...
-/** @private */
-class ConstructorType extends AnyType {
-    type : new ( value : any ) => {}
+/**
+ * Custom class must be immutable class which implements toJSON() method
+ * with a constructor taking json.
+ */
+class ImmutableClassType extends AnyType {
+    type : new ( value? : any ) => {}
 
-    convert( value ) {
-        return value == null || value instanceof this.type ? value : new this.type( value );
+    create(){
+        return new this.type();
+    }
+
+    convert( next : any ) : any {
+        return next == null || next instanceof this.type ? next : new this.type( next );
+    }
+
+    toJSON( value ){
+        return value && value.toJSON ? value.toJSON() : value;
     }
 
     clone( value ) {
-        // delegate to clone function or deep clone through serialization
-        return value && value.clone ? value.clone() : this.convert( JSON.parse( JSON.stringify( value ) ) );
+        return new this.type( this.toJSON( value ) );
+    }
+
+    isChanged( a, b ){
+        return a !== b;
     }
 }
 
-Function.prototype._attribute = ConstructorType;
+Function.prototype._attribute = ImmutableClassType;
 
-// Primitive Types.
-/** @private */
+/**
+ * Optimized attribute of primitive type.
+ * 
+ * Primitives has specialized simplified pipeline.
+ */
 export class PrimitiveType extends AnyType {
     type : NumberConstructor | StringConstructor | BooleanConstructor
 
@@ -28,11 +52,29 @@ export class PrimitiveType extends AnyType {
 
     toJSON( value ) { return value; }
 
-    convert( value ) { return value == null ? value : this.type( value ); }
+    convert( next ) { return next == null ? next : this.type( next ); }
 
     isChanged( a, b ) { return a !== b; }
 
     clone( value ) { return value; }
+
+    doInit( value, record : AttributesContainer, options : TransactionOptions ){
+        return this.transform( value === void 0 ? this.value : value, void 0, record, options );
+    }
+
+    doUpdate( value, record, options, nested ){
+        const   { name } = this,
+                { attributes } = record,
+                prev = attributes[ name ];
+        
+        return prev !== ( attributes[ name ] = this.transform( value, prev, record, options ) );
+    }
+
+    initialize(){
+        if( !this.options.hasCustomDefault ){
+            this.value = this.type();
+        }
+    }
 }
 
 Boolean._attribute = String._attribute = PrimitiveType;
@@ -42,11 +84,15 @@ Boolean._attribute = String._attribute = PrimitiveType;
 export class NumericType extends PrimitiveType {
     type : NumberConstructor
 
-    convert( value, a?, b?, record? ) {
-        const num = value == null ? value : this.type( value );        
+    create(){
+        return 0;
+    }
+
+    convert( next, prev?, record? ) {
+        const num = next == null ? next : this.type( next );
 
         if( num !== num ){
-            this._log( 'warn', 'assigned with Invalid Number', value, record );
+            this._log( 'warn', 'assigned with Invalid Number', next, record );
         }
         
         return num;
@@ -63,26 +109,73 @@ export class NumericType extends PrimitiveType {
 Number._attribute = NumericType;
 
 /**
+ * Add Number.integer attrubute type
+ */
+declare global {
+    interface NumberConstructor {
+        integer : Function
+    }
+
+    interface Window {
+        Integer : Function;
+    }
+}
+
+function Integer( x ){
+    return x ? Math.round( x ) : 0;
+}
+Integer._attribute = NumericType;
+Number.integer = Integer;
+
+
+if( typeof window !== 'undefined' ){
+    window.Integer = Number.integer;
+}
+
+/**
  * Compatibility wrapper for Array type.
  * @private
  */ 
 export class ArrayType extends AnyType {
     toJSON( value ) { return value; }
     dispose(){}
+    create(){ return []; }
 
-    convert( value, a?, b?, record? ) {
+    convert( next, prev, record ) {
         // Fix incompatible constructor behaviour of Array...
-        if( value == null || Array.isArray( value ) ) return value;
+        if( next == null || Array.isArray( next ) ) return next;
 
-        this._log( 'warn', 'assigned with non-array', value, record );
+        this._log( 'warn', 'non-array assignment is ignored', next, record );
 
         return [];
     }
 
-    clone( value ){ return value && value.slice(); }
+    clone( value ){
+        return value && value.slice();
+    }
 }
 
 Array._attribute = ArrayType;
+
+export class ObjectType extends AnyType {
+    toJSON( value ) { return value; }
+    dispose(){}
+    create(){ return {}; }
+
+    convert( next, prev, record ) {
+        if( next == null || next.constructor === Object ) return next;
+
+        this._log( 'warn', 'non-object assignment is ignored', next, record );
+
+        return {};
+    }
+
+    clone( value ){
+        return value && tools.assign( {}, value );
+    }
+}
+
+Object._attribute = ObjectType;
 
 export function doNothing(){}
 
@@ -90,10 +183,9 @@ export class FunctionType extends AnyType {
     // Functions are not serialized.
     toJSON( value ) { return void 0; }
     create(){ return doNothing; }
-    dispose(){}
 
     convert( next, prev, record ) {
-        // Fix incompatible constructor behaviour of Function...
+        // Fix incompatible constructor behaviour of Array...
         if( next == null || typeof next === 'function' ) return next;
 
         this._log( 'warn', 'assigned with non-function', next, record );

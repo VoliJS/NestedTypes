@@ -1,40 +1,15 @@
-export declare class Log {
+export declare type Logger = (level: LogLevel, error: string, props?: object) => void;
+export declare type LogLevel = 'none' | 'error' | 'warn' | 'info' | 'debug' | 'log';
+export interface Log extends Logger {
     level: number;
-    stops: LogOptions;
-    throws: LogOptions;
-    counts: {
-        error: number;
-        warn: number;
-        info: number;
-        debug: number;
-    };
+    throw: number;
+    stop: number;
     logger: Logger;
-    private doLogging(type, args);
-    reset(): this;
-    developer(trueDeveloper?: boolean): this;
-    constructor();
-    error(...args: any[]): void;
-    warn(...args: any[]): void;
-    info(...args: any[]): void;
-    debug(...args: any[]): void;
-    readonly state: string;
 }
-export interface Logger {
-    error(...args: any[]): void;
-    warn(...args: any[]): void;
-    info(...args: any[]): void;
-    debug(...args: any[]): void;
-}
-export interface LogOptions {
-    error?: boolean;
-    warn?: boolean;
-    info?: boolean;
-    debug?: boolean;
-}
-export declare let log: Log;
+export declare const log: Log;
 export declare function isValidJSON(value: any): boolean;
 export declare function getBaseClass(Class: Function): any;
-export declare function getChangedStatics(Ctor: Function, ...names: string[]): {};
+export declare function assignToClassProto<T, K extends keyof T>(Class: any, definition: T, ...names: K[]): void;
 export declare function isEmpty(obj: {}): boolean;
 export declare type Iteratee = (value: any, key?: string | number) => any;
 export declare function some(obj: any, fun: Iteratee): any;

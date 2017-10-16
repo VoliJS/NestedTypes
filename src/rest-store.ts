@@ -87,8 +87,8 @@ export class LazyStore extends RestStore {
         return this;
     }
 
-    static define( props, staticProps ){
-        var attributes = props.defaults || props.attributes;
+    static onDefine( definitions, BaseClass ){
+        var attributes = definitions.defaults || definitions.attributes;
 
         // add automatic fetching on first element's access
         _.each( attributes, ( Type : Function, name ) => {
@@ -105,7 +105,7 @@ export class LazyStore extends RestStore {
             }  
         });
 
-        return RestModel.define.call( this, props, staticProps );
+        RestModel.onDefine.call( this, definitions, BaseClass );
     }
 } 
     

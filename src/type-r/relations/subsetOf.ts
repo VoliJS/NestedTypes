@@ -1,9 +1,9 @@
 import { Collection, CollectionOptions } from '../collection'
-import { tools, define } from '../object-plus'
+import { tools, eventsApi, define } from '../object-plus'
 import { Record, AggregatedType } from '../record'
 import { parseReference, CollectionReference } from './commons'
 import { ChainableAttributeSpec } from '../record'
-import { Transactional, ItemsBehavior, TransactionOptions } from '../transactions'
+import { Transactional, ItemsBehavior, TransactionOptions, transactionApi } from '../transactions'
 
 const { fastDefaults } = tools;
 
@@ -24,13 +24,6 @@ Collection.subsetOf = function subsetOf( masterCollection : CollectionReference 
     );
 };
 
-/** @private */
-function subsetOptions( options : CollectionOptions ){
-    const subsetOptions = { parse : true };
-    if( options ) fastDefaults( subsetOptions, options );
-    return subsetOptions;
-}
-
 const subsetOfBehavior = ItemsBehavior.share | ItemsBehavior.persistent;
 
 function defineSubsetCollection( CollectionConstructor : typeof Collection ) {
@@ -43,19 +36,55 @@ function defineSubsetCollection( CollectionConstructor : typeof Collection ) {
         get __inner_state__(){ return this.refs || this.models; }
 
         constructor( recordsOrIds?, options? ){
-            super( recordsOrIds, subsetOptions( options ), subsetOfBehavior );
+            super( [], options, subsetOfBehavior );
+            this.refs = toArray( recordsOrIds );
         }
 
-        add( elements, options? ){
-            return super.add( elements, subsetOptions( options ) );
+        // Remove should work fine as it already accepts ids. Add won't...
+        add( a_elements, options? ){
+            const { resolvedWith } = this,
+                    toAdd = toArray( a_elements );
+            
+            if( resolvedWith ){
+                // If the collection is resolved already, everything is simple.
+                return super.add( resolveRefs( resolvedWith, toAdd ), options );
+            }
+            else{
+                // Collection is not resolved yet. So, we prepare the delayed computation.
+                if( toAdd.length ){
+                    const isRoot = transactionApi.begin( this );
+
+                    // Save elements to resolve in future...
+                    this.refs = this.refs ? this.refs.concat( toAdd ) : toAdd;
+
+                    transactionApi.markAsDirty( this, options );
+
+                    // And throw the 'changes' event.
+                    isRoot && transactionApi.commit( this );
+                }
+            }
         }
 
-        reset( elements?, options? ){
-            return super.reset( elements, subsetOptions( options ) );
+        reset( a_elements?, options? ){
+            const { resolvedWith } = this,
+                elements = toArray( a_elements );
+    
+            return resolvedWith ?
+                // Collection is resolved, so parse ids and forward the call to set.
+                super.reset( resolveRefs( resolvedWith, elements ), options ) :
+                // Collection is not resolved yet. So, we prepare the delayed computation.
+                delaySet( this, elements, options ) || [];
         }
 
-        _createTransaction( elements, options? ){
-            return super._createTransaction( elements, subsetOptions( options ) );
+        _createTransaction( a_elements, options? ){
+            const { resolvedWith } = this,
+                elements = toArray( a_elements );
+    
+            return resolvedWith ?
+                // Collection is resolved, so parse ids and forward the call to set.
+                super._createTransaction( resolveRefs( resolvedWith, elements ), options ) :
+                // Collection is not resolved yet. So, we prepare the delayed computation.
+                delaySet( this, elements, options );
         }
 
         // Serialized as an array of model ids.
@@ -87,23 +116,9 @@ function defineSubsetCollection( CollectionConstructor : typeof Collection ) {
             return copy;
         }
 
-        // Parse is always invoked. Careful, performance-sensitive.
+        // Clean up the custom parse method possibly defined in the base class.
         parse( raw : any ) : Record[] {
-            const { resolvedWith } = this,
-                elements = Array.isArray( raw ) ? raw : [ raw ],
-                records : Record[] = [];                            
-
-            if( resolvedWith ){
-                for( let element of elements ){
-                    const record = resolvedWith.get( element );
-                    if( record ) records.push( record );
-                }
-            }
-            else if( elements.length ){
-                this.refs = elements;
-            }
-
-            return records;
+            return raw;
         }
 
         resolve( collection : Collection ) : this {
@@ -126,7 +141,12 @@ function defineSubsetCollection( CollectionConstructor : typeof Collection ) {
         }
 
         addAll() : Record[] {
-            return this.reset( this.resolvedWith.models );
+            if( this.resolvedWith ){
+                this.set( this.resolvedWith.models );
+                return this.models;
+            }
+
+            throw new Error( "Cannot add elemens because the subset collection is not resolved yet." );
         }
 
         toggleAll() : Record[] {
@@ -135,4 +155,33 @@ function defineSubsetCollection( CollectionConstructor : typeof Collection ) {
     }
 
     return SubsetOfCollection;
+}
+
+function resolveRefs( master, elements ){
+    const records = [];
+    
+    for( let el of elements ){
+        const record = master.get( el );
+        if( record ) records.push( record );
+    }
+
+    return records;
+}
+
+function delaySet( collection, elements, options ) : void {
+    if( tools.notEqual( collection.refs, elements ) ){
+        const isRoot = transactionApi.begin( collection );
+
+        // Save elements to resolve in future...
+        collection.refs = elements;
+
+        transactionApi.markAsDirty( collection, options );
+        
+        // And throw the 'changes' event.
+        isRoot && transactionApi.commit( collection );
+    }
+}
+
+function toArray( elements ){
+    return Array.isArray( elements ) ? elements : [ elements ];
 }

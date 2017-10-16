@@ -1,11 +1,9 @@
-import * as Mixins from './mixins'
-import { omit } from './tools'
+import { define, mixins, Mixable, Mixin, MixableConstructor, MixinsState, mixinRules, definitions, MixinMergeRules } from './mixins'
+import { omit, transform } from './tools'
 import { EventMap, EventsDefinition, EventSource, HandlersByEvent } from './eventsource'
 import * as _eventsApi from './eventsource'
 
-const { mixins, define, extendable } = Mixins,
-      // Force extranction to the local variabled.
-      { EventHandler, strings, on, off, once, trigger5, trigger2, trigger3 } = _eventsApi;
+const { EventHandler, strings, on, off, once, trigger5, trigger2, trigger3 } = _eventsApi;
 
 /** @hidden */
 const eventSplitter = /\s+/;
@@ -20,10 +18,18 @@ function uniqueId() : string {
 
 export { EventMap, EventsDefinition }
 
-export interface MessengerDefinition extends Mixins.ClassDefinition {
+export interface MessengerDefinition {
     _localEvents? : EventMap
     localEvents? : EventsDefinition
+    properties? : PropertyMap
+    [ name : string ] : any
 }
+
+export interface PropertyMap {
+    [ name : string ] : Property
+}
+
+export type Property = PropertyDescriptor | ( () => any )
 
 /** @hidden */
 export interface MessengersByCid {
@@ -37,15 +43,35 @@ export type CallbacksByEvents = { [ events : string ] : Function }
  * Messenger is mixable class with capabilities of sending and receiving synchronous events.
  * This class itself can serve as both mixin and base class.
  */
-@extendable
-export abstract class Messenger implements Mixins.Mixable, EventSource {
+
+@define
+@definitions({
+    properties : mixinRules.merge,
+    localEvents : mixinRules.merge
+})
+export abstract class Messenger implements Mixable, EventSource {
     // Define extendable mixin static properties.
-    static create : ( a : any, b? : any, c? : any ) => Messenger
-    static mixins : ( ...mixins : ( Mixins.Constructor<any> | {} )[] ) => Mixins.MixableConstructor< Messenger >
-    static mixinRules : ( mixinRules : Mixins.MixinRules ) => Mixins.MixableConstructor< Messenger >
-    static mixTo : ( ...args : Mixins.Constructor<any>[] ) => Mixins.MixableConstructor< Messenger >
-    static extend : (spec? : MessengerDefinition, statics? : {} ) => Mixins.MixableConstructor< Messenger >
-    static predefine : () => Mixins.MixableConstructor< Messenger >
+    static __super__ : object;
+    static mixins : MixinsState;
+    static onExtend : ( BaseClass : Function ) => void;
+    static define : ( definition? : MessengerDefinition, statics? : object ) => MixableConstructor;
+    static extend : ( definition? : MessengerDefinition, statics? : object ) => MixableConstructor;
+    static onDefine({ localEvents, _localEvents, properties } : MessengerDefinition, BaseClass? : typeof Mixable ){
+        // Handle localEvents definition
+        if( localEvents || _localEvents ){
+            const eventsMap = new EventMap( this.prototype._localEvents );
+
+            localEvents && eventsMap.addEventsMap( localEvents );
+            _localEvents && eventsMap.merge( _localEvents );
+            
+            this.prototype._localEvents = eventsMap;
+        }
+
+        // Handle properties definitions...
+        if( properties ){
+            Object.defineProperties( this.prototype, transform( {}, <PropertyMap>properties, toPropertyDescriptor ) );
+        }
+    }
 
     /** @hidden */ 
     _events : HandlersByEvent = void 0;
@@ -63,27 +89,12 @@ export abstract class Messenger implements Mixins.Mixable, EventSource {
     constructor(){
         this.cid = uniqueId();
         this.initialize.apply( this, arguments );
+
+        // TODO: local events subscribe?
     }
 
     /** Method is called at the end of the constructor */
     initialize() : void {}
-
-    /** @private */
-    static define( protoProps? : MessengerDefinition , staticProps? ) : typeof Messenger {
-        const spec : MessengerDefinition = omit( protoProps || {}, 'localEvents' );
-
-        if( protoProps ){
-            const { localEvents, _localEvents } = protoProps;
-            if( localEvents || _localEvents ){
-                const eventsMap = new EventMap( this.prototype._localEvents );
-                localEvents && eventsMap.addEventsMap( localEvents );
-                _localEvents && eventsMap.merge( _localEvents );
-                spec._localEvents = eventsMap;
-            }
-        }
-
-        return Mixins.Mixable.define.call( this, spec, staticProps );
-    }
     
     on( events : string | CallbacksByEvents, callback, context? ) : this {
         if( typeof events === 'string' ) strings( on, this, events, callback, context );
@@ -175,9 +186,6 @@ export abstract class Messenger implements Mixins.Mixable, EventSource {
     }
 }
 
-/** @hidden */
-const slice = Array.prototype.slice;
-
 /**
  * Backbone 1.2 API conformant Events mixin.
  */
@@ -186,6 +194,12 @@ export const Events : Messenger = <Messenger> omit( Messenger.prototype, 'constr
 /**
  * Messenger Private Helpers 
  */
+
+function toPropertyDescriptor( x : Property ) : PropertyDescriptor {
+    if( x ){
+        return typeof x === 'function' ? { get : < () => any >x } : <PropertyDescriptor> x;
+    }
+}
 
 /** @hidden */
 function addReference( listener : Messenger, source : Messenger ){

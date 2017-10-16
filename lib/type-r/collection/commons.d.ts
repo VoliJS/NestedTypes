@@ -11,7 +11,7 @@ export interface CollectionCore extends Transactional, Owner {
     _itemEvents?: eventsApi.EventMap;
     _shared: number;
     _aggregationError: Record[];
-    _log(level: string, text: string, value: any): any;
+    _log(level: string, text: string, value: any): void;
 }
 export declare type Elements = (Object | Record)[];
 export interface CollectionOptions extends TransactionOptions {
@@ -19,8 +19,8 @@ export interface CollectionOptions extends TransactionOptions {
 }
 export declare type Comparator = (a: Record, b: Record) => number;
 export declare function dispose(collection: CollectionCore): Record[];
-export declare function convertAndAquire(collection: CollectionCore, attrs: {} | Record, options: any): Record;
-export declare function free(owner: CollectionCore, child: Record): void;
+export declare function convertAndAquire(collection: CollectionCore, attrs: {} | Record, options: CollectionOptions): Record;
+export declare function free(owner: CollectionCore, child: Record, unset?: boolean): void;
 export declare function freeAll(collection: CollectionCore, children: Record[]): Record[];
 export declare function sortElements(collection: CollectionCore, options: CollectionOptions): boolean;
 export interface IdIndex {

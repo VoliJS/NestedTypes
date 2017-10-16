@@ -1,4 +1,4 @@
-import { AnyType, AttributeDescriptor } from '../record'
+import { AnyType, AttributeOptions } from '../record'
 import { parseReference, CollectionReference } from './commons'
 import { Collection } from '../collection'
 import { Record } from '../record'
@@ -64,7 +64,7 @@ Record.from = function from( masterCollection : CollectionReference ) : Chainabl
                 this.attributes[ name ] = record;
 
                 // Subscribe for events manually. delegateEvents won't be invoked.
-                record && this._attributes[ name ].handleChange( record, null, this );
+                record && this._attributes[ name ].handleChange( record, null, this, {} );
             }
 
             return record;

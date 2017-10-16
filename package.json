@@ -1,6 +1,6 @@
 {
-  "name": "nestedtypes",
-  "version": "2.0.3",
+  "name": "nestedtypes-next",
+  "version": "2.1.0-rc00",
   "main": "./dist/index.js",
   "module": "./lib/index.js",
   "types": "./lib/index.d.ts",

@@ -239,9 +239,9 @@ export class Record extends Transactional implements AttributesContainer {
 
     // Get array of attribute keys (Record) or record ids (Collection) 
     keys() : string[] {
-        const keys = [];
+        const keys : string[] = [];
 
-        this.each( ( key, value ) => value === void 0 || keys.push( key ) );
+        this.each( ( value, key ) => value === void 0 || keys.push( key ) );
 
         return keys;
     }

@@ -1863,7 +1863,7 @@ QUnit.test( "#1939 - `parse` is passed `options`", function( assert ){
     } );
 
     QUnit.test( "Underscore methods with object-style and property-style iteratee", function( assert ){
-        assert.expect( 26 );
+        assert.expect( 24 );
 
         var M = Backbone.Model.defaults( { a : 1, b : undefined, e: undefined, c: undefined } );
 
@@ -1876,8 +1876,6 @@ QUnit.test( "#1939 - `parse` is passed `options`", function( assert ){
         ] );
         assert.equal( coll.find( { a : 0 } ), undefined );
         assert.deepEqual( coll.find( { a : 4 } ), model );
-        assert.equal( coll.find( 'd' ), undefined );
-        assert.deepEqual( coll.find( 'e' ), model );
         assert.equal( coll.filter( { a : 0 } ), false );
         assert.deepEqual( coll.filter( { a : 4 } ), [ model ] );
         assert.equal( coll.some( { a : 0 } ), false );

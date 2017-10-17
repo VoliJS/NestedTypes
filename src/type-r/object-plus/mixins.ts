@@ -377,11 +377,15 @@ mixinRules.some = ( a : Function, b : Function ) =>(
  */
 
 function assignProperty( dest : object, name : string, sourceProp : PropertyDescriptor, rule : MixinMergeRule, unshift? : boolean ){
-    // Destination prop is defined, thus the merge rules must be applied.
+// Destination prop is defined, thus the merge rules must be applied.
     if( dest.hasOwnProperty( name ) ){
-        dest[ name ] = unshift ?
-            resolveRule( sourceProp.value, dest[ name ], rule ) :
-            resolveRule( dest[ name ], sourceProp.value, rule ) ;
+        const destProp = Object.getOwnPropertyDescriptor( dest, name );
+
+        if( destProp.configurable && 'value' in destProp ){
+            dest[ name ] = unshift ?
+                resolveRule( sourceProp.value, destProp.value, rule ) :
+                resolveRule( destProp.value, sourceProp.value, rule ) ;
+        }
     }
     // If destination is empty, just copy the prop over.
     else{

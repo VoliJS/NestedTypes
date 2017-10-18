@@ -35,11 +35,8 @@ export declare class ArrayType extends AnyType {
     clone(value: any): any;
 }
 export declare class ObjectType extends AnyType {
-    toJSON(value: any): any;
-    dispose(): void;
     create(): {};
     convert(next: any, prev: any, record: any): any;
-    clone(value: any): {};
 }
 export declare function doNothing(): void;
 export declare class FunctionType extends AnyType {

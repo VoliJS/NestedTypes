@@ -47,7 +47,7 @@ export function defaults( x ) : typeof Nested.Record {
 export * from './backbone';
 
 MixinsState.get( Nested.Mixable ).merge([ Nested.Events ]);
-Nested.Mixable.mixins.populate( Backbone.View, Backbone.Router, Backbone.History );
+Nested.Messenger.mixins.populate( Backbone.View, Backbone.Router, Backbone.History );
 Nested.Record.mixins.merge([ ModelMixin ]);
 Nested.Record.Collection.mixins.merge([ CollectionMixin ]);
 

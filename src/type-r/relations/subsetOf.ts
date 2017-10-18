@@ -183,5 +183,7 @@ function delaySet( collection, elements, options ) : void {
 }
 
 function toArray( elements ){
-    return Array.isArray( elements ) ? elements : [ elements ];
+    return elements ? ( 
+        Array.isArray( elements ) ? elements : [ elements ]
+    ) : [];
 }

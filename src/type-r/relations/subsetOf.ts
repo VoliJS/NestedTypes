@@ -55,7 +55,7 @@ function defineSubsetCollection( CollectionConstructor : typeof Collection ) {
                     const isRoot = transactionApi.begin( this );
 
                     // Save elements to resolve in future...
-                    this.refs = this.refs ? this.refs.concat( toAdd ) : toAdd;
+                    this.refs = this.refs ? this.refs.concat( toAdd ) : toAdd.slice();
 
                     transactionApi.markAsDirty( this, options );
 
@@ -110,7 +110,7 @@ function defineSubsetCollection( CollectionConstructor : typeof Collection ) {
                 copy.reset( this.models, { silent : true } );
             }
             else{
-                copy.refs = this.refs;
+                copy.refs = this.refs.slice();
             }
 
             return copy;
@@ -173,7 +173,7 @@ function delaySet( collection, elements, options ) : void {
         const isRoot = transactionApi.begin( collection );
 
         // Save elements to resolve in future...
-        collection.refs = elements;
+        collection.refs = elements.slice();
 
         transactionApi.markAsDirty( collection, options );
         

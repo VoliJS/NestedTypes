@@ -53,5 +53,8 @@
     "compile": "node_modules/.bin/tsc && ./node_modules/.bin/webpack -p",
     "deploy": "cp ./dist/* ../observer-frontend/htdocs/js/lib/nested",
     "all": "npm run pull && npm run build && npm run deploy"
+  },
+  "dependencies": {
+    "tslib": "^1.8.0"
   }
 }

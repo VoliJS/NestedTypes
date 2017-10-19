@@ -3,10 +3,10 @@ import { Mixable, tools, predefine, define, MixinsState } from '../object-plus'
 import compile from './attributes'
 import { Transactional } from '../transactions'
 
-import { ChainableAttributeSpec, createSharedTypeSpec, AggregatedType, MSDateType, TimestampType, NumericType, SharedType } from './attributes'
+import { createSharedTypeSpec, AggregatedType, MSDateType, TimestampType, NumericType, SharedType } from './attributes'
 
 export * from './attributes'
-export { Record, ChainableAttributeSpec }
+export { Record }
 
 const { assign, defaults, omit, getBaseClass } = tools;
 

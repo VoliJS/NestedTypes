@@ -45,7 +45,7 @@ export declare abstract class Transactional implements Messenger, Validatable, T
     constructor(cid: string | number);
     abstract clone(options?: CloneOptions): this;
     transaction(fun: (self: this) => void, options?: TransactionOptions): void;
-    updateEach(iteratee: (val: any, key: string) => void, options?: TransactionOptions): void;
+    updateEach(iteratee: (val: any, key: string | number) => void, options?: TransactionOptions): void;
     set(values: any, options?: TransactionOptions): this;
     assignFrom(source: Transactional | Object): this;
     abstract _createTransaction(values: any, options?: TransactionOptions): Transaction | void;

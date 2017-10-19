@@ -152,7 +152,7 @@ export abstract class Transactional implements Messenger, Validatable, Traversab
 
     // Loop through the members in the scope of transaction.
     // Transactional version of each()
-    updateEach( iteratee : ( val : any, key : string ) => void, options? : TransactionOptions ){
+    updateEach( iteratee : ( val : any, key : string | number ) => void, options? : TransactionOptions ){
         const isRoot = transactionApi.begin( this );
         this.each( iteratee );
         isRoot && transactionApi.commit( this );

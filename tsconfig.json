@@ -4,6 +4,7 @@
     "module":"es6",
     "declaration": true,
     "moduleResolution": "node",
+    "importHelpers": true,
     "sourceMap": true,
     "outDir": "./lib",
     "noImplicitAny": false,

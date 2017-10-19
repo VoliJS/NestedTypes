@@ -1,5 +1,5 @@
 import { Transactional, Transaction, TransactionOptions, Owner, transactionApi } from "../../transactions"
-const { begin : _begin, markAsDirty : _markAsDirty, commit } = transactionApi;
+const { begin : _begin, markAsDirty : _markAsDirty, commit : _commit } = transactionApi;
 
 import { eventsApi } from '../../object-plus'
 const { trigger3 } = eventsApi;
@@ -68,6 +68,12 @@ function begin( record : AttributesContainer ){
     }
     
     return false;
+}
+
+function commit( record : AttributesContainer, initiator? ){
+    _commit( record, initiator );
+
+    record._changedAttributes = record._previousAttributes = null;
 }
 
 function markAsDirty( record : AttributesContainer, options : TransactionOptions ){

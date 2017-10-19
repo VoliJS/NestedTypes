@@ -348,8 +348,6 @@ export class Collection< R extends Record = Record> extends Transactional implem
             if( aggregated ) record.dispose();
         }
 
-        this.models = this._byId = this._validationError = void 0;
-
         super.dispose();
     }
 

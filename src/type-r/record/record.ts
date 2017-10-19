@@ -155,7 +155,7 @@ export class Record extends Transactional implements AttributesContainer {
     // TODO: If attribute was aggregated, don't dispose it.
     unset( key : string, options? ) : any {
         const value = this[ key ];
-        this.set({ [ key ] : void 0 }, options );
+        this.set({ [ key ] : void 0 }, { unset : true, ...options });
         return value;
     }
 
@@ -283,8 +283,7 @@ export class Record extends Transactional implements AttributesContainer {
 
         if( log.level > 1 ) typeCheck( this, values );
 
-        this.attributes = new this.Attributes( this, values, options );
-        this._previousAttributes = void 0;
+        this._previousAttributes = this.attributes = new this.Attributes( this, values, options );
 
         this.initialize( a_values, a_options );
 
@@ -420,8 +419,6 @@ export class Record extends Transactional implements AttributesContainer {
         this.forEachAttr( this.attributes, ( value, key, attribute ) => {
             attribute.dispose( this, value );
         });
-
-        this.attributes = this._previousAttributes = this._validationError = void 0;
 
         super.dispose();
     }

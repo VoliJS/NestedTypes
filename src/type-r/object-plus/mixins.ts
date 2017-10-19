@@ -272,7 +272,9 @@ const dontMix = {
     },
     
     object : {
-        constructor : true
+        constructor : true,
+        toString : false,
+        valueOf : false
     }    
 }
 
@@ -280,7 +282,7 @@ function forEachOwnProp( object : object, fun : ( name : string ) => void ){
     const ignore = dontMix[ typeof object ];
 
     for( let name of Object.getOwnPropertyNames( object ) ) {
-        name in ignore || fun( name );
+        ignore[ name ] || fun( name );
     }
 }
 

@@ -56,7 +56,7 @@ export function removeOne( collection : CollectionCore, el : Record | {} | strin
 
 /** @private */
 export function removeMany( collection : CollectionCore, toRemove : any[], options ){
-    const removed = _removeFromIndex( collection, toRemove );
+    const removed = _removeFromIndex( collection, toRemove, options.unset );
     if( removed.length ){
         const isRoot = begin( collection );
 
@@ -77,7 +77,7 @@ export function removeMany( collection : CollectionCore, toRemove : any[], optio
 
 // remove models from the index...
 /** @private */
-function _removeFromIndex( collection, toRemove ){
+function _removeFromIndex( collection, toRemove, unset : boolean ){
     var removed = Array( toRemove.length ),
         _byId   = collection._byId;
 
@@ -86,7 +86,7 @@ function _removeFromIndex( collection, toRemove ){
         if( model ){
             removed[ j++ ] = model;
             removeIndex( _byId, model );
-            free( collection, model );
+            free( collection, model, unset );
         }
     }
 

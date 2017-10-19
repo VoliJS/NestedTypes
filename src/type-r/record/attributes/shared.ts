@@ -106,12 +106,12 @@ export class SharedType extends AnyType {
     }
 
     // Listening to the change events
-    _handleChange( next : Transactional, prev : Transactional, record : AttributesContainer ){
+    _handleChange( next : Transactional, prev : Transactional, record : AttributesContainer, options ){
         if( prev ){
             // If there was an implicitly created object, remove an ownership.
             if( prev._owner === record ){
                 free( record, prev );
-                prev.dispose();
+                options.unset || prev.dispose();
             }
             else{
                 off( prev, prev._changeEventName, this._onChange, record );

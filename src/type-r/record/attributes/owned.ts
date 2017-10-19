@@ -109,10 +109,10 @@ export class AggregatedType extends AnyType {
         options.changeHandlers.unshift( this._handleChange );
     }
 
-    _handleChange( next : Transactional, prev : Transactional, record : AttributesContainer ){
+    _handleChange( next : Transactional, prev : Transactional, record : AttributesContainer, options : TransactionOptions ){
         if( prev ){
             free( record, prev );
-            prev.dispose();
+            options.unset || prev.dispose();
         } 
         
         if( next && !aquire( record, next, this.name ) ){

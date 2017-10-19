@@ -11,7 +11,7 @@ export declare class SharedType extends AnyType {
     convert(next: any, prev: any, record: AttributesContainer, options: TransactionOptions): Transactional;
     validate(model: any, value: any, name: any): void;
     create(): Transactional;
-    _handleChange(next: Transactional, prev: Transactional, record: AttributesContainer): void;
+    _handleChange(next: Transactional, prev: Transactional, record: AttributesContainer, options: any): void;
     dispose(record: AttributesContainer, value: Transactional): void;
     _onChange: (child: Transactional, options: TransactionOptions, initiator: Transactional) => void;
     initialize(options: any): void;

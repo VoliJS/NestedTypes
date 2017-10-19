@@ -14,5 +14,5 @@ export declare class AggregatedType extends AnyType {
     validate(record: AttributesContainer, value: Transactional): ValidationError;
     create(): Transactional;
     initialize(options: any): void;
-    _handleChange(next: Transactional, prev: Transactional, record: AttributesContainer): void;
+    _handleChange(next: Transactional, prev: Transactional, record: AttributesContainer, options: TransactionOptions): void;
 }

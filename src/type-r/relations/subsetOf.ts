@@ -154,6 +154,9 @@ function defineSubsetCollection( CollectionConstructor : typeof Collection ) {
         }
     }
 
+    // Clean up all custom item events to prevent memory leaks.
+    SubsetOfCollection.prototype._itemEvents = void 0;
+
     return SubsetOfCollection;
 }
 

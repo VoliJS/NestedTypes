@@ -57,21 +57,6 @@
                 canHaveNativeProperties( Nested.Model );
             });
 
-            it( 'may turn off native properties for model\'s attributes', function(){
-                var M = Nested.Model.extend({
-                    attributes : {
-                        a : 'a'
-                    },
-
-                    properties : false
-                });
-
-                var m = new M();
-
-                expect( m.a ).to.be.an( 'undefined' );
-
-            });
-
             it( 'inherit default attributes from the base model', function(){
                 var B = M.extend({
                     defaults : {
@@ -115,25 +100,6 @@
 
                 expect( m.elements.first().elements.length ).to.be.zero;
 
-            });
-
-            it( 'can handle function in Model.defaults', function(){
-                var M = Nested.Model.extend({
-                    defaults : function(){
-                        return {
-                            num : 1,
-                            date : new Date()
-                        };
-                    }
-                });
-
-                var m = new M();
-
-                expect( m.num ).to.equal( 1 );
-                expect( m.date ).to.be.instanceOf( Date );
-
-                m.num = "2";
-                expect( m.num ).to.equal( 2 );
             });
         });
 

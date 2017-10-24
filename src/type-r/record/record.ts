@@ -258,13 +258,15 @@ export class Record extends Transactional implements AttributesContainer {
     _parse( data ){ return data; }
 
     // Create record default values, optionally augmenting given values.
-    defaults( values? : {} ){
+    defaults( values = {} ){
         const defaults = {},
-            { _attributes } = this;
+            { _attributesArray } = this;
 
-        for( let key in _attributes ){
-            const value = values[ key ];
-            defaults[ key ] = value === void 0 ? _attributes[ key ].defaultValue() : value;
+        for( let attr of _attributesArray ){
+            const key = attr.name,
+            value = values[ key ];
+
+            defaults[ key ] = value === void 0 ? attr.defaultValue() : value;
         }
 
         return defaults;
@@ -471,7 +473,6 @@ Record.prototype.AttributesCopy = BaseRecordAttributesCopy;
 const IdAttribute = AnyType.create({ value : void 0 }, 'id' );
 Record.prototype._attributes = { id : IdAttribute };
 Record.prototype._attributesArray = [ IdAttribute ];
-Record.prototype.defaults = function( attrs : { id? : string } = {} ){ return { id : attrs.id } };
 Record._attribute = AggregatedType;
 
 import { shouldBeAnObject } from './attributes'

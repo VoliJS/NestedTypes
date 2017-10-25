@@ -1,4 +1,4 @@
-import { Messenger, CallbacksByEvents, MessengersByCid, MixinsState, MessengerDefinition, eventsApi } from './object-plus';
+import { Messenger, CallbacksByEvents, MessengersByCid, MixinsState, MessengerDefinition, eventsApi, Subclass } from './object-plus';
 import { ValidationError, Validatable, ChildrenErrors } from './validation';
 import { Traversable } from './traversable';
 export declare type TransactionalDefinition = MessengerDefinition;
@@ -11,7 +11,7 @@ export declare abstract class Transactional implements Messenger, Validatable, T
     static __super__: object;
     static mixins: MixinsState;
     static define: (definition?: TransactionalDefinition, statics?: object) => typeof Transactional;
-    static extend: (definition?: TransactionalDefinition, statics?: object) => typeof Transactional;
+    static extend: <T extends TransactionalDefinition>(definition?: T, statics?: object) => Subclass<T>;
     static onDefine: (definition: TransactionalDefinition, BaseClass: typeof Transactional) => void;
     static onExtend(BaseClass: typeof Transactional): void;
     static create(a: any, b?: any): Transactional;

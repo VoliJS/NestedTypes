@@ -345,3 +345,15 @@ function arraysNotEqual( a, b ) {
 
     return false;
 }
+
+/**
+ * Create an object without Object prototype members except hasOwnProperty.
+ * @param obj - optional parameter to populate the hash map from.
+ */
+const HashProto = Object.create( null );
+HashProto.hasOwnProperty = ObjectProto.hasOwnProperty;
+
+export function hashMap( obj? ){
+    const hash = Object.create( HashProto );
+    return obj ? assign( hash, obj ) : hash;
+}

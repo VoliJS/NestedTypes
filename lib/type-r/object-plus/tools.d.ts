@@ -35,4 +35,5 @@ declare global  {
 export declare function keys(o: any): string[];
 export declare function once(func: Function): Function;
 export declare function notEqual(a: any, b: any): boolean;
+export declare function hashMap(obj?: any): any;
 export {};

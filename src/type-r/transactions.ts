@@ -1,4 +1,4 @@
-import { Messenger, CallbacksByEvents, MessengersByCid, MixinsState, MixinMergeRules, MessengerDefinition, tools, mixins, eventsApi, define } from './object-plus'
+import { Messenger, CallbacksByEvents, MessengersByCid, MixinsState, MixinMergeRules, MessengerDefinition, tools, mixins, eventsApi, define, Subclass } from './object-plus'
 import { ValidationError, Validatable, ChildrenErrors } from './validation'
 import { Traversable, resolveReference } from './traversable'
 
@@ -28,7 +28,7 @@ export abstract class Transactional implements Messenger, Validatable, Traversab
     static __super__ : object;
     static mixins : MixinsState;
     static define : ( definition? : TransactionalDefinition, statics? : object ) => typeof Transactional;
-    static extend : ( definition? : TransactionalDefinition, statics? : object ) => typeof Transactional;
+    static extend : <T extends TransactionalDefinition>( definition? : T, statics? : object ) => Subclass<T>;
 
     static onDefine : ( definition : TransactionalDefinition, BaseClass : typeof Transactional ) => void;
 

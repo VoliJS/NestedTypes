@@ -8,7 +8,7 @@ export interface MixableConstructor extends Function {
     onExtend?: (BaseClass: Function) => void;
     onDefine?: (definition: object, BaseClass: Function) => void;
     define?: (definition?: object, statics?: object) => MixableConstructor;
-    extend?: (definition?: object, statics?: object) => MixableConstructor;
+    extend?: <T extends object>(definition?: T, statics?: object) => Subclass<T>;
 }
 export interface MixableDefinition {
     mixins?: Mixin[];

@@ -3,7 +3,7 @@
  *
  * Vlad Balin & Volicon, (c) 2016-2017
  */
-import { log, assign, omit, getPropertyDescriptor, getBaseClass, defaults, transform } from './tools'
+import { log, assign, omit, hashMap, getPropertyDescriptor, getBaseClass, defaults, transform } from './tools'
 import { __extends } from 'tslib'
 
 export interface Subclass< T > extends MixableConstructor {
@@ -17,7 +17,7 @@ export interface MixableConstructor extends Function{
     onExtend? : ( BaseClass : Function ) => void;
     onDefine? : ( definition : object, BaseClass : Function ) => void;
     define? : ( definition? : object, statics? : object ) => MixableConstructor;
-    extend? : ( definition? : object, statics? : object ) => MixableConstructor;
+    extend? : <T extends object>( definition? : T, statics? : object ) => Subclass<T>;
 }
 
 export interface MixableDefinition {
@@ -127,7 +127,7 @@ export function define( ClassOrDefinition : object | MixableConstructor ){
 export function definitions( rules : MixinMergeRules ) : ClassDecorator {
     return ( Class : Function ) => {
         const mixins = MixinsState.get( Class );
-        mixins.definitionRules = defaults( rules, mixins.definitionRules );
+        mixins.definitionRules = defaults( hashMap(), rules, mixins.definitionRules );
     }
 }
 
@@ -160,13 +160,13 @@ export class MixinsState {
     constructor( public Class : MixableConstructor ){
         const { mixins } = getBaseClass( Class );
 
-        this.mergeRules = ( mixins && mixins.mergeRules ) || {};
-        this.definitionRules = ( mixins && mixins.definitionRules ) || {};
+        this.mergeRules = ( mixins && mixins.mergeRules ) || hashMap();
+        this.definitionRules = ( mixins && mixins.definitionRules ) || hashMap();
         this.appliedMixins = ( mixins && mixins.appliedMixins ) || [];
     }
 
     getStaticDefinitions( BaseClass : Function ){
-        const definitions = {},
+        const definitions = hashMap(),
             { Class } = this;
 
         return transform( definitions, this.definitionRules, ( rule, name ) =>{
@@ -206,8 +206,8 @@ export class MixinsState {
                     // merge definitionRules and mergeRules
                     const sourceMixins = ( mixin as any ).mixins;
                     if( sourceMixins ){
-                        this.mergeRules = defaults( {}, this.mergeRules, sourceMixins.mergeRules );
-                        this.definitionRules = defaults( {}, this.definitionRules, sourceMixins.definitionRules );
+                        this.mergeRules = defaults( hashMap(), this.mergeRules, sourceMixins.mergeRules );
+                        this.definitionRules = defaults( hashMap(), this.definitionRules, sourceMixins.definitionRules );
                         this.appliedMixins = this.appliedMixins.concat( sourceMixins.appliedMixins );
                     }
 
@@ -262,20 +262,18 @@ export class MixinsState {
 }
 
 const dontMix = {
-    function : {
+    function : hashMap({
         length : true,
         prototype : true,
         caller : true,
         arguments : true,
         name : true,
         __super__ : true
-    },
+    }),
     
-    object : {
-        constructor : true,
-        toString : false,
-        valueOf : false
-    }    
+    object : hashMap({
+        constructor : true
+    })    
 }
 
 function forEachOwnProp( object : object, fun : ( name : string ) => void ){

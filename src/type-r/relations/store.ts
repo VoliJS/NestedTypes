@@ -1,5 +1,6 @@
 import { Record } from '../record'
 import { Transactional } from '../transactions'
+import { startIO, IOPromise } from '../io-tools'
 
 let _store : Store = null;
 

@@ -3,7 +3,7 @@
  * The root of all definitions. 
  */
 
-import { tools, eventsApi, Mixable, definitions, mixinRules, define } from '../object-plus'
+import { tools, eventsApi, Mixable, definitions, mixins,  mixinRules, define } from '../object-plus'
 
 import { CloneOptions, Transactional, TransactionalDefinition, Transaction, TransactionOptions, Owner } from '../transactions'
 import { ChildrenErrors } from '../validation'
@@ -13,6 +13,9 @@ import { Collection } from '../collection'
 import { AnyType, AggregatedType, setAttribute, UpdateRecordMixin, 
     AttributesValues, AttributesContainer,
     ConstructorsMixin, AttributesConstructor, AttributesCopyConstructor } from './attributes'
+
+import { IORecord, IORecordMixin } from './io-mixin'
+import { IOPromise, IOEndpoint } from '../io-tools'
 
 const { assign, isEmpty, log } = tools;
 
@@ -54,7 +57,7 @@ export interface RecordDefinition extends TransactionalDefinition {
     Collection : mixinRules.value,
     idAttribute : mixinRules.protoValue
 })
-export class Record extends Transactional implements AttributesContainer {
+export class Record extends Transactional implements IORecord, AttributesContainer {
     // Hack
     static onDefine( definition, BaseClass ){}
 
@@ -68,6 +71,17 @@ export class Record extends Transactional implements AttributesContainer {
     }
     
     static attributes : AttributesValues
+
+    /********************
+     * IO Methods
+     */
+     _endpoints : { [ name : string ] : IOEndpoint }
+
+     // Save record
+     save( options? : object ) : IOPromise<any> { throw new Error( 'Implemented by mixin' ); }
+
+     // Destroy record
+     destroy( options? : object ) : IOPromise<any> { throw new Error( 'Implemented by mixin' ); }
 
     /***********************************
      * Core Members
@@ -444,7 +458,7 @@ export class Record extends Transactional implements AttributesContainer {
     _onChildrenChange : ( child : Transactional, options : TransactionOptions ) => void
 };
 
-assign( Record.prototype, UpdateRecordMixin );
+assign( Record.prototype, UpdateRecordMixin, IORecordMixin );
 
 /***********************************************
  * Helper functions

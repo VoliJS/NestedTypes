@@ -41,7 +41,7 @@ export class RestCollection extends Collection implements Restful {
     // Fetch the default set of models for this collection, resetting the
     // collection when they arrive. If `reset: true` is passed, the response
     // data will be passed through the `reset` method instead of `set`.
-    fetch( options : RestOptions ) : JQueryXHR {
+    fetch( options : RestOptions ) : any {
         options         = _.extend( { parse : true }, options );
         var success     = options.success;
         var collection  = this;
@@ -115,7 +115,7 @@ export class RestModel extends Model implements Restful {
 
     // Fetch the model from the server, merging the response with the model's
     // local attributes. Any changed attributes will trigger a "change" event.
-    fetch( options? : RestOptions ) : JQueryXHR {
+    fetch( options? : RestOptions ) : any {
         options         = _.extend( { parse : true }, options );
         var model       = this;
         var success     = options.success;
@@ -133,7 +133,7 @@ export class RestModel extends Model implements Restful {
 
     // Proxy `Backbone.sync` by default -- but override this if you need
     // custom syncing semantics for *this* particular model.
-    sync( method : string, self : this, options : SyncOptions ) : JQueryXHR
+    sync( method : string, self : this, options : SyncOptions ) : any
     sync() : JQueryXHR {
         return Sync.sync.apply( this, arguments );
     }
@@ -141,9 +141,9 @@ export class RestModel extends Model implements Restful {
     // Set a hash of model attributes, and sync the model to the server.
     // If the server returns an attributes hash that differs, the model's
     // state will be `set` again.
-    save( attrs? : {}, options? : RestOptions ) : JQueryPromise< any >
-    save( key : string, value : any, options? : RestOptions ) : JQueryPromise< any >
-    save( key, val, a_options? : RestOptions ) : JQueryPromise< any > {
+    save( attrs? : {}, options? : RestOptions ) : any
+    save( key : string, value : any, options? : RestOptions ) : any
+    save( key, val, a_options? : RestOptions ) : any {
         // Handle both `"key", value` and `{key: value}` -style arguments.
         let attrs, originalOptions;
 
@@ -209,7 +209,7 @@ export class RestModel extends Model implements Restful {
     // Destroy this model on the server if it was already persisted.
     // Optimistically removes the model from its collection, if it has one.
     // If `wait: true` is passed, waits for the server to respond before removal.
-    destroy( options : RestOptions ) : JQueryXHR | boolean {
+    destroy( options : RestOptions ) : any {
         options     = options ? _.clone( options ) : {};
         var model   = this;
         var success = options.success;

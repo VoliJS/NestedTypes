@@ -1,6 +1,7 @@
-import { Messenger, CallbacksByEvents, MessengersByCid, MixinsState, MixinMergeRules, MessengerDefinition, tools, mixins, eventsApi, define, Subclass } from './object-plus'
+import { Messenger, CallbacksByEvents, MessengersByCid, MixinsState, MixinMergeRules, MessengerDefinition, tools, mixins, mixinRules, definitions, eventsApi, define, Subclass } from './object-plus'
 import { ValidationError, Validatable, ChildrenErrors } from './validation'
 import { Traversable, resolveReference } from './traversable'
+import { IOEndpoint, IOPromise, IONode, abortIO } from './io-tools'
 
 const { assign } = tools,
       { trigger2, trigger3, on, off } = eventsApi;
@@ -11,7 +12,9 @@ const { assign } = tools,
  */
 
 /** @private */
-export type TransactionalDefinition = MessengerDefinition
+export interface TransactionalDefinition extends MessengerDefinition {
+    endpoint? : IOEndpoint
+}
 
 export enum ItemsBehavior {
     share       = 0b0001,
@@ -21,16 +24,22 @@ export enum ItemsBehavior {
 
 // Transactional object interface
 @define
+@definitions({
+    endpoint : mixinRules.value
+})
 @mixins( Messenger )
-export abstract class Transactional implements Messenger, Validatable, Traversable {
+export abstract class Transactional implements Messenger, IONode, Validatable, Traversable {
     // Mixins are hard in TypeScript. We need to copy type signatures over...
     // Here goes 'Mixable' mixin.
     static __super__ : object;
     static mixins : MixinsState;
     static define : ( definition? : TransactionalDefinition, statics? : object ) => typeof Transactional;
-    static extend : <T extends TransactionalDefinition>( definition? : T, statics? : object ) => Subclass<T>;
+    static extend : <T extends TransactionalDefinition>( definition? : T, statics? : object ) => any;
 
-    static onDefine : ( definition : TransactionalDefinition, BaseClass : typeof Transactional ) => void;
+    static onDefine( definitions : TransactionalDefinition, BaseClass : typeof Transactional ){
+        if( definitions.endpoint ) this.prototype._endpoint = definitions.endpoint;
+        Messenger.onDefine.call( this, definitions, BaseClass );
+    };
 
     static onExtend( BaseClass : typeof Transactional ) : void {
         // Make sure we don't inherit class factories.
@@ -65,6 +74,7 @@ export abstract class Transactional implements Messenger, Validatable, Traversab
     dispose() : void {
         if( this._disposed ) return;
         
+        abortIO( this );
         this._owner = void 0;
         this._ownerKey = void 0;
         this.off();
@@ -235,6 +245,17 @@ export abstract class Transactional implements Messenger, Validatable, Traversab
         return arr;
     }
 
+    _endpoint : IOEndpoint
+    _ioPromise : IOPromise<any>
+
+    hasPendingIO() : IOPromise<any> { return this._ioPromise; }
+
+    fetch( options? : object ) : IOPromise<any> { throw new Error( "Not implemented" ); }
+
+    getEndpoint() : IOEndpoint {
+        return getOwnerEndpoint( this ) || this._endpoint;
+    }
+
     // Map members to an object
     mapObject<T>( iteratee : ( val : any, key : string | number ) => T, context? : any ) : { [ key : string ] : T }{
         const obj : { [ key : string ] : T } = {},
@@ -351,6 +372,13 @@ export interface TransactionOptions {
     unset? : boolean
 
     validate? : boolean
+
+    // `true` if the transaction is initiated as a result of IO operation
+    ioUpdate? : boolean
+
+    // The hint for IOEndpoint
+    // If `true`, `record.save()` will behave as "upsert" operation for the records having id.
+    upsert? : boolean
 }
 
 /**
@@ -440,5 +468,19 @@ export const transactionApi = {
             child._owner = void 0;
             child._ownerKey = void 0;
         }
+    }
+}
+
+function getOwnerEndpoint( self : Transactional ) : IOEndpoint {
+    // Check if we are the member of the collection...
+    const { collection } = self as any;
+    if( collection ){
+        return getOwnerEndpoint( collection );
+    }
+
+    // Now, if we're the member of the model...
+    if( self._owner ){
+        const { _endpoints } = self._owner as any;
+        return _endpoints && _endpoints[ self._ownerKey ];
     }
 }

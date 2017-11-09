@@ -3,6 +3,7 @@ import { Transactional, CloneOptions, TransactionOptions, TransactionalDefinitio
 import { Record, AggregatedType } from '../record';
 import { CollectionCore, CollectionTransaction } from './commons';
 import { AddOptions } from './add';
+import { IOPromise } from '../io-tools';
 export declare type GenericComparator = string | ((x: Record) => number) | ((a: Record, b: Record) => number);
 export interface CollectionOptions extends TransactionOptions {
     comparator?: GenericComparator;
@@ -54,6 +55,11 @@ export declare class Collection<R extends Record = Record> extends Transactional
     clone(options?: CloneOptions): this;
     toJSON(): Object[];
     set(elements?: ElementsArg, options?: TransactionOptions): this;
+    liveUpdates(enabled: LiveUpdatesOption): IOPromise<any>;
+    _liveUpdates: object;
+    fetch(a_options?: {
+        liveUpdates?: LiveUpdatesOption;
+    } & TransactionOptions): IOPromise<any>;
     dispose(): void;
     reset(a_elements?: ElementsArg, options?: TransactionOptions): R[];
     add(a_elements: ElementsArg, options?: AddOptions): Record[];
@@ -74,4 +80,5 @@ export declare class Collection<R extends Record = Record> extends Transactional
     _log(level: tools.LogLevel, text: string, value: any): void;
     getClassName(): string;
 }
+export declare type LiveUpdatesOption = boolean | ((x: any) => boolean);
 export declare type ElementsArg = Object | Record | Object[] | Record[];

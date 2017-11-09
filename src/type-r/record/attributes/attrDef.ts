@@ -6,6 +6,7 @@ import { Transactional } from '../../transactions'
 import { ChangeAttrHandler, AttributeOptions, Parse } from './any'
 import {  AttributesContainer } from './updates'
 import { EventMap, EventsDefinition, definitionDecorator, tools } from '../../object-plus'
+import { IOEndpoint } from '../../io-tools'
 
 const { assign } = tools;
 
@@ -48,6 +49,10 @@ export class ChainableAttributeSpec {
 
     get isRequired() : ChainableAttributeSpec {
         return this.metadata({ isRequired : true }); 
+    }
+
+    endpoint( endpoint : IOEndpoint ){
+        return this.metadata({ endpoint });
     }
 
     watcher( ref : string | ( ( value : any, key : string ) => void ) ) : ChainableAttributeSpec {

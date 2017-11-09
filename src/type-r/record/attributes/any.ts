@@ -1,6 +1,7 @@
 import { setAttribute, AttributesContainer, AttributeUpdatePipeline, RecordTransaction } from './updates'
 import { tools } from '../../object-plus'
 import { Owner, Transactional, TransactionOptions } from '../../transactions'
+import { IOEndpoint } from '../../io-tools'
 
 const { notEqual, assign} = tools;
 
@@ -18,6 +19,8 @@ export interface AttributeOptions {
     validate? : ( record : AttributesContainer, value : any, key : string ) => any
     isRequired? : boolean
     changeEvents? : boolean
+
+    endpoint? : IOEndpoint
 
     type? : Function
     value? : any

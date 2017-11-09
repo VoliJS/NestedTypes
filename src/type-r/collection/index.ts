@@ -6,6 +6,7 @@ import { IdIndex, free, sortElements, dispose, Elements, CollectionCore, addInde
 import { addTransaction, AddOptions } from './add'
 import { setTransaction, emptySetTransaction } from './set'
 import { removeOne, removeMany } from './remove'
+import { IOPromise, startIO } from '../io-tools'
 
 const { trigger2, on, off } = eventsApi,
     { begin, commit, markAsDirty } = transactionApi,
@@ -337,6 +338,60 @@ export class Collection< R extends Record = Record> extends Transactional implem
         return this;    
     }
 
+        /**
+     * Enable or disable live updates.
+     * 
+     * `true` enables full collection synchronization.
+     * `false` cancel live updates.
+     * `json => true | false` - filter updates
+     */
+    liveUpdates( enabled : LiveUpdatesOption ) : IOPromise<any> {
+        if( enabled ){
+            this.liveUpdates( false );
+
+            const filter = typeof enabled === 'function' ? enabled : () => true;
+
+            this._liveUpdates = {
+                updated : json => {
+                    filter( json ) && this.add( json, { parse : true, merge : true } );
+                },
+
+                removed : id => this.remove( id )
+            };
+
+            return this.getEndpoint().subscribe( this._liveUpdates, this );
+        }
+        else{
+            if( this._liveUpdates ){
+                this.getEndpoint().unsubscribe( this._liveUpdates, this );
+                this._liveUpdates = null;
+            }
+        }
+    }
+
+    _liveUpdates : object
+
+    fetch( a_options : { liveUpdates? : LiveUpdatesOption } & TransactionOptions = {} ) : IOPromise<any> {
+        const options = { parse : true, ...a_options },
+            endpoint = this.getEndpoint();
+
+        return startIO(
+            this,
+            endpoint.list( options, this ),
+            options,
+
+            json => {
+                let result : any = this.set( json, { parse : true, ...options } as TransactionOptions );
+                
+                if( options.liveUpdates ){
+                    result = this.liveUpdates( options.liveUpdates );
+                }
+
+                return result;
+            }
+        );
+    }
+
     dispose() : void {
         if( this._disposed ) return;
 
@@ -347,6 +402,8 @@ export class Collection< R extends Record = Record> extends Transactional implem
 
             if( aggregated ) record.dispose();
         }
+
+        this.liveUpdates( false );
 
         super.dispose();
     }
@@ -505,6 +562,8 @@ export class Collection< R extends Record = Record> extends Transactional implem
         return super.getClassName() || 'Collection';
     }
 }
+
+export type LiveUpdatesOption = boolean | ( ( x : any ) => boolean );
 
 export type ElementsArg = Object | Record | Object[] | Record[];
 

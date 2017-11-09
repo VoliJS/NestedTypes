@@ -12,6 +12,7 @@ import { AnyType } from './any'
 import { ConstructorsMixin, constructorsMixin } from './updates'
 import { toAttributeOptions, ChainableAttributeSpec } from './attrDef'
 import { CompiledReference } from '../../traversable'
+import { IOEndpoint } from '../../io-tools'
 
 export interface RecordAttributesMixin extends ConstructorsMixin {
     // Attributes descriptors
@@ -25,7 +26,9 @@ export interface RecordAttributesMixin extends ConstructorsMixin {
     _toJSON() : any
 
     // Event map for record's local events.
-    _localEvents? : eventsApi.EventMap
+    _localEvents? : eventsApi.EventMap,
+
+    _endpoints : { [ name : string ] : IOEndpoint }
 }
 
 export interface AttributeDescriptors {
@@ -46,7 +49,8 @@ export default function( attributesDefinition : object, baseClassAttributes : At
         properties : _.transform( <PropertyDescriptorMap>{}, myAttributes, x => x.createPropertyDescriptor() ),
         _toJSON : createToJSON( allAttributes ),
         ...parseMixin( allAttributes ),
-        ...localEventsMixin( myAttributes )
+        ...localEventsMixin( myAttributes ),
+        _endpoints : _.transform( {}, allAttributes, attrDef => attrDef.options.endpoint )
     }            
 }
 

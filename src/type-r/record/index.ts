@@ -50,6 +50,8 @@ Record.onDefine = function( definition : RecordDefinition, BaseClass : typeof Re
     // assign collection from the definition.
     this.Collection = definition.Collection;
     this.Collection.prototype.model = this;
+
+    if( definition.endpoint ) this.Collection.prototype._endpoint = definition.endpoint;    
 }
 
 Record._attribute = AggregatedType;

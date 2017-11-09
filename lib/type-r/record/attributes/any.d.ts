@@ -1,6 +1,7 @@
 import { AttributesContainer, AttributeUpdatePipeline, RecordTransaction } from './updates';
 import { tools } from '../../object-plus';
 import { TransactionOptions } from '../../transactions';
+import { IOEndpoint } from '../../io-tools';
 declare global  {
     interface Function {
         _attribute: typeof AnyType;
@@ -13,6 +14,7 @@ export interface AttributeOptions {
     validate?: (record: AttributesContainer, value: any, key: string) => any;
     isRequired?: boolean;
     changeEvents?: boolean;
+    endpoint?: IOEndpoint;
     type?: Function;
     value?: any;
     hasCustomDefault?: boolean;

@@ -3,6 +3,8 @@ import { CloneOptions, Transactional, TransactionalDefinition, Transaction, Tran
 import { ChildrenErrors } from '../validation';
 import { Collection } from '../collection';
 import { AnyType, AttributesValues, AttributesContainer, AttributesConstructor, AttributesCopyConstructor } from './attributes';
+import { IORecord } from './io-mixin';
+import { IOPromise, IOEndpoint } from '../io-tools';
 export interface ConstructorOptions extends TransactionOptions {
     clone?: boolean;
 }
@@ -12,13 +14,18 @@ export interface RecordDefinition extends TransactionalDefinition {
     collection?: object;
     Collection?: typeof Transactional;
 }
-export declare class Record extends Transactional implements AttributesContainer {
+export declare class Record extends Transactional implements IORecord, AttributesContainer {
     static onDefine(definition: any, BaseClass: any): void;
     static Collection: typeof Collection;
     static DefaultCollection: typeof Collection;
     static from: (collectionReference: any) => any;
     static defaults(attrs: AttributesValues): typeof Record;
     static attributes: AttributesValues;
+    _endpoints: {
+        [name: string]: IOEndpoint;
+    };
+    save(options?: object): IOPromise<any>;
+    destroy(options?: object): IOPromise<any>;
     _previousAttributes: {};
     previousAttributes(): AttributesValues;
     attributes: AttributesValues;

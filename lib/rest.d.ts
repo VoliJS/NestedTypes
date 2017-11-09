@@ -14,7 +14,7 @@ export declare class RestCollection extends Collection implements Restful {
     _invalidate(options: {
         validate?: boolean;
     }): boolean;
-    fetch(options: RestOptions): JQueryXHR;
+    fetch(options: RestOptions): any;
     create(a_model: any, options?: any): RestModel;
     sync(): any;
 }
@@ -26,11 +26,11 @@ export declare class RestModel extends Model implements Restful {
         validate?: boolean;
     }): boolean;
     dispose(): void;
-    fetch(options?: RestOptions): JQueryXHR;
-    sync(method: string, self: this, options: SyncOptions): JQueryXHR;
-    save(attrs?: {}, options?: RestOptions): JQueryPromise<any>;
-    save(key: string, value: any, options?: RestOptions): JQueryPromise<any>;
-    destroy(options: RestOptions): JQueryXHR | boolean;
+    fetch(options?: RestOptions): any;
+    sync(method: string, self: this, options: SyncOptions): any;
+    save(attrs?: {}, options?: RestOptions): any;
+    save(key: string, value: any, options?: RestOptions): any;
+    destroy(options: RestOptions): any;
     url(): string;
     set(key: string, value: any, options?: object): this;
     set(attrs: {}, options?: object): this;

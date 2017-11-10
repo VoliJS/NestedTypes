@@ -12,8 +12,6 @@ import { RestCollection, RestModel } from './rest'
 import { Store as BaseStore, tools, MixinsState } from './type-r'
 import Sync from './sync'
 
-export { BaseStore }
-
 import { ModelMixin, CollectionMixin } from './underscore-mixin'
 import { RestStore, LazyStore } from './rest-store'
 
@@ -40,7 +38,7 @@ const Nested : typeof TypeR & typeof Backbone = Object.create( TypeR, tools.defa
 
 export default Nested;
 
-export { Backbone, RestStore as Store, LazyStore, RestCollection as Collection, RestModel as Model };
+export { Backbone, RestStore, LazyStore, RestCollection as Collection, RestModel as Model };
 
 export function defaults( x ) : typeof Nested.Record {
     return Nested.Model.defaults( x );

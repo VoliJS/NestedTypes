@@ -17,7 +17,7 @@ export interface CollectionDefinition extends TransactionalDefinition {
 }
 export declare class Collection<R extends Record = Record> extends Transactional implements CollectionCore {
     _shared: number;
-    _aggregationError: Record[];
+    _aggregationError: R[];
     static Subset: typeof Collection;
     static Refs: typeof Collection;
     static _SubsetOf: typeof Collection;
@@ -46,7 +46,7 @@ export declare class Collection<R extends Record = Record> extends Transactional
     _validateNested(errors: {}): number;
     model: typeof Record;
     idAttribute: string;
-    constructor(records?: (Record | {})[], options?: CollectionOptions, shared?: number);
+    constructor(records?: (R | {})[], options?: CollectionOptions, shared?: number);
     initialize(): void;
     readonly length: number;
     first(): R;

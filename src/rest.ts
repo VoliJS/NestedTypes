@@ -12,6 +12,7 @@ export interface RestOptions extends SyncOptions {
     wait? : boolean
     patch? : boolean
     reset? : boolean
+    validate? : boolean
 }
 
 @define({
@@ -19,7 +20,7 @@ export interface RestOptions extends SyncOptions {
         destroy( model ){ this.remove( model ); }
     } 
 })
-export class RestCollection extends Collection implements Restful {
+export class RestCollection extends Collection<RestModel> implements Restful {
     _xhr : JQueryXHR
 
     dispose(){
@@ -93,7 +94,7 @@ export class RestCollection extends Collection implements Restful {
     urlRoot : mixinRules.protoValue
 })
 export class RestModel extends Model implements Restful {
-    static Collection = RestCollection;
+    static Collection : typeof Collection = RestCollection as any;
     
     _xhr : JQueryXHR
 

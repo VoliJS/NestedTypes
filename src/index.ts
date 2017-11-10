@@ -12,6 +12,8 @@ import { RestCollection, RestModel } from './rest'
 import { Store as BaseStore, tools, MixinsState } from './type-r'
 import Sync from './sync'
 
+export { BaseStore }
+
 import { ModelMixin, CollectionMixin } from './underscore-mixin'
 import { RestStore, LazyStore } from './rest-store'
 

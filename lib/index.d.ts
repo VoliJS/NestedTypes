@@ -2,6 +2,8 @@ import * as TypeR from './type-r';
 export * from './type-r';
 import Backbone from './backbone';
 import { RestCollection, RestModel } from './rest';
+import { Store as BaseStore } from './type-r';
+export { BaseStore };
 import { RestStore, LazyStore } from './rest-store';
 export declare const Class: typeof TypeR.Messenger;
 declare const Nested: typeof TypeR & typeof Backbone;

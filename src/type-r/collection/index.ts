@@ -49,7 +49,7 @@ class CollectionRefsType extends SharedType {
 })
 export class Collection< R extends Record = Record> extends Transactional implements CollectionCore {
     _shared : number
-    _aggregationError : Record[]
+    _aggregationError : R[]
 
     static Subset : typeof Collection
     static Refs : typeof Collection
@@ -175,7 +175,7 @@ export class Collection< R extends Record = Record> extends Transactional implem
 
         if( typeof objOrId === 'object' ){
             const id = objOrId[ this.idAttribute ];
-            return ( id !== void 0 && this._byId[ id ] ) || this._byId[ (<Record>objOrId).cid ];
+            return ( id !== void 0 && this._byId[ id ] ) || this._byId[ (<R>objOrId).cid ];
         }
         else{
             return this._byId[ objOrId ];
@@ -263,7 +263,7 @@ export class Collection< R extends Record = Record> extends Transactional implem
     // idAttribute extracted from the model type.
     idAttribute : string
 
-    constructor( records? : ( Record | {} )[], options : CollectionOptions = {}, shared? : number ){
+    constructor( records? : ( R | {} )[], options : CollectionOptions = {}, shared? : number ){
         super( _count++ );
         this.models = [];
         this._byId = {};

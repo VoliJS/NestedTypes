@@ -5,8 +5,9 @@ export interface RestOptions extends SyncOptions {
     wait?: boolean;
     patch?: boolean;
     reset?: boolean;
+    validate?: boolean;
 }
-export declare class RestCollection extends Collection implements Restful {
+export declare class RestCollection extends Collection<RestModel> implements Restful {
     _xhr: JQueryXHR;
     dispose(): void;
     model: typeof RestModel;
@@ -19,7 +20,7 @@ export declare class RestCollection extends Collection implements Restful {
     sync(): any;
 }
 export declare class RestModel extends Model implements Restful {
-    static Collection: typeof RestCollection;
+    static Collection: typeof Collection;
     _xhr: JQueryXHR;
     urlRoot: string;
     _invalidate(options: {

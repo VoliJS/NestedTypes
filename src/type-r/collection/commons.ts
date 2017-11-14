@@ -34,7 +34,7 @@ export type Comparator = ( a : Record, b : Record ) => number;
 
 /** @private */
 export function dispose( collection : CollectionCore ) : Record[]{
-    const models = collection.models;
+    const { models } = collection;
 
     collection.models = [];
     collection._byId  = {};

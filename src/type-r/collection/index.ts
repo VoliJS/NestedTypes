@@ -410,16 +410,27 @@ export class Collection< R extends Record = Record> extends Transactional implem
 
     reset( a_elements? : ElementsArg, options : TransactionOptions = {} ) : R[] {
         const isRoot = begin( this ),
-              previousModels = dispose( this );
+              previousModels = this.models;
 
         // Make all changes required, but be silent.
         if( a_elements ){            
             emptySetTransaction( this, toElements( this, a_elements, options ), options, true );
         }
+        else{
+            this._byId = {};
+            this.models = [];
+        }
 
         markAsDirty( this, options );
 
         options.silent || trigger2( this, 'reset', this, defaults( { previousModels : previousModels }, options ) );
+
+        // Dispose models which are not in the updated collection.
+        const { _byId } = this;
+        
+        for( let toDispose of previousModels ){
+            _byId[ toDispose.cid ] || free( this, toDispose );
+        }
 
         isRoot && commit( this );
         return this.models;

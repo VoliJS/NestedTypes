@@ -225,15 +225,15 @@
 
             it( 'parse ISO dates in all browsers on assignment', function(){
                 // parse Date from string
-                user.created = "2012-12-12T10:00";
+                user.created = "2012-12-12T10:00Z";
                 expect( user.created ).to.be.instanceof( Date );
                 expect( user.created.toISOString() ).to.be.eql( '2012-12-12T10:00:00.000Z' );
 
-                user.timestamp = "2012-12-12T10:00";
+                user.timestamp = "2012-12-12T10:00Z";
                 expect( user.timestamp ).to.be.instanceof( Date );
                 expect( user.timestamp.toISOString() ).to.be.eql( '2012-12-12T10:00:00.000Z' );
 
-                user.microsoft = "2012-12-12T10:00";
+                user.microsoft = "2012-12-12T10:00Z";
                 expect( user.microsoft ).to.be.instanceof( Date );
                 expect( user.microsoft.toISOString() ).to.be.eql( '2012-12-12T10:00:00.000Z' );
             });

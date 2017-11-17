@@ -1,5 +1,5 @@
-> All NestedTypes users are encouraged to convert to the [Type-R](https://volicon.github.io/Type-R/Getting_Started.html) v2.0
-> and React-MVx v2.0. NestedTypes & NestedReact will be maintained as the BackboneJS compatibility layer only as long as Verizon/Volicon systems have legacy Backbone code. If you don't need it - move to the Type-R.
+> All NestedTypes users are encouraged to convert to the [Type-R v2.0](https://volicon.github.io/Type-R)
+> and [React-MVx v2.0](https://volicon.github.io/React-MVx/). NestedTypes & NestedReact will be maintained as the BackboneJS compatibility layer only as long as Verizon/Volicon systems have legacy Backbone code. If you don't need BackboneJS compatibility, move to the Type-R.
 
 NestedTypes 2.0 is BackboneJS compatibility layer for the [Type-R](https://volicon.github.io/Type-R/Getting_Started.html) data framework. Type-R is Model/Collection core written from the scratch with the TypeScript and has no side dependencies.
 

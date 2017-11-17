@@ -1,6 +1,6 @@
 {
   "name": "nestedtypes",
-  "version": "2.1.0-beta.00",
+  "version": "2.1.0-beta.01",
   "main": "./dist/index.js",
   "module": "./lib/index.js",
   "types": "./lib/index.d.ts",
@@ -31,13 +31,13 @@
     "jquery": "*",
     "mocha": "^3.5.3",
     "requirejs": "^2.3.5",
+    "rollup": "^0.50.0",
+    "rollup-plugin-node-resolve": "^3.0.0",
+    "rollup-plugin-uglify": "^2.0.1",
     "sinon": "^3.3.0",
     "sinon-chai": "^2.14.0",
-    "source-map-loader": "^0.1.5",
-    "ts-loader": "^2.3.7",
-    "typescript": "^2.6.1",
-    "underscore": "*",
-    "webpack": "^3.8.1"
+    "typescript": "*",
+    "underscore": "*"
   },
   "files": [
     "dist",
@@ -47,10 +47,10 @@
   ],
   "license": "MIT",
   "scripts": {
-    "test": "node_modules/.bin/mocha",
+    "test": "node_modules/.bin/mocha tests/nestedtypes/functionality",
     "build": "npm run pull && npm run compile",
     "pull": "git submodule update --remote && cp -R ./submodules/Type-R/src/* ./src/type-r",
-    "compile": "node_modules/.bin/tsc && ./node_modules/.bin/webpack -p",
+    "compile": "node_modules/.bin/tsc && ./node_modules/.bin/rollup --config",
     "deploy": "cp ./dist/* ../observer-frontend/htdocs/js/lib/nested",
     "all": "npm run pull && npm run build && npm run deploy"
   },

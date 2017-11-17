@@ -1,6 +1,6 @@
 {
   "name": "nestedtypes",
-  "version": "2.1.0-rc00",
+  "version": "2.1.0",
   "main": "./dist/index.js",
   "module": "./lib/index.js",
   "types": "./lib/index.d.ts",
@@ -47,7 +47,6 @@
   ],
   "license": "MIT",
   "scripts": {
-    "test": "node_modules/.bin/mocha tests/nestedtypes/functionality",
     "build": "npm run pull && npm run compile",
     "pull": "git submodule update --remote && cp -R ./submodules/Type-R/src/* ./src/type-r",
     "compile": "node_modules/.bin/tsc && ./node_modules/.bin/rollup --config",

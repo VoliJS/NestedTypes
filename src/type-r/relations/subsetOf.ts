@@ -41,7 +41,7 @@ function defineSubsetCollection( CollectionConstructor : typeof Collection ) {
         }
 
         // Remove should work fine as it already accepts ids. Add won't...
-        add( a_elements, options? ){
+        add( a_elements, options = {} ){
             const { resolvedWith } = this,
                     toAdd = toArray( a_elements );
             
@@ -65,7 +65,7 @@ function defineSubsetCollection( CollectionConstructor : typeof Collection ) {
             }
         }
 
-        reset( a_elements?, options? ){
+        reset( a_elements?, options = {} ){
             const { resolvedWith } = this,
                 elements = toArray( a_elements );
     

@@ -9,7 +9,7 @@ export declare class MemoryEndpoint implements IOEndpoint {
     constructor(init: object[], delay: number);
     index: Index;
     items: {};
-    generateId(a_id: any): string;
+    generateId(a_id: any): any;
     create(json: any, options: any): IOPromise<any>;
     update(id: any, json: any, options: any): IOPromise<any>;
     read(id: any, options: any): IOPromise<any>;

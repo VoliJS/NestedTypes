@@ -31,13 +31,14 @@ export class MemoryEndpoint implements IOEndpoint {
     items = {};
 
     generateId( a_id ){
+        // Update index counter...
         const id = Number( a_id );
         if( !isNaN( id ) ){
             this.index[ 0 ] = Math.max( this.index[ 0 ] as number, id );
-            return String( id );
         }
 
-        return String( ( this.index[ 0 ] as number ) ++ );
+        // Return id...
+        return a_id || String( ( this.index[ 0 ] as number ) ++ );
     }
 
     create( json, options ) {

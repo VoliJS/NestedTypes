@@ -1,6 +1,6 @@
 {
   "name": "nestedtypes",
-  "version": "2.1.1",
+  "version": "2.1.2",
   "main": "./dist/index.js",
   "module": "./lib/index.js",
   "types": "./lib/index.d.ts",
@@ -30,7 +30,7 @@
     "rollup": "^0.50.0",
     "rollup-plugin-node-resolve": "^3.0.0",
     "rollup-plugin-uglify": "^2.0.1",
-    "typescript": "*",
+    "typescript": "^2.6.2",
     "underscore": "*"
   },
   "files": [

@@ -90,7 +90,7 @@ export class Collection< R extends Record = Record> extends Transactional implem
             this.prototype._itemEvents = eventsMap;
         }
 
-        if( definition.comparator ) this.prototype.comparator = definition.comparator;
+        if( definition.comparator !== void 0 ) this.prototype.comparator = definition.comparator;
 
         Transactional.onDefine.call( this, definition );
     }

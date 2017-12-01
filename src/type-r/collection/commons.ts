@@ -124,7 +124,7 @@ export function addIndex( index : IdIndex, model : Record ) : void {
     index[ model.cid ] = model;
     var id             = model.id;
     
-    if( id != null ){
+    if( id || id === 0 ){
         index[ id ] = model;
     }
 }
@@ -133,7 +133,7 @@ export function addIndex( index : IdIndex, model : Record ) : void {
 export function removeIndex( index : IdIndex, model : Record ) : void {
     delete index[ model.cid ];
     var id = model.id;
-    if( id != null ){
+    if( id || id === 0 ){
         delete index[ id ];
     }
 }

@@ -180,7 +180,16 @@ export abstract class Transactional implements Messenger, IONode, Validatable, T
 
     // Assign transactional object "by value", copying aggregated items.
     assignFrom( source : Transactional | Object ) : this {
-        return this.set( ( <any>source ).__inner_state__ || source, { merge : true } );
+        this.set( ( <any>source ).__inner_state__ || source, { merge : true } );
+
+        // Synchronize change tokens
+        const { _changeToken } = source as any;
+
+        if( _changeToken ){
+            this._changeToken = _changeToken;
+        }
+
+        return this;
     }
 
     // Apply bulk object update without any notifications, and return open transaction.

@@ -12,7 +12,7 @@ export interface Traversable {
     get( key : string ) : any 
 }
 
-const referenceMask =  /\^|([^.]+)/g;
+const referenceMask =  /\^|(store\.[^.]+)|([^.]+)/g;
 
 // Compile reference to function
 export type ResolveReference = ( root : Traversable ) => any;  
@@ -26,19 +26,27 @@ export class CompiledReference {
         const path = reference
                         .match( referenceMask )
                         .map( key => {
-                            if( key === '^' ) return 'getOwner()';
+                            if( key === '^' || key === 'owner' ) return 'getOwner()';
 
                             if( key[ 0 ] === '~' ) return `getStore().get("${ key.substr( 1 ) }")`;
+
+                            if( key.indexOf( 'store.' ) === 0 ) return `getStore().get("${ key.substr( 6 ) }")`;
                             
                             return key;
                         } );
                
         this.tail = splitTail && path.pop();
         this.local = !path.length;
-
-        path.unshift( 'self' );
         
-        this.resolve = <any> new Function( 'self', `return ${ path.join('.') };` );
+        this.resolve = <any> new Function( 'self', `
+            var v = self.${ path.shift() };
+                           
+            ${ path.map( x => `
+                v = v && v.${ x };
+            `).join('')}
+
+            return v;
+        ` );
     }
 }
 

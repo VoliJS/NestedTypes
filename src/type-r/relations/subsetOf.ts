@@ -97,6 +97,10 @@ function defineSubsetCollection( CollectionConstructor : typeof Collection ) {
         // Subset is always valid.
         _validateNested(){ return 0; }
 
+        get length() : number {
+            return this.models.length || ( this.refs ? this.refs.length : 0 );
+        }
+
         // Must be shallow copied on clone.
         clone( owner? ){
             var Ctor = (<any>this).constructor,

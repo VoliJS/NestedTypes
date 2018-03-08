@@ -1,4 +1,4 @@
-import { createIOPromise } from '../io-tools';
+import { createIOPromise } from 'type-r';
 export function create(init, delay) {
     if (init === void 0) { init = []; }
     if (delay === void 0) { delay = 50; }
@@ -70,4 +70,4 @@ var MemoryEndpoint = (function () {
     return MemoryEndpoint;
 }());
 export { MemoryEndpoint };
-//# sourceMappingURL=memory.js.map
+//# sourceMappingURL=index.js.map

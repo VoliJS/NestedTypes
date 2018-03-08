@@ -1,4 +1,4 @@
-import { createIOPromise } from '../io-tools';
+import { createIOPromise } from 'type-r';
 export function create(key) {
     return new LocalStorageEndpoint(key);
 }
@@ -74,4 +74,4 @@ var LocalStorageEndpoint = (function () {
     return LocalStorageEndpoint;
 }());
 export { LocalStorageEndpoint };
-//# sourceMappingURL=localStorage.js.map
+//# sourceMappingURL=index.js.map

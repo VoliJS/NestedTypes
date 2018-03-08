@@ -10,13 +10,12 @@ declare const exported: {
     $: JQueryStatic;
     history: any;
     VERSION: string;
-    View: (options: any) => void;
-    History: () => void;
-    Router: (options: any) => void;
+    View: typeof View;
+    History: typeof History;
+    Router: typeof Router;
     noConflict: () => any;
 };
 export default exported;
 export declare function View(options: any): void;
 export declare function Router(options: any): void;
 export declare function History(): void;
-export {};

@@ -29,4 +29,4 @@ var AttributesEndpoint = (function () {
     return AttributesEndpoint;
 }());
 export { AttributesEndpoint };
-//# sourceMappingURL=attributes.js.map
+//# sourceMappingURL=index.js.map

@@ -1,4 +1,4 @@
-import { IOEndpoint, IOOptions, IOPromise, createIOPromise } from '../io-tools'
+import { IOEndpoint, IOOptions, IOPromise, createIOPromise } from 'type-r'
 
 export type Index = number[];
 

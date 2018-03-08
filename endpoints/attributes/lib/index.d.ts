@@ -1,4 +1,4 @@
-import { IOEndpoint, IOOptions, IOPromise } from '../io-tools';
+import { IOEndpoint, IOOptions, IOPromise } from 'type-r';
 export declare function create(): AttributesEndpoint;
 export { create as attributesIO };
 export declare class AttributesEndpoint implements IOEndpoint {

@@ -25,12 +25,13 @@
     "underscore": "*"
   },
   "devDependencies": {
-    "@types/jquery": "^2.0.48",
-    "jquery": "*",
+    "@types/jquery": "^2.0.49",
+    "jquery": "^3.3.1",
     "rollup": "^0.50.0",
-    "rollup-plugin-node-resolve": "^3.0.0",
+    "rollup-plugin-node-resolve": "^3.2.0",
+    "rollup-plugin-sourcemaps": "*",
     "rollup-plugin-uglify": "^2.0.1",
-    "typescript": "^2.6.2",
+    "typescript": "^2.7.2",
     "underscore": "*"
   },
   "files": [
@@ -41,10 +42,11 @@
   ],
   "license": "MIT",
   "scripts": {
-    "build": "npm run pull && npm run compile",
-    "pull": "git submodule update --remote && cp -R ./submodules/Type-R/src/* ./src/type-r",
+    "build": "npm run pull && npm run compile && npm run build:endpoints",
+    "pull": "git submodule update --remote && cp -R ./submodules/Type-R/src/* ./src/type-r && cp -R ./submodules/Type-R/endpoints/* ./endpoints",
     "compile": "node_modules/.bin/tsc && ./node_modules/.bin/rollup --config",
     "deploy": "cp ./dist/* ../observer-frontend/htdocs/js/lib/nested",
+    "build:endpoints": "cd endpoints/attributes && npm run build && cd ../localStorage && npm run build && cd ../memory && npm run build && cd ../restful && npm run build && cd ../proxy && npm run build",
     "all": "npm run pull && npm run build && npm run deploy"
   },
   "dependencies": {

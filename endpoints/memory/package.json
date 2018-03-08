@@ -1,0 +1,13 @@
+{
+    "name": "memoryIO",
+    "main": "./dist/index.js",
+    "jsnext:main": "./lib/index.js",
+    "module": "./lib/index.js",
+    "types": "./lib/index.d.ts",
+    "scripts": {
+        "build":"../../node_modules/.bin/tsc && ../../node_modules/.bin/rollup --config"
+    },
+    "author": "Vlad Balin",
+    "license": "MIT"
+}
+  

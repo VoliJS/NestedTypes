@@ -10,6 +10,7 @@ export declare class ChainableAttributeSpec {
     constructor(options: AttributeOptions);
     check(check: AttributeCheck, error: any): ChainableAttributeSpec;
     readonly asProp: (proto: object, name: string) => void;
+    readonly as: (proto: object, name: string) => void;
     readonly isRequired: ChainableAttributeSpec;
     endpoint(endpoint: IOEndpoint): ChainableAttributeSpec;
     watcher(ref: string | ((value: any, key: string) => void)): ChainableAttributeSpec;
@@ -23,6 +24,7 @@ export declare class ChainableAttributeSpec {
     metadata(options: AttributeOptions): ChainableAttributeSpec;
     value(x: any): ChainableAttributeSpec;
 }
+export declare function type(this: void, spec: ChainableAttributeSpec | Function): ChainableAttributeSpec;
 declare global  {
     interface Function {
         value: (x: any) => ChainableAttributeSpec;

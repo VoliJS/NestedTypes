@@ -1,14 +1,25 @@
+// Polyfill for IE10. Should fix problems with babel and statics inheritance.
+import { tools } from './object-plus'
+
+declare global {
+    interface ObjectConstructor {
+        setPrototypeOf( target : Object, proto : Object );
+    }
+}
+
+Object.setPrototypeOf || ( Object.setPrototypeOf = tools.defaults );
+
 /**
  * Export everything 
  */
+
 export * from './object-plus'
 export * from './collection'
 export * from './relations'
 export * from './record'
-
 export * from './transactions'
 
-export { IOEndpoint, IOPromise, createIOPromise } from './io-tools'
+export * from './io-tools'
 
 // Exported module itself is the global event bus.
 import { Events } from './object-plus/'

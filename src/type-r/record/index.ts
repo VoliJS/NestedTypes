@@ -1,6 +1,6 @@
 import { Record, RecordDefinition } from './record'
 import { Mixable, tools, predefine, define, MixinsState } from '../object-plus'
-import compile from './attributes'
+import compile, { ChainableAttributeSpec } from './attributes'
 import { Transactional } from '../transactions'
 
 import { createSharedTypeSpec, AggregatedType, MSDateType, TimestampType, NumericType, SharedType } from './attributes'

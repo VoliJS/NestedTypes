@@ -38,6 +38,7 @@ export declare class Collection<R extends Record = Record> extends Transactional
     _onChildrenChange(record: R, options?: TransactionOptions, initiator?: Transactional): void;
     get(objOrId: string | R | Object): R;
     each(iteratee: (val: R, key: number) => void, context?: any): void;
+    forEach(iteratee: (val: R, key?: number) => void, context?: any): void;
     every(iteratee: Predicate<R>, context?: any): boolean;
     filter(iteratee: Predicate<R>, context?: any): R[];
     find(iteratee: Predicate<R>, context?: any): R;

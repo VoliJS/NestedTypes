@@ -131,6 +131,16 @@ export function definitions( rules : MixinMergeRules ) : ClassDecorator {
     }
 }
 
+// Create simple property list decorator
+export function propertyListDecorator( listName: string ) : PropertyDecorator {
+    return function propList(proto, name : string) {
+        const list = proto.hasOwnProperty( listName ) ?
+            proto[ listName ] : (proto[ listName ] = (proto[ listName ] || []).slice());  
+
+        list.push(name);
+    }
+}
+
 export function definitionDecorator( definitionKey, value ){
     return ( proto : object, name : string ) => {
         MixinsState

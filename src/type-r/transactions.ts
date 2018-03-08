@@ -31,6 +31,7 @@ export enum ItemsBehavior {
 export abstract class Transactional implements Messenger, IONode, Validatable, Traversable {
     // Mixins are hard in TypeScript. We need to copy type signatures over...
     // Here goes 'Mixable' mixin.
+    static endpoint : IOEndpoint;
     static __super__ : object;
     static mixins : MixinsState;
     static define : ( definition? : TransactionalDefinition, statics? : object ) => typeof Transactional;

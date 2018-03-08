@@ -1,9 +1,14 @@
+declare global  {
+    interface ObjectConstructor {
+        setPrototypeOf(target: Object, proto: Object): any;
+    }
+}
 export * from './object-plus';
 export * from './collection';
 export * from './relations';
 export * from './record';
 export * from './transactions';
-export { IOEndpoint, IOPromise, createIOPromise } from './io-tools';
+export * from './io-tools';
 export declare const on: any, off: any, trigger: any, once: any, listenTo: any, stopListening: any, listenToOnce: any;
 import { Record as Model } from './record';
 import { Mixable as Class } from './object-plus/';

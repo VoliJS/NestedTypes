@@ -11,6 +11,7 @@ export declare enum ItemsBehavior {
     persistent = 4,
 }
 export declare abstract class Transactional implements Messenger, IONode, Validatable, Traversable {
+    static endpoint: IOEndpoint;
     static __super__: object;
     static mixins: MixinsState;
     static define: (definition?: TransactionalDefinition, statics?: object) => typeof Transactional;

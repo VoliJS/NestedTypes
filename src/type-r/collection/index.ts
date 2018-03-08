@@ -191,6 +191,10 @@ export class Collection< R extends Record = Record> extends Transactional implem
         }
     }
 
+    forEach( iteratee : ( val : R, key? : number ) => void, context? : any ){
+        return this.each( iteratee, context );
+    }
+
     every( iteratee : Predicate<R>, context? : any ) : boolean {
         const fun = toPredicateFunction( iteratee, context ),
             { models } = this;

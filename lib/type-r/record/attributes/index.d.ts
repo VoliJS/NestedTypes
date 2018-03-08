@@ -9,7 +9,10 @@ export * from './attrDef';
 import { AnyType } from './any';
 import { ConstructorsMixin } from './updates';
 import { IOEndpoint } from '../../io-tools';
-export interface RecordAttributesMixin extends ConstructorsMixin {
+export interface ParseMixin {
+    _parse?: (json: any) => object;
+}
+export interface RecordAttributesMixin extends ConstructorsMixin, ParseMixin {
     _attributes: AttributeDescriptors;
     _attributesArray: AnyType[];
     properties: PropertyDescriptorMap;

@@ -6,6 +6,25 @@
  * exported [[log]] variable.
  */
 
+ /** Similar to underscore `_.defaults` */
+export function defaults< T >( dest : T, ...sources : Object[] ) : T
+export function defaults< T >( dest : T, source : Object ) : T {
+    for( var name in source ) {
+        if( source.hasOwnProperty( name ) && !dest.hasOwnProperty( name ) ) {
+            dest[ name ] = source[ name ];
+        }
+    }
+
+    if( arguments.length > 2 ){
+        for( let i = 2; i < arguments.length; i++ ){
+            const other = arguments[ i ];
+            other && defaults( dest, other );
+        }
+    }
+
+    return dest;
+}
+
 // Logger is the function.
 export type Logger = ( level : LogLevel, error : string, props? : object ) => void;
 
@@ -57,11 +76,28 @@ log.level = typeof process !== 'undefined' && process.env && process.env.NODE_EN
 log.throw = 0;
 log.stop = 0;
 
+
+let toString = typeof window === 'undefined' ? 
+    function toString( something ){
+        if( something && typeof something === 'object' ){
+            const value = something.__inner_state__ || something,
+                isTransactional = Boolean( something.__inner_state__ ),
+                isArray = Array.isArray( value );
+
+            const keys = Object.keys( value ).join( ', ' ),
+                  body = isArray ? `[ length = ${ value.length } ]` : `{ ${ keys } }`;
+
+            return something.constructor.name + ' ' + body;
+        }
+
+        return something;
+    } : function toString( x ){ return x; };
+
 if( typeof console !== 'undefined' ) {
     log.logger = function _console( level : LogLevel, error : string, props : object ){
         const args = [ error ];
         for( let name in props ){
-            args.push( `\n\t${name}:`, props[ name ] );
+            args.push( `\n\t${name}:`, toString( props[ name ] ) );
         }
 
         console[ level ].apply( console, args );
@@ -241,34 +277,6 @@ export function assign< T >( dest : T, source : Object ) : T {
 
     return dest;
 }
-
-/** Similar to underscore `_.defaults` */
-export function defaults< T >( dest : T, ...sources : Object[] ) : T
-export function defaults< T >( dest : T, source : Object ) : T {
-    for( var name in source ) {
-        if( source.hasOwnProperty( name ) && !dest.hasOwnProperty( name ) ) {
-            dest[ name ] = source[ name ];
-        }
-    }
-
-    if( arguments.length > 2 ){
-        for( let i = 2; i < arguments.length; i++ ){
-            const other = arguments[ i ];
-            other && defaults( dest, other );
-        }
-    }
-
-    return dest;
-}
-
-// Polyfill for IE10. Should fix problems with babel and statics inheritance.
-declare global {
-    interface ObjectConstructor {
-        setPrototypeOf( target : Object, proto : Object );
-    }
-}
-
-Object.setPrototypeOf || ( Object.setPrototypeOf = defaults ); 
 
 /** Similar to underscore `_.keys` */
 export function keys( o : any ) : string[]{

@@ -1,3 +1,4 @@
+export declare function defaults<T>(dest: T, ...sources: Object[]): T;
 export declare type Logger = (level: LogLevel, error: string, props?: object) => void;
 export declare type LogLevel = 'none' | 'error' | 'warn' | 'info' | 'debug' | 'log';
 export interface Log extends Logger {
@@ -26,14 +27,7 @@ export declare function transform<A, B>(dest: {
 export declare function fastAssign<A>(dest: A, source: {}): A;
 export declare function fastDefaults<A>(dest: A, source: {}): A;
 export declare function assign<T>(dest: T, ...sources: Object[]): T;
-export declare function defaults<T>(dest: T, ...sources: Object[]): T;
-declare global  {
-    interface ObjectConstructor {
-        setPrototypeOf(target: Object, proto: Object): any;
-    }
-}
 export declare function keys(o: any): string[];
 export declare function once(func: Function): Function;
 export declare function notEqual(a: any, b: any): boolean;
 export declare function hashMap(obj?: any): any;
-export {};

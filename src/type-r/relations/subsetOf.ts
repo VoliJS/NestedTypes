@@ -110,6 +110,7 @@ function defineSubsetCollection( CollectionConstructor : typeof Collection ) {
                 });
 
             if( this.resolvedWith ){
+                // TODO: bug here. 
                 copy.resolvedWith = this.resolvedWith;
                 copy.refs = null;
                 copy.reset( this.models, { silent : true } );

@@ -259,11 +259,11 @@ export abstract class Transactional implements Messenger, IONode, Validatable, T
     }
 
     _endpoint : IOEndpoint
-    _ioPromise : IOPromise<any>
+    _ioPromise : IOPromise<this>
 
-    hasPendingIO() : IOPromise<any> { return this._ioPromise; }
+    hasPendingIO() : IOPromise<this> { return this._ioPromise; }
 
-    fetch( options? : object ) : IOPromise<any> { throw new Error( "Not implemented" ); }
+    fetch( options? : object ) : IOPromise<this> { throw new Error( "Not implemented" ); }
 
     getEndpoint() : IOEndpoint {
         return getOwnerEndpoint( this ) || this._endpoint;

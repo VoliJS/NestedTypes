@@ -128,6 +128,32 @@ export class ChainableAttributeSpec {
     value( x ) : ChainableAttributeSpec {
         return this.metadata({ value : x, hasCustomDefault : true });
     }
+
+    static from( spec : any ) : ChainableAttributeSpec {
+        let attrSpec : ChainableAttributeSpec;
+
+        if( typeof spec === 'function' ) {
+            attrSpec = spec.has;
+        }
+        else if( spec && spec instanceof ChainableAttributeSpec ) {
+            attrSpec = spec;
+        }
+        else{
+            // Infer type from value.
+            const type = inferType( spec );
+    
+            // Transactional types inferred from values must have shared type. 
+            if( type && type.prototype instanceof Transactional ){
+                attrSpec = (<any>type).shared.value( spec );
+            }
+            // All others will be created in regular way.
+            else{
+                attrSpec = new ChainableAttributeSpec({ type : type, value : spec, hasCustomDefault : true });
+            }
+        }
+    
+        return attrSpec;
+    }
 }
 
 function emptyFunction(){}
@@ -170,32 +196,6 @@ Object.defineProperty( Function.prototype, 'has', {
 
     set( value ) { this._has = value; }
 } );
-
-export function toAttributeOptions( spec : any ) : AttributeOptions {
-    let attrSpec : ChainableAttributeSpec;
-
-    if( typeof spec === 'function' ) {
-        attrSpec = spec.has;
-    }
-    else if( spec && spec instanceof ChainableAttributeSpec ) {
-        attrSpec = spec;
-    }
-    else{
-        // Infer type from value.
-        const type = inferType( spec );
-
-        // Transactional types inferred from values must have shared type. 
-        if( type && type.prototype instanceof Transactional ){
-            attrSpec = (<any>type).shared.value( spec );
-        }
-        // All others will be created in regular way.
-        else{
-            attrSpec = new ChainableAttributeSpec({ type : type, value : spec, hasCustomDefault : true });
-        }
-    }
- 
-    return attrSpec.options;
-}
 
 function inferType( value : {} ) : Function {
     switch( typeof value ) {

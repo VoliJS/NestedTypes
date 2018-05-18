@@ -78,10 +78,10 @@ export class Record extends Transactional implements IORecord, AttributesContain
      _endpoints : { [ name : string ] : IOEndpoint }
 
      // Save record
-     save( options? : object ) : IOPromise<any> { throw new Error( 'Implemented by mixin' ); }
+     save( options? : object ) : IOPromise<this> { throw new Error( 'Implemented by mixin' ); }
 
      // Destroy record
-     destroy( options? : object ) : IOPromise<any> { throw new Error( 'Implemented by mixin' ); }
+     destroy( options? : object ) : IOPromise<this> { throw new Error( 'Implemented by mixin' ); }
 
     /***********************************
      * Core Members
@@ -265,12 +265,6 @@ export class Record extends Transactional implements IORecord, AttributesContain
         return this.map( value => value );
     }
 
-    // Attributes-level serialization
-    _toJSON(){ return {}; }
-
-    // Attributes-level parse
-    _parse( data ){ return data; }
-
     // Create record default values, optionally augmenting given values.
     defaults( values = {} ){
         const defaults = {},
@@ -366,9 +360,11 @@ export class Record extends Transactional implements IORecord, AttributesContain
     
     // Default record-level parser, to be overriden by the subclasses.
     parse( data, options? : TransactionOptions ){
-        // Call dynamically compiled loop-unrolled attribute-level parse function.
-        return this._parse( data );
+        return data;
     }
+
+    // DEPRECATED: Attributes-level parse. Is moved to attribute descriptors.
+    _parse( data ){ return data; }
 
     /**
      * Transactional control

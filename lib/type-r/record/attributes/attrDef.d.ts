@@ -23,6 +23,7 @@ export declare class ChainableAttributeSpec {
     readonly has: ChainableAttributeSpec;
     metadata(options: AttributeOptions): ChainableAttributeSpec;
     value(x: any): ChainableAttributeSpec;
+    static from(spec: any): ChainableAttributeSpec;
 }
 export declare function type(this: void, spec: ChainableAttributeSpec | Function): ChainableAttributeSpec;
 declare global  {
@@ -33,4 +34,3 @@ declare global  {
         has: ChainableAttributeSpec;
     }
 }
-export declare function toAttributeOptions(spec: any): AttributeOptions;

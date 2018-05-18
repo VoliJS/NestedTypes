@@ -28,11 +28,11 @@
     "@types/jquery": "^2.0.49",
     "jquery": "^3.3.1",
     "rollup": "^0.50.0",
-    "rollup-plugin-node-resolve": "^3.2.0",
+    "rollup-plugin-node-resolve": "^3.3.0",
     "rollup-plugin-sourcemaps": "*",
     "rollup-plugin-uglify": "^2.0.1",
-    "typescript": "^2.7.2",
-    "underscore": "*"
+    "typescript": "^2.8.3",
+    "underscore": "^1.9.0"
   },
   "files": [
     "dist",
@@ -50,6 +50,6 @@
     "all": "npm run pull && npm run build && npm run deploy"
   },
   "dependencies": {
-    "tslib": "^1.8.0"
+    "tslib": "^1.9.1"
   }
 }

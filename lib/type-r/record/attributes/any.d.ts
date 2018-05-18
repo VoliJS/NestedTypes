@@ -54,7 +54,6 @@ export declare class AnyType implements AttributeUpdatePipeline {
     propagateChanges: boolean;
     _log(level: tools.LogLevel, text: string, value: any, record: AttributesContainer): void;
     defaultValue(): any;
-    parse: Parse;
     constructor(name: string, a_options: AttributeOptions);
     getHook: (value, key: string) => any;
     get: (value, key: string) => any;

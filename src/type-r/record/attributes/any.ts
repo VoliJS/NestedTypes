@@ -181,8 +181,6 @@ export class AnyType implements AttributeUpdatePipeline {
         return this.value;
     }
 
-    parse : Parse
-
     constructor( public name : string, a_options : AttributeOptions ) {        
         // Save original options...
         this.options = a_options;
@@ -232,9 +230,6 @@ export class AnyType implements AttributeUpdatePipeline {
         // `convert` is default transform, which is always present...
         transforms.unshift( this.convert );
 
-        // Attribute-level parse transform must always go first...
-        this.parse = parse || this.parse;
-
         // Get hook from the attribute will be used first...
         if( this.get ) getHooks.unshift( this.get );
 
@@ -254,6 +249,16 @@ export class AnyType implements AttributeUpdatePipeline {
         this.transform = transforms.length ? transforms.reduce( chainTransforms ) : this.transform;
         
         this.handleChange = changeHandlers.length ? changeHandlers.reduce( chainChangeHandlers ) : this.handleChange;
+
+        // Attribute-level parse transform are attached as update hooks modifiers...
+        const { doInit, doUpdate } = this;
+        this.doInit = parse ? function( value, record : AttributesContainer, options : TransactionOptions ){
+            return doInit.call( this, options.parse && value != null ? parse.call( record, value, this.name ) : value, record, options );
+        } : doInit;
+
+        this.doUpdate = parse ? function( value, record : AttributesContainer, options : TransactionOptions, nested? : RecordTransaction[] ){
+            return doUpdate.call( this, options.parse && value != null ? parse.call( record, value, this.name ) : value, record, options, nested );
+        } : doUpdate;
     }
 
     getHook : ( value, key : string ) => any = null

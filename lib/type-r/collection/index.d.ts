@@ -56,11 +56,11 @@ export declare class Collection<R extends Record = Record> extends Transactional
     clone(options?: CloneOptions): this;
     toJSON(): Object[];
     set(elements?: ElementsArg, options?: TransactionOptions): this;
-    liveUpdates(enabled: LiveUpdatesOption): IOPromise<any>;
+    liveUpdates(enabled: LiveUpdatesOption): IOPromise<this>;
     _liveUpdates: object;
     fetch(a_options?: {
         liveUpdates?: LiveUpdatesOption;
-    } & TransactionOptions): IOPromise<any>;
+    } & TransactionOptions): IOPromise<this>;
     dispose(): void;
     reset(a_elements?: ElementsArg, options?: TransactionOptions): R[];
     add(a_elements: ElementsArg, options?: AddOptions): Record[];

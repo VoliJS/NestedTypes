@@ -63,9 +63,9 @@ export declare abstract class Transactional implements Messenger, IONode, Valida
     abstract each(iteratee: (val: any, key: string | number) => void, context?: any): any;
     map<T>(iteratee: (val: any, key: string | number) => T, context?: any): T[];
     _endpoint: IOEndpoint;
-    _ioPromise: IOPromise<any>;
-    hasPendingIO(): IOPromise<any>;
-    fetch(options?: object): IOPromise<any>;
+    _ioPromise: IOPromise<this>;
+    hasPendingIO(): IOPromise<this>;
+    fetch(options?: object): IOPromise<this>;
     getEndpoint(): IOEndpoint;
     mapObject<T>(iteratee: (val: any, key: string | number) => T, context?: any): {
         [key: string]: T;

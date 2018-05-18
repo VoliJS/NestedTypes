@@ -9,14 +9,10 @@ export * from './attrDef';
 import { AnyType } from './any';
 import { ConstructorsMixin } from './updates';
 import { IOEndpoint } from '../../io-tools';
-export interface ParseMixin {
-    _parse?: (json: any) => object;
-}
-export interface RecordAttributesMixin extends ConstructorsMixin, ParseMixin {
+export interface RecordAttributesMixin extends ConstructorsMixin {
     _attributes: AttributeDescriptors;
     _attributesArray: AnyType[];
     properties: PropertyDescriptorMap;
-    _toJSON(): any;
     _localEvents?: eventsApi.EventMap;
     _endpoints: {
         [name: string]: IOEndpoint;

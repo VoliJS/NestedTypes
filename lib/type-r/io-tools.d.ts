@@ -1,6 +1,6 @@
 export interface IONode {
     _endpoint: IOEndpoint;
-    _ioPromise: IOPromise<any>;
+    _ioPromise: IOPromise<this>;
 }
 export interface IOPromise<T> extends Promise<T> {
     abort?: () => void;

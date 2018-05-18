@@ -349,7 +349,7 @@ export class Collection< R extends Record = Record> extends Transactional implem
      * `false` cancel live updates.
      * `json => true | false` - filter updates
      */
-    liveUpdates( enabled : LiveUpdatesOption ) : IOPromise<any> {
+    liveUpdates( enabled : LiveUpdatesOption ) : IOPromise<this> {
         if( enabled ){
             this.liveUpdates( false );
 
@@ -363,7 +363,7 @@ export class Collection< R extends Record = Record> extends Transactional implem
                 removed : id => this.remove( id )
             };
 
-            return this.getEndpoint().subscribe( this._liveUpdates, this );
+            return this.getEndpoint().subscribe( this._liveUpdates, this ).then( () => this );
         }
         else{
             if( this._liveUpdates ){
@@ -375,7 +375,7 @@ export class Collection< R extends Record = Record> extends Transactional implem
 
     _liveUpdates : object
 
-    fetch( a_options : { liveUpdates? : LiveUpdatesOption } & TransactionOptions = {} ) : IOPromise<any> {
+    fetch( a_options : { liveUpdates? : LiveUpdatesOption } & TransactionOptions = {} ) : IOPromise<this> {
         const options = { parse : true, ...a_options },
             endpoint = this.getEndpoint();
 

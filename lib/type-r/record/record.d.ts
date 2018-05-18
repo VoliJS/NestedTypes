@@ -24,8 +24,8 @@ export declare class Record extends Transactional implements IORecord, Attribute
     _endpoints: {
         [name: string]: IOEndpoint;
     };
-    save(options?: object): IOPromise<any>;
-    destroy(options?: object): IOPromise<any>;
+    save(options?: object): IOPromise<this>;
+    destroy(options?: object): IOPromise<this>;
     _previousAttributes: {};
     previousAttributes(): AttributesValues;
     attributes: AttributesValues;
@@ -52,8 +52,6 @@ export declare class Record extends Transactional implements IORecord, Attribute
     each(iteratee: (value?: any, key?: string) => void, context?: any): void;
     keys(): string[];
     values(): any[];
-    _toJSON(): {};
-    _parse(data: any): any;
     defaults(values?: {}): {};
     constructor(a_values?: {}, a_options?: ConstructorOptions);
     initialize(values?: any, options?: any): void;
@@ -63,6 +61,7 @@ export declare class Record extends Transactional implements IORecord, Attribute
     get(key: string): any;
     toJSON(): Object;
     parse(data: any, options?: TransactionOptions): any;
+    _parse(data: any): any;
     deepSet(name: string, value: any, options?: any): this;
     readonly collection: any;
     dispose(): void;

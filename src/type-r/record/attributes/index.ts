@@ -10,24 +10,17 @@ export * from './attrDef'
 
 import { AnyType } from './any'
 import { ConstructorsMixin, constructorsMixin } from './updates'
-import { toAttributeOptions, ChainableAttributeSpec } from './attrDef'
+import { ChainableAttributeSpec } from './attrDef'
 import { CompiledReference } from '../../traversable'
 import { IOEndpoint } from '../../io-tools'
 
-export interface ParseMixin {
-    _parse? : ( json : any ) => object
-}
-
-export interface RecordAttributesMixin extends ConstructorsMixin, ParseMixin {
+export interface RecordAttributesMixin extends ConstructorsMixin {
     // Attributes descriptors
     _attributes : AttributeDescriptors
     _attributesArray : AnyType[]
     
     // Attribute's property descriptors
     properties : PropertyDescriptorMap
-
-    // Attributes serialization
-    _toJSON() : any
 
     // Event map for record's local events.
     _localEvents? : eventsApi.EventMap,
@@ -51,8 +44,6 @@ export default function( attributesDefinition : object, baseClassAttributes : At
         _attributes : new ConstructorsMixin.AttributesCopy( allAttributes ),
         _attributesArray : Object.keys( allAttributes ).map( key => allAttributes[ key ] ),
         properties : _.transform( <PropertyDescriptorMap>{}, myAttributes, x => x.createPropertyDescriptor() ),
-        _toJSON : createToJSON( allAttributes ),
-        ...parseMixin( allAttributes ),
         ...localEventsMixin( myAttributes ),
         _endpoints : _.transform( {}, allAttributes, attrDef => attrDef.options.endpoint )
     }            
@@ -60,39 +51,7 @@ export default function( attributesDefinition : object, baseClassAttributes : At
 
 // Create attribute from the type spec.
 export function createAttribute( spec : any, name : string ) : AnyType {
-    return AnyType.create( toAttributeOptions( spec ), name );
-}
-
-function parseMixin( attributes : AttributeDescriptors ) : ParseMixin {
-    const attrsWithParse = Object.keys( attributes ).filter( name => attributes[ name ].parse );
-
-    return attrsWithParse.length ? {
-        _parse : new Function( 'json', `
-            var _attrs = this._attributes;
-
-            ${ attrsWithParse.map( name => `                
-                json.${ name } === void 0 || ( json.${ name } = _attrs.${ name }.parse.call( this, json.${ name }, "${ name }" ) );
-            ` ).join('')}
-
-            return json;
-        ` )
-    } : {} as any;
-}
-
-function createToJSON( attributes : AttributeDescriptors ) : () => void {
-    return new Function(`
-        var json = {},
-            v = this.attributes,
-            a = this._attributes;
-
-        ${ Object.keys( attributes ).map( key => {
-            if( attributes[ key ].toJSON ){
-                return `json.${key} = a.${key}.toJSON.call( this, v.${ key }, '${key}' );`;
-            }
-        } ).join( '\n' ) }
-
-        return json;
-    `) as any;
+    return AnyType.create( ChainableAttributeSpec.from( spec ).options, name );
 }
 
 export function createSharedTypeSpec( Constructor : Function, Attribute : typeof AnyType ){

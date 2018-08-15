@@ -68,7 +68,7 @@ export class ChainableAttributeSpec {
 
     toJSON( fun ) : ChainableAttributeSpec {
         return this.metadata({
-            toJSON : typeof fun === 'function' ? fun : ( fun ? x => x && x.toJSON() : emptyFunction ) 
+            toJSON : typeof fun === 'function' ? fun : ( fun ? ( x, k, o ) => x && x.toJSON( o ) : emptyFunction ) 
         });
     }
 

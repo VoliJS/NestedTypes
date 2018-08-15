@@ -4,7 +4,7 @@ export declare type Method = 'create' | 'update' | 'patch' | 'delete' | 'read';
 export interface Restful {
     trigger(event: string, model: any, xhr: any, options: any): any;
     collection?: {
-        trigger(event: string, model, xhr, options);
+        trigger(event: string, model: any, xhr: any, options: any): any;
     };
     toJSON(options: any): {};
     _xhr: JQueryXHR;
@@ -14,9 +14,9 @@ export interface SyncOptions {
     url?: LazyValue<string>;
     data?: any;
     attrs?: {};
-    beforeSend?: (xhr) => any;
+    beforeSend?: (xhr: any) => any;
     success?: (resp: any) => void;
-    error?: (xhr?, textStatus?, errorThrown?) => void;
+    error?: (xhr?: any, textStatus?: any, errorThrown?: any) => void;
     textStatus?: string;
     errorThrown?: any;
     xhr?: any;
@@ -26,7 +26,8 @@ declare const exported: {
     $: JQueryStatic;
     errorPromise: (error: any) => JQueryDeferred<{}>;
     ajax: (options: {}) => any;
-    sync: (method: Method, model: Restful, options?: SyncOptions) => JQueryXHR;
+    sync: typeof sync;
     urlError: () => never;
 };
 export default exported;
+declare function sync(method: Method, model: Restful, options?: SyncOptions): JQueryXHR;

@@ -320,8 +320,8 @@ export class Collection< R extends Record = Record> extends Transactional implem
         return copy;
     }
 
-    toJSON() : Object[] {
-        return this.models.map( model => model.toJSON() );
+    toJSON( options? : object ) : any {
+        return this.models.map( model => model.toJSON( options ) );
     }
 
     // Apply bulk in-place object update in scope of ad-hoc transaction 

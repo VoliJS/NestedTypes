@@ -1,5 +1,5 @@
 /// <reference types="jquery" />
-declare global  {
+declare global {
     interface Window {
         Backbone: any;
     }
@@ -13,9 +13,10 @@ declare const exported: {
     View: typeof View;
     History: typeof History;
     Router: typeof Router;
-    noConflict: () => any;
+    noConflict: typeof noConflict;
 };
 export default exported;
+declare function noConflict(): any;
 export declare function View(options: any): void;
 export declare function Router(options: any): void;
 export declare function History(): void;

@@ -1,5 +1,5 @@
 import resolve from 'rollup-plugin-node-resolve';
-import uglify from 'rollup-plugin-uglify';
+import { uglify } from 'rollup-plugin-uglify';
 import sourcemaps from 'rollup-plugin-sourcemaps';
 
 export default {
@@ -8,12 +8,12 @@ export default {
     output : {
         file   : 'dist/index.js',
         format : 'umd',
-        name   : 'attributesIO'
+        name   : 'attributesIO',
+        sourcemap: true
     },
     plugins: [
         resolve(), //for support of `import X from "directory"` rather than verbose `import X from "directory/index"`
         sourcemaps(),
         uglify()
-    ],
-    sourcemap: true,
+    ]
 };

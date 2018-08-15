@@ -206,7 +206,7 @@ export abstract class Transactional implements Messenger, IONode, Validatable, T
     parse( data : any, options? : TransactionOptions ) : any { return data }
 
     // Convert object to the serializable JSON structure
-    abstract toJSON() : {}
+    abstract toJSON( options? : object ) : {}
 
     /*******************
      * Traversals and member access

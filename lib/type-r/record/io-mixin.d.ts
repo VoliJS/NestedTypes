@@ -4,7 +4,7 @@ export interface IORecord extends IONode {
     save(options?: IOOptions): IOPromise<this>;
     fetch(options?: IOOptions): IOPromise<this>;
     destroy(options?: IOOptions): IOPromise<this>;
-    toJSON(): any;
+    toJSON(options?: object): any;
     isNew(): boolean;
     id: string | number;
     set(json: object, options: object): any;

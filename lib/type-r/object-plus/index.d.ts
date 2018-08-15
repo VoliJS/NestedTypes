@@ -5,7 +5,7 @@ export * from './events';
 import * as eventsApi from './eventsource';
 export { eventsApi };
 import { MixableConstructor } from './mixins';
-declare global  {
+declare global {
     interface ObjectConstructor {
         assign<T>(dest: T, ...sources: Object[]): T;
         log: tools.Log;

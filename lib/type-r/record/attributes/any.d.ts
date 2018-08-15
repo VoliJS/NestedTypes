@@ -2,7 +2,7 @@ import { AttributesContainer, AttributeUpdatePipeline, RecordTransaction } from 
 import { tools } from '../../object-plus';
 import { TransactionOptions } from '../../transactions';
 import { IOEndpoint } from '../../io-tools';
-declare global  {
+declare global {
     interface Function {
         _attribute: typeof AnyType;
     }
@@ -42,7 +42,7 @@ export declare class AnyType implements AttributeUpdatePipeline {
     clone(value: any, record: AttributesContainer): any;
     dispose(record: AttributesContainer, value: any): void;
     validate(record: AttributesContainer, value: any, key: string): void;
-    toJSON(value: any, key: any): any;
+    toJSON(value: any, key: any, options?: object): any;
     createPropertyDescriptor(): PropertyDescriptor | void;
     value: any;
     static defaultValue: any;
@@ -55,6 +55,6 @@ export declare class AnyType implements AttributeUpdatePipeline {
     _log(level: tools.LogLevel, text: string, value: any, record: AttributesContainer): void;
     defaultValue(): any;
     constructor(name: string, a_options: AttributeOptions);
-    getHook: (value, key: string) => any;
-    get: (value, key: string) => any;
+    getHook: (value: any, key: string) => any;
+    get: (value: any, key: string) => any;
 }

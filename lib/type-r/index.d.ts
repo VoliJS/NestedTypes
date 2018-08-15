@@ -1,4 +1,4 @@
-declare global  {
+declare global {
     interface ObjectConstructor {
         setPrototypeOf(target: Object, proto: Object): any;
     }

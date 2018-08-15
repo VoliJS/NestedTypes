@@ -14,7 +14,7 @@ export declare type RestfulFetchOptions = {
 };
 export declare class RestfulEndpoint implements IOEndpoint {
     url: string;
-    fetchOptions: Partial<RestfulFetchOptions>;
+    fetchOptions?: Partial<RestfulFetchOptions>;
     constructor(url: string, fetchOptions?: Partial<RestfulFetchOptions>);
     static defaultFetchOptions: RestfulFetchOptions;
     create(json: any, options: RestfulIOOptions, record: any): Promise<any>;
@@ -31,5 +31,5 @@ export declare class RestfulEndpoint implements IOEndpoint {
     protected objectUrl(record: any, id: any, options: any): any;
     protected collectionUrl(collection: any, options: any): any;
     protected buildRequestOptions(method: string, options?: RequestInit, body?: any): RequestInit;
-    protected request(method: string, url: string, {options}: RestfulIOOptions, body?: any): Promise<any>;
+    protected request(method: string, url: string, { options }: RestfulIOOptions, body?: any): Promise<any>;
 }

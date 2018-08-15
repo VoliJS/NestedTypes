@@ -20,7 +20,7 @@ export declare class MSDateType extends DateType {
 export declare class TimestampType extends DateType {
     toJSON(value: any): any;
 }
-declare global  {
+declare global {
     interface DateConstructor {
         microsoft: ChainableAttributeSpec;
         timestamp: ChainableAttributeSpec;

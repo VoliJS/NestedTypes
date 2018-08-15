@@ -54,7 +54,7 @@ export declare class Collection<R extends Record = Record> extends Transactional
     last(): R;
     at(a_index: number): R;
     clone(options?: CloneOptions): this;
-    toJSON(): Object[];
+    toJSON(options?: object): any;
     set(elements?: ElementsArg, options?: TransactionOptions): this;
     liveUpdates(enabled: LiveUpdatesOption): IOPromise<this>;
     _liveUpdates: object;

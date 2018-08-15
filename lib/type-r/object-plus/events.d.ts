@@ -23,7 +23,7 @@ export declare abstract class Messenger implements Mixable, EventSource {
     static onExtend: (BaseClass: Function) => void;
     static define: (definition?: MessengerDefinition, statics?: object) => MixableConstructor;
     static extend: (definition?: MessengerDefinition, statics?: object) => MixableConstructor;
-    static onDefine({localEvents, _localEvents, properties}: MessengerDefinition, BaseClass?: typeof Mixable): void;
+    static onDefine({ localEvents, _localEvents, properties }: MessengerDefinition, BaseClass?: typeof Mixable): void;
     _events: HandlersByEvent;
     _listeningTo: MessengersByCid;
     cid: string;

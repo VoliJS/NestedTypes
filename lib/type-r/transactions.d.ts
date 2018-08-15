@@ -8,7 +8,7 @@ export interface TransactionalDefinition extends MessengerDefinition {
 export declare enum ItemsBehavior {
     share = 1,
     listen = 2,
-    persistent = 4,
+    persistent = 4
 }
 export declare abstract class Transactional implements Messenger, IONode, Validatable, Traversable {
     static endpoint: IOEndpoint;
@@ -19,10 +19,10 @@ export declare abstract class Transactional implements Messenger, IONode, Valida
     static onDefine(definitions: TransactionalDefinition, BaseClass: typeof Transactional): void;
     static onExtend(BaseClass: typeof Transactional): void;
     static create(a: any, b?: any): Transactional;
-    on: (events: string | CallbacksByEvents, callback, context?) => this;
-    once: (events: string | CallbacksByEvents, callback, context?) => this;
-    off: (events?: string | CallbacksByEvents, callback?, context?) => this;
-    trigger: (name: string, a?, b?, c?, d?, e?) => this;
+    on: (events: string | CallbacksByEvents, callback: any, context?: any) => this;
+    once: (events: string | CallbacksByEvents, callback: any, context?: any) => this;
+    off: (events?: string | CallbacksByEvents, callback?: any, context?: any) => this;
+    trigger: (name: string, a?: any, b?: any, c?: any, d?: any, e?: any) => this;
     stopListening: (source?: Messenger, a?: string | CallbacksByEvents, b?: Function) => this;
     listenTo: (source: Messenger, a: string | CallbacksByEvents, b?: Function) => this;
     listenToOnce: (source: Messenger, a: string | CallbacksByEvents, b?: Function) => this;
@@ -54,7 +54,7 @@ export declare abstract class Transactional implements Messenger, IONode, Valida
     assignFrom(source: Transactional | Object): this;
     abstract _createTransaction(values: any, options?: TransactionOptions): Transaction | void;
     parse(data: any, options?: TransactionOptions): any;
-    abstract toJSON(): {};
+    abstract toJSON(options?: object): {};
     abstract get(key: string): any;
     deepGet(reference: string): any;
     getOwner(): Owner;

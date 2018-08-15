@@ -6,7 +6,7 @@ export declare class ProxyEndpoint implements IOEndpoint {
     constructor(record: typeof Record);
     subscribe(events: any, target: any): Promise<any>;
     unsubscribe(events: any, target: any): void;
-    list(options: any): Promise<Object[]>;
+    list(options: any): Promise<any>;
     update(id: any, json: any, options: any): Promise<{
         _cas: any;
     }>;
@@ -15,6 +15,6 @@ export declare class ProxyEndpoint implements IOEndpoint {
         _cas: any;
         _type: any;
     }>;
-    read(id: any, options: object): Promise<Object>;
+    read(id: any, options: object): Promise<any>;
     destroy(id: string, options: object): Promise<{}>;
 }

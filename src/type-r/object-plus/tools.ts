@@ -1,71 +1,20 @@
-/**
- * Simple overridable logging stubs, writing to `console` by default.
- * Node.js users might want to redirect logging somewhere.
- * 
- * This is the singleton avaliable globally through `Object.log` or 
- * exported [[log]] variable.
- */
-
-// Logger is the function.
-export type Logger = ( level : LogLevel, error : string, props? : object ) => void;
-
-export type LogLevel = 'none' | 'error' | 'warn' | 'info' | 'debug' | 'log';
-
-const levelToNumber = {
-    none : 0, error : 1, warn : 2, info : 3, log : 4, debug : 5
-}
-
-export interface Log extends Logger {
-    level : number
-    throw : number
-    stop : number
-    logger : Logger
-}
-
-export const log : Log = <any>function( a_level : LogLevel, a_msg : string, a_props : object ){
-    let levelAsNumber = levelToNumber[ a_level ], msg, props, level;
-
-    if( levelAsNumber === void 0 && !a_props ){
-        levelAsNumber = 4;
-        msg = a_level;
-        props = a_msg;
-        level = 'log';
-    }
-    else{
-        msg = a_msg, level = a_level, props = a_props;
-    }
-
-    if( levelAsNumber <= log.level ){
-        if( levelAsNumber <= log.throw || !log.logger ){
-            const error = new Error( msg );
-            (error as any).props = props;
-            throw error;
-        }
-        else{
-            log.logger( level, msg, props );
-            
-            if( levelAsNumber <= log.stop ){
-                debugger;
-            }
+ /** Similar to underscore `_.defaults` */
+export function defaults< T >( dest : T, ...sources : Object[] ) : T
+export function defaults< T >( dest : T, source : Object ) : T {
+    for( var name in source ) {
+        if( source.hasOwnProperty( name ) && !dest.hasOwnProperty( name ) ) {
+            dest[ name ] = source[ name ];
         }
     }
-}
 
-declare var process: any;
-
-log.level = typeof process !== 'undefined' && process.env && process.env.NODE_ENV === 'production' ? 1 : 2;
-log.throw = 0;
-log.stop = 0;
-
-if( typeof console !== 'undefined' ) {
-    log.logger = function _console( level : LogLevel, error : string, props : object ){
-        const args = [ error ];
-        for( let name in props ){
-            args.push( `\n\t${name}:`, props[ name ] );
+    if( arguments.length > 2 ){
+        for( let i = 2; i < arguments.length; i++ ){
+            const other = arguments[ i ];
+            other && defaults( dest, other );
         }
-
-        console[ level ].apply( console, args );
     }
+
+    return dest;
 }
 
 /** Check if value is raw JSON */
@@ -241,34 +190,6 @@ export function assign< T >( dest : T, source : Object ) : T {
 
     return dest;
 }
-
-/** Similar to underscore `_.defaults` */
-export function defaults< T >( dest : T, ...sources : Object[] ) : T
-export function defaults< T >( dest : T, source : Object ) : T {
-    for( var name in source ) {
-        if( source.hasOwnProperty( name ) && !dest.hasOwnProperty( name ) ) {
-            dest[ name ] = source[ name ];
-        }
-    }
-
-    if( arguments.length > 2 ){
-        for( let i = 2; i < arguments.length; i++ ){
-            const other = arguments[ i ];
-            other && defaults( dest, other );
-        }
-    }
-
-    return dest;
-}
-
-// Polyfill for IE10. Should fix problems with babel and statics inheritance.
-declare global {
-    interface ObjectConstructor {
-        setPrototypeOf( target : Object, proto : Object );
-    }
-}
-
-Object.setPrototypeOf || ( Object.setPrototypeOf = defaults ); 
 
 /** Similar to underscore `_.keys` */
 export function keys( o : any ) : string[]{

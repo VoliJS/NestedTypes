@@ -1,10 +1,9 @@
-import { Messenger, CallbacksByEvents, MessengersByCid, MixinsState, MixinMergeRules, MessengerDefinition, tools, mixins, mixinRules, definitions, eventsApi, define, Subclass } from './object-plus'
-import { ValidationError, Validatable, ChildrenErrors } from './validation'
-import { Traversable, resolveReference } from './traversable'
-import { IOEndpoint, IOPromise, IONode, abortIO } from './io-tools'
+import { abortIO, IOEndpoint, IONode, IOPromise } from './io-tools';
+import { CallbacksByEvents, define, definitions, eventsApi, Messenger, MessengerDefinition, MessengersByCid, mixinRules, mixins, MixinsState, log, LogLevel, Logger } from './object-plus';
+import { resolveReference, Traversable } from './traversable';
+import { ChildrenErrors, Validatable, ValidationError } from './validation';
 
-const { assign } = tools,
-      { trigger2, trigger3, on, off } = eventsApi;
+const { trigger3, on, off } = eventsApi;
 /***
  * Abstract class implementing ownership tree, tho-phase transactions, and validation. 
  * 1. createTransaction() - apply changes to an object tree, and if there are some events to send, transaction object is created.
@@ -31,6 +30,7 @@ export enum ItemsBehavior {
 export abstract class Transactional implements Messenger, IONode, Validatable, Traversable {
     // Mixins are hard in TypeScript. We need to copy type signatures over...
     // Here goes 'Mixable' mixin.
+    static endpoint : IOEndpoint;
     static __super__ : object;
     static mixins : MixinsState;
     static define : ( definition? : TransactionalDefinition, statics? : object ) => typeof Transactional;
@@ -160,27 +160,21 @@ export abstract class Transactional implements Messenger, IONode, Validatable, T
         isRoot && transactionApi.commit( this );
     }
 
-    // Loop through the members in the scope of transaction.
-    // Transactional version of each()
-    updateEach( iteratee : ( val : any, key : string | number ) => void, options? : TransactionOptions ){
-        const isRoot = transactionApi.begin( this );
-        this.each( iteratee );
-        isRoot && transactionApi.commit( this );
-    }
-
-    // Apply bulk in-place object update in scope of ad-hoc transaction 
-    set( values : any, options? : TransactionOptions ) : this {
-        if( values ){ 
-            const transaction = this._createTransaction( values, options );
-            transaction && transaction.commit();
-        } 
-
-        return this;
-    }
-
     // Assign transactional object "by value", copying aggregated items.
     assignFrom( source : Transactional | Object ) : this {
-        return this.set( ( <any>source ).__inner_state__ || source, { merge : true } );
+        // Need to delay change events until change token willl by synced.
+        this.transaction( () =>{
+            this.set( ( <any>source ).__inner_state__ || source, { merge : true } );
+
+            // Synchronize change tokens
+            const { _changeToken } = source as any;
+    
+            if( _changeToken ){
+                this._changeToken = _changeToken;
+            }    
+        });
+
+        return this;
     }
 
     // Apply bulk object update without any notifications, and return open transaction.
@@ -188,12 +182,16 @@ export abstract class Transactional implements Messenger, IONode, Validatable, T
     // Returns null if there are no any changes.
     /** @private */  
     abstract _createTransaction( values : any, options? : TransactionOptions ) : Transaction | void
+
+    // Apply bulk in-place object update in scope of ad-hoc transaction 
+    abstract set( values : any, options? : TransactionOptions ) : this;
+
     
     // Parse function applied when 'parse' option is set for transaction.
     parse( data : any, options? : TransactionOptions ) : any { return data }
 
     // Convert object to the serializable JSON structure
-    abstract toJSON() : {}
+    abstract toJSON( options? : object ) : {}
 
     /*******************
      * Traversals and member access
@@ -230,43 +228,16 @@ export abstract class Transactional implements Messenger, IONode, Validatable, T
      */
 
     // Loop through the members. Must be efficiently implemented in container class.
-    abstract each( iteratee : ( val : any, key : string | number ) => void, context? : any )
-
-    // Map members to an array
-    map<T>( iteratee : ( val : any, key : string | number ) => T, context? : any ) : T[]{
-        const arr : T[] = [],
-              fun = context !== void 0 ? ( v, k ) => iteratee.call( context, v, k ) : iteratee;
-        
-        this.each( ( val, key ) => {
-            const result = fun( val, key );
-            if( result !== void 0 ) arr.push( result );
-        } );
-
-        return arr;
-    }
 
     _endpoint : IOEndpoint
-    _ioPromise : IOPromise<any>
+    _ioPromise : IOPromise<this>
 
-    hasPendingIO() : IOPromise<any> { return this._ioPromise; }
+    hasPendingIO() : IOPromise<this> { return this._ioPromise; }
 
-    fetch( options? : object ) : IOPromise<any> { throw new Error( "Not implemented" ); }
+    fetch( options? : object ) : IOPromise<this> { throw new Error( "Not implemented" ); }
 
     getEndpoint() : IOEndpoint {
         return getOwnerEndpoint( this ) || this._endpoint;
-    }
-
-    // Map members to an object
-    mapObject<T>( iteratee : ( val : any, key : string | number ) => T, context? : any ) : { [ key : string ] : T }{
-        const obj : { [ key : string ] : T } = {},
-            fun = context !== void 0 ? ( v, k ) => iteratee.call( context, v, k ) : iteratee;
-        
-        this.each( ( val, key ) => {
-            const result = iteratee( val, key );
-            if( result !== void 0 ) obj[ key ] = result;
-        } );
-
-        return obj;
     }
     
     /*********************************
@@ -322,7 +293,7 @@ export abstract class Transactional implements Messenger, IONode, Validatable, T
     }
 
     // Logging interface for run time errors and warnings.
-    abstract _log( level : string, text : string, value : any ) : void;
+    abstract _log( level : LogLevel, topic : string, text : string, value : any, logger? : Logger ) : void
 }
 
 export interface CloneOptions {
@@ -355,6 +326,9 @@ export interface Transaction {
 export interface TransactionOptions {
     // Invoke parsing 
     parse? : boolean
+
+    // Optional logger
+    logger? : Logger
 
     // Suppress change notifications and update triggers
     silent? : boolean

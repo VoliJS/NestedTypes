@@ -1,11 +1,10 @@
-import { Record } from '../record'
-import { Owner, Transaction, ItemsBehavior,
-        TransactionOptions, Transactional, transactionApi } from '../transactions'
+import { eventsApi, Logger } from '../object-plus';
+import { Record } from '../record';
+import { ItemsBehavior, Owner, Transaction, Transactional, transactionApi, TransactionOptions } from '../transactions';
 
-import { eventsApi, tools } from '../object-plus'
 
-const { EventMap, trigger2, trigger3, on, off } = eventsApi,
-      { commit, markAsDirty } = transactionApi,
+const { trigger2, trigger3, on, off } = eventsApi,
+      { commit } = transactionApi,
       _aquire = transactionApi.aquire, _free = transactionApi.free;
 
 /** @private */
@@ -20,7 +19,7 @@ export interface CollectionCore extends Transactional, Owner {
     _shared : number
     _aggregationError : Record[]
 
-    _log( level : string, text : string, value : any ) : void
+    _log( level : string, topic : string, text : string, value : any, logger : Logger ) : void
 }
 
 // Collection's manipulation methods elements
@@ -124,7 +123,7 @@ export function addIndex( index : IdIndex, model : Record ) : void {
     index[ model.cid ] = model;
     var id             = model.id;
     
-    if( id != null ){
+    if( id || ( id as any ) === 0 ){
         index[ id ] = model;
     }
 }
@@ -133,7 +132,7 @@ export function addIndex( index : IdIndex, model : Record ) : void {
 export function removeIndex( index : IdIndex, model : Record ) : void {
     delete index[ model.cid ];
     var id = model.id;
-    if( id != null ){
+    if( id || ( id as any ) === 0 ){
         delete index[ id ];
     }
 }
@@ -180,7 +179,7 @@ export class CollectionTransaction implements Transaction {
         }
 
         if( object._aggregationError ){
-            logAggregationError( object );
+            logAggregationError( object, _isDirty );
         }
 
         // Just trigger 'change' on collection, it must be already triggered for models during nested commits.
@@ -216,7 +215,7 @@ export class CollectionTransaction implements Transaction {
     }
 }
 
-export function logAggregationError( collection : CollectionCore ){
-    collection._log( 'error', 'added records already have an owner', collection._aggregationError );
+export function logAggregationError( collection : CollectionCore, options : TransactionOptions ){
+    collection._log( 'error', 'Type-R:InvalidOwner', 'added records already have an owner', collection._aggregationError, options.logger );
     collection._aggregationError = void 0;
 }

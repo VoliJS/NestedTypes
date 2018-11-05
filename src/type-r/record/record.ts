@@ -3,21 +3,17 @@
  * The root of all definitions. 
  */
 
-import { tools, eventsApi, Mixable, definitions, mixins,  mixinRules, define } from '../object-plus'
+import { CollectionConstructor } from '../collection';
+import { IOEndpoint, IOPromise } from '../io-tools';
+import { define, definitions, isProduction, Logger, logger, LogLevel, mixinRules, tools } from '../object-plus';
+import { CloneOptions, Owner, Transaction, Transactional, TransactionalDefinition, TransactionOptions } from '../transactions';
+import { ChildrenErrors } from '../validation';
+import { AggregatedType, AnyType } from './metatypes';
+import { IORecord, IORecordMixin } from './io-mixin';
+import { AttributesConstructor, AttributesContainer, AttributesCopyConstructor, AttributesValues, setAttribute, shouldBeAnObject, unknownAttrsWarning, UpdateRecordMixin } from './updates';
 
-import { CloneOptions, Transactional, TransactionalDefinition, Transaction, TransactionOptions, Owner } from '../transactions'
-import { ChildrenErrors } from '../validation'
 
-import { Collection } from '../collection'
-
-import { AnyType, AggregatedType, setAttribute, UpdateRecordMixin, 
-    AttributesValues, AttributesContainer,
-    ConstructorsMixin, AttributesConstructor, AttributesCopyConstructor } from './attributes'
-
-import { IORecord, IORecordMixin } from './io-mixin'
-import { IOPromise, IOEndpoint } from '../io-tools'
-
-const { assign, isEmpty, log } = tools;
+const { assign, isEmpty } = tools;
 
 /*******************************************************
  * Record core implementation
@@ -57,12 +53,14 @@ export interface RecordDefinition extends TransactionalDefinition {
     Collection : mixinRules.value,
     idAttribute : mixinRules.protoValue
 })
-export class Record extends Transactional implements IORecord, AttributesContainer {
+export class Record extends Transactional implements IORecord, AttributesContainer, Iterable<any> {
+    static _metatype = AggregatedType;
+
     // Hack
     static onDefine( definition, BaseClass ){}
 
-    static Collection : typeof Collection;
-    static DefaultCollection : typeof Collection;
+    static Collection : CollectionConstructor;
+    static DefaultCollection : CollectionConstructor;
 
     static from : ( collectionReference : any ) => any;
     
@@ -78,10 +76,10 @@ export class Record extends Transactional implements IORecord, AttributesContain
      _endpoints : { [ name : string ] : IOEndpoint }
 
      // Save record
-     save( options? : object ) : IOPromise<any> { throw new Error( 'Implemented by mixin' ); }
+     save( options? : object ) : IOPromise<this> { throw new Error( 'Implemented by mixin' ); }
 
      // Destroy record
-     destroy( options? : object ) : IOPromise<any> { throw new Error( 'Implemented by mixin' ); }
+     destroy( options? : object ) : IOPromise<this> { throw new Error( 'Implemented by mixin' ); }
 
     /***********************************
      * Core Members
@@ -107,7 +105,7 @@ export class Record extends Transactional implements IORecord, AttributesContain
             const prev = this._previousAttributes;
             changed = {};
 
-            const { _attributes, attributes } = this;
+            const { attributes } = this;
 
             for( let attr of this._attributesArray ){
                 const key = attr.name,
@@ -178,7 +176,7 @@ export class Record extends Transactional implements IORecord, AttributesContain
         const nullify = options && options.nullify;
 
         this.transaction( () =>{
-            this.forEachAttr( this.attributes, ( value, key ) => this[ key ] = nullify ? null : void 0 );
+            this.forEach( ( value, key ) => this[ key ] = nullify ? null : void 0 );
         }, options );
 
         return this;
@@ -201,8 +199,8 @@ export class Record extends Transactional implements IORecord, AttributesContain
     idAttribute : string;
 
     // Fixed 'id' property pointing to id attribute
-    get id() : string | number { return this.attributes[ this.idAttribute ]; }
-    set id( x : string | number ){ setAttribute( this, this.idAttribute, x ); }
+    get id() : string { return this.attributes[ this.idAttribute ]; }
+    set id( x : string ){ setAttribute( this, this.idAttribute, x ); }
 
     /***********************************
      * Dynamically compiled stuff
@@ -215,61 +213,6 @@ export class Record extends Transactional implements IORecord, AttributesContain
     // Attributes object copy constructor
     Attributes : AttributesConstructor
     AttributesCopy : AttributesCopyConstructor
-
-    // forEach function for traversing through attributes, with protective default implementation
-    // Overriden by dynamically compiled loop unrolled function in define.ts
-    forEachAttr( attrs : {}, iteratee : ( value : any, key? : string, spec? : AnyType ) => void ) : void {
-        const { _attributes } = this;
-        let unknown : string[];
-
-        for( let name in attrs ){
-            const spec = _attributes[ name ];
-
-            if( spec ){
-                iteratee( attrs[ name ], name, spec );
-            }
-            else{
-                unknown || ( unknown = [] );
-                unknown.push( `'${ name }'` );
-            }
-        }
-
-        if( unknown ){
-            this._log( 'warn', `attributes ${ unknown.join(', ')} are not defined`,{
-                attributes : attrs
-            } );
-        }
-    }
-
-    each( iteratee : ( value? : any, key? : string ) => void, context? : any ){
-        const fun = context !== void 0 ? ( v, k ) => iteratee.call( context, v, k ) : iteratee,
-            { attributes } = this;
-
-        for( const key in this.attributes ){
-            const value = attributes[ key ];
-            if( value !== void 0 ) fun( value, key );
-        }
-    }
-
-    // Get array of attribute keys (Record) or record ids (Collection) 
-    keys() : string[] {
-        const keys : string[] = [];
-
-        this.each( ( value, key ) => value === void 0 || keys.push( key ) );
-
-        return keys;
-    }
-
-    // Get array of attribute values (Record) or records (Collection)
-    values() : any[] {
-        return this.map( value => value );
-    }
-
-    // Attributes-level serialization
-    _toJSON(){ return {}; }
-
-    // Attributes-level parse
-    _parse( data ){ return data; }
 
     // Create record default values, optionally augmenting given values.
     defaults( values = {} ){
@@ -297,7 +240,7 @@ export class Record extends Transactional implements IORecord, AttributesContain
         const options = a_options || {},
               values = ( options.parse ? this.parse( a_values, options ) :  a_values ) || {};
 
-        if( log.level > 1 ) typeCheck( this, values );
+        isProduction || typeCheck( this, values, options );
 
         this._previousAttributes = this.attributes = new this.Attributes( this, values, options );
 
@@ -318,21 +261,21 @@ export class Record extends Transactional implements IORecord, AttributesContain
         return copy;
     }
 
-    // Deprecated, every clone is the deep one now.
-    deepClone() : this { return this.clone() };
-
     // Validate attributes.
     _validateNested( errors : ChildrenErrors ) : number {
         var length    = 0;
 
-        this.forEachAttr( this.attributes, ( value, name, attribute ) => {
-            const error = attribute.validate( this, value, name );
+        const { attributes } = this;
+
+        for( let attribute of this._attributesArray ){
+            const { name } = attribute,
+                error = attribute.validate( this, attributes[ name ], name );
 
             if( error ){
                 errors[ name ] = error;
                 length++;
             }
-        } );
+        }
 
         return length;
     }
@@ -342,39 +285,50 @@ export class Record extends Transactional implements IORecord, AttributesContain
         return this[ key ];
     }
 
+    // Apply bulk in-place object update in scope of ad-hoc transaction 
+    set( values : any, options? : TransactionOptions ) : this {
+        if( values ){ 
+            const transaction = this._createTransaction( values, options );
+            transaction && transaction.commit();
+        }
+
+        return this;
+    }
+
     /**
      * Serialization control
      */
 
     // Default record-level serializer, to be overriden by subclasses 
-    toJSON() : Object {
-        const json = {};
+    toJSON( options? : object ) : any {
+        const json = {},
+            { attributes } = this;
 
-        this.forEachAttr( this.attributes, ( value, key : string, { toJSON } ) =>{
-            // If attribute serialization is not disabled, and its value is not undefined...
+        for( let attribute of this._attributesArray ){
+            const { name } = attribute,
+                value = attributes[ name ];
+
             if( value !== void 0 ){
                 // ...serialize it according to its spec.
-                const asJson = toJSON.call( this, value, key );
+                const asJson = attribute.toJSON.call( this, value, name, options );
 
                 // ...skipping undefined values. Such an attributes are excluded.
-                if( asJson !== void 0 ) json[ key ] = asJson; 
+                if( asJson !== void 0 ) json[ name ] = asJson; 
             }
-        });
+        }
 
         return json;
     }
     
     // Default record-level parser, to be overriden by the subclasses.
     parse( data, options? : TransactionOptions ){
-        // Call dynamically compiled loop-unrolled attribute-level parse function.
-        return this._parse( data );
+        return data;
     }
 
     /**
      * Transactional control
      */
-
-    deepSet( name : string, value : any, options? ){
+    deepSet( name : string, value : any, options? : any ){
         // Operation might involve series of nested object updates, thus it's wrapped in transaction.
         this.transaction( () => {
             const path  = name.split( '.' ),
@@ -431,19 +385,21 @@ export class Record extends Transactional implements IORecord, AttributesContain
     // Dispose object and all childrens
     dispose(){
         if( this._disposed ) return;
-        
-        this.forEachAttr( this.attributes, ( value, key, attribute ) => {
-            attribute.dispose( this, value );
-        });
 
+        const { attributes } = this;
+
+        for( let attr of this._attributesArray ){
+            attr.dispose( this, attributes[ attr.name ] );
+        }
+        
         super.dispose();
     }
 
-    _log( level : tools.LogLevel, text : string, props : object ) : void {
-        tools.log( level, '[Record] ' + text, {
+    _log( level : LogLevel, topic: string, text : string, props : object, a_logger? : Logger ) : void {
+        ( a_logger || logger ).trigger( level, topic, text, {
+            ...props,
             'Record' : this,
-            'Attributes definition:' : this._attributes,
-            ...props
+            'Attributes definition:' : this._attributes
         });
     }
 
@@ -456,6 +412,38 @@ export class Record extends Transactional implements IORecord, AttributesContain
     // Simulate attribute change 
     forceAttributeChange : ( key : string, options : TransactionOptions ) => void
     _onChildrenChange : ( child : Transactional, options : TransactionOptions ) => void
+
+
+    /**
+     * Map methods
+     */
+
+    forEach( iteratee : ( value? : any, key? : string ) => void, context? : any ){
+        const fun = context !== void 0 ? ( v, k ) => iteratee.call( context, v, k ) : iteratee,
+            { attributes } = this;
+
+        for( const key in this.attributes ){
+            const value = attributes[ key ];
+            if( value !== void 0 ) fun( value, key );
+        }
+    }
+
+    [ Symbol.iterator ](){
+        return new RecordEntriesIterator( this );
+    }
+
+    entries(){
+        return new RecordEntriesIterator( this );
+    }
+
+    // Get array of attribute keys (Record) or record ids (Collection) 
+    keys() : string[] {
+        const keys : string[] = [];
+
+        this.forEach( ( value, key ) => value === void 0 || keys.push( key ) );
+
+        return keys;
+    }
 };
 
 assign( Record.prototype, UpdateRecordMixin, IORecordMixin );
@@ -465,7 +453,7 @@ assign( Record.prototype, UpdateRecordMixin, IORecordMixin );
  */
 
 class BaseRecordAttributes {
-    id : string | number
+    id : string
 
     constructor( record : Record, x : AttributesValues, options : TransactionOptions ) {
         this.id = x.id;
@@ -475,7 +463,7 @@ class BaseRecordAttributes {
 Record.prototype.Attributes = BaseRecordAttributes;
 
 class BaseRecordAttributesCopy {
-    id : string | number
+    id : string
 
     constructor( x : AttributesValues ) {
         this.id = x.id;
@@ -487,12 +475,9 @@ Record.prototype.AttributesCopy = BaseRecordAttributesCopy;
 const IdAttribute = AnyType.create({ value : void 0 }, 'id' );
 Record.prototype._attributes = { id : IdAttribute };
 Record.prototype._attributesArray = [ IdAttribute ];
-Record._attribute = AggregatedType;
 
-import { shouldBeAnObject } from './attributes'
-
-function typeCheck( record : Record, values : object ){
-    if( shouldBeAnObject( record, values ) ){
+function typeCheck( record : Record, values : object, options ){
+    if( shouldBeAnObject( record, values, options ) ){
         const { _attributes } = record;
         let unknown : string[];
 
@@ -504,7 +489,23 @@ function typeCheck( record : Record, values : object ){
         }
 
         if( unknown ){
-            record._log( 'warn', `undefined attributes ${ unknown.join(', ')} are ignored.`, { values } );
+            unknownAttrsWarning( record, unknown, { values }, options );
         }
+    }
+}
+
+export class RecordEntriesIterator implements Iterator<[string, any]> {
+    private idx = 0;
+    
+    constructor( private readonly record : Record){}
+
+    next() : IteratorResult<[string, any]> {
+        const { record } = this,
+            metatype = record._attributesArray[ this.idx++ ];
+
+        return {
+            done : !metatype,
+            value : metatype ? [ metatype.name, record[ metatype.name ] ] : void 0
+        };
     }
 }

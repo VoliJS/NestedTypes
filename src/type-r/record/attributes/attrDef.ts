@@ -47,6 +47,8 @@ export class ChainableAttributeSpec {
         return definitionDecorator( 'attributes', this );
     }
 
+    get as(){ return this.asProp; }
+
     get isRequired() : ChainableAttributeSpec {
         return this.metadata({ isRequired : true }); 
     }
@@ -66,7 +68,7 @@ export class ChainableAttributeSpec {
 
     toJSON( fun ) : ChainableAttributeSpec {
         return this.metadata({
-            toJSON : typeof fun === 'function' ? fun : ( fun ? x => x && x.toJSON() : emptyFunction ) 
+            toJSON : typeof fun === 'function' ? fun : ( fun ? ( x, k, o ) => x && x.toJSON( o ) : emptyFunction ) 
         });
     }
 
@@ -126,9 +128,43 @@ export class ChainableAttributeSpec {
     value( x ) : ChainableAttributeSpec {
         return this.metadata({ value : x, hasCustomDefault : true });
     }
+
+    static from( spec : any ) : ChainableAttributeSpec {
+        let attrSpec : ChainableAttributeSpec;
+
+        if( typeof spec === 'function' ) {
+            attrSpec = spec.has;
+        }
+        else if( spec && spec instanceof ChainableAttributeSpec ) {
+            attrSpec = spec;
+        }
+        else{
+            // Infer type from value.
+            const type = inferType( spec );
+    
+            // Transactional types inferred from values must have shared type. 
+            if( type && type.prototype instanceof Transactional ){
+                attrSpec = (<any>type).shared.value( spec );
+            }
+            // All others will be created in regular way.
+            else{
+                attrSpec = new ChainableAttributeSpec({ type : type, value : spec, hasCustomDefault : true });
+            }
+        }
+    
+        return attrSpec;
+    }
 }
 
 function emptyFunction(){}
+
+export function type( this : void, spec : ChainableAttributeSpec | Function ) : ChainableAttributeSpec {
+    return spec instanceof ChainableAttributeSpec ? spec : new ChainableAttributeSpec( {
+        type : spec,
+        value : spec._attribute.defaultValue,
+        hasCustomDefault : spec._attribute.defaultValue !== void 0
+    } );;
+}
 
 declare global {
     interface Function{
@@ -155,41 +191,11 @@ Object.defineProperty( Function.prototype, 'asProp', {
 Object.defineProperty( Function.prototype, 'has', {
     get() {
         // workaround for sinon.js and other libraries overriding 'has'
-        return this._has || new ChainableAttributeSpec( {
-            type : this,
-            value : this._attribute.defaultValue,
-            hasCustomDefault : this._attribute.defaultValue !== void 0
-        } );
+        return this._has || type( this );
     },
 
     set( value ) { this._has = value; }
 } );
-
-export function toAttributeOptions( spec : any ) : AttributeOptions {
-    let attrSpec : ChainableAttributeSpec;
-
-    if( typeof spec === 'function' ) {
-        attrSpec = spec.has;
-    }
-    else if( spec && spec instanceof ChainableAttributeSpec ) {
-        attrSpec = spec;
-    }
-    else{
-        // Infer type from value.
-        const type = inferType( spec );
-
-        // Transactional types inferred from values must have shared type. 
-        if( type && type.prototype instanceof Transactional ){
-            attrSpec = (<any>type).shared.value( spec );
-        }
-        // All others will be created in regular way.
-        else{
-            attrSpec = new ChainableAttributeSpec({ type : type, value : spec, hasCustomDefault : true });
-        }
-    }
- 
-    return attrSpec.options;
-}
 
 function inferType( value : {} ) : Function {
     switch( typeof value ) {

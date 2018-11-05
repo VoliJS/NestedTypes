@@ -10,4 +10,4 @@ export declare class CompiledReference {
     local: boolean;
     constructor(reference: string, splitTail?: boolean);
 }
-export declare function resolveReference(root: Traversable, reference: string, action: (object, key: string) => any): any;
+export declare function resolveReference(root: Traversable, reference: string, action: (object: any, key: string) => any): any;

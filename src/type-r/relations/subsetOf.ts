@@ -1,11 +1,8 @@
-import { Collection, CollectionOptions } from '../collection'
-import { tools, eventsApi, define } from '../object-plus'
-import { Record, AggregatedType } from '../record'
-import { parseReference, CollectionReference } from './commons'
-import { ChainableAttributeSpec } from '../record'
-import { Transactional, ItemsBehavior, TransactionOptions, transactionApi } from '../transactions'
-
-const { fastDefaults } = tools;
+import { Collection } from '../collection';
+import { define, tools } from '../object-plus';
+import { AggregatedType, ChainableAttributeSpec, Record } from '../record';
+import { ItemsBehavior, transactionApi } from '../transactions';
+import { CollectionReference, parseReference } from './commons';
 
 type RecordsIds = ( string | number )[];
 
@@ -24,6 +21,10 @@ Collection.subsetOf = function subsetOf( masterCollection : CollectionReference 
     );
 };
 
+export function subsetOf( path : string, T = Collection ){
+    return T.subsetOf( path );
+}
+
 const subsetOfBehavior = ItemsBehavior.share | ItemsBehavior.persistent;
 
 function defineSubsetCollection( CollectionConstructor : typeof Collection ) {
@@ -31,7 +32,7 @@ function defineSubsetCollection( CollectionConstructor : typeof Collection ) {
         refs : any[];
         resolvedWith : Collection = null;
 
-        _attribute : AggregatedType
+        _metatype : AggregatedType
 
         get __inner_state__(){ return this.refs || this.models; }
 
@@ -41,7 +42,7 @@ function defineSubsetCollection( CollectionConstructor : typeof Collection ) {
         }
 
         // Remove should work fine as it already accepts ids. Add won't...
-        add( a_elements, options? ){
+        add( a_elements, options = {} ){
             const { resolvedWith } = this,
                     toAdd = toArray( a_elements );
             
@@ -65,7 +66,7 @@ function defineSubsetCollection( CollectionConstructor : typeof Collection ) {
             }
         }
 
-        reset( a_elements?, options? ){
+        reset( a_elements?, options = {} ){
             const { resolvedWith } = this,
                 elements = toArray( a_elements );
     
@@ -73,7 +74,7 @@ function defineSubsetCollection( CollectionConstructor : typeof Collection ) {
                 // Collection is resolved, so parse ids and forward the call to set.
                 super.reset( resolveRefs( resolvedWith, elements ), options ) :
                 // Collection is not resolved yet. So, we prepare the delayed computation.
-                delaySet( this, elements, options ) || [];
+                delaySet( this, elements, options ) as any || [];
         }
 
         _createTransaction( a_elements, options? ){
@@ -97,6 +98,10 @@ function defineSubsetCollection( CollectionConstructor : typeof Collection ) {
         // Subset is always valid.
         _validateNested(){ return 0; }
 
+        get length() : number {
+            return this.models.length || ( this.refs ? this.refs.length : 0 );
+        }
+
         // Must be shallow copied on clone.
         clone( owner? ){
             var Ctor = (<any>this).constructor,
@@ -106,6 +111,7 @@ function defineSubsetCollection( CollectionConstructor : typeof Collection ) {
                 });
 
             if( this.resolvedWith ){
+                // TODO: bug here. 
                 copy.resolvedWith = this.resolvedWith;
                 copy.refs = null;
                 copy.reset( this.models, { silent : true } );

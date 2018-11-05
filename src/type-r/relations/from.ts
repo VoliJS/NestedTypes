@@ -1,9 +1,6 @@
-import { AnyType, AttributeOptions } from '../record'
-import { parseReference, CollectionReference } from './commons'
-import { Collection } from '../collection'
-import { Record } from '../record'
+import { AnyType, ChainableAttributeSpec, Record } from '../record';
+import { CollectionReference, parseReference } from './commons';
 
-import { ChainableAttributeSpec } from '../record'
 
 /********
  * Reference to model by id.
@@ -41,12 +38,16 @@ class RecordRefType extends AnyType {
     validate( model, value, name ){}
 }
 
+export function from( path : string, T = Record ){
+    return T.from( path );
+}
+
 Record.from = function from( masterCollection : CollectionReference ) : ChainableAttributeSpec {
     const getMasterCollection = parseReference( masterCollection );
 
     const typeSpec = new ChainableAttributeSpec({
         value : null,
-        _attribute : RecordRefType
+        _metatype : RecordRefType
     });
     
     return typeSpec

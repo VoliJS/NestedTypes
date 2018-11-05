@@ -1,6 +1,6 @@
 export interface IONode {
     _endpoint : IOEndpoint
-    _ioPromise : IOPromise< any >
+    _ioPromise : IOPromise< this >
 }
 
 export interface IOPromise<T> extends Promise<T> {
@@ -89,9 +89,8 @@ export function startIO( self : IONode, promise : IOPromise<any>, options : IOOp
         } )  
         .catch( err => {
             self._ioPromise = null;
-
-            console.error( err );
             
+            // Overlaps with a new `error` event.
             triggerAndBubble( self, 'error', self, err, options );
             
             throw err;

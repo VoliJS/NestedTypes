@@ -1,16 +1,16 @@
-import { define, tools, eventsApi, EventMap, definitions, mixinRules, EventsDefinition, Mixable } from '../object-plus'
-import { ItemsBehavior, transactionApi, Transactional, CloneOptions, Transaction, TransactionOptions, TransactionalDefinition, Owner } from '../transactions'
-import { Record, SharedType, AggregatedType, createSharedTypeSpec } from '../record'
+import { IOPromise, startIO } from '../io-tools';
+import { define, definitions, EventMap, eventsApi, EventsDefinition, Logger, logger, LogLevel, Mixable, MixableConstructor, mixinRules, tools } from '../object-plus';
+import { AggregatedType, ChainableAttributeSpec, createSharedTypeSpec, Record, SharedType } from '../record';
+import { CloneOptions, ItemsBehavior, Transactional, TransactionalDefinition, transactionApi, TransactionOptions } from '../transactions';
+import { AddOptions, addTransaction } from './add';
+import { CollectionCore, CollectionTransaction, Elements, free, sortElements, updateIndex } from './commons';
+import { removeMany, removeOne } from './remove';
+import { emptySetTransaction, setTransaction } from './set';
 
-import { IdIndex, free, sortElements, dispose, Elements, CollectionCore, addIndex, removeIndex, updateIndex, Comparator, CollectionTransaction } from './commons'
-import { addTransaction, AddOptions } from './add'
-import { setTransaction, emptySetTransaction } from './set'
-import { removeOne, removeMany } from './remove'
-import { IOPromise, startIO } from '../io-tools'
 
-const { trigger2, on, off } = eventsApi,
+const { trigger2 } = eventsApi,
     { begin, commit, markAsDirty } = transactionApi,
-    { omit, log, assign, defaults, assignToClassProto } = tools;
+    { assign, defaults } = tools;
 
 let _count = 0;
 
@@ -21,7 +21,7 @@ export interface CollectionOptions extends TransactionOptions {
     model? : typeof Record
 }
 
-export type Predicate<R> = ( val : R, key : number ) => boolean | object;
+export type Predicate<R> = ( ( val : R, key? : number ) => boolean ) | Partial<R>;
 
 export interface CollectionDefinition extends TransactionalDefinition {
     model? : typeof Record,
@@ -35,6 +35,14 @@ class CollectionRefsType extends SharedType {
     static defaultValue = [];
 }
 
+export interface CollectionConstructor<R extends Record = Record > extends MixableConstructor {
+    new ( records? : Partial<R> | Partial<R>[], options?: CollectionOptions ) : Collection<R>
+    prototype : Collection<R>
+    Refs : CollectionConstructor<R>
+    subsetOf( C : Collection<R> | string | ( () => Collection<R> ) ) : ChainableAttributeSpec
+};
+
+
 @define({
     // Default client id prefix 
     cidPrefix : 'c',
@@ -47,7 +55,7 @@ class CollectionRefsType extends SharedType {
     model : mixinRules.protoValue,
     itemEvents : mixinRules.merge
 })
-export class Collection< R extends Record = Record> extends Transactional implements CollectionCore {
+export class Collection< R extends Record = Record> extends Transactional implements CollectionCore, Iterable<R> {
     _shared : number
     _aggregationError : R[]
 
@@ -55,11 +63,11 @@ export class Collection< R extends Record = Record> extends Transactional implem
     static Refs : typeof Collection
     static _SubsetOf : typeof Collection
     
-    createSubset( models : ElementsArg, options ){
-        const SubsetOf = (<any>this.constructor).subsetOf( this ).options.type,
+    createSubset( models : ElementsArg<R>, options ) : Collection<R>{
+        const SubsetOf = (this.constructor as CollectionConstructor<R>).subsetOf( this ).options.type as CollectionConstructor<R>,
             subset   = new SubsetOf( models, options );
             
-        subset.resolve( this );
+        ( subset as any ).resolve( this );
         return subset;
     }
 
@@ -75,7 +83,7 @@ export class Collection< R extends Record = Record> extends Transactional implem
         Mixable.mixins.populate( RefsCollection );
         
         RefsCollection.prototype = this.prototype;
-        RefsCollection._attribute = CollectionRefsType;
+        RefsCollection._metatype = CollectionRefsType;
 
         this.Refs = this.Subset = <any>RefsCollection;
 
@@ -90,7 +98,7 @@ export class Collection< R extends Record = Record> extends Transactional implem
             this.prototype._itemEvents = eventsMap;
         }
 
-        if( definition.comparator ) this.prototype.comparator = definition.comparator;
+        if( definition.comparator !== void 0 ) this.prototype.comparator = definition.comparator;
 
         Transactional.onDefine.call( this, definition );
     }
@@ -112,7 +120,6 @@ export class Collection< R extends Record = Record> extends Transactional implem
     _byId : { [ id : string ] : R }
 
     set comparator( x : GenericComparator ){
-        let compare;
 
         switch( typeof x ){
             case 'string' :
@@ -170,75 +177,28 @@ export class Collection< R extends Record = Record> extends Transactional implem
         isRoot && commit( this );
     }
 
-    get( objOrId : string | R | Object ) : R {
+    get( objOrId : string | { id? : string, cid? : string } ) : R {
         if( objOrId == null ) return;
 
         if( typeof objOrId === 'object' ){
             const id = objOrId[ this.idAttribute ];
-            return ( id !== void 0 && this._byId[ id ] ) || this._byId[ (<R>objOrId).cid ];
+            return ( id !== void 0 && this._byId[ id ] ) || this._byId[ objOrId.cid ];
         }
         else{
             return this._byId[ objOrId ];
         }        
     }
 
-    each( iteratee : ( val : R, key : number ) => void, context? : any ){
-        const fun = bindContext( iteratee, context ),
-            { models } = this;
-
-        for( let i = 0; i < models.length; i++ ){
-            fun( models[ i ], i ); 
-        }
+    each( iteratee : ( val : R, key? : number ) => void, context? : any ) : void {
+        this.models.forEach( iteratee, context );
     }
 
-    every( iteratee : Predicate<R>, context? : any ) : boolean {
-        const fun = toPredicateFunction( iteratee, context ),
-            { models } = this;
-
-        for( let i = 0; i < models.length; i++ ){
-            if( !fun( models[ i ], i ) ) return false;
-        }
-
-        return true;
-    }
-
-    filter( iteratee : Predicate<R>, context? : any ) : R[] {
-        const fun = toPredicateFunction( iteratee, context ),
-            { models } = this;
-
-        return this.map( ( x, i ) => fun( x, i ) ? x : void 0 );
-    }
-
-    find( iteratee : Predicate<R>, context? : any ) : R {
-        const fun = toPredicateFunction( iteratee, context ),
-        { models } = this;
-
-        for( let i = 0; i < models.length; i++ ){
-            if( fun( models[ i ], i ) ) return models[ i ];
-        }
-
-        return null;
-    }
-
-    some( iteratee : Predicate<R>, context? : any ) : boolean {
-        return Boolean( this.find( iteratee, context ) );
-    }
-
-    map< T >( iteratee : ( val : R, key : number ) => T, context? : any ) : T[]{
-        const fun = bindContext( iteratee, context ),
-            { models } = this,
-            mapped = Array( models.length );
-
-        let j = 0;
-
-        for( let i = 0; i < models.length; i++ ){
-            const x = fun( models[ i ], i );
-            x === void 0 || ( mapped[ j++ ] = x ); 
-        }
-
-        mapped.length = j;
-
-        return mapped;
+    // Loop through the members in the scope of transaction.
+    // Transactional version of each()
+    updateEach( iteratee : ( val : R, key? : number ) => void ){
+        const isRoot = transactionApi.begin( this );
+        this.models.forEach( iteratee );
+        isRoot && transactionApi.commit( this );
     }
 
     _validateNested( errors : {} ) : number {
@@ -263,7 +223,7 @@ export class Collection< R extends Record = Record> extends Transactional implem
     // idAttribute extracted from the model type.
     idAttribute : string
 
-    constructor( records? : ( R | {} )[], options : CollectionOptions = {}, shared? : number ){
+    constructor( records? : ElementsArg<R>, options : CollectionOptions = {}, shared? : number ){
         super( _count++ );
         this.models = [];
         this._byId = {};
@@ -298,7 +258,6 @@ export class Collection< R extends Record = Record> extends Transactional implem
 
     initialize(){}
 
-    get length() : number { return this.models.length; }
     first() : R { return this.models[ 0 ]; }
     last() : R { return this.models[ this.models.length - 1 ]; }
     at( a_index : number ) : R {
@@ -316,14 +275,14 @@ export class Collection< R extends Record = Record> extends Transactional implem
         return copy;
     }
 
-    toJSON() : Object[] {
-        return this.models.map( model => model.toJSON() );
+    toJSON( options? : object ) : any {
+        return this.models.map( model => model.toJSON( options ) );
     }
 
     // Apply bulk in-place object update in scope of ad-hoc transaction 
-    set( elements : ElementsArg = [], options : TransactionOptions = {} ) : this {
+    set( elements : ElementsArg<R> = [], options : TransactionOptions = {} ) : this {
         if( (<any>options).add !== void 0 ){
-            this._log( 'warn', "Collection.set doesn't support 'add' option, behaving as if options.add === true.", options );
+            this._log( 'warn', "Type-R:InvalidOption", "Collection.set doesn't support 'add' option, behaving as if options.add === true.", options );
         }
 
         // Handle reset option here - no way it will be populated from the top as nested transaction.
@@ -345,7 +304,7 @@ export class Collection< R extends Record = Record> extends Transactional implem
      * `false` cancel live updates.
      * `json => true | false` - filter updates
      */
-    liveUpdates( enabled : LiveUpdatesOption ) : IOPromise<any> {
+    liveUpdates( enabled : LiveUpdatesOption ) : IOPromise<this> {
         if( enabled ){
             this.liveUpdates( false );
 
@@ -359,19 +318,21 @@ export class Collection< R extends Record = Record> extends Transactional implem
                 removed : id => this.remove( id )
             };
 
-            return this.getEndpoint().subscribe( this._liveUpdates, this );
+            return this.getEndpoint().subscribe( this._liveUpdates, this ).then( () => this );
         }
         else{
             if( this._liveUpdates ){
                 this.getEndpoint().unsubscribe( this._liveUpdates, this );
                 this._liveUpdates = null;
             }
+
+            // TODO: Return the resolved promise.
         }
     }
 
     _liveUpdates : object
 
-    fetch( a_options : { liveUpdates? : LiveUpdatesOption } & TransactionOptions = {} ) : IOPromise<any> {
+    fetch( a_options : { liveUpdates? : LiveUpdatesOption } & TransactionOptions = {} ) : IOPromise<this> {
         const options = { parse : true, ...a_options },
             endpoint = this.getEndpoint();
 
@@ -408,7 +369,7 @@ export class Collection< R extends Record = Record> extends Transactional implem
         super.dispose();
     }
 
-    reset( a_elements? : ElementsArg, options : TransactionOptions = {} ) : R[] {
+    reset( a_elements? : ElementsArg<R>, options : TransactionOptions = {} ) : R[] {
         const isRoot = begin( this ),
               previousModels = this.models;
 
@@ -437,7 +398,7 @@ export class Collection< R extends Record = Record> extends Transactional implem
     }
 
     // Add elements to collection.
-    add( a_elements : ElementsArg , options : AddOptions = {} ){
+    add( a_elements : ElementsArg<R> , options : AddOptions = {} ){
         const elements = toElements( this, a_elements, options ),
               transaction = this.models.length ?
                     addTransaction( this, elements, options ) :
@@ -462,7 +423,7 @@ export class Collection< R extends Record = Record> extends Transactional implem
 
     // Apply bulk object update without any notifications, and return open transaction.
     // Used internally to implement two-phase commit.   
-    _createTransaction( a_elements : ElementsArg, options : TransactionOptions = {} ) : CollectionTransaction | void {
+    _createTransaction( a_elements : ElementsArg<R>, options : TransactionOptions = {} ) : CollectionTransaction | void {
         const elements = toElements( this, a_elements, options );
 
         if( this.models.length ){
@@ -475,13 +436,13 @@ export class Collection< R extends Record = Record> extends Transactional implem
         }
     }
 
-    static _attribute = AggregatedType;
+    static _metatype = AggregatedType;
 
     /***********************************
      * Collection manipulation methods
      */
 
-    pluck( key : keyof R ) : any[] {
+    pluck<K extends keyof R>( key : K ) : R[K][] {
         return this.models.map( model => model[ key ] );
     }
 
@@ -499,46 +460,11 @@ export class Collection< R extends Record = Record> extends Transactional implem
         return this;
     }
 
-    // Add a model to the end of the collection.
-    push(model : ElementsArg, options : CollectionOptions ) {
-      return this.add(model, assign({at: this.length}, options));
-    }
-
-    // Remove a model from the end of the collection.
-    pop( options : CollectionOptions ) : R {
-      var model = this.at(this.length - 1);
-      this.remove(model, { unset : true, ...options });
-      return model;
-    }
-
     // Remove and return given model.
-    // TODO: do not dispose the model for aggregated collection.
     unset( modelOrId : R | string, options? ) : R {
         const value = this.get( modelOrId );
         this.remove( modelOrId, { unset : true, ...options } );
         return value;
-    }
-
-    // Add a model to the beginning of the collection.
-    unshift(model : ElementsArg, options : CollectionOptions ) {
-      return this.add(model, assign({at: 0}, options));
-    }
-
-    // Remove a model from the beginning of the collection.
-    shift( options? : CollectionOptions ) : R {
-      var model = this.at(0);
-      this.remove( model, { unset : true, ...options } );
-      return model;
-    }
-
-    // Slice out a sub-array of models from the collection.
-    slice() : R[] {
-      return slice.apply(this.models, arguments);
-    }
-
-    indexOf( modelOrId : any ) : number {
-        const record = this.get( modelOrId );
-        return this.models.indexOf( record );
     }
 
     modelId( attrs : {} ) : any {
@@ -562,8 +488,8 @@ export class Collection< R extends Record = Record> extends Transactional implem
         return next;
     }
 
-    _log( level : tools.LogLevel, text : string, value ) : void {
-        tools.log( level, `[Collection Update] ${ this.model.prototype.getClassName() }.${ this.getClassName() }: ` + text, {
+    _log( level : LogLevel, topic : string, text : string, value : object, a_logger? : Logger ) : void {
+        ( a_logger || logger ).trigger( level, topic, `${ this.model.prototype.getClassName() }.${ this.getClassName() }: ` + text, {
             Argument : value,
             'Attributes spec' : this.model.prototype._attributes
         });
@@ -572,39 +498,124 @@ export class Collection< R extends Record = Record> extends Transactional implem
     getClassName() : string {
         return super.getClassName() || 'Collection';
     }
+
+    /***********************************
+     * Proxied Array methods
+     */
+
+    get length() : number { return this.models.length; }
+
+    // Add a model to the end of the collection.
+    push(model : ElementsArg<R>, options? : CollectionOptions ) {
+        return this.add(model, assign({at: this.length}, options));
+    }
+
+    // Remove a model from the end of the collection.
+    pop( options? : CollectionOptions ) : R {
+        var model = this.at(this.length - 1);
+        this.remove(model, { unset : true, ...options });
+        return model;
+    }
+
+    // Add a model to the beginning of the collection.
+    unshift(model : ElementsArg<R>, options? : CollectionOptions ) {
+        return this.add(model, assign({at: 0}, options));
+    }
+  
+    // Remove a model from the beginning of the collection.
+    shift( options? : CollectionOptions ) : R {
+        const model = this.at(0);
+        this.remove( model, { unset : true, ...options } );
+        return model;
+    }
+
+    // Slice out a sub-array of models from the collection.
+    slice( begin? : number, end? : number ) : R[] {
+        return this.models.slice( begin, end );
+    }
+  
+    indexOf( modelOrId : string | Partial<R> ) : number {
+        return this.models.indexOf( this.get( modelOrId ) );
+    }
+
+    filter( iteratee : Predicate<R>, context? : any ) : R[] {
+        return this.models.filter( toPredicateFunction( iteratee ), context );
+    }
+
+    find( iteratee : Predicate<R>, context? : any ) : R {
+        return this.models.find( toPredicateFunction( iteratee ), context );
+    }
+
+    some( iteratee : Predicate<R>, context? : any ) : boolean {
+        return this.models.some( toPredicateFunction( iteratee ), context );
+    }
+
+    forEach( iteratee : ( val : R, key? : number ) => void, context? : any ) : void {
+        this.models.forEach( iteratee, context );
+    }
+    
+    [ Symbol.iterator ]() : IterableIterator<R> {
+        return this.models[ Symbol.iterator ]();
+    }
+
+    values() : IterableIterator<R> {
+        return this.models.values();
+    }
+
+    entries() : IterableIterator<[ number, R ]>{
+        return this.models.entries();
+    }
+
+    every( iteratee : Predicate<R>, context? : any ) : boolean {
+        return this.models.every( toPredicateFunction( iteratee ), context );
+    }
+
+    includes( idOrObj : string | Partial<R> ){
+        return Boolean( this.get( idOrObj ) );
+    }
+
+    // Map members to an array
+    map<T>( iteratee : ( val : R, key? : number ) => T, context? : any ) : T[]{
+        return this.models.map( iteratee, context );
+    }
+
+    
+    reduce<T>( iteratee : (previousValue: any, currentValue: R, currentIndex?: number ) => T, init? : any ) : T {
+        return this.models.reduce( iteratee, init );
+    }
 }
+
+const d : CollectionConstructor = Collection;
+
 
 export type LiveUpdatesOption = boolean | ( ( x : any ) => boolean );
 
-export type ElementsArg = Object | Record | Object[] | Record[];
+export type ElementsArg<R = Record> = Partial<R> | Partial<R>[]
 
 // TODO: make is safe for parse to return null (?)
-function toElements( collection : Collection, elements : ElementsArg, options : CollectionOptions ) : Elements {
+function toElements<R extends Record>( collection : Collection<R>, elements : ElementsArg<R>, options : CollectionOptions ) : Elements {
     const parsed = options.parse ? collection.parse( elements, options ) : elements; 
     return Array.isArray( parsed ) ? parsed : [ parsed ];
 }
 
 createSharedTypeSpec( Collection, SharedType );
 
-Record.Collection = <any>Collection;
+Record.Collection = Collection;
 
-function bindContext( fun : Function, context? : any ){
-    return context !== void 0 ? ( v, k ) => fun.call( context, v, k ) : fun;
-}
+function toPredicateFunction<R>( iteratee : Predicate<R> ){
+    switch( typeof iteratee ){
+        case 'function' : return iteratee;
+        case 'object' :
+            const keys = Object.keys( iteratee );
+            
+            return x => {
+                for( let key of keys ){
+                    if( iteratee[ key ] !== x[ key ] )
+                        return false;
+                }
 
-function toPredicateFunction<R>( iteratee : Predicate<R>, context : any ){
-    if( typeof iteratee === 'object' ){
-        // Wrap object to the predicate...
-        return x => {
-            for( let key in iteratee as any ){
-                if( iteratee[ key ] !== x[ key ] )
-                    return false;
+                return true;
             }
-
-            return true;
-        }
+        default : throw new Error( 'Invalid iteratee' );
     }
-    
-    return bindContext( iteratee, context );
-
 }

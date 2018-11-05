@@ -3,8 +3,8 @@
  *
  * Vlad Balin & Volicon, (c) 2016-2017
  */
-import { log, assign, omit, hashMap, getPropertyDescriptor, getBaseClass, defaults, transform } from './tools'
-import { __extends } from 'tslib'
+import { __extends } from 'tslib';
+import { assign, defaults, getBaseClass, hashMap, transform } from './tools';
 
 export interface Subclass< T > extends MixableConstructor {
     new ( ...args ) : T
@@ -113,7 +113,7 @@ export function define( ClassOrDefinition : object | MixableConstructor ){
     // @define class
     if( typeof ClassOrDefinition === 'function' ){
         predefine( ClassOrDefinition );
-        ClassOrDefinition.define();
+        ( ClassOrDefinition as MixableConstructor ).define();
     }
     // @define({ prop : val, ... }) class
     else{
@@ -128,6 +128,16 @@ export function definitions( rules : MixinMergeRules ) : ClassDecorator {
     return ( Class : Function ) => {
         const mixins = MixinsState.get( Class );
         mixins.definitionRules = defaults( hashMap(), rules, mixins.definitionRules );
+    }
+}
+
+// Create simple property list decorator
+export function propertyListDecorator( listName: string ) : PropertyDecorator {
+    return function propList(proto, name : string) {
+        const list = proto.hasOwnProperty( listName ) ?
+            proto[ listName ] : (proto[ listName ] = (proto[ listName ] || []).slice());  
+
+        list.push(name);
     }
 }
 
@@ -195,11 +205,6 @@ export class MixinsState {
 
                 // For constructors, merge _both_ static and prototype members.
                 if( typeof mixin === 'function' ){
-                    if( getBaseClass( mixin ) !== Object ){
-                        //TODO log error
-                        console.log( 'Mixin error' );
-                    }
-
                     // Merge static members
                     this.mergeObject( this.Class, mixin );
 

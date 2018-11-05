@@ -38,6 +38,7 @@ export declare class Collection<R extends Record = Record> extends Transactional
     _onChildrenChange(record: R, options?: TransactionOptions, initiator?: Transactional): void;
     get(objOrId: string | R | Object): R;
     each(iteratee: (val: R, key: number) => void, context?: any): void;
+    forEach(iteratee: (val: R, key?: number) => void, context?: any): void;
     every(iteratee: Predicate<R>, context?: any): boolean;
     filter(iteratee: Predicate<R>, context?: any): R[];
     find(iteratee: Predicate<R>, context?: any): R;
@@ -53,13 +54,13 @@ export declare class Collection<R extends Record = Record> extends Transactional
     last(): R;
     at(a_index: number): R;
     clone(options?: CloneOptions): this;
-    toJSON(): Object[];
+    toJSON(options?: object): any;
     set(elements?: ElementsArg, options?: TransactionOptions): this;
-    liveUpdates(enabled: LiveUpdatesOption): IOPromise<any>;
+    liveUpdates(enabled: LiveUpdatesOption): IOPromise<this>;
     _liveUpdates: object;
     fetch(a_options?: {
         liveUpdates?: LiveUpdatesOption;
-    } & TransactionOptions): IOPromise<any>;
+    } & TransactionOptions): IOPromise<this>;
     dispose(): void;
     reset(a_elements?: ElementsArg, options?: TransactionOptions): R[];
     add(a_elements: ElementsArg, options?: AddOptions): Record[];

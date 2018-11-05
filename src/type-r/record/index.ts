@@ -1,14 +1,15 @@
-import { Record, RecordDefinition } from './record'
-import { Mixable, tools, predefine, define, MixinsState } from '../object-plus'
-import compile from './attributes'
-import { Transactional } from '../transactions'
+import { predefine, tools } from '../object-plus';
+import { Transactional } from '../transactions';
+import { ChainableAttributeSpec, createSharedTypeSpec, type } from './attrDef';
+import { SharedType } from './metatypes';
+import { createAttributesMixin } from './mixin';
+import { Record, RecordDefinition } from './record';
 
-import { createSharedTypeSpec, AggregatedType, MSDateType, TimestampType, NumericType, SharedType } from './attributes'
+export * from './attrDef';
+export * from './metatypes';
+export { Record };
 
-export * from './attributes'
-export { Record }
-
-const { assign, defaults, omit, getBaseClass } = tools;
+const { assign, defaults } = tools;
 
 Record.onExtend = function( this : typeof Record, BaseClass : typeof Record ){
     Transactional.onExtend.call( this, BaseClass );
@@ -16,7 +17,7 @@ Record.onExtend = function( this : typeof Record, BaseClass : typeof Record ){
     // Create the default collection
     const Class = this;
 
-    @predefine class DefaultCollection extends BaseClass.Collection<any> {
+    @predefine class DefaultCollection extends BaseClass.Collection {
         static model = Class;
     }
 
@@ -36,7 +37,7 @@ Record.onDefine = function( definition : RecordDefinition, BaseClass : typeof Re
     const baseProto : Record = BaseClass.prototype;
 
     // Compile attributes spec, creating definition mixin.
-    const { properties, _localEvents, ...dynamicMixin } = compile( this.attributes = getAttributes( definition ), baseProto._attributes );
+    const { properties, _localEvents, ...dynamicMixin } = createAttributesMixin( this.attributes = getAttributes( definition ), baseProto._attributes );
     assign( this.prototype, dynamicMixin );
     
     definition.properties = defaults( definition.properties || {}, properties );
@@ -54,7 +55,6 @@ Record.onDefine = function( definition : RecordDefinition, BaseClass : typeof Re
     if( definition.endpoint ) this.Collection.prototype._endpoint = definition.endpoint;    
 }
 
-Record._attribute = AggregatedType;
 createSharedTypeSpec( Record, SharedType );
 
 function getAttributes({ defaults, attributes, idAttribute } : RecordDefinition ) {
@@ -70,20 +70,20 @@ function getAttributes({ defaults, attributes, idAttribute } : RecordDefinition 
 
 declare var Reflect;
 
-export function attr( proto, attrName? ) : any {
+export function attr( proto : object, attrName : string ) : void;
+export function attr( spec : any ) : PropertyDecorator;
+export function attr( proto, attrName? : string ) : any {
     if( attrName ){
         // Called without the spec. Extract the type.
         if( typeof Reflect !== 'undefined' && Reflect.getMetadata ){
-            Reflect
-                .getMetadata( "design:type", proto, attrName )
-                .asProp( proto, attrName );
+            type( Reflect.getMetadata( "design:type", proto, attrName ) ).asProp( proto, attrName );
         }
         else{
-            proto._log( 'error', 'Add import "reflect-metadata"; as the first line of your app.' );
+            proto._log( 'error', 'Type-R:MissingImport', 'Add import "reflect-metadata"; as the first line of your app.' );
         }
     }
     else{
-        return proto.asProp;
+        return ChainableAttributeSpec.from( proto ).asProp;
     }
 }
 

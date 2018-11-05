@@ -1,4 +1,4 @@
-import { CollectionTransaction, CollectionOptions, CollectionCore } from './commons';
+import { CollectionCore, CollectionOptions, CollectionTransaction } from './commons';
 export interface AddOptions extends CollectionOptions {
     at?: number;
 }

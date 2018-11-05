@@ -24,8 +24,8 @@ class ImmutableClassType extends AnyType {
         return next == null || next instanceof this.type ? next : new this.type( next );
     }
 
-    toJSON( value ){
-        return value && value.toJSON ? value.toJSON() : value;
+    toJSON( value, key? : string, options? : object ){
+        return value && value.toJSON ? value.toJSON( options ) : value;
     }
 
     clone( value ) {

@@ -5,7 +5,7 @@ import { ValidationError } from '../../validation';
 export declare class AggregatedType extends AnyType {
     type: typeof Transactional;
     clone(value: Transactional): Transactional;
-    toJSON(x: any): any;
+    toJSON(x: any, key: string, options: object): any;
     doInit(value: any, record: AttributesContainer, options: ConstructorOptions): any;
     doUpdate(value: any, record: any, options: any, nested: any[]): boolean;
     canBeUpdated(prev: Transactional, next: any, options: TransactionOptions): any;

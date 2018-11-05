@@ -1,6 +1,6 @@
+import { eventsApi, Logger } from '../object-plus';
 import { Record } from '../record';
-import { Owner, Transaction, TransactionOptions, Transactional } from '../transactions';
-import { eventsApi } from '../object-plus';
+import { Owner, Transaction, Transactional, TransactionOptions } from '../transactions';
 export interface CollectionCore extends Transactional, Owner {
     _byId: IdIndex;
     models: Record[];
@@ -11,7 +11,7 @@ export interface CollectionCore extends Transactional, Owner {
     _itemEvents?: eventsApi.EventMap;
     _shared: number;
     _aggregationError: Record[];
-    _log(level: string, text: string, value: any): void;
+    _log(level: string, topic: string, text: string, value: any, logger: Logger): void;
 }
 export declare type Elements = (Object | Record)[];
 export interface CollectionOptions extends TransactionOptions {
@@ -39,4 +39,4 @@ export declare class CollectionTransaction implements Transaction {
     constructor(object: CollectionCore, isRoot: boolean, added: Record[], removed: Record[], nested: Transaction[], sorted: boolean);
     commit(initiator?: Transactional): void;
 }
-export declare function logAggregationError(collection: CollectionCore): void;
+export declare function logAggregationError(collection: CollectionCore, options: TransactionOptions): void;

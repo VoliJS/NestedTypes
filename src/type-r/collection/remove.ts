@@ -8,10 +8,10 @@
  * Most frequent operation - single element remove. Thus, it have the fast-path.
  */
 
-import { Record } from '../record'
-import { free, CollectionCore, CollectionTransaction, removeIndex } from './commons'
-import { eventsApi } from '../object-plus'
-import { TransactionOptions, transactionApi } from '../transactions' 
+import { eventsApi } from '../object-plus';
+import { Record } from '../record';
+import { transactionApi, TransactionOptions } from '../transactions';
+import { CollectionCore, CollectionTransaction, free, removeIndex } from './commons';
 
 const { trigger2, trigger3 } = eventsApi,
     { markAsDirty, begin, commit } = transactionApi;

@@ -13,7 +13,7 @@ export class AggregatedType extends AnyType {
         return value ? value.clone() : value;
     }
 
-    toJSON( x ){ return x && x.toJSON(); }
+    toJSON( x, key : string, options : object ){ return x && x.toJSON( options ); }
 
     doInit( value, record : AttributesContainer, options : ConstructorOptions ){
         const v = options.clone ? this.clone( value ) : (

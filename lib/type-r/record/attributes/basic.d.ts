@@ -19,7 +19,7 @@ export declare class NumericType extends PrimitiveType {
     convert(next: any, prev?: any, record?: any): any;
     validate(model: any, value: any, name: any): string;
 }
-declare global  {
+declare global {
     interface NumberConstructor {
         integer: Function;
     }

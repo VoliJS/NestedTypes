@@ -1,6 +1,6 @@
-import { Collection } from '../collection'
-import { Record } from '../record'
-import { CompiledReference } from '../traversable'
+import { Collection } from '../collection';
+import { Record } from '../record';
+import { CompiledReference } from '../traversable';
 
 export type CollectionReference = ( () => Collection ) | Collection | string; 
 

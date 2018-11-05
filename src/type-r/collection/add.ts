@@ -1,6 +1,6 @@
-import { Transaction, transactionApi } from '../transactions'
-import { CollectionTransaction, logAggregationError, sortElements, convertAndAquire, free, CollectionOptions, addIndex, updateIndex, CollectionCore } from './commons'
-import { Record } from '../record'
+import { Record } from '../record';
+import { Transaction, transactionApi } from '../transactions';
+import { addIndex, CollectionCore, CollectionOptions, CollectionTransaction, convertAndAquire, logAggregationError, sortElements, updateIndex } from './commons';
 
 const { begin, commit, markAsDirty } = transactionApi;
 
@@ -21,7 +21,7 @@ export function addTransaction( collection : CollectionCore, items : any[], opti
             return new CollectionTransaction( collection, isRoot, added, [], nested, needSort );
         }
 
-        if( collection._aggregationError ) logAggregationError( collection );
+        if( collection._aggregationError ) logAggregationError( collection, options );
     }
 
     // No changes...

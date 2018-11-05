@@ -1,12 +1,9 @@
-import { define, mixins, Mixable, Mixin, MixableConstructor, MixinsState, mixinRules, definitions, MixinMergeRules } from './mixins'
-import { omit, transform } from './tools'
-import { EventMap, EventsDefinition, EventSource, HandlersByEvent } from './eventsource'
-import * as _eventsApi from './eventsource'
+import * as _eventsApi from './eventsource';
+import { EventMap, EventsDefinition, EventSource, HandlersByEvent } from './eventsource';
+import { define, definitions, Mixable, MixableConstructor, mixinRules, MixinsState } from './mixins';
+import { omit, transform } from './tools';
 
-const { EventHandler, strings, on, off, once, trigger5, trigger2, trigger3 } = _eventsApi;
-
-/** @hidden */
-const eventSplitter = /\s+/;
+const { strings, on, off, once, trigger5, trigger2, trigger3 } = _eventsApi;
 
 /** @hidden */
 let _idCount = 0;
@@ -16,7 +13,7 @@ function uniqueId() : string {
     return 'l' + _idCount++;
 }
 
-export { EventMap, EventsDefinition }
+export { EventMap, EventsDefinition };
 
 export interface MessengerDefinition {
     _localEvents? : EventMap
@@ -49,7 +46,7 @@ export type CallbacksByEvents = { [ events : string ] : Function }
     properties : mixinRules.merge,
     localEvents : mixinRules.merge
 })
-export abstract class Messenger implements Mixable, EventSource {
+export class Messenger implements Mixable, EventSource {
     // Define extendable mixin static properties.
     static __super__ : object;
     static mixins : MixinsState;
@@ -197,7 +194,7 @@ export const Events : Messenger = <Messenger> omit( Messenger.prototype, 'constr
 
 function toPropertyDescriptor( x : Property ) : PropertyDescriptor {
     if( x ){
-        return typeof x === 'function' ? { get : < () => any >x } : <PropertyDescriptor> x;
+        return typeof x === 'function' ? { get : < () => any >x, configurable : true } : <PropertyDescriptor> x;
     }
 }
 

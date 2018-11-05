@@ -1,6 +1,6 @@
-import { Transaction, transactionApi } from '../transactions'
-import { CollectionTransaction, logAggregationError, IdIndex, convertAndAquire, free, sortElements, CollectionOptions, addIndex, CollectionCore, Elements, freeAll } from './commons'
-import { Record } from '../record'
+import { Record } from '../record';
+import { Transaction, transactionApi } from '../transactions';
+import { addIndex, CollectionCore, CollectionOptions, CollectionTransaction, convertAndAquire, Elements, free, freeAll, IdIndex, logAggregationError, sortElements } from './commons';
 
 const { begin, commit, markAsDirty } = transactionApi;
 
@@ -21,7 +21,7 @@ export function emptySetTransaction( collection : CollectionCore, items : Elemen
             return new CollectionTransaction( collection, isRoot, added.slice(), [], [], needSort );
         }
 
-        if( collection._aggregationError ) logAggregationError( collection );
+        if( collection._aggregationError ) logAggregationError( collection, options );
     }
 
     // No changes...
@@ -51,7 +51,7 @@ export function setTransaction( collection, items, options ){
             return new CollectionTransaction( collection, isRoot, added, removed, nested, sorted );
         }
 
-        if( collection._aggregationError ) logAggregationError( collection );
+        if( collection._aggregationError ) logAggregationError( collection, options );
     }
 
     isRoot && commit( collection );

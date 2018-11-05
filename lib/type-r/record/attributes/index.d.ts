@@ -13,7 +13,6 @@ export interface RecordAttributesMixin extends ConstructorsMixin {
     _attributes: AttributeDescriptors;
     _attributesArray: AnyType[];
     properties: PropertyDescriptorMap;
-    _toJSON(): any;
     _localEvents?: eventsApi.EventMap;
     _endpoints: {
         [name: string]: IOEndpoint;

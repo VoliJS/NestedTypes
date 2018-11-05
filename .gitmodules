@@ -1,4 +1,4 @@
 [submodule "submodules/Type-R"]
 	path = submodules/Type-R
 	url = https://github.com/Volicon/Type-R.git
-	branch = master
+	branch = develop

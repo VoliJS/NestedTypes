@@ -25,6 +25,7 @@ export declare function predefine(Constructor: MixableConstructor): void;
 export declare function define(ClassOrDefinition: Function): void;
 export declare function define(ClassOrDefinition: object): ClassDecorator;
 export declare function definitions(rules: MixinMergeRules): ClassDecorator;
+export declare function propertyListDecorator(listName: string): PropertyDecorator;
 export declare function definitionDecorator(definitionKey: any, value: any): (proto: object, name: string) => void;
 export declare class MixinsState {
     Class: MixableConstructor;

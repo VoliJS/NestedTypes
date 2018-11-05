@@ -25,18 +25,18 @@
     "underscore": "*"
   },
   "devDependencies": {
-    "@types/jquery": "^2.0.48",
+    "@types/jquery": "^2.0.51",
     "chai": "* <3",
     "chai-as-promised": "^5.3.0",
     "jquery": "*",
     "mocha": "^3.5.3",
     "requirejs": "^2.3.5",
     "rollup": "^0.50.0",
-    "rollup-plugin-node-resolve": "^3.0.0",
+    "rollup-plugin-node-resolve": "^3.4.0",
     "rollup-plugin-uglify": "^2.0.1",
     "sinon": "^3.3.0",
     "sinon-chai": "^2.14.0",
-    "typescript": "*",
+    "typescript": "^3.1.6",
     "underscore": "*"
   },
   "files": [

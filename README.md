@@ -1,28 +1,8 @@
-NestedTypes 2.0 is BackboneJS compatibility layer for the [Type-R](https://volicon.github.io/Type-R/Getting_Started.html) data framework. Type-R is Model/Collection core written from the scratch with the TypeScript and has no side dependencies.
+NestedTypes v3.0 is BackboneJS compatibility layer for the [Type-R](https://volicon.github.io/Type-R/Getting_Started.html) data framework. NestedTypes adds support for BackboneJS REST API, underscore Model and Collection methods, and the rest of Backbone 1.1 classes (View, Router).
 
-NestedTypes adds support for REST (standard BackboneJS API), Underscore methods, and Backbone 1.1 classes.
+Functional-wise, there's no reason to prefer NestedTypes over the Type-R any more. If you don't need BackboneJS backward compatibility, move to the [Type-R](https://volicon.github.io/Type-R) which doesn't have any legacy dependencies like jQuery and underscore.
 
-> If you're upgrading from the version 1.3, *[there are compatibility issues](/docs/compatibility.md)*.
-> Mostly due to the fact that the Type-R and NestedTypes 2.0 is built around the concept of [aggregation trees](https://volicon.github.io/Type-R/API_by_feature/Aggregation_tree.html).
-> NestedTypes 1.3 code won't work without refactoring.
-
-# Important Notice
-
-Staring with v2.0 Type-R includes generic I/O abstraction which is far superior to the legacy BackboneJS I/O. 
-NestedTypes & NestedReact will be maintained as the BackboneJS compatibility layer as long as Verizon/Volicon systems have legacy Backbone code. Therefore:
-
-- NestedTypes docs won't be updated. Use [Type-R](https://volicon.github.io/Type-R) documentation as you primary source of documentation.
-- Functional-wise, there's no reason to prefer NestedTypes over the Type-R any more. If you don't need BackboneJS backward compatibility, move to the [Type-R](https://volicon.github.io/Type-R) which doesn't have any legacy dependencies like jQuery and underscore.
-
-# Features
-
-Post-backbone data framework. 10 times faster, first-class support for nested models and collections and relations by id. 
-
-- ES6 classes support.
-- Deeply observable changes.
-- First-class support for [aggregation](https://volicon.github.io/Type-R/API_by_feature/Aggregation_tree.html) and [relations by id](https://volicon.github.io/Type-R/API_by_feature/id-references_and_Stores.html).
-- Attribute type annotations and dynamic type safety.
-- More than 10 times faster than BackboneJS and 2-4 times faster than NestedTypes 1.3 in all browsers.
+NestedTypes & NestedReact will be maintained as long as Verizon/Volicon systems have legacy Backbone code. NestedTypes docs won't be updated. Use [Type-R](https://volicon.github.io/Type-R) documentation as a primary source of documentation.
 
 # Installation & Requirements
 

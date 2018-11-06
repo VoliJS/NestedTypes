@@ -44,8 +44,7 @@
   "license": "MIT",
   "scripts": {
     "build": "npm run compile",
-    "compile": "node_modules/.bin/tsc && ./node_modules/.bin/rollup --config",
-    "deploy": "cp ./dist/* ../observer-frontend/htdocs/js/lib/nested"
+    "compile": "node_modules/.bin/tsc && ./node_modules/.bin/rollup --config"
   },
   "dependencies": {
     "tslib": "^1.9.3"

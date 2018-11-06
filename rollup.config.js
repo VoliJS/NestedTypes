@@ -12,7 +12,8 @@ export default {
         exports: 'named',
         globals: {
             jquery: '$',
-            underscore: '_'
+            underscore: '_',
+            'type-r' : 'Nested'
         },
         sourcemap: true
     },
@@ -24,6 +25,7 @@ export default {
 
     external: [
         'jquery',
-        'underscore'
+        'underscore',
+        'type-r'
     ]
 };

@@ -1,19 +1,19 @@
 /**
  * Extend Type-R namespace
  */
-import * as TypeR from './type-r'
-export * from './type-r'
-
+import * as TypeR from 'type-r';
+import { MixinsState, Store as BaseStore, tools } from 'type-r';
 /**
- * Prepare backbone View, Router, History, and Events.  
+ * Prepare backbone View, Router, History, and Events.
  */
-import Backbone from './backbone'
-import { RestCollection, RestModel } from './rest'
-import { Store as BaseStore, tools, MixinsState } from './type-r'
-import Sync from './sync'
-
-import { ModelMixin, CollectionMixin } from './underscore-mixin'
-import { RestStore, LazyStore } from './rest-store'
+import Backbone from './backbone';
+import { RestCollection, RestModel } from './rest';
+import { LazyStore, RestStore } from './rest-store';
+import Sync from './sync';
+import { CollectionMixin, ModelMixin } from './underscore-mixin';
+export * from 'type-r';
+export * from './backbone';
+export { Backbone, RestStore, LazyStore, RestCollection as Collection, RestModel as Model };
 
 /**
  * Prepare  
@@ -38,13 +38,11 @@ const Nested : typeof TypeR & typeof Backbone = Object.create( TypeR, tools.defa
 
 export default Nested;
 
-export { Backbone, RestStore, LazyStore, RestCollection as Collection, RestModel as Model };
 
 export function defaults( x ) : typeof Nested.Record {
     return Nested.Model.defaults( x );
 }
 
-export * from './backbone';
 
 MixinsState.get( Nested.Mixable ).merge([ Nested.Events ]);
 Nested.Messenger.mixins.populate( Backbone.View, Backbone.Router, Backbone.History );

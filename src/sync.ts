@@ -5,11 +5,8 @@
  *
  * With validation patches - NestedTypes validation semantic is applied. (c) Vlad Balin, 2015.
  */
-import * as _ from 'underscore'
-import Backbone from './backbone'
-
-import { tools } from './type-r'
-const { defaults } = tools;
+import * as _ from 'underscore';
+import Backbone from './backbone';
 
 export type LazyValue< T > = () => T | T;
 

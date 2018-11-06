@@ -1,4 +1,5 @@
 /// <reference types="jquery" />
+import "type-r/globals";
 import { RestModel } from './rest';
 export declare class RestStore extends RestModel {
 }

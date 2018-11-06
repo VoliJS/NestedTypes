@@ -1,6 +1,6 @@
 /// <reference types="jquery" />
-import { SyncOptions, Restful } from './sync';
-import { Model, Collection } from './type-r';
+import { Collection, Model } from 'type-r';
+import { Restful, SyncOptions } from './sync';
 export interface RestOptions extends SyncOptions {
     wait?: boolean;
     patch?: boolean;

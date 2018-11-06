@@ -1,9 +1,16 @@
 import * as _ from 'underscore'
+import { Model, tools } from 'type-r'
 
 export const ModelMixin = {
     pick( ...args : any[] ){
         return _.pick( this, args );
     },
+
+    values( this : Model ){
+        return this.keys().map( name => this[ name ] );
+    },
+
+    each: Model.prototype.forEach,
 
     escape( attr ){
         return _.escape( this[ attr ] );

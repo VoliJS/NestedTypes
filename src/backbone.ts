@@ -6,8 +6,8 @@
 //     Backbone.js 1.2.3
 //     (c) 2010-2015 Jeremy Ashkenas, DocumentCloud and Investigative Reporters & Editors
 //     Backbone may be freely distributed under the MIT license.
-import * as _ from 'underscore'
-import * as jQuery from 'jquery'
+import * as jQuery from 'jquery';
+import * as _ from 'underscore';
 
 // Initial Setup
 // -------------

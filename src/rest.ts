@@ -1,12 +1,8 @@
-import Sync, { SyncOptions, Restful, LazyValue } from './sync'
+import { Collection, define, definitions, mixinRules, Model, tools } from 'type-r';
+import * as _ from 'underscore';
+import Sync, { Restful, SyncOptions } from './sync';
 
-import * as _ from 'underscore'
-import * as Backbone from './backbone'
-
-import { define, Model, Collection, tools, definitions, mixinRules } from './type-r'
 const { defaults } = tools;
-
-const transactionalProto = tools.getBaseClass( Model ).prototype;
 
 export interface RestOptions extends SyncOptions {
     wait? : boolean
@@ -86,6 +82,8 @@ export class RestCollection extends Collection<RestModel> implements Restful {
         return Sync.sync.apply( this, arguments );
     }
 };
+
+const modelProto = Model.prototype;
 
 @define({
     urlRoot : ''
@@ -184,7 +182,7 @@ export class RestModel extends Model implements Restful {
 
             if( serverAttrs ){
                 // When server sends string, polimorphyc Model set screws up.
-                transactionalProto.set.call( this, serverAttrs, options );
+                modelProto.set.call( this, serverAttrs, options );
                 if( model._invalidate( options ) ) return false;
             }
 

@@ -1,7 +1,8 @@
-import Backbone from './backbone'
-import * as _ from 'underscore'
-import { mixins, mixinRules, define, Store } from './type-r'
-import { RestModel, RestCollection } from './rest'
+import { define, Store } from 'type-r';
+import "type-r/globals";
+import * as _ from 'underscore';
+import Backbone from './backbone';
+import { RestCollection, RestModel } from './rest';
 
 @define({
     getStore : Store.prototype.getStore,
@@ -14,7 +15,7 @@ export class LazyStore extends RestStore {
     _resolved  : {} = {}
 
     initialize(){
-        this.each( ( element, name ) => {
+        this.forEach( ( element, name ) => {
             if( !element ) return;
 
             element.store = this;

@@ -1,4 +1,4 @@
-NestedTypes 2.0 is BackboneJS compatibility layer for the [Type-R](https://volicon.github.io/Type-R/Getting_Started.html) data framework. Type-R is Model/Collection core written from the scratch with the TypeScript and has no side dependencies.
+NestedTypes 2.0 is BackboneJS compatibility layer for the [Type-R](https://github.com/VoliJS/Type-R) data framework. Type-R is Model/Collection core written from the scratch with the TypeScript and has no side dependencies.
 
 NestedTypes adds support for REST (standard BackboneJS API), Underscore methods, and Backbone 1.1 classes.
 
@@ -11,8 +11,8 @@ NestedTypes adds support for REST (standard BackboneJS API), Underscore methods,
 Staring with v2.0 Type-R includes generic I/O abstraction which is far superior to the legacy BackboneJS I/O. 
 NestedTypes & NestedReact will be maintained as the BackboneJS compatibility layer as long as Verizon/Volicon systems have legacy Backbone code. Therefore:
 
-- NestedTypes docs won't be updated. Use [Type-R](https://volicon.github.io/Type-R) documentation as you primary source of documentation.
-- Functional-wise, there's no reason to prefer NestedTypes over the Type-R any more. If you don't need BackboneJS backward compatibility, move to the [Type-R](https://volicon.github.io/Type-R) which doesn't have any legacy dependencies like jQuery and underscore.
+- NestedTypes docs won't be updated. Use [Type-R](https://github.com/VoliJS/Type-R) documentation as you primary source of documentation.
+- Functional-wise, there's no reason to prefer NestedTypes over the Type-R any more. If you don't need BackboneJS backward compatibility, move to the [Type-R](https://github.com/VoliJS/Type-R) which doesn't have any legacy dependencies like jQuery and underscore.
 
 # Features
 
